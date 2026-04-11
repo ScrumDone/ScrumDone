@@ -1,5 +1,30 @@
 @import 'tailwindcss';
 
+
+@theme {
+  --color-scrumdone-blue-main: #00BFFF;
+  --color-scrumdone-notification-red: #FB2C36; 
+  --color-scrumdone-orange: #FF8C00;
+  --color-scrumdone-green-100: #F0FDF4;
+  --color-scrumdone-green-300: #4ECDC4;
+  --color-scrumdone-green-400: #32CD32;
+  --color-scrumdone-green-500: #10B981;
+  --color-scrumdone-green-600: #00C950;
+  --color-scrumdone-blue-200: #E6F7FF;
+  --color-scrumdone-blue-100: #CCE5FF;
+  --color-scrumdone-blue-600: #2B7FFF;
+  --color-scrumdone-red-100: #FEF2F2;
+  --color-scrumdone-red-300: #FF6B6B;
+  --color-scrumdone-red-500: #EF4444;
+  --color-scrumdone-red-600: #FB2C36; 
+  --color-scrumdone-yellow-400: #F0B100; 
+  --color-scrumdone-yellow-500: #F59E0B;
+  --color-scrumdone-purple-600: #AD46FF;
+  --color-scrumdone-purple-100: #FAF5FF;
+
+}
+
+
 html,
 body,
 #root {
