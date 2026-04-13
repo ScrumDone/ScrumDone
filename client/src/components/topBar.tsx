@@ -1,6 +1,7 @@
 
 import React from 'react'
 import { BellIcon } from '@heroicons/react/24/outline'
+import Avatar from './Avatar'
 
 const TopBar: React.FC = () => {
     return (
@@ -18,9 +19,7 @@ const TopBar: React.FC = () => {
                 </button>
 
                 <div className="flex items-center gap-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-scrumdone-blue-main text-base font-semibold text-white">
-                        AN
-                    </div>
+                    <Avatar initials="AN" size="md" />
 
                     <div className="leading-tight">
                         <p className="font-segoe-ui text-sm font-medium text-slate-800">Artur Nowak</p>
