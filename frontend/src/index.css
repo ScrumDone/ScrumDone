@@ -2,6 +2,8 @@
 
 
 @theme {
+  --font-segoe-ui: 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-segoe-emoji: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
   --color-scrumdone-blue-main: #00BFFF;
   --color-scrumdone-notification-red: #FB2C36; 
   --color-scrumdone-orange: #FF8C00;
