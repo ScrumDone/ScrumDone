@@ -11,7 +11,9 @@ const Homepage: React.FC = () => {
             <TopBar />
 
             <main className="ml-64 pt-(--app-header-h)">
-                <div className="p-6"></div>
+                <div className="max-w-6xl mx-auto px-14 py-10">
+                    <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-[0em] antialiased">Strona Główna</h1>
+                </div>
             </main>
         </div>
     )
