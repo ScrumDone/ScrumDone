@@ -18,7 +18,7 @@ const TopBar: React.FC = () => {
                 </button>
 
                 <div className="flex items-center gap-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-scrumdone-blue-main text-xs font-semibold text-white">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-scrumdone-blue-main text-base font-semibold text-white">
                         AN
                     </div>
 
