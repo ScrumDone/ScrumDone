@@ -2,6 +2,7 @@
 import React from 'react'
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
+import Avatar from '../components/Avatar'
 
 const Homepage: React.FC = () => {
     return (
@@ -33,6 +34,7 @@ const Homepage: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <h1 className="font-segoe-ui text-slate-600 text-[0.75rem] leading-6 font-normal tracking-[0em] antialiased">from:</h1>
+                                    <Avatar initials="AN" size="xs" />
                                     <h1 className="font-segoe-ui text-slate-600 text-[0.75rem] leading-6 font-normal tracking-[0em] antialiased">Artur Nowak</h1>
                                 </div>
                             </div>

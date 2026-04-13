@@ -1,8 +1,9 @@
 import React from 'react'
 
-type AvatarSize = 'sm' | 'md' | 'lg'
+type AvatarSize = 'sm' | 'md' | 'lg' | 'xs'
 
 const sizeClassMap: Record<AvatarSize, string> = {
+    xs: 'h-6 w-6 text-[10px]',
     sm: 'h-8 w-8 text-sm',
     md: 'h-9 w-9 text-base',
     lg: 'h-11 w-11 text-lg',
