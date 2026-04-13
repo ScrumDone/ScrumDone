@@ -1,11 +1,11 @@
 
 import React from 'react'
+import SideBar from '../components/sideBar'
 
 const Homepage: React.FC = () => {
     return (
-        <div>
-            <h1>Welcome to ScrumDone!</h1>
-            <p>Your ultimate tool for managing Scrum projects efficiently.</p>
+        <div className="flex h-screen w-full items-center justify-center bg-[#F9FAFB]">
+            <SideBar />
         </div>
     )
 }
