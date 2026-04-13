@@ -22,7 +22,7 @@ const SideBar: React.FC = () => {
     return (
         <aside className="fixed inset-y-0 left-0 h-screen w-64 overflow-hidden border-r border-slate-200 bg-white">
             <div className="h-full flex flex-col">
-                <div className="border-b border-slate-200 p-6">
+                <div className="flex h-(--app-header-h) items-center border-b border-slate-200 px-6">
                     <div className='flex gap-2'>
                         <h1 className="font-segoe-ui text-scrumdone-blue-main text-[1rem] leading-6 font-normal tracking-[0em] antialiased">randlab</h1>
                         <h1 className="font-segoe-ui text-black text-[1rem] leading-6 font-normal tracking-[0em] antialiased">.pl</h1>

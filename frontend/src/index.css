@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+:root {
+  --app-header-h: 4.5rem;
+}
+
 
 @theme {
   --font-segoe-ui: 'Segoe UI', 'Inter', 'Helvetica Neue', Arial, sans-serif;
