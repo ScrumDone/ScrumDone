@@ -11,8 +11,14 @@ const Homepage: React.FC = () => {
             <TopBar />
 
             <main className="ml-64 pt-(--app-header-h)">
-                <div className="max-w-6xl mx-auto px-14 py-10">
-                    <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-[0em] antialiased">Strona Główna</h1>
+                <div className="max-w-6xl mx-auto px-8 py-6">
+                    <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-[0em] antialiased mb-6">Strona Główna</h1>
+
+                    <div className="grid grid-cols-3 gap-6">
+                        <div className="bg-white rounded-xl border border-gray-200 p-4">...</div>
+                        <div className="bg-white rounded-xl border border-gray-200 p-4">...</div>
+                        <div className="bg-white rounded-xl border border-gray-200 p-4">...</div>
+                    </div>
                 </div>
             </main>
         </div>
