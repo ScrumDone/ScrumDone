@@ -5,7 +5,8 @@ import {
   CalendarIcon,
     BriefcaseIcon,
   BuildingOffice2Icon,
-    DocumentChartBarIcon
+    DocumentChartBarIcon,
+    FolderIcon
 } from '@heroicons/react/24/outline'
 
 const SideBar: React.FC = () => {
@@ -17,6 +18,7 @@ const SideBar: React.FC = () => {
                 { key: 'projects', icon: BriefcaseIcon, label: 'Projekty' },
                 { key: 'companies', icon: BuildingOffice2Icon, label: 'Firmy' },
                 { key: 'reports', icon: DocumentChartBarIcon, label: 'Raporty' },
+                { key: 'files', icon: FolderIcon, label: 'Pliki'},
         ]
 
     return (
@@ -48,7 +50,7 @@ const SideBar: React.FC = () => {
     )
 }
 
-type NavItemKey = 'home' | 'calendar' | 'projects' | 'companies' | 'reports'
+type NavItemKey = 'home' | 'calendar' | 'projects' | 'companies' | 'reports' | 'files'
 
 interface NavItemConfig {
     key: NavItemKey
