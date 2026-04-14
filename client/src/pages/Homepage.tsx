@@ -3,6 +3,7 @@ import React from 'react'
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
 import WelcomePageTask from '../components/welcomePageTask'
+import NewsFeed from '../components/newsFeed'
 
 const Homepage: React.FC = () => {
     return (
@@ -45,9 +46,7 @@ const Homepage: React.FC = () => {
                             <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-6">
                                 Aktualności
                             </h1>
-                            <div className="border border-gray-200 rounded-lg p-4">
-
-                            </div>
+                            <NewsFeed />
                         </div>
                         <div className="bg-white rounded-xl border border-gray-200 p-6">
                             <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-6">
