@@ -1,13 +1,13 @@
 
 ## Build 
 
-*Will be dockerized later*
-
-1. build the project with `http` launch configuration
-
-2. access scalar api documentation at http://localhost:5275/scalar/v1
-
-3. test connection with endpoints like http://localhost:8080/weatherforecast *Temporary testing endpoint*
-
+- Install Docker https://docs.docker.com/desktop/setup/install/windows-install/
+- Run the docker engine (opening downloaded docker dektop should do it)
+- Open a terminal and navigate to the `/server` directory of the project.
+- `docker compose up --build`
+- access scalar api documentation at http://localhost:8080/scalar/v1
+- test connection with endpoints like http://localhost:8080/weatherforecast *Temporary testing endpoint*
 
 
+## When you're done testing or want to rebuild the image from scratch:
+- `docker compose down -v`
