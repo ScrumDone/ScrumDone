@@ -20,6 +20,6 @@
         public Task? Task { get; set; }
         public Project? Project { get; set; }
         public Message? Message { get; set; }
-        public List<User> AvailableUsers { get; set; } = new();
+        public List<FileAccessMTMRelation> PermitedUsers { get; set; } = new();
     }
 }

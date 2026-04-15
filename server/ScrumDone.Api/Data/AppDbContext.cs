@@ -26,20 +26,24 @@ namespace ScrumDone.Api.Data
         DbSet<TaskLabel> TaskLabels { get; set; }
         DbSet<Sprint> Sprints { get; set; }
         DbSet<NotificationType> NotificationTypes { get; set; }
-
+        DbSet<ProjectUserMTMRelation> ProjectUserMTMTable { get; set; }
+        DbSet<TaskUserMTMRelation> TaskUserMTMTable { get; set; }
+        DbSet<TaskTaskLabelMTMRelation> TaskTaskLabelMTMTable { get; set; }
+        DbSet<FileAccessMTMRelation> FileAccessMTMTable { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Message>()
-               .HasOne(m => m.ParentMessage)
-               .WithMany(m => m.Responses)
-               .HasForeignKey(m => m.ParentMessageId)
-               .OnDelete(DeleteBehavior.Restrict);
+             .HasOne(m => m.ParentMessage)
+             .WithMany(m => m.Responses)
+             .HasForeignKey(m => m.ParentMessageId)
+             .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.Author)
                 .WithMany(u => u.AuthoredNotifications)
-                .HasForeignKey(n => n.AuthorId);
+                .HasForeignKey(n => n.AuthorId)
+                .IsRequired(false);
 
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.Notified)
@@ -49,13 +53,7 @@ namespace ScrumDone.Api.Data
             modelBuilder.Entity<File>()
                 .HasOne(f => f.Author)
                 .WithMany(u => u.AuthoredFiles)
-                .HasForeignKey(f => f.AuthorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<File>()
-                .HasMany(f => f.AvailableUsers)
-                .WithMany(u => u.AccessFiles)
-                .UsingEntity(j => j.ToTable("FileAccess"));
+                .HasForeignKey(f => f.AuthorId);
         }
     }
 }

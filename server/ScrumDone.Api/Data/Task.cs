@@ -17,13 +17,13 @@
         public Guid? SprintId { get; set; }
         public Guid StatusId { get; set; }
         public Guid PriorityId { get; set; }
-        public List<File> Attachments { get; set; }
+        public List<File> Attachments { get; set; } = new();
         public Project Project { get; set; }
         public Sprint? Sprint { get; set; }
         public TaskStatus Status { get; set; }
         public TaskPriority Priority { get; set; }
-        public List<User> Assignee { get; set; }
-        public List<TaskLabel> Labels { get; set; }
-        public List<Message> Comments { get; set; }
+        public List<TaskUserMTMRelation> Assignees { get; set; } = new();
+        public List<TaskTaskLabelMTMRelation> Labels { get; set; } = new();
+        public List<Message> Comments { get; set; } = new();
     }
 }

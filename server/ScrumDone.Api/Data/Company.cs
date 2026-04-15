@@ -15,8 +15,8 @@
         public bool IsDeleted { get; set; } = false;
 
 
-        public List<ContactPerson> ContactPeople { get; set; }
-        public List<Project> Projects { get; set; }
-        public List<CompanyNote> Notes { get; set; }
+        public List<ContactPerson> ContactPeople { get; set; } = new();
+        public List<Project> Projects { get; set; } = new();
+        public List<CompanyNote> Notes { get; set; } = new();
     }
 }

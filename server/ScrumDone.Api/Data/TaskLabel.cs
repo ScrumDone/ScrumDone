@@ -11,6 +11,6 @@
         public DateTimeOffset? DeletedAt { get; set; }
         public bool IsDeleted { get; set; } = false;
 
-        public List<Task> Tasks { get; set; } = new();
+        public List<TaskTaskLabelMTMRelation> Tasks { get; set; } = new();
     }
 }

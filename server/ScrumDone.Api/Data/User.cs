@@ -12,7 +12,7 @@
         public bool IsDeleted { get; set; } = false;
 
         public Guid UserPermissionsTypeId { get; set; }
-        public List<Project> Projects { get; set; } = new();
+        public List<ProjectUserMTMRelation> Projects { get; set; } = new();
         public List<Message> Comments { get; set; } = new();
         public List<Task> AssignedTasks { get; set; } = new();
         public List<Raport> CreatedRaports { get; set; } = new();
@@ -22,6 +22,6 @@
         public List<Notification> AuthoredNotifications { get; set; } = new();
         public List<Notification> ReceivedNotifications { get; set; } = new();
         public List<File> AuthoredFiles { get; set; } = new();
-        public List<File> AccessFiles { get; set; } = new();
+        public List<FileAccessMTMRelation> FileAccesses { get; set; } = new();
     }
 }
