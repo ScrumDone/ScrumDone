@@ -1,9 +1,12 @@
 import React from 'react'
+import CalendarTaskItem from './calendarTaskItem'
+
+type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
 
 interface CalendarTask {
     id: string
     title: string
-    colorClass: string
+    colorVariant: TaskColor
 }
 
 interface CalendarDay {
@@ -22,8 +25,8 @@ const days: CalendarDay[] = [
         date: 7,
         isSelected: true,
         tasks: [
-            { id: 'task-1', title: 'Quotes Generation Module', colorClass: 'bg-scrumdone-red-500' },
-            { id: 'task-2', title: 'Database schema design', colorClass: 'bg-scrumdone-yellow-500' },
+            { id: 'task-1', title: 'Quotes Generation Module', colorVariant: 'red' },
+            { id: 'task-2', title: 'Database schema design', colorVariant: 'yellow' },
         ],
     },
     { id: 'wed', shortName: 'śr.', date: 8 },
@@ -33,7 +36,7 @@ const days: CalendarDay[] = [
         id: 'sat',
         shortName: 'sob.',
         date: 11,
-        tasks: [{ id: 'task-3', title: 'Real-time notifications', colorClass: 'bg-scrumdone-green-500' }],
+        tasks: [{ id: 'task-3', title: 'Real-time notifications', colorVariant: 'green' }],
     },
     { id: 'sun', shortName: 'niedz.', date: 12 },
 ]
@@ -54,12 +57,7 @@ const WeekCalendar: React.FC = () => {
 
                         <div className={`flex h-full flex-col gap-2 px-2 py-2 ${day.isSelected ? 'bg-scrumdone-blue-200/30' : 'bg-white'}`}>
                             {day.tasks?.map((task) => (
-                                <div key={task.id} className="flex items-center gap-1 rounded-sm bg-slate-100 px-1.5 py-1">
-                                    <span className={`h-2 w-0.5 rounded-full ${task.colorClass}`} />
-                                    <p className="truncate font-segoe-ui text-[9px] leading-3 font-normal text-slate-700 antialiased">
-                                        {task.title}
-                                    </p>
-                                </div>
+                                <CalendarTaskItem key={task.id} title={task.title} colorVariant={task.colorVariant} />
                             ))}
                         </div>
                     </article>
