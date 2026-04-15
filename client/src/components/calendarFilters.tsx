@@ -35,7 +35,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({ title, options }) => {
 
 const CalendarFilters: React.FC = () => {
     return (
-        <aside className="flex w-44 flex-col gap-3">
+        <aside className="flex w-44 flex-col gap-3 pr-1">
             <FilterSection
                 title="Projekty"
                 options={[
