@@ -13,19 +13,19 @@ interface FilterSectionProps {
 
 const FilterSection: React.FC<FilterSectionProps> = ({ title, options }) => {
     return (
-        <section className="rounded-md border border-slate-200 bg-white p-4">
-            <h3 className="mb-3 font-segoe-ui text-[14px] leading-5 font-normal text-slate-900 antialiased">{title}</h3>
-            <div className="flex flex-col gap-2">
+        <section className="rounded-[10px] border border-gray-200 bg-white p-4">
+            <h3 className="mb-3 font-segoe-ui text-[18px] leading-7 font-normal text-slate-900 antialiased">{title}</h3>
+            <div className="flex flex-col gap-3">
                 {options.map((option) => (
                     <label key={option.id} className="flex items-center gap-2">
                         <input
                             type="checkbox"
                             defaultChecked
-                            className="h-3.5 w-3.5 rounded border-slate-300 text-slate-900 accent-slate-900"
+                            className="h-4 w-4 rounded border-slate-300 text-slate-900 accent-slate-900"
                             aria-label={option.label}
                         />
                         <span className={`h-2 w-2 rounded-full ${option.colorClass}`} />
-                        <span className="font-segoe-ui text-[12px] leading-4 font-normal text-slate-700 antialiased">{option.label}</span>
+                        <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{option.label}</span>
                     </label>
                 ))}
             </div>
