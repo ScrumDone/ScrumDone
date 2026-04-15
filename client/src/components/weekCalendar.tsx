@@ -40,12 +40,12 @@ const days: CalendarDay[] = [
 
 const WeekCalendar: React.FC = () => {
     return (
-        <section className="overflow-hidden rounded-md border border-gray-200 bg-white">
-            <div className="grid grid-cols-7">
+        <section className="h-full overflow-hidden rounded-md border border-gray-200 bg-white">
+            <div className="grid h-full grid-cols-7">
                 {days.map((day) => (
                     <article
                         key={day.id}
-                        className={`min-h-[515px] border-r border-gray-200 last:border-r-0 ${day.isSelected ? 'bg-scrumdone-blue-300/40' : 'bg-white'}`}
+                        className={`h-full min-h-[calc(100vh-16rem)] border-r border-gray-200 last:border-r-0 ${day.isSelected ? 'bg-scrumdone-blue-300/40' : 'bg-white'}`}
                     >
                         <header className="border-b border-slate-200 px-3 py-2 text-center">
                             <p className="font-segoe-ui text-[10px] leading-4 font-normal text-slate-500 antialiased">{day.shortName}</p>

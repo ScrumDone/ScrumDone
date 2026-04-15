@@ -16,9 +16,9 @@ const CalendarPage: React.FC = () => {
             <TopBar />
 
             <main className="ml-64 pt-(--app-header-h)">
-                <div className="mx-auto max-w-350 px-8 py-6">
-                    <div className="flex items-start gap-3">
-                        <div className="min-w-0 flex-1">
+                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-8 py-6">
+                    <div className="flex flex-1 items-stretch gap-3">
+                        <div className="min-w-0 flex flex-1 flex-col">
                             <div className="mb-6 flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
                                     <h1 className="font-segoe-ui text-[24px] leading-8 font-normal text-slate-900 antialiased">Kalendarz</h1>
@@ -71,7 +71,9 @@ const CalendarPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <WeekCalendar />
+                            <div className="flex-1 pb-6">
+                                <WeekCalendar />
+                            </div>
                         </div>
                         <CalendarFilters />
                     </div>
