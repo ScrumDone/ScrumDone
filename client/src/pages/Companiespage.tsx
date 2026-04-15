@@ -28,14 +28,14 @@ const CompaniesPage: React.FC = () => {
                             Firmy
                         </h1>
                         
-                        <button className="bg-[#00aaff] hover:bg-[#0099ee] text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-semibold shadow-sm transition-all active:scale-95">
-                            <PlusIcon className="w-5 h-5 stroke-[2.5]" />
+                        <button className="bg-scrumdone-blue-main hover:opacity-90 text-white px-4 py-2 rounded-lg flex items-center gap-4 text-sm font-normal transition-all active:scale-95 cursor-pointer">
+                            <PlusIcon className="w-5 h-5 stroke-2" />
                             Dodaj firmę
                         </button>
                     </div>
 
-                    {/* Siatka z kartami firm */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Siatka z kartami firm - stałe 2 kolumny na desktopie */}
+                    <div className="grid grid-cols-2 gap-8">
                         {mockCompanies.map((company) => (
                             <CompanyCard 
                                 key={company.id}

@@ -19,12 +19,12 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ name, nip, email, phone, proj
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-5 min-w-[320px] flex-1 transition-all hover:shadow-md">
       
       {/* NAZWA FIRMY */}
-      <div className="flex items-center gap-4">
-        <div className="bg-blue-50 p-3 rounded-xl text-blue-600">
-          <BuildingOfficeIcon className="w-6 h-6" />
+      <div className="flex items-center gap-3">
+        <div className="bg-scrumdone-blue-200 p-3 rounded-lg text-scrumdone-blue-main">
+          <BuildingOfficeIcon className="w-6 h-6 stroke-2" />
         </div>
         <div>
-          <h3 className="text-lg text-gray-900">{name}</h3>
+          <h3 className="text-[18px] leading-[28px] text-black font-normal">{name}</h3>          
           <p className="text-xs text-gray-400 font-medium">NIP: {nip}</p>
         </div>
       </div>
