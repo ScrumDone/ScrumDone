@@ -19,7 +19,7 @@ const CalendarPage: React.FC = () => {
                 <div className="mx-auto max-w-350 px-8 py-6">
                     <div className="flex items-start gap-3">
                         <div className="min-w-0 flex-1">
-                            <div className="mb-4 flex items-center justify-between gap-4">
+                            <div className="mb-6 flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
                                     <h1 className="font-segoe-ui text-[24px] leading-8 font-normal text-slate-900 antialiased">Kalendarz</h1>
 
@@ -47,23 +47,25 @@ const CalendarPage: React.FC = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2">
+                                    <div className="flex items-center rounded-[10px]  bg-[#F3F3F5] p-1">
+                                        <button
+                                            type="button"
+                                            className="rounded-lg bg-[#ECEEF2] px-3 py-1.5 font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased"
+                                        >
+                                            Tydzień
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="rounded-lg px-3 py-1.5 font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased transition-colors hover:bg-[#ECEEF2]"
+                                        >
+                                            Miesiąc
+                                        </button>
+                                    </div>
                                     <button
                                         type="button"
-                                        className="rounded border border-slate-200 bg-white px-3 py-1.5 font-segoe-ui text-[11px] leading-4 text-slate-700 antialiased"
+                                        className="flex items-center  rounded-lg  bg-[#F3F3F5] hover:bg-[#ECEEF2]  px-3 py-2 gap-16 font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased"
                                     >
-                                        Tydzień
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="rounded border border-slate-200 bg-white px-3 py-1.5 font-segoe-ui text-[11px] leading-4 text-slate-700 antialiased"
-                                    >
-                                        Miesiąc
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="flex items-center gap-2 rounded border border-slate-200 bg-white px-3 py-1.5 font-segoe-ui text-[11px] leading-4 text-slate-700 antialiased"
-                                    >
-                                        Persona
+                                        Personal
                                         <ChevronDownIcon className="h-3.5 w-3.5" />
                                     </button>
                                 </div>
