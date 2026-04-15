@@ -5,13 +5,21 @@
         public Guid Id { get; set; }
         public string OldFileName { get; set; }
         public string FilePath { get; set; }
-        public bool Ispublic { get; set; }
-        public Guid UserId { get; set; }
-        public User User { get; set; }
+        public bool IsPublic { get; set; }
+
+        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? DeletedAt { get; set; }
+        public bool IsDeleted { get; set; } = false;
+
+        public Guid AuthorId { get; set; }
         public Guid? TaskId { get; set; }
         public Guid? ProjectId { get; set; }
-        public Task Task { get; set; }
-        public Guid? Project { get; set; }
-
+        public Guid? MessageId { get; set; }
+        public User Author { get; set; }
+        public Task? Task { get; set; }
+        public Project? Project { get; set; }
+        public Message? Message { get; set; }
+        public List<User> AvailableUsers { get; set; } = new();
     }
 }
