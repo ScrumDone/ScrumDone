@@ -6,8 +6,7 @@
 - Open a terminal and navigate to the `/server` directory of the project.
 - `docker compose up --build`
 - access scalar api documentation at http://localhost:8080/scalar/v1
-- test connection with endpoints like http://localhost:8080/weatherforecast *Temporary testing endpoint*
-
+- test connection with endpoints like http://localhost:8080/api/utils/health
 
 ## When you're done testing or want to rebuild the image from scratch:
 - `docker compose down -v`
