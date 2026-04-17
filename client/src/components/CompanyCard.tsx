@@ -20,19 +20,19 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ name, nip, email, phone, proj
             <Building2 className="w-7 h-7 text-scrumdone-blue-main stroke-2" />
           </div>
           <div>
-            <h3 className="text-[18px] leading-[28px] text-black-900">{name}</h3>
-            <p className="text-[12px] leading-[16px] text-gray-500">NIP: {nip}</p>
+            <h3 className="text-[18px] leading-7 text-black-900">{name}</h3>
+            <p className="text-[12px] leading-4 text-gray-500">NIP: {nip}</p>
           </div>
         </div>
       </div>
 
       {/* DANE KONTAKTOWE */}
       <div className="space-y-2">
-        <div className="flex items-start gap-2 text-[14px] leading-[20px] text-gray-700">
+        <div className="flex items-start gap-2 text-[14px] leading-5 text-gray-700">
           <Mail className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-600 stroke-2" />
           <span className="truncate">{email}</span>
         </div>
-        <div className="flex items-center gap-2 text-[14px] leading-[20px] text-gray-700">
+        <div className="flex items-center gap-2 text-[14px] leading-5 text-gray-700">
           <Phone className="w-4 h-4 flex-shrink-0 text-gray-600 stroke-2" />
           <span>{phone}</span>
         </div>
@@ -41,10 +41,10 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ name, nip, email, phone, proj
       {/* PROJEKTY */}
       <div className="pt-4 border-t border-gray-300 mt-auto">
         <div className="flex items-center justify-between">
-          <span className="text-[14px] leading-[20px] text-gray-600 font-normal">
+          <span className="text-[14px] leading-5 text-gray-600 font-normal">
             Projekty
           </span>
-          <span className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-[12px] leading-[16px] font-medium min-w-[24px] bg-gray-200 text-gray-900">
+          <span className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-[12px] leading-4 font-medium min-w-6 bg-gray-200 text-gray-900">
             {projectsCount}
           </span>
         </div>
