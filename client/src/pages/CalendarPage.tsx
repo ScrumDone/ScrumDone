@@ -71,8 +71,13 @@ const CalendarPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex-1 pb-6">
-                                <WeekCalendar />
+                            <div className="flex-1">
+                                <div className="h-[calc(100vh-22rem)] min-h-96">
+                                    <WeekCalendar />
+                                </div>
+                                <div className="bg-white w-full mt-6 mb-6 rounded-xl border border-slate-200 p-4 min-h-35">
+
+                                </div>
                             </div>
                         </div>
                         <CalendarFilters />
