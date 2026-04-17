@@ -20,17 +20,17 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       
       {/* NAZWA I KLIENCI */}
       <div className="flex justify-between items-start">
-        <div>
+        <div className="flex flex-col gap-1">
           <h3 className="text-xl text-gray-900">{name}</h3>
-          <p className="text-sm text-gray-500 font-medium">{clientName}</p>
+          <p className="text-sm text-gray-500">{clientName}</p>
         </div>
-        <span className="inline-flex items-center justify-center bg-scrumdone-blue-main text-white text-[12px] leading-[16px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap w-fit">
+        <span className="inline-flex items-center justify-center bg-scrumdone-blue-main text-white text-[12px] leading-4 font-medium px-2 py-0.5 rounded-lg whitespace-nowrap w-fit">
           {status}
         </span>
       </div>
 
       {/* OPIS */}
-      <p className="text-sm text-gray-600 leading-relaxed min-h-[40px]">
+      <p className="text-sm text-gray-600 leading-relaxed min-h-10">
         {description}
       </p>
 
