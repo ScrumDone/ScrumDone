@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: scrumdone-postgres
+    environment:
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: scrumdone
+      PGOPTIONS: "-c tcp_keepalives_idle=30 -c tcp_keepalives_interval=10 -c tcp_keepalives_count=5"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d
+    networks:
+      - scrumdone-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devuser -d scrumdone"]
+      interval: 3s
+      retries: 5
+
+  scrumdone-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: scrumdone-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: devuser
+      DB_PASSWORD: devpassword
+      DB_NAME: scrumdone
+    ports:
+      - "8080:8080"
+    networks:
+      - scrumdone-net
+
+networks:
+  scrumdone-net:
