@@ -34,8 +34,8 @@ const CompaniesPage: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Siatka z kartami firm - stałe 2 kolumny na desktopie */}
-                    <div className="grid grid-cols-2 gap-8">
+                    {/* Siatka z kartami firm - stałe 3 kolumny na desktopie */}
+                    <div className="grid grid-cols-3 gap-8">
                         {mockCompanies.map((company) => (
                             <CompanyCard 
                                 key={company.id}
