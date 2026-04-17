@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 import {
   HomeIcon,
   CalendarIcon,
@@ -11,14 +12,15 @@ import {
 
 const SideBar: React.FC = () => {
         const [activeItem, setActiveItem] = useState<NavItemKey>('projects')
+        const navigate = useNavigate()
 
         const navItems: NavItemConfig[] = [
-                { key: 'home', icon: HomeIcon, label: 'Strona główna' },
-                { key: 'calendar', icon: CalendarIcon, label: 'Kalendarz' },
-                { key: 'projects', icon: BriefcaseIcon, label: 'Projekty' },
-                { key: 'companies', icon: BuildingOffice2Icon, label: 'Firmy' },
-                { key: 'reports', icon: DocumentChartBarIcon, label: 'Raporty' },
-                { key: 'files', icon: FolderIcon, label: 'Pliki'},
+                { key: 'home', icon: HomeIcon, label: 'Strona główna', url : '/' },
+                { key: 'calendar', icon: CalendarIcon, label: 'Kalendarz', url : '/calendar' },
+                { key: 'projects', icon: BriefcaseIcon, label: 'Projekty', url : '/projects' },
+                { key: 'companies', icon: BuildingOffice2Icon, label: 'Firmy', url : '/companies' },
+                { key: 'reports', icon: DocumentChartBarIcon, label: 'Raporty', url : '/reports' },
+                { key: 'files', icon: FolderIcon, label: 'Pliki', url : '/files'},
         ]
 
     return (
@@ -41,6 +43,7 @@ const SideBar: React.FC = () => {
                             onClick={() => {
                                 setActiveItem(item.key);
                                 console.log(`Navigating to ${item.label}`);
+                                navigate(item.url);
                             }}
                         />
                     ))}
@@ -56,6 +59,7 @@ interface NavItemConfig {
     key: NavItemKey
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
     label: string
+    url: string
 }
 
 interface NavItemProps {
