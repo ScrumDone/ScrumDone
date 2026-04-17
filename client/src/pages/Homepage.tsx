@@ -7,6 +7,13 @@ import NewsFeed from '../components/newsFeed'
 import ProjectsOverview from '../components/projectsOverview'
 
 const Homepage: React.FC = () => {
+
+    async function fetchtest() {
+        const response = await fetch('http://localhost:8080/api/utils/health');
+        const data = await response.json();
+        console.log(data);
+    }
+    fetchtest();
     return (
         <div className="min-h-screen w-full bg-[#F9FAFB]">
             <SideBar />
