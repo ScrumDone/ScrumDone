@@ -8,6 +8,7 @@ import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
 import WeekCalendar from '../components/weekCalendar'
 import CalendarFilters from '../components/calendarFilters'
+import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
 
 const CalendarPage: React.FC = () => {
     return (
@@ -75,9 +76,7 @@ const CalendarPage: React.FC = () => {
                                 <div className="h-[calc(100vh-22rem)] min-h-96">
                                     <WeekCalendar />
                                 </div>
-                                <div className="bg-white w-full mt-6 mb-6 rounded-xl border border-slate-200 p-4 min-h-35">
-
-                                </div>
+                                <CalendarNoDeadlineTasks />
                             </div>
                         </div>
                         <CalendarFilters />
