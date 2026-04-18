@@ -8,6 +8,7 @@ import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
 import WeekCalendar from '../components/weekCalendar'
 import CalendarFilters from '../components/calendarFilters'
+import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
 
 const CalendarPage: React.FC = () => {
     return (
@@ -71,8 +72,11 @@ const CalendarPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex-1 pb-6">
-                                <WeekCalendar />
+                            <div className="flex-1">
+                                <div className="h-[calc(100vh-22rem)] min-h-96">
+                                    <WeekCalendar />
+                                </div>
+                                <CalendarNoDeadlineTasks />
                             </div>
                         </div>
                         <CalendarFilters />
