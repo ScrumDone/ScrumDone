@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
     ChevronLeftIcon,
     ChevronRightIcon,
     ChevronDownIcon,
+    CheckIcon,
 } from '@heroicons/react/24/outline'
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
@@ -10,7 +11,32 @@ import WeekCalendar from '../components/weekCalendar'
 import CalendarFilters from '../components/calendarFilters'
 import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
 
+type CalendarMode = 'Personal' | 'Team'
+
+const modeOptions: CalendarMode[] = ['Personal', 'Team']
+
 const CalendarPage: React.FC = () => {
+    const [selectedMode, setSelectedMode] = useState<CalendarMode>('Personal')
+    const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false)
+    const modeDropdownRef = useRef<HTMLDivElement | null>(null)
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!modeDropdownRef.current) {
+                return
+            }
+
+            if (!modeDropdownRef.current.contains(event.target as Node)) {
+                setIsModeDropdownOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [])
+
     return (
         <div className="min-h-screen w-full bg-[#F9FAFB]">
             <SideBar/>
@@ -62,13 +88,43 @@ const CalendarPage: React.FC = () => {
                                             Miesiąc
                                         </button>
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="flex items-center  rounded-lg  bg-[#F3F3F5] hover:bg-[#ECEEF2]  px-3 py-2 gap-16 font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased"
-                                    >
-                                        Personal
-                                        <ChevronDownIcon className="h-3.5 w-3.5" />
-                                    </button>
+                                    <div className="relative" ref={modeDropdownRef}>
+                                        <button
+                                            type="button"
+                                            className="flex items-center rounded-lg bg-[#F3F3F5] px-3 py-2 font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased transition-colors hover:bg-[#ECEEF2]"
+                                            onClick={() => setIsModeDropdownOpen((previous) => !previous)}
+                                            aria-haspopup="menu"
+                                            aria-expanded={isModeDropdownOpen}
+                                            aria-label="Wybierz tryb kalendarza"
+                                        >
+                                            <span>{selectedMode}</span>
+                                            <ChevronDownIcon className="ml-14 h-3.5 w-3.5" />
+                                        </button>
+
+                                        {isModeDropdownOpen ? (
+                                            <div className="absolute left-0 z-20 mt-2 w-48 rounded-lg shadow-md bg-white p-1">
+                                                {modeOptions.map((mode) => {
+                                                    const isSelected = mode === selectedMode
+
+                                                    return (
+                                                        <button
+                                                            key={mode}
+                                                            type="button"
+                                                            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased ${isSelected ? 'bg-[#ECEEF2]' : 'hover:bg-slate-50'}`}
+                                                            onClick={() => {
+                                                                setSelectedMode(mode)
+                                                                setIsModeDropdownOpen(false)
+                                                            }}
+                                                            role="menuitem"
+                                                        >
+                                                            <span>{mode}</span>
+                                                            {isSelected ? <CheckIcon className="h-5 w-5 text-slate-500" /> : null}
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        ) : null}
+                                    </div>
                                 </div>
                             </div>
 
