@@ -1,4 +1,7 @@
 import React from 'react'
+import CalendarPeopleFilter, { type PersonFilter } from './calendarPeopleFilter'
+
+type CalendarMode = 'Personal' | 'Team'
 
 interface FilterOption {
     id: string
@@ -10,6 +13,17 @@ interface FilterSectionProps {
     title: string
     options: FilterOption[]
 }
+
+interface CalendarFiltersProps {
+    mode: CalendarMode
+}
+
+const personFilterOptions: PersonFilter[] = [
+    { id: 'artur-nowak', initials: 'AN', fullName: 'Artur Nowak' },
+    { id: 'eryk-baczynski', initials: 'EB', fullName: 'Eryk Baczyński' },
+    { id: 'maria-kowalska', initials: 'MK', fullName: 'Maria Kowalska' },
+    { id: 'jan-nowicki', initials: 'JN', fullName: 'Jan Nowicki' },
+]
 
 const FilterSection: React.FC<FilterSectionProps> = ({ title, options }) => {
     return (
@@ -33,9 +47,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({ title, options }) => {
     )
 }
 
-const CalendarFilters: React.FC = () => {
+const CalendarFilters: React.FC<CalendarFiltersProps> = ({ mode }) => {
     return (
         <aside className="flex w-44 flex-col gap-3 pr-1">
+            {mode === 'Team' ? <CalendarPeopleFilter people={personFilterOptions} /> : null}
+
             <FilterSection
                 title="Projekty"
                 options={[
