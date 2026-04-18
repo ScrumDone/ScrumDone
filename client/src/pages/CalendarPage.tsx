@@ -135,7 +135,7 @@ const CalendarPage: React.FC = () => {
                                 <CalendarNoDeadlineTasks />
                             </div>
                         </div>
-                        <CalendarFilters />
+                        <CalendarFilters mode={selectedMode} />
                     </div>
                 </div>
             </main>
