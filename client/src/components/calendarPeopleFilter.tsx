@@ -36,14 +36,14 @@ const CalendarPeopleFilter: React.FC<CalendarPeopleFilterProps> = ({ people }) =
                             key={person.id}
                             type="button"
                             onClick={() => togglePerson(person.id)}
-                            className="flex items-center gap-3 text-left"
+                            className="flex items-center gap-2 text-left"
                             aria-pressed={isSelected}
                         >
-                            <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] border transition-colors ${isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
-                                <CheckIcon className="h-5 w-5" strokeWidth={2.5} />
+                            <span className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
+                                <CheckIcon className="h-3 w-3" strokeWidth={2.5} />
                             </span>
-                            <Avatar initials={person.initials} size="md" />
-                            <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{person.fullName}</span>
+                            <Avatar initials={person.initials} size="xs" />
+                            <span className="font-segoe-ui text-[14px] leading-5 font-medium text-black antialiased">{person.fullName}</span>
                         </button>
                     )
                 })}
