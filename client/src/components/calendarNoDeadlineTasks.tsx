@@ -61,7 +61,7 @@ export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProp
     const normalizedInitials = task.assigneeInitials.trim().slice(0, 2).toUpperCase()
 
     return (
-        <article className={`rounded-2xl border-2 bg-white/85 p-4 sm:p-5 ${accentClassMap[task.accentColor]}`}>
+        <article className={`rounded-2xl border-2 bg-white/85 p-4  ${accentClassMap[task.accentColor]}`}>
             <div className="mb-4 flex items-center gap-3">
                 <span className={`h-3 w-3 shrink-0 rounded-full ${dotClassMap[task.dotColor]}`} aria-hidden="true" />
                 <h2 className="font-segoe-ui text-[14px] leading-8 font-normal text-slate-900 antialiased">
@@ -89,12 +89,12 @@ const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
     tasks = defaultTasks,
 }) => {
     return (
-        <section className="mt-6 mb-6 w-full rounded-2xl border border-slate-200 bg-slate-100 p-6">
-            <h2 className="mb-5 font-segoe-ui text-[24px] leading-8 font-normal text-slate-900 antialiased">
+        <section className="rounded-lg border border-slate-200 bg-white p-4 mt-6">
+            <h2 className="mb-3 font-segoe-ui text-[18px] leading-7 font-medium text-slate-900 antialiased">
                 {title} ({tasks.length})
             </h2>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3">
                 {tasks.map((task) => (
                     <CalendarNoDeadlineTaskCard key={task.id} task={task} />
                 ))}
