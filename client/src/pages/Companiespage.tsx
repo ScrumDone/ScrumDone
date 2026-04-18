@@ -20,7 +20,7 @@ const CompaniesPage: React.FC = () => {
 
             {/* Główna sekcja */}
             <main className="ml-64 pt-(--app-header-h)">
-                <div className="max-w-6xl mx-auto px-8 py-6">
+                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-8 py-6">
                     
                     {/* Nagłówek strony i przycisk dodaj */}
                     <div className="flex items-center justify-between mb-8">
