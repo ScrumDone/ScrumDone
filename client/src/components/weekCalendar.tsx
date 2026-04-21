@@ -1,4 +1,5 @@
 import React from 'react'
+import { format, addDays, isSameDay, parseISO } from 'date-fns'
 import CalendarTaskItem from './calendarTaskItem'
 
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
@@ -7,61 +8,75 @@ interface CalendarTask {
     id: string
     title: string
     colorVariant: TaskColor
+    date: string 
 }
 
-interface CalendarDay {
-    id: string
-    shortName: string
-    date: number
-    isSelected?: boolean
-    tasks?: CalendarTask[]
+interface WeekCalendarProps {
+    startDate: Date
 }
 
-const days: CalendarDay[] = [
-    { id: 'mon', shortName: 'pon.', date: 6 },
-    {
-        id: 'tue',
-        shortName: 'wt.',
-        date: 7,
-        isSelected: true,
-        tasks: [
-            { id: 'task-1', title: 'Quotes Generation Module', colorVariant: 'red' },
-            { id: 'task-2', title: 'Database schema design', colorVariant: 'yellow' },
-        ],
-    },
-    { id: 'wed', shortName: 'śr.', date: 8 },
-    { id: 'thu', shortName: 'czw.', date: 9 },
-    { id: 'fri', shortName: 'pt.', date: 10 },
-    {
-        id: 'sat',
-        shortName: 'sob.',
-        date: 11,
-        tasks: [{ id: 'task-3', title: 'Real-time notifications', colorVariant: 'green' }],
-    },
-    { id: 'sun', shortName: 'niedz.', date: 12 },
-]
+const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate }) => {
+    
+    const allTasks: CalendarTask[] = [
+        { 
+            id: 'task-1', 
+            title: 'Quotes Generation Module', 
+            colorVariant: 'red', 
+            date: '2026-04-21' 
+        },
+        { 
+            id: 'task-2', 
+            title: 'Database schema design', 
+            colorVariant: 'yellow', 
+            date: '2026-04-21' 
+        },
+        { 
+            id: 'task-3', 
+            title: 'Real-time notifications', 
+            colorVariant: 'green', 
+            date: '2026-04-25' 
+        },
+    ]
 
-const WeekCalendar: React.FC = () => {
+    const dayNames = ['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.']
+
     return (
         <section className="h-full overflow-hidden rounded-[10px] border border-gray-200 bg-white">
             <div className="grid h-full grid-cols-7">
-                {days.map((day) => (
-                    <article
-                        key={day.id}
-                        className="h-full border-r-2 border-gray-100 last:border-r-0 bg-white"
-                    >
-                        <header className={`border-b border-slate-200 gap-1 px-3 py-4 text-center ${day.isSelected ? 'bg-scrumdone-blue-200' : 'bg-white'}`}>
-                            <p className="font-segoe-ui text-[14px] leading-5 font-normal text-slate-700 antialiased">{day.shortName}</p>
-                            <p className={`font-segoe-ui text-[18px] leading-7 font-normal ${day.isSelected ? 'text-scrumdone-blue-main' : 'text-slate-900'} antialiased`}>{day.date}</p>
-                        </header>
+                {dayNames.map((shortName, index) => {
+                    const columnDate = addDays(startDate, index)
+                    const isToday = isSameDay(columnDate, new Date())
 
-                        <div className={`flex flex-1 flex-col gap-2 px-2 py-2 ${day.isSelected ? 'bg-scrumdone-blue-200/30' : 'bg-white'}`}>
-                            {day.tasks?.map((task) => (
-                                <CalendarTaskItem key={task.id} title={task.title} colorVariant={task.colorVariant} />
-                            ))}
-                        </div>
-                    </article>
-                ))}
+                    const tasksForThisDay = allTasks.filter(task => 
+                        isSameDay(parseISO(task.date), columnDate)
+                    )
+
+                    return (
+                        <article
+                            key={columnDate.toISOString()}
+                            className="h-full border-r-2 border-gray-100 last:border-r-0 bg-white flex flex-col"
+                        >
+                            <header className={`border-b border-slate-200 gap-1 px-3 py-4 text-center ${isToday ? 'bg-scrumdone-blue-200' : 'bg-white'}`}>
+                                <p className="font-segoe-ui text-[14px] leading-5 font-normal text-slate-700 antialiased">
+                                    {shortName}
+                                </p>
+                                <p className={`font-segoe-ui text-[18px] leading-7 font-normal ${isToday ? 'text-scrumdone-blue-main' : 'text-slate-900'} antialiased`}>
+                                    {format(columnDate, 'd')}
+                                </p>
+                            </header>
+
+                            <div className={`flex flex-1 flex-col gap-2 px-2 py-2 ${isToday ? 'bg-scrumdone-blue-200/30' : 'bg-white'}`}>
+                                {tasksForThisDay.map((task) => (
+                                    <CalendarTaskItem 
+                                        key={task.id} 
+                                        title={task.title} 
+                                        colorVariant={task.colorVariant} 
+                                    />
+                                ))}
+                            </div>
+                        </article>
+                    )
+                })}
             </div>
         </section>
     )
