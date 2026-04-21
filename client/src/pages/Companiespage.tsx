@@ -6,9 +6,39 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 
 // Przykładowe dane
 const mockCompanies = [
-  { id: 1, name: 'Adoddle', nip: '1234567890', email: 'anna@adoddle.com', phone: '+48 123 456 789', projectsCount: 1 },
-  { id: 2, name: 'Nexus Tech', nip: '0987654321', email: 'piotr@nexus.com', phone: '+48 987 654 321', projectsCount: 1 },
-  { id: 3, name: 'Hadar Solutions', nip: '1122334455', email: 'katarzyna@hadar.com', phone: '+48 555 666 777', projectsCount: 1 },
+  { 
+    id: 1, 
+    name: 'Adoddle', 
+    nip: '1234567890', 
+    email: 'anna.wisniewska@adoddle.com', 
+    phone: '+48 123 456 789', 
+    projectsCount: 1,
+    mainContactName: 'Anna Wiśniewska',
+    mainContactRole: 'CEO',
+    contactsCount: 3
+  },
+  { 
+    id: 2, 
+    name: 'Nexus Tech', 
+    nip: '0987654321', 
+    email: 'piotr.zielinski@nexus.com', 
+    phone: '+48 987 654 321', 
+    projectsCount: 1,
+    mainContactName: 'Piotr Zielinski',
+    mainContactRole: 'Prezes Zarządu',
+    contactsCount: 2
+  },
+  { 
+    id: 3, 
+    name: 'Hadar Solutions', 
+    nip: '1122334455', 
+    email: 'katarzyna.lewandowska@hadar.com', 
+    phone: '+48 555 666 777', 
+    projectsCount: 1,
+    mainContactName: 'Katarzyna Lewandowska',
+    mainContactRole: 'Dyrektorka Generalna',
+    contactsCount: 3
+  },
 ];
 
 const CompaniesPage: React.FC = () => {
@@ -29,7 +59,7 @@ const CompaniesPage: React.FC = () => {
                         </h1>
                         
                         <button className="bg-scrumdone-blue-main hover:opacity-90 text-white px-4 py-2 rounded-lg flex items-center gap-4 text-sm font-normal transition-all active:scale-95 cursor-pointer">
-                            <PlusIcon className="w-5 h-5 stroke-2" />
+                            <PlusIcon className="w-4 h-4 stroke-2" />
                             Dodaj firmę
                         </button>
                     </div>
@@ -44,6 +74,9 @@ const CompaniesPage: React.FC = () => {
                                 email={company.email}
                                 phone={company.phone}
                                 projectsCount={company.projectsCount}
+                                mainContactName={company.mainContactName}
+                                mainContactRole={company.mainContactRole}
+                                contactsCount={company.contactsCount}
                             />
                         ))}
                     </div>
