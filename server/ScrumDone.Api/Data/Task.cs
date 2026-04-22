@@ -19,6 +19,7 @@ namespace ScrumDone.Api.Data
         public Guid? SprintId { get; set; }
         public Guid StatusId { get; set; }
         public Guid PriorityId { get; set; }
+        public Guid? ParentTaskId { get; set; }
         public List<File> Attachments { get; set; } = new();
         public Project Project { get; set; }
         public Sprint? Sprint { get; set; }
@@ -27,5 +28,7 @@ namespace ScrumDone.Api.Data
         public List<TaskUserMTMRelation> Assignees { get; set; } = new();
         public List<TaskTaskLabelMTMRelation> Labels { get; set; } = new();
         public List<Message> Comments { get; set; } = new();
+        public Task? ParentTask { get; set; }
+        public List<Task> SubTasks { get; set; } = new();
     }
 }

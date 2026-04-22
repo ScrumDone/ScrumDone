@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ScrumDone.Api.Data.Common;
+using System.Linq.Expressions;
 
 namespace ScrumDone.Api.Data
 {
@@ -34,6 +35,8 @@ namespace ScrumDone.Api.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<Message>()
              .HasOne(m => m.ParentMessage)
              .WithMany(m => m.Responses)
@@ -44,17 +47,43 @@ namespace ScrumDone.Api.Data
                 .HasOne(n => n.Author)
                 .WithMany(u => u.AuthoredNotifications)
                 .HasForeignKey(n => n.AuthorId)
-                .IsRequired(false);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Notification>()
                 .HasOne(n => n.Notified)
                 .WithMany(u => u.ReceivedNotifications)
-                .HasForeignKey(n => n.NotifiedId);
+                .HasForeignKey(n => n.NotifiedId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<File>()
                 .HasOne(f => f.Author)
                 .WithMany(u => u.AuthoredFiles)
-                .HasForeignKey(f => f.AuthorId);
+                .HasForeignKey(f => f.AuthorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Task>()
+                .HasOne(t => t.ParentTask)
+                .WithMany(u => u.SubTasks)
+                .HasForeignKey(t => t.ParentTaskId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            // Automaticaly disable soft deleted data from queries unless overriden
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(IHasSoftDelete).IsAssignableFrom(entityType.ClrType))
+                {
+                    var param = Expression.Parameter(entityType.ClrType, "e");
+                    var body = Expression.Equal(
+                        Expression.Property(param, nameof(IHasSoftDelete.IsDeleted)),
+                        Expression.Constant(false)
+                    );
+                    var lambda = Expression.Lambda(body, param);
+
+                    modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+                }
+            }
         }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
