@@ -158,8 +158,8 @@ const FilesFilters: React.FC<FilesFiltersProps> = ({ files, onFilteredFilesChang
             <div className="my-4 border-t border-slate-200" />
 
             <div>
-                <h2 className="mb-4 flex items-center gap-2 font-segoe-ui text-2xl font-semibold text-slate-700">
-                    <TagIcon className="h-6 w-6 text-slate-500" />
+                <h2 className="mb-4 flex items-center gap-2 font-segoe-ui text-sm leading-5 font-medium tracking-[-0.15px]  text-slate-700">
+                    <TagIcon className="h-4 w-4 text-slate-500" />
                     Tagi:
                 </h2>
 
@@ -171,10 +171,10 @@ const FilesFilters: React.FC<FilesFiltersProps> = ({ files, onFilteredFilesChang
                                 key={tag}
                                 type="button"
                                 onClick={() => toggleTag(tag)}
-                                className={`rounded-full border px-5 py-2 text-[clamp(18px,1.3vw,32px)] leading-none transition ${
+                                className={`rounded-full  px-3 py-2 text-[12px] leading-4 text-regular transition ${
                                     isActive
-                                        ? 'border-slate-700 bg-white text-slate-900 shadow-[0_0_0_2px_rgba(15,23,42,0.35)]'
-                                        : 'border-slate-100 bg-[#F3F4F6] text-slate-700 hover:border-slate-300'
+                                        ? ' bg-scrumdone-blue-main text-white '
+                                        : 'bg-[#F3F4F6] text-slate-700 hover:border-slate-300'
                                 }`}
                             >
                                 {tag}
