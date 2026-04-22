@@ -21,7 +21,7 @@ const ProjectsPage: React.FC = () => {
 
             {/* Główny obszar roboczy */}
             <main className="ml-64 pt-(--app-header-h)">
-                <div className="max-w-7xl mx-auto px-8 py-10">
+                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-8 py-6">
                     
                     {/* Tytuł i dodawanie projektu */}
                     <div className="flex items-center justify-between mb-10">
