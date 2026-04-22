@@ -42,39 +42,39 @@ const SelectFilter: React.FC<SelectFilterProps> = ({ labelAll, options, selected
     }
 
     return (
-        <div className="relative min-w-70 flex-1">
+        <div className="relative flex-1">
             <button
                 type="button"
                 onClick={() => setIsOpen((prev) => !prev)}
-                className="h-16 w-full rounded-2xl border border-slate-200 bg-[#F3F4F6] px-6 text-left shadow-sm transition hover:border-slate-300"
+                className="h-12 w-full rounded-lg  bg-[#F3F4F6] px-3 py-2 text-left transition hover:border-slate-300"
             >
                 <span className="flex items-center justify-between">
-                    <span className="font-segoe-ui text-[clamp(20px,2.2vw,42px)] leading-none font-semibold text-[#111827]">
+                    <span className="font-segoe-ui text-sm leading-5 tracking-[-0.15px] font-medium text-[#0A0A0A]">
                         {selected || labelAll}
                     </span>
-                    <ChevronDownIcon className="h-7 w-7 text-slate-400" />
+                    <ChevronDownIcon className="h-4 w-4 text-slate-400" />
                 </span>
             </button>
 
             {isOpen ? (
-                <div className="absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                <div className="absolute z-20 mt-1 w-full rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
                     <button
                         type="button"
                         onClick={() => handleSelect('')}
-                        className="flex w-full items-center justify-between rounded-xl bg-slate-100 px-4 py-3 text-left text-2xl text-[#111827] transition hover:bg-slate-200"
+                        className="flex h-10 w-full items-center justify-between rounded-md bg-[#F3F4F6] px-3 py-2 text-left font-segoe-ui text-sm leading-5 tracking-[-0.15px] font-medium text-[#0A0A0A] transition hover:bg-slate-200"
                     >
                         <span>{labelAll}</span>
-                        {selected === '' ? <span className="text-slate-500">✓</span> : null}
+                        {selected === '' ? <span className="text-sm text-slate-500">✓</span> : null}
                     </button>
                     {options.map((option) => (
                         <button
                             key={option}
                             type="button"
                             onClick={() => handleSelect(option)}
-                            className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-2xl text-[#111827] transition hover:bg-slate-100"
+                            className="mt-1 flex h-10 w-full items-center justify-between rounded-md px-3 py-2 text-left font-segoe-ui text-sm leading-5 tracking-[-0.15px] font-medium text-[#0A0A0A] transition hover:bg-slate-100"
                         >
                             <span>{option}</span>
-                            {selected === option ? <span className="text-slate-500">✓</span> : null}
+                            {selected === option ? <span className="text-sm text-slate-500">✓</span> : null}
                         </button>
                     ))}
                 </div>
