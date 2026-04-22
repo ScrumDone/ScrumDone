@@ -46,7 +46,7 @@ const SelectFilter: React.FC<SelectFilterProps> = ({ labelAll, options, selected
             <button
                 type="button"
                 onClick={() => setIsOpen((prev) => !prev)}
-                className="h-12 w-full rounded-lg  bg-[#F3F4F6] px-3 py-2 text-left transition hover:border-slate-300"
+                className="h-9 w-full rounded-lg  bg-[#F3F4F6] px-3 py-2 text-left transition hover:border-slate-300"
             >
                 <span className="flex items-center justify-between">
                     <span className="font-segoe-ui text-sm leading-5 tracking-[-0.15px] font-medium text-[#0A0A0A]">
@@ -128,15 +128,15 @@ const FilesFilters: React.FC<FilesFiltersProps> = ({ files, onFilteredFilesChang
     }
 
     return (
-        <section className="rounded-3xl border border-slate-200 bg-white p-6">
+        <section className="rounded-xl border border-slate-200 bg-white p-3">
             <div className="flex flex-col gap-4 xl:flex-row">
                 <div className="relative flex-2">
-                    <MagnifyingGlassIcon className="pointer-events-none absolute left-5 top-1/2 h-7 w-7 -translate-y-1/2 text-slate-400" />
+                    <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                     <input
                         value={searchValue}
                         onChange={(event) => setSearchValue(event.target.value)}
                         placeholder="Szukaj plików..."
-                        className="h-16 w-full rounded-2xl border border-slate-200 bg-[#F3F4F6] pl-14 pr-4 text-2xl text-[#111827] outline-none placeholder:text-slate-500 focus:border-slate-300"
+                        className="h-9 w-full rounded-lg border border-transparent bg-[#F3F5F5] py-1 pl-9 pr-3 font-segoe-ui text-sm leading-5 tracking-[-0.15px] font-regular text-[#0A0A0A] outline-none placeholder:text-slate-500 focus:border-slate-300 focus:border-2"
                     />
                 </div>
 
@@ -155,7 +155,7 @@ const FilesFilters: React.FC<FilesFiltersProps> = ({ files, onFilteredFilesChang
                 />
             </div>
 
-            <div className="my-6 border-t border-slate-200" />
+            <div className="my-4 border-t border-slate-200" />
 
             <div>
                 <h2 className="mb-4 flex items-center gap-2 font-segoe-ui text-2xl font-semibold text-slate-700">
