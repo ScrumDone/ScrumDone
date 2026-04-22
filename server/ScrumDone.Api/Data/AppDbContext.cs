@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ScrumDone.Api.Data.Common;
 
 namespace ScrumDone.Api.Data
 {
@@ -54,6 +55,87 @@ namespace ScrumDone.Api.Data
                 .HasOne(f => f.Author)
                 .WithMany(u => u.AuthoredFiles)
                 .HasForeignKey(f => f.AuthorId);
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            var now = DateTimeOffset.UtcNow;
+
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                // Handle CreatedAt
+                if (entry.State == EntityState.Added)
+                {
+                    if (entry.Entity is IHasCreatedAt createdAtEntity)
+                    {
+                        createdAtEntity.CreatedAt = now;
+                    }
+
+                    if (entry.Entity is IHasUpdatedAt updatedAtEntity)
+                    {
+                        updatedAtEntity.UpdatedAt = now;
+                    }
+
+                    if (entry.Entity is IHasSoftDelete softDeleteEntity)
+                    {
+                        softDeleteEntity.IsDeleted = false;
+                        softDeleteEntity.DeletedAt = null;
+                    }
+                }
+
+                // Handle UpdatedAt
+                if (entry.State == EntityState.Modified)
+                {
+                    if (entry.Entity is IHasUpdatedAt updatedAtEntity)
+                    {
+                        updatedAtEntity.UpdatedAt = now;
+                    }
+                }
+
+                // Handle SoftDelete
+                if (entry.State == EntityState.Modified)
+                {
+                    if (entry.Entity is IHasSoftDelete softDeleteEntity)
+                    {
+                        var originalIsDeleted = (bool)entry.Property(nameof(IHasSoftDelete.IsDeleted)).OriginalValue;
+                        var currentIsDeleted = (bool)entry.Property(nameof(IHasSoftDelete.IsDeleted)).CurrentValue;
+
+                        // Trying to modify already deleted entity WITHOUT restoring -> block
+                        if (originalIsDeleted && currentIsDeleted)
+                        {
+                            throw new InvalidOperationException("Cannot modify a soft-deleted entity.");
+                        }
+
+                        // Restoring (true -> false)
+                        if (originalIsDeleted && !currentIsDeleted)
+                        {
+                            softDeleteEntity.DeletedAt = null;
+                        }
+
+                        // Deleting (false -> true)
+                        if (!originalIsDeleted && currentIsDeleted)
+                        {
+                            softDeleteEntity.DeletedAt = now;
+                        }
+                    }
+                }
+
+                // Handle Hard Delete -> Soft Delete
+                if (entry.State == EntityState.Deleted)
+                {
+                    if (entry.Entity is IHasSoftDelete softDeleteEntity)
+                    {
+                        if (!softDeleteEntity.IsDeleted)
+                        {
+                            entry.State = EntityState.Modified;
+                            softDeleteEntity.IsDeleted = true;
+                            softDeleteEntity.DeletedAt = now;
+                        }
+                    }
+                }
+            }
+
+            return await base.SaveChangesAsync(cancellationToken);
         }
     }
 }

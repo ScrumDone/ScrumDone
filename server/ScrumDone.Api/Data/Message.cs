@@ -1,15 +1,17 @@
-﻿namespace ScrumDone.Api.Data
+﻿using ScrumDone.Api.Data.Common;
+
+namespace ScrumDone.Api.Data
 {
-    public class Message
+    public class Message : IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
     {
         public Guid Id { get; set; }
         public string Text { get; set; }
         public bool IsEdited { get; set; } = false;
 
-        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-        public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
+        public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
-        public bool IsDeleted { get; set; } = false;
 
         public Guid AuthorId { get; set; }
         public Guid TaskId { get; set; }
