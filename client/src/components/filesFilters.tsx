@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { MagnifyingGlassIcon, TagIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import { MagnifyingGlassIcon, TagIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline'
 
 export type FileType =
     | 'PDF'
@@ -182,6 +182,26 @@ const FilesFilters: React.FC<FilesFiltersProps> = ({ files, onFilteredFilesChang
                         )
                     })}
                 </div>
+
+                {selectedTags.length > 0 ? (
+                    <div className="mt-6 flex flex-wrap items-center gap-3">
+                        <span className="font-segoe-ui text-sm leading-5 tracking-[-0.15px] text-slate-600">
+                            Wybrane tagi:
+                        </span>
+
+                        {selectedTags.map((tag) => (
+                            <button
+                                key={`selected-${tag}`}
+                                type="button"
+                                onClick={() => toggleTag(tag)}
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-segoe-ui text-sm leading-5 tracking-[-0.15px] text-[#0A0A0A] transition hover:bg-slate-50"
+                            >
+                                <span>{tag}</span>
+                                <XMarkIcon className="h-4 w-4 text-[#0A0A0A]" />
+                            </button>
+                        ))}
+                    </div>
+                ) : null}
             </div>
         </section>
     )
