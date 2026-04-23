@@ -5,11 +5,17 @@ import type { ProjectData } from '../data/projects';
 
 interface ProjectTopBarProps {
   project: ProjectData;
+  viewMode?: 'kanban' | 'scrum';
+  onViewModeChange?: (mode: 'kanban' | 'scrum') => void;
 }
 
 const projectTabs = ['Tablica Kanban', 'Kalendarz', 'Sprinty', 'Repozytorium plikow'];
 
-const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
+const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
+  project,
+  viewMode = 'kanban',
+  onViewModeChange,
+}) => {
   return (
     <section className=" bg-white border-b border-slate-200">
       <div className="border-b border-slate-200 px-6 py-5">
@@ -48,8 +54,20 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
 
           <div className="flex min-w-56 flex-col items-stretch gap-3">
             <div className="inline-flex w-full gap-2 rounded-[10px] bg-slate-50 p-1">
-              <button className="flex-1 rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-900">Kanban</button>
-              <button className="flex-1 rounded-lg px-4 py-2 text-sm font-medium text-slate-700">Scrum</button>
+              <button
+                type="button"
+                onClick={() => onViewModeChange?.('kanban')}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'kanban' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'}`}
+              >
+                Kanban
+              </button>
+              <button
+                type="button"
+                onClick={() => onViewModeChange?.('scrum')}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'scrum' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'}`}
+              >
+                Scrum
+              </button>
             </div>
 
             <button className="inline-flex w-full items-center justify-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-50">
@@ -73,7 +91,10 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
               {tab}
             </NavLink>
           ) : (
-            <button key={tab} className="text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950">
+            <button
+              key={tab}
+              className={`text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950 ${(tab === 'Sprinty' && viewMode === 'kanban') ? 'hidden' : ''}`}
+            >
               {tab}
             </button>
           )

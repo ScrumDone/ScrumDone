@@ -223,6 +223,7 @@ const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
 const ProjectKanbanPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((item) => item.slug === projectSlug);
+  const [viewMode, setViewMode] = useState<'kanban' | 'scrum'>('kanban');
   const [currentSprintId, setCurrentSprintId] = useState('sprint-0');
 
   const handleSprintChange = (sprintId: string) => {
@@ -238,17 +239,23 @@ const ProjectKanbanPage: React.FC = () => {
         <div className="flex w-full flex-col">
           {project ? (
             <>
-              <ProjectTopBar project={project} />
+              <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setViewMode} />
 
               <section className="mx-6 mt-6 pb-8">
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                   <div className="min-w-0">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-                      <SprintSelector
-                        sprints={sprintsData}
-                        currentSprintId={currentSprintId}
-                        onSprintChange={handleSprintChange}
-                      />
+                      <div className={viewMode === 'kanban' ? 'hidden' : ''}>
+                        <SprintSelector
+                          sprints={sprintsData}
+                          currentSprintId={currentSprintId}
+                          onSprintChange={handleSprintChange}
+                        />
+                      </div>
+
+                      <h2 className={`font-segoe-ui text-[18px] leading-7 font-medium tracking-[-0.44px] text-slate-900 antialiased ${viewMode === 'kanban' ? '' : 'hidden'}`}>
+                        Tablica Kanban
+                      </h2>
 
                       <button
                         type="button"
