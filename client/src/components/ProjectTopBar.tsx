@@ -62,9 +62,19 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
 
       <div className="flex flex-wrap gap-8 px-6 py-3">
         {projectTabs.map((tab) => (
-          <button key={tab} className="text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950">
-            {tab}
-          </button>
+          tab === 'Tablica Kanban' ? (
+            <Link
+              key={tab}
+              to={`/projects/${project.slug}/tablica-kanban`}
+              className="text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950"
+            >
+              {tab}
+            </Link>
+          ) : (
+            <button key={tab} className="text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950">
+              {tab}
+            </button>
+          )
         ))}
       </div>
     </section>
