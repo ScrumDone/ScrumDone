@@ -10,9 +10,10 @@ export interface PersonFilter {
 
 interface CalendarPeopleFilterProps {
     people: PersonFilter[]
+    title?: string
 }
 
-const CalendarPeopleFilter: React.FC<CalendarPeopleFilterProps> = ({ people }) => {
+const CalendarPeopleFilter: React.FC<CalendarPeopleFilterProps> = ({ people, title = 'Osoby' }) => {
     const [selectedPeople, setSelectedPeople] = useState<Record<string, boolean>>(
         () => Object.fromEntries(people.map((person) => [person.id, true])),
     )
@@ -26,7 +27,7 @@ const CalendarPeopleFilter: React.FC<CalendarPeopleFilterProps> = ({ people }) =
 
     return (
         <section className="rounded-[10px] border border-gray-200 bg-white p-4">
-            <h3 className="mb-3 font-segoe-ui text-[18px] leading-7 font-normal text-slate-900 antialiased">Osoby</h3>
+            <h3 className="mb-3 font-segoe-ui text-[18px] leading-7 font-normal text-slate-900 antialiased">{title}</h3>
             <div className="flex flex-col gap-3">
                 {people.map((person) => {
                     const isSelected = selectedPeople[person.id]

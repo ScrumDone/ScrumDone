@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowLeftIcon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import type { ProjectData } from '../data/projects';
 
 interface ProjectTopBarProps {
@@ -62,9 +62,21 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
 
       <div className="flex flex-wrap gap-8 px-6 py-3">
         {projectTabs.map((tab) => (
-          <button key={tab} className="text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950">
-            {tab}
-          </button>
+          tab === 'Tablica Kanban' ? (
+            <NavLink
+              key={tab}
+              to={`/projects/${project.slug}/tablica-kanban`}
+              className={({ isActive }) =>
+                `text-sm leading-5 tracking-[-0.15px] transition-colors ${isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'}`
+              }
+            >
+              {tab}
+            </NavLink>
+          ) : (
+            <button key={tab} className="text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950">
+              {tab}
+            </button>
+          )
         ))}
       </div>
     </section>
