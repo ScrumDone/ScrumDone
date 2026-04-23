@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom';
+import React from 'react'
+import { NavLink } from 'react-router-dom'
 import {
   HomeIcon,
   CalendarIcon,
@@ -11,9 +11,6 @@ import {
 } from '@heroicons/react/24/outline'
 
 const SideBar: React.FC = () => {
-        const [activeItem, setActiveItem] = useState<NavItemKey>('projects')
-        const navigate = useNavigate()
-
         const navItems: NavItemConfig[] = [
                 { key: 'home', icon: HomeIcon, label: 'Strona główna', url : '/' },
                 { key: 'calendar', icon: CalendarIcon, label: 'Kalendarz', url : '/calendar' },
@@ -39,12 +36,8 @@ const SideBar: React.FC = () => {
                             key={item.key}
                             icon={item.icon}
                             label={item.label}
-                            active={activeItem === item.key}
-                            onClick={() => {
-                                setActiveItem(item.key);
-                                console.log(`Navigating to ${item.label}`);
-                                navigate(item.url);
-                            }}
+                            to={item.url}
+                            end={item.url === '/'}
                         />
                     ))}
                 </nav>
@@ -65,22 +58,28 @@ interface NavItemConfig {
 interface NavItemProps {
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
     label: string
-    active?: boolean
-    onClick: () => void
+    to: string
+    end: boolean
 }
 
-const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, active, onClick }) => {
+const NavItem: React.FC<NavItemProps> = ({ icon: Icon, label, to, end }) => {
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={`group flex w-full items-center gap-3 rounded-md p-3 text-left transition-colors ${active ? 'bg-scrumdone-blue-200' : 'hover:bg-slate-50'}`}
+        <NavLink
+            to={to}
+            end={end}
+            className={({ isActive }) =>
+                `group flex w-full items-center gap-3 rounded-md p-3 text-left transition-colors ${isActive ? 'bg-scrumdone-blue-200' : 'hover:bg-slate-50'}`
+            }
         >
-            <Icon className={`w-5 h-5 transition-colors ${active ? 'text-scrumdone-blue-main' : 'text-slate-600'}`} strokeWidth={2} />
-            <span className={`font-segoe-ui text-[1rem] leading-6 font-normal tracking-[0em] ${active ? 'text-scrumdone-blue-main' : 'text-slate-700'}`}>
-                {label}
-            </span>
-        </button>
+            {({ isActive }) => (
+                <>
+                    <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-scrumdone-blue-main' : 'text-slate-600'}`} strokeWidth={2} />
+                    <span className={`font-segoe-ui text-[1rem] leading-6 font-normal tracking-[0em] ${isActive ? 'text-scrumdone-blue-main' : 'text-slate-700'}`}>
+                        {label}
+                    </span>
+                </>
+            )}
+        </NavLink>
     )
 }
 
