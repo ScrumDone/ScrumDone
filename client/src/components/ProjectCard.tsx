@@ -16,7 +16,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   name, clientName, description, startDate, endDate, membersCount, progress, status 
 }) => {
   return (
-    <div className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-4">
+    <div className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-300">
       
       {/* NAZWA I KLIENCI */}
       <div className="flex justify-between items-start">
