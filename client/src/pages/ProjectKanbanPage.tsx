@@ -1,11 +1,12 @@
-import React from 'react';
-import { ChevronDownIcon, EllipsisVerticalIcon, PlusIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { EllipsisVerticalIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
+import SprintSelector, { type Sprint } from '../components/SprintSelector';
 import { projects } from '../data/projects';
 
 type PriorityOption = {
@@ -51,6 +52,33 @@ const taskDotClassMap: Record<TaskDotColor, string> = {
   green: 'bg-scrumdone-green-500',
   blue: 'bg-scrumdone-blue-main',
 };
+
+const sprintsData: Sprint[] = [
+  {
+    id: 'sprint-0',
+    title: 'Sprint 0 - Setup',
+    dateRange: '15 sty 2026 - 05 lut 2026',
+    totalTasks: 4,
+    completedTasks: 3,
+    status: 'Ukończony',
+  },
+  {
+    id: 'sprint-1',
+    title: 'Sprint 1 - Core Features',
+    dateRange: '06 lut 2026 - 19 lut 2026',
+    totalTasks: 8,
+    completedTasks: 1,
+    status: 'Aktywny',
+  },
+  {
+    id: 'sprint-2',
+    title: 'Sprint 2 - Testing',
+    dateRange: '20 lut 2026 - 05 mar 2026',
+    totalTasks: 6,
+    completedTasks: 0,
+    status: 'Planowany',
+  },
+];
 
 const kanbanColumns: KanbanColumn[] = [
   {
@@ -116,37 +144,6 @@ const kanbanColumns: KanbanColumn[] = [
     ],
   },
 ];
-
-const SprintOverviewCard: React.FC = () => {
-  return (
-    <button
-      type="button"
-      className="group inline-flex max-w-full items-center gap-4 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-scrumdone-blue-main/30"
-      aria-label="Sprint 0 - Setup"
-    >
-      <div className="min-w-0 mr-4">
-        <h2 className="font-segoe-ui text-sm leading-5 font-medium text-center tracking-[-0.15px] text-slate-900 antialiased">
-          Sprint 0 - Setup
-        </h2>
-
-        <div className="mt-0.5 flex flex-wrap items-center gap-3 font-segoe-ui text-[12px] leading-4 font-normal  text-slate-700 font-medium antialiased">
-          <span>15 sty 2026 - 05 lut 2026</span>
-          <span>•</span>
-          <span>4 zadań</span>
-          <span>•</span>
-          <span className="text-scrumdone-green-500 font-medium">3 ukończonych (75%)</span>
-        </div>
-      </div>
-
-      <div className="inline-flex shrink-0 items-center gap-3 self-center">
-        <span className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-2 py-0.5 font-segoe-ui text-[12px] leading-4 font-medium text-slate-900">
-          Ukończony
-        </span>
-        <ChevronDownIcon className="h-4 w-4 text-slate-500 transition-colors group-hover:text-slate-700" />
-      </div>
-    </button>
-  );
-};
 
 const PriorityFilterCard: React.FC = () => {
   return (
@@ -226,6 +223,11 @@ const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
 const ProjectKanbanPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((item) => item.slug === projectSlug);
+  const [currentSprintId, setCurrentSprintId] = useState('sprint-0');
+
+  const handleSprintChange = (sprintId: string) => {
+    setCurrentSprintId(sprintId);
+  };
 
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB]">
@@ -242,7 +244,11 @@ const ProjectKanbanPage: React.FC = () => {
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                   <div className="min-w-0">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-                      <SprintOverviewCard />
+                      <SprintSelector
+                        sprints={sprintsData}
+                        currentSprintId={currentSprintId}
+                        onSprintChange={handleSprintChange}
+                      />
 
                       <button
                         type="button"
