@@ -11,7 +11,7 @@ const projectTabs = ['Tablica Kanban', 'Kalendarz', 'Sprinty', 'Repozytorium pli
 
 const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
   return (
-    <section className=" bg-white">
+    <section className=" bg-white border-b border-slate-200">
       <div className="border-b border-slate-200 px-6 py-5">
         <div className="mb-4">
           <Link to="/projects" className="inline-flex items-center gap-2 leading-5 text-sm text-slate-600 hover:text-slate-900">
@@ -22,9 +22,9 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
 
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="flex min-w-88 flex-1 gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[10px] border border-slate-200 bg-slate-50 text-lg font-semibold text-slate-700">
+            {/* <div className="flex h-16 w-16 items-center justify-center rounded-[10px] border border-slate-200 bg-slate-50 text-lg font-semibold text-slate-700">
               {project.name.slice(0, 1)}
-            </div>
+            </div> */}
 
             <div className="flex flex-col gap-2">
               <h1 className="text-2xl leading-8  text-slate-900 tracking-[0.07]">{project.name}</h1>
@@ -62,7 +62,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
 
       <div className="flex flex-wrap gap-8 px-6 py-3">
         {projectTabs.map((tab) => (
-          <button key={tab} className="text-xl text-slate-800 hover:text-slate-950">
+          <button key={tab} className="text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950">
             {tab}
           </button>
         ))}
