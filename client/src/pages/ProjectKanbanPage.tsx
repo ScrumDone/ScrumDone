@@ -119,31 +119,32 @@ const kanbanColumns: KanbanColumn[] = [
 
 const SprintOverviewCard: React.FC = () => {
   return (
-    <section className="flex-1 rounded-[14px] border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">
-            Sprint 0 - Setup
-          </h2>
+    <button
+      type="button"
+      className="group inline-flex max-w-full items-center gap-4 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-scrumdone-blue-main/30"
+      aria-label="Sprint 0 - Setup"
+    >
+      <div className="min-w-0 mr-4">
+        <h2 className="font-segoe-ui text-sm leading-5 font-medium text-center tracking-[-0.15px] text-slate-900 antialiased">
+          Sprint 0 - Setup
+        </h2>
 
-          <div className="mt-1 flex flex-wrap items-center gap-3 font-segoe-ui text-[12px] leading-4 font-normal tracking-[-0.15px] text-slate-500 antialiased">
-            <span>15 sty 2026 - 05 lut 2026</span>
-            <span>•</span>
-            <span>4 zadań</span>
-            <span>•</span>
-            <span className="text-scrumdone-green-500">3 ukończonych (75%)</span>
-          </div>
+        <div className="mt-0.5 flex flex-wrap items-center gap-3 font-segoe-ui text-[12px] leading-4 font-normal  text-slate-700 font-medium antialiased">
+          <span>15 sty 2026 - 05 lut 2026</span>
+          <span>•</span>
+          <span>4 zadań</span>
+          <span>•</span>
+          <span className="text-scrumdone-green-500 font-medium">3 ukończonych (75%)</span>
         </div>
-
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-segoe-ui text-[12px] leading-4 font-medium text-slate-900 transition-colors hover:bg-slate-50"
-        >
-          Ukończony
-          <ChevronDownIcon className="h-4 w-4 text-slate-500" />
-        </button>
       </div>
-    </section>
+
+      <div className="inline-flex shrink-0 items-center gap-3 self-center">
+        <span className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-2 py-0.5 font-segoe-ui text-[12px] leading-4 font-medium text-slate-900">
+          Ukończony
+        </span>
+        <ChevronDownIcon className="h-4 w-4 text-slate-500 transition-colors group-hover:text-slate-700" />
+      </div>
+    </button>
   );
 };
 
@@ -240,7 +241,7 @@ const ProjectKanbanPage: React.FC = () => {
               <section className="mx-6 mt-6 pb-8">
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                   <div className="min-w-0">
-                    <div className="mb-4 flex flex-wrap items-start gap-4">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
                       <SprintOverviewCard />
 
                       <button
