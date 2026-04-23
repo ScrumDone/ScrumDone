@@ -174,35 +174,34 @@ const KanbanTaskCard: React.FC<{ task: KanbanTask }> = ({ task }) => {
   return (
     <article className="rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="max-w-[11rem] font-segoe-ui text-[13px] leading-5 font-normal tracking-[-0.15px] text-slate-900 antialiased">
+        <h3 className="max-w-44 font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">
           {task.title}
         </h3>
 
-        <button type="button" className="rounded-full p-1 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900">
+        <button type="button" className="rounded-full p-1 text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900">
           <EllipsisVerticalIcon className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="mt-5 flex items-end justify-between gap-3">
-        <div className="flex flex-col gap-2">
-          <span className={`h-2 w-2 rounded-full ${taskDotClassMap[task.dotColor]}`} aria-hidden="true" />
+      <div className="mt-3 flex items-center justify-between">
+        <span className={`h-2 w-2 rounded-full ${taskDotClassMap[task.dotColor]}`} aria-hidden="true" />
+        <div className="flex gap-2 items-center">
           <span className="font-segoe-ui text-[12px] leading-4 font-normal text-slate-500 antialiased">{task.dateLabel}</span>
+          <Avatar
+            initials={task.assigneeInitials}
+            size="xs"
+            bgClassName="bg-scrumdone-blue-main"
+            textClassName="text-white"
+            />
         </div>
-
-        <Avatar
-          initials={task.assigneeInitials}
-          size="xs"
-          bgClassName="bg-scrumdone-blue-main"
-          textClassName="text-white"
-        />
-      </div>
+       </div>
     </article>
   );
 };
 
 const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
   return (
-    <section className="flex min-h-[20rem] flex-col gap-3">
+    <section className="flex min-h-80 self-start flex-col gap-3">
       <header className="flex items-center gap-3">
         <span className={`h-6 w-1 rounded-full ${column.accentClass}`} aria-hidden="true" />
         <h3 className="font-segoe-ui text-[16px] leading-6 font-normal text-slate-900 antialiased">{column.title}</h3>
@@ -211,12 +210,11 @@ const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
         </span>
       </header>
 
-      <div className="flex flex-1 flex-col gap-3">
+      <div className="flex flex-1 flex-col gap-3 mt-4">
         {column.tasks.length > 0 ? (
           column.tasks.map((task) => <KanbanTaskCard key={task.id} task={task} />)
         ) : (
-          <div className="flex min-h-40 items-center justify-center rounded-[12px] border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center font-segoe-ui text-[13px] leading-5 text-slate-400 antialiased">
-            Brak zadań
+          <div className=" bg-slate-50 px-4 py-6 text-center font-segoe-ui text-[13px] leading-5 text-slate-400 antialiased">
           </div>
         )}
       </div>
@@ -254,7 +252,7 @@ const ProjectKanbanPage: React.FC = () => {
                       </button>
                     </div>
 
-                    <div className="grid gap-4 xl:grid-cols-4">
+                    <div className="grid items-start gap-4 xl:grid-cols-4">
                       {kanbanColumns.map((column) => (
                         <KanbanColumnView key={column.id} column={column} />
                       ))}
