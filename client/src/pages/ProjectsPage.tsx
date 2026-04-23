@@ -3,13 +3,7 @@ import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectCard from '../components/ProjectCard';
 import { PlusIcon } from '@heroicons/react/24/outline';
-
-// Dane testowe
-const mockProjects = [
-  { id: 1, name: 'Adoddle', clientName: 'Adoddle', description: 'Development of mobile application for project management', startDate: '15.01.2026', endDate: '5.04.2026', membersCount: 3, progress: 65, status: 'Aktywny' },
-  { id: 2, name: 'Nexus', clientName: 'Nexus Tech', description: 'E-commerce platform development', startDate: '1.02.2026', endDate: '6.04.2026', membersCount: 3, progress: 45, status: 'Aktywny' },
-  { id: 3, name: 'Hadar', clientName: 'Hadar Solutions', description: 'Custom CRM system implementation', startDate: '20.01.2026', endDate: '5.04.2026', membersCount: 3, progress: 72, status: 'Aktywny' },
-];
+import { projects } from '../data/projects';
 
 const ProjectsPage: React.FC = () => {
     return (
@@ -37,7 +31,7 @@ const ProjectsPage: React.FC = () => {
 
                     {/* Siatka projektów */}
                     <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                        {mockProjects.map((project) => (
+                        {projects.map((project) => (
                             <ProjectCard key={project.id} {...project} />
                         ))}
                     </div>
