@@ -73,7 +73,7 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({ sprints, currentSprintI
         </div>
 
         <div className="inline-flex shrink-0 items-center gap-3 self-center">
-          <span className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-2 py-0.5 font-segoe-ui text-[12px] leading-4 font-medium text-slate-900">
+          <span className={`inline-flex items-center rounded-lg border border-slate-300 px-2 py-0.5 font-segoe-ui text-[12px] leading-4 font-medium ${currentSprint?.status === 'Aktywny' ? 'bg-scrumdone-blue-main text-white' : 'text-slate-900 bg-slate-50'}`}>
             {currentSprint?.status}
           </span>
           <ChevronDownIcon
@@ -102,7 +102,7 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({ sprints, currentSprintI
                   key={sprint.id}
                   type="button"
                   onClick={() => handleSprintSelect(sprint.id)}
-                  className={`group w-full px-4 py-3 text-left transition-colors hover:bg-slate-50 ${isSelected ? 'bg-slate-100' : ''}`}
+                  className={`group w-full px-4 py-3 text-left transition-colors hover:bg-slate-50`}
                   role="option"
                   aria-selected={isSelected}
                 >
@@ -121,14 +121,13 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({ sprints, currentSprintI
                     </div>
 
                     <div className="inline-flex shrink-0 items-center gap-2">
-                      <span className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-2 py-0.5 font-segoe-ui text-[12px] leading-4 font-medium text-slate-900 whitespace-nowrap">
+                      <span className={`inline-flex items-center rounded-lg border border-slate-300 px-2 py-0.5 font-segoe-ui text-[12px] leading-4 font-medium ${sprint.status === 'Aktywny' ? 'bg-scrumdone-blue-main text-white' : 'text-slate-900 bg-slate-50'}`}>
                         {sprint.status}
                       </span>
 
                       {isSelected && (
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-scrumdone-blue-main">
-                          <CheckIcon className="h-3 w-3 text-white stroke-2" />
-                        </div>
+                          <CheckIcon className="h-4 w-4 text-slate-900 stroke-2" />
+
                       )}
                     </div>
                   </div>
