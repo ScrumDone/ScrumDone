@@ -11,7 +11,7 @@ const projectTabs = ['Tablica Kanban', 'Kalendarz', 'Sprinty', 'Repozytorium pli
 
 const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
   return (
-    <section className="overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+    <section className=" bg-white">
       <div className="border-b border-slate-200 px-6 py-5">
         <div className="mb-4">
           <Link to="/projects" className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
@@ -21,7 +21,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ project }) => {
         </div>
 
         <div className="flex flex-wrap items-start justify-between gap-6">
-          <div className="flex min-w-[22rem] flex-1 gap-4">
+          <div className="flex min-w-88 flex-1 gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-[14px] border border-slate-200 bg-slate-50 text-lg font-semibold text-slate-700">
               {project.name.slice(0, 1)}
             </div>

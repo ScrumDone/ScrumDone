@@ -15,16 +15,15 @@ const ProjectDetailsPage: React.FC = () => {
       <TopBar />
 
       <main className="ml-64 pt-(--app-header-h)">
-        <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col gap-6 px-8 py-6">
+        <div className="flex w-full flex-col">
           {project ? (
             <>
               <ProjectTopBar project={project} />
-              <section className="rounded-[14px] border border-slate-200 bg-white p-6 text-slate-600">
-                Miejsce na zawartosc podstrony projektu.
-              </section>
+
             </>
+
           ) : (
-            <section className="rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
+            <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
               Nie znaleziono projektu o podanym adresie.
             </section>
           )}
