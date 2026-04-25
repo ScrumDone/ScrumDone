@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ScrumDone.Api.Data;
@@ -11,9 +12,11 @@ using ScrumDone.Api.Data;
 namespace ScrumDone.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260422013956_reactions-and-automation")]
+    partial class reactionsandautomation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -348,14 +351,9 @@ namespace ScrumDone.Api.Migrations
                     b.Property<Guid>("NotifiedId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("ResourceId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ResourceType")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid?>("SecondResourceId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("RelevantUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -610,9 +608,6 @@ namespace ScrumDone.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("ParentTaskId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("PriorityId")
                         .HasColumnType("uuid");
 
@@ -635,8 +630,6 @@ namespace ScrumDone.Api.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ParentTaskId");
 
                     b.HasIndex("PriorityId");
 
@@ -916,7 +909,7 @@ namespace ScrumDone.Api.Migrations
                     b.HasOne("ScrumDone.Api.Data.User", "Author")
                         .WithMany("AuthoredFiles")
                         .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ScrumDone.Api.Data.Message", "Message")
@@ -989,8 +982,7 @@ namespace ScrumDone.Api.Migrations
                 {
                     b.HasOne("ScrumDone.Api.Data.User", "Author")
                         .WithMany("AuthoredNotifications")
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("AuthorId");
 
                     b.HasOne("ScrumDone.Api.Data.NotificationType", "NotificationType")
                         .WithMany("Notifications")
@@ -1001,7 +993,7 @@ namespace ScrumDone.Api.Migrations
                     b.HasOne("ScrumDone.Api.Data.User", "Notified")
                         .WithMany("ReceivedNotifications")
                         .HasForeignKey("NotifiedId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Author");
@@ -1072,11 +1064,6 @@ namespace ScrumDone.Api.Migrations
 
             modelBuilder.Entity("ScrumDone.Api.Data.Task", b =>
                 {
-                    b.HasOne("ScrumDone.Api.Data.Task", "ParentTask")
-                        .WithMany("SubTasks")
-                        .HasForeignKey("ParentTaskId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("ScrumDone.Api.Data.TaskPriority", "Priority")
                         .WithMany("Tasks")
                         .HasForeignKey("PriorityId")
@@ -1102,8 +1089,6 @@ namespace ScrumDone.Api.Migrations
                     b.HasOne("ScrumDone.Api.Data.User", null)
                         .WithMany("AssignedTasks")
                         .HasForeignKey("UserId");
-
-                    b.Navigation("ParentTask");
 
                     b.Navigation("Priority");
 
@@ -1214,8 +1199,6 @@ namespace ScrumDone.Api.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Labels");
-
-                    b.Navigation("SubTasks");
                 });
 
             modelBuilder.Entity("ScrumDone.Api.Data.TaskLabel", b =>

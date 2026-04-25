@@ -1,6 +1,8 @@
-﻿namespace ScrumDone.Api.Data
+﻿using ScrumDone.Api.Data.Common;
+
+namespace ScrumDone.Api.Data
 {
-    public class Project
+    public class Project : IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
@@ -10,10 +12,10 @@
         public bool IsSetToScrum { get; set; } = false;
         public DateTimeOffset? ExpectedFinishDate { get; set; } = DateTimeOffset.UtcNow;
 
-        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-        public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
+        public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
-        public bool IsDeleted { get; set; } = false;
 
         public List<Task> Tasks { get; set; } = new();
         public List<File> Files { get; set; } = new();
