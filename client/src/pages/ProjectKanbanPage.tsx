@@ -8,6 +8,9 @@ import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintSelector, { type Sprint } from '../components/SprintSelector';
 import { projects } from '../data/projects';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type PriorityOption = {
   id: string;
@@ -169,8 +172,30 @@ const PriorityFilterCard: React.FC = () => {
 };
 
 const KanbanTaskCard: React.FC<{ task: KanbanTask }> = ({ task }) => {
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   return (
-    <article className="rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <article
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`rounded-[10px] border border-slate-200 bg-white px-3 py-3
+        shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab active:cursor-grabbing
+        ${isDragging ? 'opacity-50' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         <h3 className="max-w-44 font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">
           {task.title}
@@ -198,6 +223,8 @@ const KanbanTaskCard: React.FC<{ task: KanbanTask }> = ({ task }) => {
 };
 
 const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
+  const { setNodeRef, isOver } = useDroppable({ id: column.id });
+
   return (
     <section className="flex min-h-80 self-start flex-col gap-3">
       <header className="flex items-center gap-3">
@@ -208,14 +235,19 @@ const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
         </span>
       </header>
 
-      <div className="flex flex-1 flex-col gap-3 mt-4">
-        {column.tasks.length > 0 ? (
-          column.tasks.map((task) => <KanbanTaskCard key={task.id} task={task} />)
-        ) : (
-          <div className=" bg-slate-50 px-4 py-6 text-center font-segoe-ui text-[13px] leading-5 text-slate-400 antialiased">
-          </div>
-        )}
-      </div>
+      <SortableContext items={column.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+        <div
+          ref={setNodeRef}
+          className={`mt-4 flex flex-1 flex-col gap-3 rounded-lg transition-colors ${isOver ? 'bg-slate-50' : ''}`}
+        >
+          {column.tasks.length > 0 ? (
+            column.tasks.map((task) => <KanbanTaskCard key={task.id} task={task} />)
+          ) : (
+            <div className="bg-slate-50 px-4 py-6 text-center font-segoe-ui text-[13px] leading-5 text-slate-400 antialiased">
+            </div>
+          )}
+        </div>
+      </SortableContext>
     </section>
   );
 };
