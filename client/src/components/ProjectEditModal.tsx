@@ -1,5 +1,10 @@
 import React from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import {
+  ArchiveBoxIcon,
+  BuildingOffice2Icon,
+  TrashIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 import Avatar from './Avatar';
 
 export type TeamMemberOption = {
@@ -46,7 +51,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-190 rounded-2xl border border-slate-200 bg-white shadow-[0_12px_60px_rgba(15,23,42,0.2)]"
+        className="flex max-h-[86vh] w-full max-w-190 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_60px_rgba(15,23,42,0.2)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between border-b border-slate-100 px-6 pb-4 pt-5">
@@ -64,7 +69,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
           </button>
         </div>
 
-        <div className="space-y-5 px-6 py-5">
+        <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
           <div>
             <label className="mb-2 block font-segoe-ui text-[15px] font-medium text-slate-800" htmlFor="project-name-input">
               Nazwa projektu
@@ -122,29 +127,61 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
           <div>
             <h3 className="mb-2 block font-segoe-ui text-[15px] font-medium text-slate-800">Członkowie zespołu</h3>
             <div className="rounded-xl border border-slate-200 bg-white p-3">
-              {members.map((member) => {
-                const isChecked = draft.memberIds.includes(member.id);
+              <div className="max-h-60 overflow-y-auto pr-1">
+                {members.map((member) => {
+                  const isChecked = draft.memberIds.includes(member.id);
 
-                return (
-                  <label key={member.id} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
-                    <div className="flex items-center gap-3">
-                      <Avatar initials={member.initials} size="md" />
-                      <div>
-                        <p className="font-segoe-ui text-[16px] font-medium text-slate-900">{member.fullName}</p>
-                        <p className="font-segoe-ui text-sm text-slate-500">{member.email}</p>
+                  return (
+                    <label key={member.id} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
+                      <div className="flex items-center gap-3">
+                        <Avatar initials={member.initials} size="md" />
+                        <div>
+                          <p className="font-segoe-ui text-[16px] font-medium text-slate-900">{member.fullName}</p>
+                          <p className="font-segoe-ui text-sm text-slate-500">{member.email}</p>
+                        </div>
                       </div>
-                    </div>
 
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => onToggleMember(member.id)}
-                      className="h-4 w-4 rounded border-slate-300 accent-slate-900"
-                      aria-label={`Wybierz ${member.fullName}`}
-                    />
-                  </label>
-                );
-              })}
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => onToggleMember(member.id)}
+                        className="h-4 w-4 rounded border-slate-300 accent-slate-900"
+                        aria-label={`Wybierz ${member.fullName}`}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200 pt-5">
+            <h3 className="mb-3 block font-segoe-ui text-[15px] font-medium text-slate-800">Akcje projektu</h3>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#2563EB] transition-colors hover:bg-slate-50"
+              >
+                <BuildingOffice2Icon className="h-5 w-5" />
+                <span>Zmień klienta</span>
+              </button>
+
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50"
+              >
+                <ArchiveBoxIcon className="h-5 w-5" />
+                <span>Archiwizuj projekt</span>
+              </button>
+
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#DC2626] transition-colors hover:bg-red-100"
+              >
+                <TrashIcon className="h-5 w-5" />
+                <span>Usuń projekt</span>
+              </button>
             </div>
           </div>
         </div>
