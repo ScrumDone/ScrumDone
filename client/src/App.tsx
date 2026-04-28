@@ -8,6 +8,7 @@ import ReportsPage from './pages/ReportsPage'
 import FilesPage from './pages/FilesPage'
 import ProjectDetailsPage from './pages/ProjectDetailsPage'
 import ProjectKanbanPage from './pages/ProjectKanbanPage'
+import SprintsPage from './pages/SprintsPage'
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/projects/:projectSlug" element={<ProjectDetailsPage />} />
       <Route path="/projects/:projectSlug/tablica-kanban" element={<ProjectKanbanPage />} />
+      <Route path="/projects/:projectSlug/sprinty" element={<SprintsPage />} />
       <Route path="/companies" element={<Companiespage />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/reports" element={<ReportsPage />} />
