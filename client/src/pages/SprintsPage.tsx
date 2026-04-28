@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronUpIcon, CheckIcon } from '@heroicons/react/24/outline';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
+import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import { projects } from '../data/projects';
 
 type TaskItem = {
@@ -25,6 +26,12 @@ type SprintData = {
   status: 'Aktywny' | 'Zaplanowany' | 'Ukończony';
   tasks: TaskItem[];
 };
+
+const personFilterOptions: PersonFilter[] = [
+  { id: 'artur-nowak', initials: 'AN', fullName: 'Artur Nowak' },
+  { id: 'eryk-baczynski', initials: 'EB', fullName: 'Eryk Baczyński' },
+  { id: 'maria-kowalska', initials: 'MK', fullName: 'Maria Kowalska' },
+];
 
 const sprintStatusColorMap: Record<string, string> = {
   Aktywny: 'bg-blue-50 border-blue-200',
@@ -106,6 +113,27 @@ const SprintsPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((item) => item.slug === projectSlug);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-2']));
+
+  // Filter states
+  const [selectedSprints, setSelectedSprints] = useState<Record<string, boolean>>({
+    'sprint-0': true,
+    'sprint-1': true,
+    'sprint-2': true,
+    'sprint-3': true,
+    'sprint-4': true,
+    'sprint-5': true,
+  });
+
+  const [selectedPriorities, setSelectedPriorities] = useState<Record<string, boolean>>({
+    wysoki: true,
+    sredni: true,
+    niski: true,
+  });
+
+  const [selectedStatuses, setSelectedStatuses] = useState<Record<string, boolean>>({
+    ukonczne: true,
+    nieukonczne: true,
+  });
 
   const toggleSprint = (sprintId: string) => {
     const newExpanded = new Set(expandedSprints);
@@ -312,41 +340,144 @@ const SprintsPage: React.FC = () => {
                   </div>
                 </div>
               )}
+
             </div>
 
             {/* Filtry po prawej */}
             <aside className="flex flex-col gap-4">
-              <div className="rounded-[10px] border border-gray-200 bg-white p-4">
+              {/* Sprinty */}
+              <section className="rounded-[10px] border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Sprinty</h3>
                 <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 accent-slate-900" />
-                    <span className="font-segoe-ui text-sm text-slate-700">Aktywne</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 accent-slate-900" />
-                    <span className="font-segoe-ui text-sm text-slate-700">Zaplanowane</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 accent-slate-900" />
-                    <span className="font-segoe-ui text-sm text-slate-700">Ukończone</span>
-                  </label>
-                </div>
-              </div>
+                  {['Sprint 0 - Setup', 'Sprint 1 - Core Features', 'Sprint 2 - UI/UX', 'Sprint 3 - Testing', 'Sprint 4', 'Sprint 5'].map((label, idx) => {
+                    const sprintId = `sprint-${idx}`;
+                    const isSelected = selectedSprints[sprintId] ?? true;
 
-              <div className="rounded-[10px] border border-gray-200 bg-white p-4">
+                    return (
+                      <button
+                        key={sprintId}
+                        type="button"
+                        onClick={() =>
+                          setSelectedSprints((prev) => ({
+                            ...prev,
+                            [sprintId]: !prev[sprintId],
+                          }))
+                        }
+                        className="flex items-center gap-2 text-left"
+                        aria-pressed={isSelected}
+                      >
+                        <span className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
+                          <CheckIcon className="h-3 w-3" strokeWidth={2.5} />
+                        </span>
+                        <span className="font-segoe-ui text-sm text-slate-900">{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Priorytet */}
+              <section className="rounded-[10px] border border-gray-200 bg-white p-4">
+                <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Priorytet</h3>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { id: 'wysoki', label: 'Wysoki', colorClass: 'bg-scrumdone-red-500' },
+                    { id: 'sredni', label: 'Średni', colorClass: 'bg-scrumdone-yellow-500' },
+                    { id: 'niski', label: 'Niski', colorClass: 'bg-scrumdone-green-500' },
+                  ].map((priority) => {
+                    const isSelected = selectedPriorities[priority.id] ?? true;
+
+                    return (
+                      <button
+                        key={priority.id}
+                        type="button"
+                        onClick={() =>
+                          setSelectedPriorities((prev) => ({
+                            ...prev,
+                            [priority.id]: !prev[priority.id],
+                          }))
+                        }
+                        className="flex items-center gap-2 text-left"
+                        aria-pressed={isSelected}
+                      >
+                        <span className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
+                          <CheckIcon className="h-3 w-3" strokeWidth={2.5} />
+                        </span>
+                        <span className={`h-2 w-2 rounded-full ${priority.colorClass}`} />
+                        <span className="font-segoe-ui text-sm text-slate-900">{priority.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Członkowie zespołu */}
+              <CalendarPeopleFilter people={personFilterOptions} title="Członkowie zespołu" />
+
+              {/* Status ukończenia */}
+              <section className="rounded-[10px] border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Status ukończenia</h3>
                 <div className="flex flex-col gap-2">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 accent-slate-900" />
-                    <span className="font-segoe-ui text-sm text-slate-700">Ukończone</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 accent-slate-900" />
-                    <span className="font-segoe-ui text-sm text-slate-700">Nieukończone</span>
-                  </label>
+                  {[
+                    { id: 'ukonczne', label: 'Ukończone' },
+                    { id: 'nieukonczne', label: 'Nieukończone' },
+                  ].map((status) => {
+                    const isSelected = selectedStatuses[status.id] ?? true;
+
+                    return (
+                      <button
+                        key={status.id}
+                        type="button"
+                        onClick={() =>
+                          setSelectedStatuses((prev) => ({
+                            ...prev,
+                            [status.id]: !prev[status.id],
+                          }))
+                        }
+                        className="flex items-center gap-2 text-left"
+                        aria-pressed={isSelected}
+                      >
+                        <span className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
+                          <CheckIcon className="h-3 w-3" strokeWidth={2.5} />
+                        </span>
+                        <span className="font-segoe-ui text-sm text-slate-900">{status.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
+              </section>
+
+              {/* Backlog */}
+              <section className="rounded-[10px] border border-gray-200 bg-white p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="font-segoe-ui text-[14px] font-medium text-slate-900">Backlog (4)</h3>
+                  <button
+                    type="button"
+                    className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500 text-sm font-medium text-white hover:bg-blue-600"
+                    title="Dodaj zadanie"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { id: 'code-refactor', name: 'Code refactoring - user module', color: 'green', assignee: 'AN' },
+                    { id: 'doc-update', name: 'Documentation update', color: 'yellow', assignee: 'EB' },
+                    { id: 'e2e-setup', name: 'E2E testing setup', color: 'red', assignee: 'EB' },
+                    { id: 'mobile-responsive', name: 'Mobile responsiveness', color: 'yellow', assignee: 'MK' },
+                  ].map((task) => (
+                    <div key={task.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color as keyof typeof taskColorMap]}`} />
+                          <p className="font-segoe-ui text-sm text-slate-900">{task.name}</p>
+                        </div>
+                        <Avatar initials={task.assignee} size="xs" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </aside>
           </div>
         </section>
