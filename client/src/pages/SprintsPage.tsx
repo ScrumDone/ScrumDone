@@ -453,7 +453,7 @@ const SprintsPage: React.FC = () => {
                   <h3 className="font-segoe-ui text-[14px] font-medium text-slate-900">Backlog (4)</h3>
                   <button
                     type="button"
-                    className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500 text-sm font-medium text-white hover:bg-blue-600"
+                    className="flex h-6 w-6 items-center justify-center rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium text-white hover:bg-blue-600"
                     title="Dodaj zadanie"
                   >
                     +
@@ -461,18 +461,19 @@ const SprintsPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-2">
                   {[
-                    { id: 'code-refactor', name: 'Code refactoring - user module', color: 'green', assignee: 'AN' },
-                    { id: 'doc-update', name: 'Documentation update', color: 'yellow', assignee: 'EB' },
-                    { id: 'e2e-setup', name: 'E2E testing setup', color: 'red', assignee: 'EB' },
-                    { id: 'mobile-responsive', name: 'Mobile responsiveness', color: 'yellow', assignee: 'MK' },
+                    { id: 'code-refactor', name: 'Code refactoring - user module', color: 'green', assignee: 'AN', assigneeName: 'Artur Nowak' },
+                    { id: 'doc-update', name: 'Documentation update', color: 'yellow', assignee: 'EB', assigneeName: 'Eryk Baczyński' },
+                    { id: 'e2e-setup', name: 'E2E testing setup', color: 'red', assignee: 'EB', assigneeName: 'Eryk Baczyński' },
+                    { id: 'mobile-responsive', name: 'Mobile responsiveness', color: 'yellow', assignee: 'MK', assigneeName: 'Maria Kowalska' },
                   ].map((task) => (
-                    <div key={task.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color as keyof typeof taskColorMap]}`} />
-                          <p className="font-segoe-ui text-sm text-slate-900">{task.name}</p>
-                        </div>
+                    <div key={task.id} className="rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100">
+                      <div className=" flex mb-1 items-start gap-2">
+                        <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${taskColorMap[task.color as keyof typeof taskColorMap]}`} />
+                        <p className="font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
                         <Avatar initials={task.assignee} size="xs" />
+                        <span className="font-segoe-ui text-[10px] tracking-[0.12px] leading-4 text-slate-700">{task.assigneeName}</span>
                       </div>
                     </div>
                   ))}
