@@ -136,8 +136,8 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
                       <div className="flex items-center gap-3">
                         <Avatar initials={member.initials} size="md" />
                         <div>
-                          <p className="font-segoe-ui text-[16px] font-medium text-slate-900">{member.fullName}</p>
-                          <p className="font-segoe-ui text-sm text-slate-500">{member.email}</p>
+                          <p className="font-segoe-ui text-sm tracking-[-0.15px] font-medium text-slate-900">{member.fullName}</p>
+                          <p className="font-segoe-ui text-[12px] leading-4 text-slate-400">{member.email}</p>
                         </div>
                       </div>
 
@@ -163,30 +163,30 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
                 type="button"
                 className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#2563EB] transition-colors hover:bg-slate-50"
               >
-                <BuildingOffice2Icon className="h-5 w-5" />
-                <span>Zmień klienta</span>
+                <BuildingOffice2Icon className="h-4 w-4" />
+                <span className="text-sm tracking-[-0.15px] leading-5">Zmień klienta</span>
               </button>
 
               <button
                 type="button"
                 className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50"
               >
-                <ArchiveBoxIcon className="h-5 w-5" />
-                <span>Archiwizuj projekt</span>
+                <ArchiveBoxIcon className="h-4 w-4" />
+                <span className="text-sm tracking-[-0.15px] leading-5">Archiwizuj projekt</span>
               </button>
 
               <button
                 type="button"
                 className="flex w-full items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#DC2626] transition-colors hover:bg-red-100"
               >
-                <TrashIcon className="h-5 w-5" />
-                <span>Usuń projekt</span>
+                <TrashIcon className="h-4 w-4" />
+                <span className="text-sm tracking-[-0.15px] leading-5">Usuń projekt</span>
               </button>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4">
+        <div className="flex items-center justify-end gap-3  px-6 py-4">
           <button
             type="button"
             onClick={onClose}
