@@ -294,45 +294,63 @@ const SprintsPage: React.FC = () => {
                     {groupedSprints.completed.map((sprint) => (
                       <div
                         key={sprint.id}
-                        className={`rounded-xl border px-5 py-4 ${sprintStatusColorMap[sprint.status]}`}
+                        className="rounded-xl border border-slate-200 overflow-hidden"
                       >
-                        <div
-                          className="flex cursor-pointer items-center justify-between"
-                          onClick={() => toggleSprint(sprint.id)}
-                        >
-                          <div className="flex-1">
-                            <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
-                            <p className="font-segoe-ui text-sm text-slate-500">
-                              {sprint.dateRange} • {sprint.totalTasks} zadań • {sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)
-                            </p>
+                        {/* Header */}
+                        <div className="border-b border-slate-200 bg-white px-5 py-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <button
+                              type="button"
+                              onClick={() => toggleSprint(sprint.id)}
+                              className="flex flex-1 items-start gap-3"
+                            >
+                              {expandedSprints.has(sprint.id) ? (
+                                <ChevronUpIcon className="mt-1 h-5 w-5 shrink-0" />
+                              ) : (
+                                <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0" />
+                              )}
+                              <div className="text-left">
+                                <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
+                                <p className="font-segoe-ui text-sm text-slate-500">
+                                  {sprint.dateRange} • {sprint.totalTasks} zadań • <span className="text-green-600 font-medium">{sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)</span>
+                                </p>
+                              </div>
+                            </button>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className={`rounded-full px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
+                                {sprint.status}
+                              </span>
+                              <button type="button" className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900">
+                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
-                          <span className={`rounded-full px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
-                            {sprint.status}
-                          </span>
-                          {expandedSprints.has(sprint.id) ? (
-                            <ChevronUpIcon className="ml-4 h-5 w-5" />
-                          ) : (
-                            <ChevronDownIcon className="ml-4 h-5 w-5" />
-                          )}
                         </div>
 
+                        {/* Tasks */}
                         {expandedSprints.has(sprint.id) && (
-                          <div className="mt-4 space-y-2 border-t border-slate-200 pt-4">
-                            {sprint.tasks.map((task) => (
-                              <div key={task.id} className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-slate-100">
+                          <div className="bg-slate-50 px-5 py-3">
+                            <div className="space-y-2">
+                              {sprint.tasks.map((task) => (
+                              <div key={task.id} className="flex items-center justify-between rounded-lg bg-white px-4 py-3">
                                 <div className="flex items-center gap-3">
                                   <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
-                                  <p className="font-segoe-ui text-sm text-slate-900">{task.name}</p>
+                                  <p className={`font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}>{task.name}</p>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                  <span className={`rounded-full px-2 py-1 font-segoe-ui text-xs ${task.status === 'Ukończone' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
+                                  <Avatar initials={task.assigneeInitials} size="xs" />
+                                  <span className="font-segoe-ui text-xs text-slate-700">{task.assigneeInitials === 'AN' ? 'Artur Nowak' : task.assigneeInitials === 'EB' ? 'Eryk Baczyński' : 'Maria Kowalska'}</span>
+                                  <span className={`rounded-full px-2.5 py-1 font-segoe-ui text-xs font-medium ${task.status === 'Ukończone' ? 'border border-green-600 text-green-600' : 'bg-slate-100 text-slate-700'}`}>
                                     {task.status}
                                   </span>
                                   <span className="font-segoe-ui text-xs text-slate-500">{task.daysLeft}</span>
-                                  <Avatar initials={task.assigneeInitials} size="xs" />
                                 </div>
                               </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
