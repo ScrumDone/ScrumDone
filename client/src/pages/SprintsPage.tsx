@@ -33,15 +33,9 @@ const personFilterOptions: PersonFilter[] = [
   { id: 'maria-kowalska', initials: 'MK', fullName: 'Maria Kowalska' },
 ];
 
-const sprintStatusColorMap: Record<string, string> = {
-  Aktywny: 'bg-blue-50 border-blue-200',
-  Zaplanowany: 'border-slate-200',
-  Ukończony: 'bg-green-50 border-green-200',
-};
-
 const sprintStatusBadgeMap: Record<string, string> = {
-  Aktywny: 'bg-blue-100 text-blue-700',
-  Zaplanowany: 'bg-slate-100 text-slate-700',
+  Aktywny: 'bg-scrumdone-blue-main text-white',
+  Zaplanowany: 'bg-white border border-blue-500 text-blue-500',
   Ukończony: 'bg-green-100 text-green-700',
 };
 
@@ -81,38 +75,43 @@ const allSprintsData: SprintData[] = [
     ],
   },
   {
-    id: 'sprint-2',
-    title: 'Sprint 2 - UI/UX',
-    dateRange: '27 lut 2026 - 14 mar 2026',
-    totalTasks: 3,
-    completedTasks: 2,
+    id: 'sprint-3',
+    title: 'Sprint 3 - Final Sprint',
+    dateRange: '15 mar 2026 - 05 kwi 2026',
+    totalTasks: 4,
+    completedTasks: 1,
     status: 'Aktywny',
     tasks: [
-      { id: 'ui-lib', name: 'UI component library', assigneeInitials: 'EB', status: 'Ukończone', daysLeft: '05 mar', color: 'red' },
-      { id: 'responsive', name: 'Responsive design', assigneeInitials: 'MK', status: 'Ukończone', daysLeft: '08 mar', color: 'green' },
-      { id: 'accessibility', name: 'Accessibility improvements', assigneeInitials: 'AN', status: 'Nieukończone', daysLeft: '12 mar', color: 'blue' },
+      { id: 'prepare-ui', name: 'Prepare initial UI project', assigneeInitials: 'EB', status: 'Ukończone', daysLeft: '05 kwi', color: 'red' },
+      { id: 'quotes-module', name: 'Quotes Generation Module', assigneeInitials: 'AN', status: 'Nieukończone', daysLeft: '07 kwi', color: 'red' },
+      { id: 'giveaway-campaign', name: 'Giveaway Campaign Setup', assigneeInitials: 'MK', status: 'Nieukończone', daysLeft: '09 kwi', color: 'green' },
+      { id: 'video-reel', name: 'Video Reel Production', assigneeInitials: 'EB', status: 'Nieukończone', daysLeft: '19 kwi', color: 'yellow' },
     ],
   },
   {
-    id: 'sprint-3',
-    title: 'Sprint 3 - Testing',
-    dateRange: '15 mar 2026 - 05 kwi 2026',
-    totalTasks: 4,
+    id: 'sprint-4',
+    title: 'Sprint 4 - Testing',
+    dateRange: '06 kwi 2026 - 26 kwi 2026',
+    totalTasks: 0,
     completedTasks: 0,
     status: 'Zaplanowany',
-    tasks: [
-      { id: 'unit-tests', name: 'Unit tests', assigneeInitials: 'AN', status: 'Nieukończone', daysLeft: '20 mar', color: 'red' },
-      { id: 'integration', name: 'Integration tests', assigneeInitials: 'EB', status: 'Nieukończone', daysLeft: '25 mar', color: 'yellow' },
-      { id: 'e2e', name: 'E2E tests', assigneeInitials: 'MK', status: 'Nieukończone', daysLeft: '01 kwi', color: 'green' },
-      { id: 'perf', name: 'Performance testing', assigneeInitials: 'AN', status: 'Nieukończone', daysLeft: '05 kwi', color: 'blue' },
-    ],
+    tasks: [],
+  },
+  {
+    id: 'sprint-5',
+    title: 'Sprint 5 - Deployment',
+    dateRange: '27 kwi 2026 - 17 maj 2026',
+    totalTasks: 0,
+    completedTasks: 0,
+    status: 'Zaplanowany',
+    tasks: [],
   },
 ];
 
 const SprintsPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((item) => item.slug === projectSlug);
-  const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-2']));
+  const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-4', 'sprint-5', 'sprint-3']));
 
   // Filter states
   const [selectedSprints, setSelectedSprints] = useState<Record<string, boolean>>({
@@ -184,45 +183,61 @@ const SprintsPage: React.FC = () => {
                     {groupedSprints.active.map((sprint) => (
                       <div
                         key={sprint.id}
-                        className={`rounded-xl border px-5 py-4 ${sprintStatusColorMap[sprint.status]}`}
+                        className="overflow-hidden rounded-xl border-2 border-sky-400"
                       >
-                        <div
-                          className="flex cursor-pointer items-center justify-between"
-                          onClick={() => toggleSprint(sprint.id)}
-                        >
-                          <div className="flex-1">
-                            <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
-                            <p className="font-segoe-ui text-sm text-slate-500">
-                              {sprint.dateRange} • {sprint.totalTasks} zadań • {sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)
-                            </p>
+                        <div className="border-b border-slate-200 bg-white px-5 py-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <button
+                              type="button"
+                              onClick={() => toggleSprint(sprint.id)}
+                              className="flex flex-1 items-start gap-3"
+                            >
+                              {expandedSprints.has(sprint.id) ? (
+                                <ChevronUpIcon className="mt-1 h-5 w-5 shrink-0" />
+                              ) : (
+                                <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0" />
+                              )}
+                              <div className="text-left">
+                                <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
+                                <p className="font-segoe-ui text-sm text-slate-500">
+                                  {sprint.dateRange} • {sprint.totalTasks} zadań • <span className="text-green-600 font-medium">{sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)</span>
+                                </p>
+                              </div>
+                            </button>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className={`rounded-lg px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
+                                {sprint.status}
+                              </span>
+                              <button type="button" className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900">
+                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
-                          <span className={`rounded-full px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
-                            {sprint.status}
-                          </span>
-                          {expandedSprints.has(sprint.id) ? (
-                            <ChevronUpIcon className="ml-4 h-5 w-5" />
-                          ) : (
-                            <ChevronDownIcon className="ml-4 h-5 w-5" />
-                          )}
                         </div>
 
                         {expandedSprints.has(sprint.id) && (
-                          <div className="mt-4 space-y-2 border-t border-slate-200 pt-4">
-                            {sprint.tasks.map((task) => (
-                              <div key={task.id} className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-slate-100">
-                                <div className="flex items-center gap-3">
-                                  <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
-                                  <p className="font-segoe-ui text-sm text-slate-900">{task.name}</p>
+                          <div className="bg-slate-50 px-4 py-3">
+                            <div className="space-y-3">
+                              {sprint.tasks.map((task) => (
+                                <div key={task.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3">
+                                  <div className="flex items-center gap-3">
+                                    <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
+                                    <p className={`font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}>{task.name}</p>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <Avatar initials={task.assigneeInitials} size="xs" />
+                                    <span className="font-segoe-ui text-xs text-slate-700">{task.assigneeInitials === 'AN' ? 'Artur Nowak' : task.assigneeInitials === 'EB' ? 'Eryk Baczyński' : 'Maria Kowalska'}</span>
+                                    <span className={`rounded-lg px-2.5 py-1 font-segoe-ui text-xs font-medium ${task.status === 'Ukończone' ? 'border border-green-600 text-green-600' : 'bg-slate-100 text-slate-700'}`}>
+                                      {task.status}
+                                    </span>
+                                    <span className="font-segoe-ui text-xs text-slate-500">{task.daysLeft}</span>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                  <span className={`rounded-full px-2 py-1 font-segoe-ui text-xs ${task.status === 'Ukończone' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
-                                    {task.status}
-                                  </span>
-                                  <span className="font-segoe-ui text-xs text-slate-500">{task.daysLeft}</span>
-                                  <Avatar initials={task.assigneeInitials} size="xs" />
-                                </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -239,45 +254,44 @@ const SprintsPage: React.FC = () => {
                     {groupedSprints.planned.map((sprint) => (
                       <div
                         key={sprint.id}
-                        className={`rounded-xl border px-5 py-4 ${sprintStatusColorMap[sprint.status]}`}
+                        className="overflow-hidden rounded-xl border border-slate-200"
                       >
-                        <div
-                          className="flex cursor-pointer items-center justify-between"
-                          onClick={() => toggleSprint(sprint.id)}
-                        >
-                          <div className="flex-1">
-                            <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
-                            <p className="font-segoe-ui text-sm text-slate-500">
-                              {sprint.dateRange} • {sprint.totalTasks} zadań
-                            </p>
+                        <div className="border-b border-slate-200 bg-white px-5 py-4">
+                          <div className="flex items-center justify-between gap-4">
+                            <button
+                              type="button"
+                              onClick={() => toggleSprint(sprint.id)}
+                              className="flex flex-1 items-start gap-3"
+                            >
+                              {expandedSprints.has(sprint.id) ? (
+                                <ChevronUpIcon className="mt-1 h-5 w-5 shrink-0" />
+                              ) : (
+                                <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0" />
+                              )}
+                              <div className="text-left">
+                                <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
+                                <p className="font-segoe-ui text-sm text-slate-500">
+                                  {sprint.dateRange} • {sprint.totalTasks} zadań
+                                </p>
+                              </div>
+                            </button>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className={`rounded-lg px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
+                                {sprint.status}
+                              </span>
+                              <button type="button" className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900">
+                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                              </button>
+                            </div>
                           </div>
-                          <span className={`rounded-full px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
-                            {sprint.status}
-                          </span>
-                          {expandedSprints.has(sprint.id) ? (
-                            <ChevronUpIcon className="ml-4 h-5 w-5" />
-                          ) : (
-                            <ChevronDownIcon className="ml-4 h-5 w-5" />
-                          )}
                         </div>
 
                         {expandedSprints.has(sprint.id) && (
-                          <div className="mt-4 space-y-2 border-t border-slate-200 pt-4">
-                            {sprint.tasks.map((task) => (
-                              <div key={task.id} className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-slate-100">
-                                <div className="flex items-center gap-3">
-                                  <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
-                                  <p className="font-segoe-ui text-sm text-slate-900">{task.name}</p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <span className={`rounded-full px-2 py-1 font-segoe-ui text-xs ${task.status === 'Ukończone' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
-                                    {task.status}
-                                  </span>
-                                  <span className="font-segoe-ui text-xs text-slate-500">{task.daysLeft}</span>
-                                  <Avatar initials={task.assigneeInitials} size="xs" />
-                                </div>
-                              </div>
-                            ))}
+                          <div className="bg-slate-50 px-5 py-11 text-center">
+                            <p className="font-segoe-ui text-sm font-medium text-slate-500">Brak zadań w tym sprincie</p>
                           </div>
                         )}
                       </div>
