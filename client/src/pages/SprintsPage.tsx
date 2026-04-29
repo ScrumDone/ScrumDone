@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ChevronDownIcon, ChevronUpIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
+import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
 import { projects } from '../data/projects';
 
 type TaskItem = {
@@ -20,7 +21,8 @@ type TaskItem = {
 type SprintData = {
   id: string;
   title: string;
-  dateRange: string;
+  startDate: string;
+  endDate: string;
   totalTasks: number;
   completedTasks: number;
   status: 'Aktywny' | 'Zaplanowany' | 'Ukończony';
@@ -46,11 +48,56 @@ const taskColorMap: Record<string, string> = {
   blue: 'bg-blue-500',
 };
 
+const polishMonths = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+
+const getSprintDateRange = (sprint: SprintData) => `${sprint.startDate} - ${sprint.endDate}`;
+
+const normalizeMonthName = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+const parsePolishDate = (value: string) => {
+  const match = value.trim().match(/^(\d{1,2})\s+([A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]+)\s+(\d{4})$/u);
+
+  if (!match) {
+    return null;
+  }
+
+  const day = Number(match[1]);
+  const monthName = match[2] ?? '';
+  const year = Number(match[3]);
+  const monthIndex = polishMonths.findIndex((month) => normalizeMonthName(month) === normalizeMonthName(monthName));
+
+  if (Number.isNaN(day) || Number.isNaN(year) || monthIndex < 0) {
+    return null;
+  }
+
+  const parsedDate = new Date(year, monthIndex, day);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate;
+};
+
+const formatPolishDate = (date: Date) => `${String(date.getDate()).padStart(2, '0')} ${polishMonths[date.getMonth()]} ${date.getFullYear()}`;
+
+const extendDateByDays = (value: string, days: number) => {
+  const parsedDate = parsePolishDate(value);
+
+  if (!parsedDate) {
+    return value;
+  }
+
+  parsedDate.setDate(parsedDate.getDate() + days);
+  return formatPolishDate(parsedDate);
+};
+
 const allSprintsData: SprintData[] = [
   {
     id: 'sprint-0',
     title: 'Sprint 0 - Setup',
-    dateRange: '15 sty 2026 - 05 lut 2026',
+    startDate: '15 sty 2026',
+    endDate: '05 lut 2026',
     totalTasks: 4,
     completedTasks: 3,
     status: 'Ukończony',
@@ -64,7 +111,8 @@ const allSprintsData: SprintData[] = [
   {
     id: 'sprint-1',
     title: 'Sprint 1 - Core Features',
-    dateRange: '06 lut 2026 - 19 lut 2026',
+    startDate: '06 lut 2026',
+    endDate: '19 lut 2026',
     totalTasks: 3,
     completedTasks: 3,
     status: 'Ukończony',
@@ -77,7 +125,8 @@ const allSprintsData: SprintData[] = [
   {
     id: 'sprint-3',
     title: 'Sprint 3 - Final Sprint',
-    dateRange: '15 mar 2026 - 05 kwi 2026',
+    startDate: '15 mar 2026',
+    endDate: '05 kwi 2026',
     totalTasks: 4,
     completedTasks: 1,
     status: 'Aktywny',
@@ -91,7 +140,8 @@ const allSprintsData: SprintData[] = [
   {
     id: 'sprint-4',
     title: 'Sprint 4 - Testing',
-    dateRange: '06 kwi 2026 - 26 kwi 2026',
+    startDate: '06 kwi 2026',
+    endDate: '26 kwi 2026',
     totalTasks: 0,
     completedTasks: 0,
     status: 'Zaplanowany',
@@ -100,7 +150,8 @@ const allSprintsData: SprintData[] = [
   {
     id: 'sprint-5',
     title: 'Sprint 5 - Deployment',
-    dateRange: '27 kwi 2026 - 17 maj 2026',
+    startDate: '27 kwi 2026',
+    endDate: '17 maj 2026',
     totalTasks: 0,
     completedTasks: 0,
     status: 'Zaplanowany',
@@ -111,7 +162,11 @@ const allSprintsData: SprintData[] = [
 const SprintsPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((item) => item.slug === projectSlug);
+  const [sprints, setSprints] = useState<SprintData[]>(allSprintsData);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-4', 'sprint-5', 'sprint-3']));
+  const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
+  const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
+  const [sprintDraft, setSprintDraft] = useState<SprintEditDraft | null>(null);
 
   // Filter states
   const [selectedSprints, setSelectedSprints] = useState<Record<string, boolean>>({
@@ -134,6 +189,105 @@ const SprintsPage: React.FC = () => {
     nieukonczne: true,
   });
 
+  const closeSprintEditModal = () => {
+    setIsSprintEditOpen(false);
+    setEditingSprintId(null);
+    setSprintDraft(null);
+  };
+
+  const openSprintEditModal = (sprint: SprintData) => {
+    setEditingSprintId(sprint.id);
+    setSprintDraft({
+      title: sprint.title,
+      startDate: sprint.startDate,
+      endDate: sprint.endDate,
+      status: sprint.status,
+    });
+    setIsSprintEditOpen(true);
+  };
+
+  const updateSprintById = (sprintId: string, updater: (sprint: SprintData) => SprintData) => {
+    setSprints((currentSprints) => currentSprints.map((sprint) => (sprint.id === sprintId ? updater(sprint) : sprint)));
+  };
+
+  const handleSprintDraftSave = () => {
+    if (!editingSprintId || !sprintDraft) {
+      return;
+    }
+
+    updateSprintById(editingSprintId, (sprint) => ({
+      ...sprint,
+      title: sprintDraft.title,
+      startDate: sprintDraft.startDate,
+      endDate: sprintDraft.endDate,
+      status: sprintDraft.status,
+    }));
+    closeSprintEditModal();
+  };
+
+  const handleStartNextSprint = () => {
+    if (!editingSprintId) {
+      return;
+    }
+
+    setSprints((currentSprints) => {
+      const currentIndex = currentSprints.findIndex((sprint) => sprint.id === editingSprintId);
+
+      if (currentIndex === -1) {
+        return currentSprints;
+      }
+
+      const nextPlannedIndex = currentSprints.findIndex((sprint, index) => index > currentIndex && sprint.status === 'Zaplanowany');
+
+      return currentSprints.map((sprint, index) => {
+        if (index === currentIndex) {
+          return { ...sprint, status: 'Ukończony' };
+        }
+
+        if (index === nextPlannedIndex) {
+          return { ...sprint, status: 'Aktywny' };
+        }
+
+        return sprint;
+      });
+    });
+
+    setSprintDraft((currentDraft) => (currentDraft ? { ...currentDraft, status: 'Ukończony' } : currentDraft));
+  };
+
+  const handleExtendSprint = () => {
+    if (!editingSprintId) {
+      return;
+    }
+
+    setSprintDraft((currentDraft) => {
+      if (!currentDraft) {
+        return currentDraft;
+      }
+
+      const updatedEndDate = extendDateByDays(currentDraft.endDate, 7);
+
+      updateSprintById(editingSprintId, (sprint) => ({
+        ...sprint,
+        endDate: updatedEndDate,
+      }));
+
+      return {
+        ...currentDraft,
+        endDate: updatedEndDate,
+      };
+    });
+  };
+
+  const handleDeleteSprint = () => {
+    if (!editingSprintId) {
+      return;
+    }
+
+    setSprints((currentSprints) => currentSprints.filter((sprint) => sprint.id !== editingSprintId));
+    closeSprintEditModal();
+  };
+
   const toggleSprint = (sprintId: string) => {
     const newExpanded = new Set(expandedSprints);
     if (newExpanded.has(sprintId)) {
@@ -145,9 +299,9 @@ const SprintsPage: React.FC = () => {
   };
 
   const groupedSprints = {
-    active: allSprintsData.filter((s) => s.status === 'Aktywny'),
-    planned: allSprintsData.filter((s) => s.status === 'Zaplanowany'),
-    completed: allSprintsData.filter((s) => s.status === 'Ukończony'),
+    active: sprints.filter((s) => s.status === 'Aktywny'),
+    planned: sprints.filter((s) => s.status === 'Zaplanowany'),
+    completed: sprints.filter((s) => s.status === 'Ukończony'),
   };
 
   if (!project) {
@@ -200,7 +354,7 @@ const SprintsPage: React.FC = () => {
                               <div className="text-left">
                                 <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
                                 <p className="font-segoe-ui text-sm text-slate-500">
-                                  {sprint.dateRange} • {sprint.totalTasks} zadań • <span className="text-green-600 font-medium">{sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)</span>
+                                  {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań • <span className="text-green-600 font-medium">{sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)</span>
                                 </p>
                               </div>
                             </button>
@@ -208,11 +362,13 @@ const SprintsPage: React.FC = () => {
                               <span className={`rounded-lg px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
                                 {sprint.status}
                               </span>
-                              <button type="button" className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900">
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+                              <button
+                                type="button"
+                                onClick={() => openSprintEditModal(sprint)}
+                                className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900"
+                                aria-label={`Edytuj sprint ${sprint.title}`}
+                              >
+                                <Cog6ToothIcon className="h-5 w-5" />
                               </button>
                             </div>
                           </div>
@@ -271,7 +427,7 @@ const SprintsPage: React.FC = () => {
                               <div className="text-left">
                                 <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
                                 <p className="font-segoe-ui text-sm text-slate-500">
-                                  {sprint.dateRange} • {sprint.totalTasks} zadań
+                                  {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań
                                 </p>
                               </div>
                             </button>
@@ -279,11 +435,13 @@ const SprintsPage: React.FC = () => {
                               <span className={`rounded-lg px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
                                 {sprint.status}
                               </span>
-                              <button type="button" className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900">
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+                              <button
+                                type="button"
+                                onClick={() => openSprintEditModal(sprint)}
+                                className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900"
+                                aria-label={`Edytuj sprint ${sprint.title}`}
+                              >
+                                <Cog6ToothIcon className="h-5 w-5" />
                               </button>
                             </div>
                           </div>
@@ -326,7 +484,7 @@ const SprintsPage: React.FC = () => {
                               <div className="text-left">
                                 <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
                                 <p className="font-segoe-ui text-sm text-slate-500">
-                                  {sprint.dateRange} • {sprint.totalTasks} zadań • <span className="text-green-600 font-medium">{sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)</span>
+                                  {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań • <span className="text-green-600 font-medium">{sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)</span>
                                 </p>
                               </div>
                             </button>
@@ -381,8 +539,8 @@ const SprintsPage: React.FC = () => {
               <section className="rounded-[10px] border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Sprinty</h3>
                 <div className="flex flex-col gap-2">
-                  {['Sprint 0 - Setup', 'Sprint 1 - Core Features', 'Sprint 2 - UI/UX', 'Sprint 3 - Testing', 'Sprint 4', 'Sprint 5'].map((label, idx) => {
-                    const sprintId = `sprint-${idx}`;
+                  {sprints.map((sprint) => {
+                    const sprintId = sprint.id;
                     const isSelected = selectedSprints[sprintId] ?? true;
 
                     return (
@@ -401,7 +559,7 @@ const SprintsPage: React.FC = () => {
                         <span className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
                           <CheckIcon className="h-3 w-3" strokeWidth={2.5} />
                         </span>
-                        <span className="font-segoe-ui text-sm text-slate-900">{label}</span>
+                        <span className="font-segoe-ui text-sm text-slate-900">{sprint.title}</span>
                       </button>
                     );
                   })}
@@ -515,6 +673,17 @@ const SprintsPage: React.FC = () => {
           </div>
         </section>
       </main>
+
+      <SprintEditModal
+        isOpen={isSprintEditOpen}
+        draft={sprintDraft}
+        onClose={closeSprintEditModal}
+        onSave={handleSprintDraftSave}
+        onDraftChange={setSprintDraft}
+        onStartNextSprint={handleStartNextSprint}
+        onExtendSprint={handleExtendSprint}
+        onDeleteSprint={handleDeleteSprint}
+      />
     </div>
   );
 };
