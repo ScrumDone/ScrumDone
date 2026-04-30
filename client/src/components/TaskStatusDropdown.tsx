@@ -6,9 +6,9 @@ export const TaskStatusDropdown = () => {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const statuses = [
-        { label: 'HISTORIA', bg: 'bg-gray-200', text: 'text-gray-700' },
-        { label: 'W TOKU', bg: 'bg-blue-100', text: 'text-blue-700' },
-        { label: 'GOTOWE', bg: 'bg-green-100', text: 'text-green-700' },
+        { label: 'Do zrobienia', bg: 'hover:bg-slate-50' },
+        { label: 'W toku', bg: 'hover:bg-blue-50' },
+        { label: 'Gotowe', bg: 'hover:bg-green-50' },
     ];
 
     useEffect(() => {
@@ -22,32 +22,47 @@ export const TaskStatusDropdown = () => {
     }, []);
 
     return (
-        <div className="relative" ref={dropdownRef}>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-gray-200 transition-all cursor-pointer border border-gray-200"
-            >
-                Selected for development
-                <ChevronDownIcon className={`h-3 w-3 transition-transform text-black ${isOpen ? 'rotate-180' : ''}`} />
-            </button>
+        /* BIAŁY KAFELEK (Kontener zewnętrzny) */
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="relative w-full" ref={dropdownRef}>
+                
+                {/* SZARY PRZYCISK (Wewnątrz kafelka) - zgodny z obraz_17.png */}
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={`
+                        flex w-full items-center justify-between gap-2 
+                        rounded-lg bg-[#F1F2F4] px-4 py-2.5 
+                        text-[14px] font-medium text-slate-700 
+                        hover:bg-[#E2E4E9] transition-all cursor-pointer
+                    `}
+                >
+                    <span>W toku</span>
+                    <ChevronDownIcon 
+                        className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} 
+                    />
+                </button>
 
-            {isOpen && (
-                <div className="absolute left-0 mt-1 w-48 rounded-lg bg-white shadow-xl border border-gray-100 z-50 overflow-hidden">
-                    <div className="py-1">
-                        {statuses.map((status) => (
-                            <button
-                                key={status.label}
-                                onClick={() => setIsOpen(false)}
-                                className="flex w-full items-center px-4 py-2.5 hover:bg-gray-50 transition-colors"
-                            >
-                                <span className={`${status.bg} ${status.text} px-2 py-0.5 rounded text-xs font-bold`}>
+                {/* MENU ROZWIJANE */}
+                {isOpen && (
+                    <div className="absolute left-0 mt-1 w-full rounded-lg bg-white shadow-xl border border-slate-200 z-50 overflow-hidden">
+                        <div className="py-1">
+                            {statuses.map((status) => (
+                                <button
+                                    key={status.label}
+                                    onClick={() => setIsOpen(false)}
+                                    className={`
+                                        flex w-full items-center px-4 py-2.5 
+                                        text-sm text-slate-700 ${status.bg} 
+                                        transition-colors
+                                    `}
+                                >
                                     {status.label}
-                                </span>
-                            </button>
-                        ))}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };

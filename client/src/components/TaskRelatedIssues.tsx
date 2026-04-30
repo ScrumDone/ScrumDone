@@ -1,17 +1,28 @@
-import { ChevronDownIcon, EllipsisHorizontalIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 
 export const TaskRelatedIssues = () => (
-  <section className="mt-8">
-    <div className="mb-3 flex items-center justify-between font-bold text-slate-900">
+  // ZMIANA: Dodano strukturę kafelka, pading, cień i margines górny dla odstępu
+  <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    
+    {/* Nagłówek kafelka */}
+    <div className="mb-6 flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <ChevronDownIcon className="h-4 w-4 text-black" />
-        <span className="text-sm">Powiązane zgłoszenia</span>
+        <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" />
+        {/* ZMIANA: Powiększony font nagłówka */}
+        <h2 className="text-[17px] font-bold text-black">Powiązane zgłoszenia</h2>
       </div>
-      <div className="flex gap-2 text-slate-400">
-        <EllipsisHorizontalIcon className="h-4 w-4 cursor-pointer hover:text-slate-600 text-black" />
-        <PlusIcon className="h-4 w-4 cursor-pointer hover:text-slate-600 text-black" />
-      </div>
+      
+      {/* ZMIANA: Jedna ikona pionowych trzech kropek zamiast zestawu ikon */}
+      <button className="p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer text-slate-500 hover:text-black">
+        <EllipsisVerticalIcon className="h-5 w-5" />
+      </button>
     </div>
-    <button className="pl-6 text-sm text-black hover:underline">Dodaj powiązane zgłoszenie</button>
+
+    {/* ZMIANA: Wcięcie pl-7 i szary tekst przycisku dodawania, bez underline */}
+    <div className="pl-7">
+      <button className="text-[13px] text-slate-500 font-medium hover:text-black transition-colors">
+        Dodaj powiązane zgłoszenie
+      </button>
+    </div>
   </section>
 );

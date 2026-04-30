@@ -1,57 +1,51 @@
 import { 
   ChevronDownIcon, 
-  AdjustmentsVerticalIcon // Import ikony ustawień
+  EllipsisVerticalIcon 
 } from '@heroicons/react/24/outline';
 import { TaskStatusDropdown } from './TaskStatusDropdown';
 
 export const TaskSidebarDetails = () => (
     <div className="flex flex-col gap-4">
+        {/* Dropdown statusu */}
         <TaskStatusDropdown />
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <div className="mb-4 flex items-center justify-between font-bold">
-                <div className="flex items-center gap-2 text-sm">
-                    <ChevronDownIcon className="h-4 w-4 text-black stroke-[2.5]" /> 
-                    <span className="text-black">Szczegóły</span>
+        {/* Kafelek szczegółów */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-6 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" /> 
+                    <span className="text-[17px] font-bold text-black">Szczegóły</span>
                 </div>
                 
-                <button className="group p-1 rounded hover:bg-slate-100 transition-colors cursor-pointer">
-                    <AdjustmentsVerticalIcon className="h-4 w-4 text-black group-hover:text-black transition-colors" />
+                <button className="p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer text-slate-500 hover:text-black">
+                    <EllipsisVerticalIcon className="h-5 w-5" />
                 </button>
             </div>
             
-            <div className="space-y-4 text-sm">
-                <DetailRow label="Osoba przypisana" value="Aleksander Radecki" hasAvatar />
-                <DetailRow label="Osoba zgłaszająca" value="Aleksander Radecki" hasAvatar />
-                <DetailRow label="Etykiety" value="Brak" isPlaceholder />
-                <DetailRow label="Termin" value="Brak" isPlaceholder />
-                <DetailRow label="Data początkowa" value="Brak" isPlaceholder />
-                <DetailRow label="Priorytet" value="Brak" isPlaceholder />
+            {/* Lista pól */}
+            <div className="space-y-4 text-[14px]">
+                {/* Usunięto flagę hasAvatar */}
+                <DetailRow label="Osoba" value="Artur Nowak" />
+                <DetailRow label="Projekt" value="Adoddle" />
+                <DetailRow label="Utworzono" value="25.03.2026" />
+                <DetailRow label="Termin" value="7.04.2026" />
+                <DetailRow label="Czas estimacji" value="Brak" isPlaceholder />
+                <DetailRow label="Priorytet" value="Wysoki" />
+                <DetailRow label="Wykonaj po" value="Brak" isPlaceholder />
             </div>
-            
-            <button className="mt-4 text-xs text-slate-500 hover:underline cursor-pointer">
-                Jeszcze 7 pól
-            </button>
         </div>
     </div>
 );
 
-const DetailRow = ({ label, value, hasAvatar, isPlaceholder }: any) => (
-    <div className="grid grid-cols-2 items-center">
-        <span className="text-slate-500 font-bold">{label}</span>
-        <div className="flex items-center gap-2">
-            {hasAvatar && (
-                <div className="h-6 w-6 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                    <img 
-                        src={`https://ui-avatars.com/api/?name=${value}&background=random`} 
-                        alt="avatar" 
-                        className="h-full w-full object-cover"
-                    />
-                </div>
-            )}
-            <span className={`font-medium ${isPlaceholder ? "text-black font-medium" : "text-black"}`}>
-                {value}
-            </span>
-        </div>
+// Uproszczony komponent DetailRow bez obsługi avatara
+const DetailRow = ({ label, value, isPlaceholder }: { label: string, value: string, isPlaceholder?: boolean }) => (
+    <div className="flex items-center justify-between gap-4">
+        {/* Etykieta po lewej */}
+        <span className="text-slate-500 shrink-0">{label}</span>
+        
+        {/* Wartość po prawej - wyrównana do prawej krawędzi */}
+        <span className={`font-medium text-right ${isPlaceholder ? "text-slate-400" : "text-slate-800"}`}>
+            {value}
+        </span>
     </div>
 );

@@ -2,31 +2,30 @@ import React from 'react';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 
-// Importy Twoich komponentów
+// Importy komponentów
 import { TaskMainContent } from '../components/TaskMainContent';
 import { TaskAttachments } from '../components/TaskAttachments';
 import { TaskSubtasks } from '../components/TaskSubtasks';
 import { TaskRelatedIssues } from '../components/TaskRelatedIssues';
 import { TaskSidebarDetails } from '../components/TaskSidebarDetails';
-import { TaskDevelopment } from '../components/TaskDevelopment';
-import { TaskPath } from '../components/TaskPath';
+import { TaskLabels } from '../components/TaskLabels'
 
 import { EyeIcon, ShareIcon, EllipsisHorizontalIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const TaskPage: React.FC = () => {
     return (
-        // POWRÓT DO BIAŁEGO TŁA: bg-white
         <div className="min-h-screen w-full bg-white font-segoe-ui antialiased">
             <SideBar />
             <TopBar />
 
             <main className="ml-64 pt-(--app-header-h)">
-                <div className="max-w-6xl mx-auto px-10 py-6">
+                {/* ZMIANA: Usunięto max-w-6xl oraz mx-auto. Dodano w-full. */}
+                <div className="w-full px-8 py-6">
                     
-                    {/* Header z nawigacją i akcjami - usunięty bg-white i shadow, zostaje border */}
+                    {/* Header */}
                     <header className="flex items-center justify-between mb-8">
                         <div className="text-[12px] text-slate-500 font-medium">
-                            Dodaj element nadrzędny / CSM-WEB-3
+                            Strona główna (start-page) / CRM-WC-2
                         </div>
                         
                         <div className="flex items-center gap-2">
@@ -47,7 +46,7 @@ const TaskPage: React.FC = () => {
                     </header>
 
                     <div className="flex gap-12">
-                        {/* Lewa strona - Content bez karty (bez bg-white i shadow), czysta struktura */}
+                        {/* Lewa strona - Content zajmuje teraz całą resztę szerokości dzięki flex-1 */}
                         <div className="flex-1 h-fit">
                             <TaskMainContent />
                             <TaskAttachments />
@@ -55,11 +54,10 @@ const TaskPage: React.FC = () => {
                             <TaskRelatedIssues />
                         </div>
 
-                        {/* Prawa strona - Sidebar */}
-                        <aside className="w-80 flex flex-col gap-6">
+                        {/* Prawa strona - Sidebar (stała szerokość) */}
+                        <aside className="w-80 flex flex-col gap-6 shrink-0">
                             <TaskSidebarDetails />
-                            <TaskDevelopment />
-                            <TaskPath />
+                            <TaskLabels/>
                         </aside>
                     </div>
                 </div>
