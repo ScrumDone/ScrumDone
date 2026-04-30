@@ -10,11 +10,11 @@ export const TaskSidebarDetails = () => (
         <TaskStatusDropdown />
 
         {/* Kafelek szczegółów */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
             <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" /> 
-                    <span className="text-[17px] font-bold text-black">Szczegóły</span>
+                    <span className="text-[24px] font-medium text-black">Szczegóły</span>
                 </div>
                 
                 <button className="p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer text-slate-500 hover:text-black">
@@ -24,7 +24,6 @@ export const TaskSidebarDetails = () => (
             
             {/* Lista pól */}
             <div className="space-y-4 text-[14px]">
-                {/* Usunięto flagę hasAvatar */}
                 <DetailRow label="Osoba" value="Artur Nowak" />
                 <DetailRow label="Projekt" value="Adoddle" />
                 <DetailRow label="Utworzono" value="25.03.2026" />
@@ -37,14 +36,10 @@ export const TaskSidebarDetails = () => (
     </div>
 );
 
-// Uproszczony komponent DetailRow bez obsługi avatara
 const DetailRow = ({ label, value, isPlaceholder }: { label: string, value: string, isPlaceholder?: boolean }) => (
     <div className="flex items-center justify-between gap-4">
-        {/* Etykieta po lewej */}
         <span className="text-slate-500 shrink-0">{label}</span>
-        
-        {/* Wartość po prawej - wyrównana do prawej krawędzi */}
-        <span className={`font-medium text-right ${isPlaceholder ? "text-slate-400" : "text-slate-800"}`}>
+        <span className={`font-medium text-right ${isPlaceholder ? "text-slate-800" : "text-slate-800"}`}>
             {value}
         </span>
     </div>

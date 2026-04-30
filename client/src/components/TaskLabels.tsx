@@ -1,14 +1,14 @@
 import { ChevronDownIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 
 export const TaskLabels = () => {
-  const labels = []; // Tutaj możesz dodać etykiety, np. ['Frontend', 'Bug']
+  const labels: string[] = []; // Przykładowa tablica etykiet, można ją zastąpić danymi z API
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-xl border border-slate-200 bg-white p-5">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" />
-          <h2 className="text-[17px] font-bold text-black">Etykiety</h2>
+          <h2 className="text-[24px] font-medium text-black">Etykiety</h2>
         </div>
         
         <button className="p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer text-slate-500 hover:text-black">
@@ -16,7 +16,7 @@ export const TaskLabels = () => {
         </button>
       </div>
 
-      <div className="pl-7">
+      <div>
         {labels.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {labels.map((label) => (

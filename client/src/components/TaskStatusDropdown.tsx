@@ -23,15 +23,15 @@ export const TaskStatusDropdown = () => {
 
     return (
         /* BIAŁY KAFELEK (Kontener zewnętrzny) */
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
             <div className="relative w-full" ref={dropdownRef}>
                 
-                {/* SZARY PRZYCISK (Wewnątrz kafelka) - zgodny z obraz_17.png */}
+                {/* SZARY PRZYCISK (Wewnątrz kafelka) */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className={`
                         flex w-full items-center justify-between gap-2 
-                        rounded-lg bg-[#F1F2F4] px-4 py-2.5 
+                        rounded-lg bg-[#F1F2F4] px-4 py-2 
                         text-[14px] font-medium text-slate-700 
                         hover:bg-[#E2E4E9] transition-all cursor-pointer
                     `}

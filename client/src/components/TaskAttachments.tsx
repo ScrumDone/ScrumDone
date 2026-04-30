@@ -1,23 +1,20 @@
 import { ChevronDownIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 
 export const TaskAttachments = () => (
-  <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <section className="rounded-xl border border-slate-200 bg-white p-5">
     {/* Nagłówek kafelka */}
     <div className="mb-6 flex items-center justify-between">
       <div className="flex items-center gap-2">
         <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" />
-        <h2 className="text-[17px] font-bold text-black">Załączniki</h2>
+        <h2 className="text-[24px] font-medium text-black">Załączniki</h2>
         <span className="text-[15px] text-slate-400 font-medium">(2)</span>
       </div>
-      
-      {/* Trzy kropki pionowo zamiast zębatki/plusa */}
       <button className="p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer">
         <EllipsisVerticalIcon className="h-5 w-5 text-black" />
       </button>
     </div>
 
-    {/* Lista załączników z wcięciem pl-7 (wyrównanie do tekstu pod strzałką) */}
-    <div className="flex gap-6 pl-7">
+    <div className="flex gap-6">
       <AttachmentCard 
         name="design-mockup.png" 
         date="03.04.2026" 
@@ -34,7 +31,7 @@ export const TaskAttachments = () => (
 
 const AttachmentCard = ({ name, date, imgSrc }: { name: string; date: string; imgSrc: string }) => (
   <div className="group w-24 cursor-pointer">
-    {/* Miniaturka - zaokrąglony kwadrat */}
+    {/* Miniaturka */}
     <div className="mb-2 h-24 w-24 overflow-hidden rounded-lg bg-slate-100">
       <img 
         src={imgSrc} 
@@ -42,7 +39,6 @@ const AttachmentCard = ({ name, date, imgSrc }: { name: string; date: string; im
         className="h-full w-full object-cover transition-transform group-hover:scale-105" 
       />
     </div>
-    {/* Metadane pod zdjęciem */}
     <div className="space-y-0.5">
       <p className="truncate text-[11px] font-medium text-slate-500">{name}</p>
       <p className="text-[11px] text-slate-400">{date}</p>
