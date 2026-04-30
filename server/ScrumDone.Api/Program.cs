@@ -24,6 +24,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetService<AppDbContext>();
     db.Database.Migrate();
+    DatabaseSeeder.Seed(db);
 }
 
 // Configure the HTTP request pipeline.
@@ -32,6 +33,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
 
 app.UseHttpsRedirection();
 

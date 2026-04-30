@@ -9,27 +9,27 @@ namespace ScrumDone.Api.Data
 
         }
 
-        DbSet<User> Users { get; set; }
-        DbSet<Company> Companies { get; set; }
-        DbSet<CooperationLog> CooperationLogs { get; set; }
-        DbSet<Project> Projects { get; set; }
-        DbSet<Task> Tasks { get; set; }
-        DbSet<Raport> Raports { get; set; }
-        DbSet<ContactPerson> ContactPeople { get; set; }
-        DbSet<CompanyNote> CompanyNotes { get; set; }
-        DbSet<Message> Messages { get; set; }
-        DbSet<Notification> Notifications { get; set; }
-        DbSet<File> Files { get; set; }
-        DbSet<TaskStatus> TaskStatuses { get; set; }
-        DbSet<TaskPriority> TaskPriorities { get; set; }
-        DbSet<UserPermissionsType> UserPermissionsTypes { get; set; }
-        DbSet<TaskLabel> TaskLabels { get; set; }
-        DbSet<Sprint> Sprints { get; set; }
-        DbSet<NotificationType> NotificationTypes { get; set; }
-        DbSet<ProjectUserMTMRelation> ProjectUserMTMTable { get; set; }
-        DbSet<TaskUserMTMRelation> TaskUserMTMTable { get; set; }
-        DbSet<TaskTaskLabelMTMRelation> TaskTaskLabelMTMTable { get; set; }
-        DbSet<FileAccessMTMRelation> FileAccessMTMTable { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Company> Companies { get; set; }
+        public DbSet<CooperationLog> CooperationLogs { get; set; }
+        public DbSet<Project> Projects { get; set; }
+        public DbSet<Task> Tasks { get; set; }
+        public DbSet<Raport> Raports { get; set; }
+        public DbSet<ContactPerson> ContactPeople { get; set; }
+        public DbSet<CompanyNote> CompanyNotes { get; set; }
+        public DbSet<Message> Messages { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<File> Files { get; set; }
+        public DbSet<TaskStatus> TaskStatuses { get; set; }
+        public DbSet<TaskPriority> TaskPriorities { get; set; }
+        public DbSet<UserPermissionsType> UserPermissionsTypes { get; set; }
+        public DbSet<TaskLabel> TaskLabels { get; set; }
+        public DbSet<Sprint> Sprints { get; set; }
+        public DbSet<NotificationType> NotificationTypes { get; set; }
+        public DbSet<ProjectUserMTMRelation> ProjectUserMTMTable { get; set; }
+        public DbSet<TaskUserMTMRelation> TaskUserMTMTable { get; set; }
+        public DbSet<TaskTaskLabelMTMRelation> TaskTaskLabelMTMTable { get; set; }
+        public DbSet<FileAccessMTMRelation> FileAccessMTMTable { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
