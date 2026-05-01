@@ -4,11 +4,21 @@ export const TaskAttachments = () => (
   <section className="rounded-xl border border-slate-200 bg-white p-5">
     {/* Nagłówek kafelka */}
     <div className="mb-6 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" />
-        <h2 className="text-[24px] font-medium text-black">Załączniki</h2>
-        <span className="text-[15px] text-slate-400 font-medium">(2)</span>
+      <div className="flex items-baseline gap-2">
+        {/* items-baseline wyrównuje dół tekstu. Ikona potrzebuje relatywnego pozycjonowania */}
+        <div className="relative top-[5px]">
+          <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" />
+        </div>
+        
+        <h2 className="text-[20px] leading-[30px] font-medium text-black">
+          Załączniki
+        </h2>
+        
+        <span className="text-[15px] text-slate-400 font-medium">
+          (2)
+        </span>
       </div>
+      
       <button className="p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer">
         <EllipsisVerticalIcon className="h-5 w-5 text-black" />
       </button>
@@ -31,7 +41,6 @@ export const TaskAttachments = () => (
 
 const AttachmentCard = ({ name, date, imgSrc }: { name: string; date: string; imgSrc: string }) => (
   <div className="group w-24 cursor-pointer">
-    {/* Miniaturka */}
     <div className="mb-2 h-24 w-24 overflow-hidden rounded-lg bg-slate-100">
       <img 
         src={imgSrc} 

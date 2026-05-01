@@ -5,17 +5,24 @@ export const TaskRelatedIssues = () => (
     
     {/* Nagłówek kafelka */}
     <div className="mb-6 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" />
-        <h2 className="text-[24px] font-medium text-black">Powiązane zgłoszenia</h2>
+      <div className="flex items-baseline gap-2">
+        {/* Twoja sprawdzona korekta: items-baseline + relative top-[5px] */}
+        <div className="relative top-[5px]">
+          <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" />
+        </div>
+        
+        <h2 className="text-[20px] leading-[30px] font-medium text-black">
+          Powiązane zgłoszenia
+        </h2>
       </div>
+      
       <button className="p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer text-slate-500 hover:text-black">
         <EllipsisVerticalIcon className="h-5 w-5" />
       </button>
     </div>
 
     <div>
-      <button className="text-[13px] text-slate-500 font-medium hover:text-black transition-colors">
+      <button className="text-[13px] text-slate-500 font-medium hover:text-black transition-colors cursor-pointer">
         Dodaj powiązane zgłoszenie
       </button>
     </div>

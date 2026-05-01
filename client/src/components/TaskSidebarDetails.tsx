@@ -10,11 +10,17 @@ export const TaskSidebarDetails = () => (
         <TaskStatusDropdown />
 
         {/* Kafelek szczegółów */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" /> 
-                    <span className="text-[24px] font-medium text-black">Szczegóły</span>
+                <div className="flex items-baseline gap-2">
+                    {/* Twoja sprawdzona korekta: items-baseline + relative top-[5px] */}
+                    <div className="relative top-[5px]">
+                        <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" /> 
+                    </div>
+                    
+                    <h2 className="text-[20px] leading-[30px] font-medium text-black">
+                        Szczegóły
+                    </h2>
                 </div>
                 
                 <button className="p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer text-slate-500 hover:text-black">

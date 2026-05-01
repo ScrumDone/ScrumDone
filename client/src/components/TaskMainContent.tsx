@@ -3,14 +3,20 @@ import { ChevronDownIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outli
 export const TaskMainContent = () => (
   <div className="flex flex-col gap-8">
     {/* Główny tytuł zadania poza kafelkiem */}
-    <h1 className="text-[34px] text-black">Quotes Generation module</h1>
+    <h1 className="text-[34px] text-black font-semibold">Quotes Generation module</h1>
 
     {/* Kafelek Opis */}
     <section className="rounded-xl border border-slate-200 bg-white p-5">
       <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" />
-          <h2 className="text-[24px] font-medium text-black">Opis</h2>
+        <div className="flex items-baseline gap-2">
+          {/* Twoja sprawdzona korekta: items-baseline + relative top-[5px] */}
+          <div className="relative top-[5px]">
+            <ChevronDownIcon className="h-5 w-5 text-black stroke-[2.5]" />
+          </div>
+          
+          <h2 className="text-[20px] leading-[30px] font-medium text-black">
+            Opis
+          </h2>
         </div>
         
         <button className="p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer">
@@ -23,7 +29,7 @@ export const TaskMainContent = () => (
           Implement quotes generation for clients
         </div>
 
-        {/* Galeria zdjęć - kwadratowe miniatury bez obramowania kart */}
+        {/* Galeria zdjęć */}
         <div className="flex gap-6">
           <AttachmentCard 
             name="screenshot-1.png" 
@@ -41,7 +47,6 @@ export const TaskMainContent = () => (
 
 const AttachmentCard = ({ name, date }: { name: string; date: string }) => (
   <div className="group w-24 cursor-pointer">
-    {/* Miniaturka */}
     <div className="mb-2 h-24 w-24 overflow-hidden rounded-lg bg-slate-100">
       <img 
         src="/image17.png" 
