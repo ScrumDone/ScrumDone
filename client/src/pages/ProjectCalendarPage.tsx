@@ -80,11 +80,10 @@ const ProjectCalendarPage: React.FC = () => {
 
   const startDate = useMemo(() => startOfWeek(new Date(2026, 3, 6), { weekStartsOn: 1 }), [])
 
-  // KLUCZOWA ZMIANA: Bardzo delikatne kolory dla przycisków
   const monthButtonClass = (mode: 'week' | 'month') =>
     `rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer ${
       displayMode === mode 
-        ? 'bg-slate-200/50 text-slate-900' // Aktywny: lekko ciemniejszy od kontenera (slate-200 z przezroczystością)
+        ? 'bg-slate-200/50 text-slate-900'
         : 'bg-transparent text-slate-900 hover:text-slate-700'
     }`
 
@@ -117,7 +116,6 @@ const ProjectCalendarPage: React.FC = () => {
                           </button>
                         </div>
 
-                        {/* ZMIANA: bg-slate-100/50 sprawia, że zewnętrzny prostokąt jest niemal biały, ale odcina się od tła strony */}
                         <div className="inline-flex rounded-xl bg-slate-100/50 p-1">
                           <button
                             type="button"

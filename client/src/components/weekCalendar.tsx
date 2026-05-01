@@ -23,11 +23,9 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks = [] }) =>
         <div className="grid grid-cols-7 overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50">
             {dayNames.map((shortName, index) => {
                 const columnDate = addDays(startDate, index)
-                // Ustawienie "dzisiaj" na sztywno zgodnie z Twoim projektem (7 kwietnia 2026)
                 const isToday = isSameDay(columnDate, new Date(2026, 3, 7)) 
                 const isWeekend = index >= 5
                 
-                // ZMIANA: Tło body jest białe dla zwykłych dni, aby pasowało do tła nagłówka
                 const bodyBgClass = isToday || isWeekend ? 'bg-slate-50' : 'bg-white'
 
                 const tasksForThisDay = tasks.filter(task => 
@@ -44,7 +42,6 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks = [] }) =>
                             <p className="text-[14px] text-slate-400 font-normal">
                                 {shortName}
                             </p>
-                            {/* ZMIANA: Numer dnia ma teraz text-slate-400 (szary), chyba że to dzisiaj (niebieski) */}
                             <p className={`text-[18px] ${isToday ? 'text-[#00aaff] font-medium' : 'text-slate-800 font-normal'}`}>
                                 {format(columnDate, 'd')}
                             </p>

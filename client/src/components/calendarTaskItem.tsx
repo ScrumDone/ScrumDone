@@ -40,7 +40,6 @@ const CalendarTaskItem: React.FC<CalendarTaskItemProps> = ({ title, colorVariant
                 hover:bg-[#e0f2fe]
             `}
         >
-            {/* Kropka zachowuje swój unikalny kolor zależny od wariantu */}
             <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${colors.dot}`} />
             
             <p className="truncate font-segoe-ui text-[12px] leading-4 font-medium text-slate-700 antialiased">
