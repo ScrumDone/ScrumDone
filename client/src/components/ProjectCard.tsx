@@ -1,7 +1,9 @@
 import React from 'react';
 import { CalendarIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 interface ProjectCardProps {
+  slug: string;
   name: string;
   clientName: string;
   description: string;
@@ -13,10 +15,13 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ 
-  name, clientName, description, startDate, endDate, membersCount, progress, status 
+  slug, name, clientName, description, startDate, endDate, membersCount, progress, status 
 }) => {
   return (
-    <div className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-4">
+    <Link
+      to={`/projects/${slug}`}
+      className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-300"
+    >
       
       {/* NAZWA I KLIENCI */}
       <div className="flex justify-between items-start">
@@ -59,7 +64,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           ></div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

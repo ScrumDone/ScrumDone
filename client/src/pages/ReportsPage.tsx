@@ -10,7 +10,7 @@ const ReportsPage: React.FC = () => {
             <TopBar />
 
             <main className="ml-64 pt-(--app-header-h)">
-                <div className="mx-auto max-w-7xl px-8 py-8">
+                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-8 py-6">
                     <div className="mb-6 flex items-center justify-between">
                         <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-[0em] antialiased">
                             Raporty

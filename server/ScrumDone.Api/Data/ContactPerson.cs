@@ -1,6 +1,8 @@
-﻿namespace ScrumDone.Api.Data
+﻿using ScrumDone.Api.Data.Common;
+
+namespace ScrumDone.Api.Data
 {
-    public class ContactPerson
+    public class ContactPerson : IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
     {
         // To validate on POST if atleast one field != null
         public Guid Id { get; set; }
@@ -10,9 +12,11 @@
         public string? Email { get; set; }
         public string? Phone { get; set; }
 
-        public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-        public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset CreatedAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
+        public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
-        public bool IsDeleted { get; set; } = false;
+
+        public Guid CompanyId { get; set; }
     }
 }
