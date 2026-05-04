@@ -123,6 +123,18 @@ public class DatabaseSeeder
         var childMessages = messageFaker.Generate(5);
         context.Messages.AddRange(childMessages);
 
+        var contactPersonFaker = new Faker<ContactPerson>("pl")
+            .RuleFor(p => p.Id, f => Guid.NewGuid())
+            .RuleFor(p => p.Name, f => f.Name.FullName())
+            .RuleFor(p => p.Email, f => f.Internet.Email())
+            .RuleFor(p => p.Role, f => f.Name.JobTitle())
+            .RuleFor(p => p.Phone, f => f.Phone.PhoneNumber())
+            .RuleFor(p => p.IsDeleted, f => f.Random.Bool())
+            .RuleFor(p => p.CreatedAt, f => DateTimeOffset.UtcNow);
+
+        var contactPeople = contactPersonFaker.Generate(5);
+        context.ContactPeople.AddRange(contactPeople);
+
         context.SaveChanges();
     }
 }
