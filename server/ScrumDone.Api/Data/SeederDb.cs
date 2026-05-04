@@ -81,6 +81,48 @@ public class DatabaseSeeder
             .RuleFor(t => t.CreatedAt, f => DateTimeOffset.UtcNow);
 
         var tasks = taskFaker.Generate(50);
-        context.Tasks.AddRange(tasks);    
+        context.Tasks.AddRange(tasks);
+        context.SaveChanges();
+
+
+        var companyNoteFaker = new Faker<CompanyNote>("pl")
+            .RuleFor(n => n.Id, f => Guid.NewGuid())
+            .RuleFor(n => n.CompanyId, f => f.PickRandom(companies).Id)
+            .RuleFor(n => n.UserId, f => f.PickRandom(users).Id)
+            .RuleFor(n => n.Content, f => f.Lorem.Sentence())
+            .RuleFor(n => n.IsDeleted, f => f.Random.Bool())
+            .RuleFor(n => n.CreatedAt, f => DateTimeOffset.UtcNow);
+
+        var notes = companyNoteFaker.Generate(10);
+        context.CompanyNotes.AddRange(notes);
+
+        var messageFaker = new Faker<Message>("pl")
+            .RuleFor(m => m.Id, f => Guid.NewGuid())
+            .RuleFor(m => m.TaskId, f => f.PickRandom(tasks).Id)
+            .RuleFor(m => m.AuthorId, f => f.PickRandom(users).Id)
+            .RuleFor(m => m.Text, f => f.Lorem.Sentence())
+            .RuleFor(m => m.IsEdited, f => f.Random.Bool())
+            .RuleFor(m => m.IsDeleted, f => f.Random.Bool())
+            .RuleFor(m => m.CreatedAt, f => DateTimeOffset.UtcNow);
+
+        var messages = messageFaker.Generate(10);
+        context.Messages.AddRange(messages);
+        context.SaveChanges();
+
+
+        var childMessageFaker = new Faker<Message>("pl")
+            .RuleFor(m => m.Id, f => Guid.NewGuid())
+            .RuleFor(m => m.TaskId, f => f.PickRandom(tasks).Id)
+            .RuleFor(m => m.ParentMessageId, f => f.PickRandom(messages).Id)
+            .RuleFor(m => m.AuthorId, f => f.PickRandom(users).Id)
+            .RuleFor(m => m.Text, f => f.Lorem.Sentence())
+            .RuleFor(m => m.IsEdited, f => f.Random.Bool())
+            .RuleFor(m => m.IsDeleted, f => f.Random.Bool())
+            .RuleFor(m => m.CreatedAt, f => DateTimeOffset.UtcNow);
+
+        var childMessages = messageFaker.Generate(5);
+        context.Messages.AddRange(childMessages);
+
+        context.SaveChanges();
     }
 }
