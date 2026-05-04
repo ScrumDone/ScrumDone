@@ -17,8 +17,8 @@ interface MonthCalendarProps {
 
 const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate }) => {
     const allTasks: CalendarTask[] = [
-        { id: 'task-1', title: 'Quotes Generation', colorVariant: 'blue', date: '2026-04-08' },
-        { id: 'task-2', title: 'Database schema', colorVariant: 'orange', date: '2026-04-08' },
+        { id: 'task-1', title: 'Quotes Generation', colorVariant: 'red', date: '2026-04-08' },
+        { id: 'task-2', title: 'Database schema', colorVariant: 'yellow', date: '2026-04-08' },
         { id: 'task-3', title: 'Real-time notification', colorVariant: 'green', date: '2026-04-12' },
     ]
 
