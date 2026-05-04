@@ -5,6 +5,7 @@ import ProjectsPage from './pages/ProjectsPage'
 import Companiespage from './pages/Companiespage'
 import CalendarPage from './pages/CalendarPage'
 import ReportsPage from './pages/ReportsPage'
+import TaskPage from './pages/TaskPage'
 import FilesPage from './pages/FilesPage'
 import ProjectDetailsPage from './pages/ProjectDetailsPage'
 import ProjectKanbanPage from './pages/ProjectKanbanPage'
@@ -21,6 +22,7 @@ const App: React.FC = () => {
       <Route path="/companies" element={<Companiespage />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/reports" element={<ReportsPage />} />
+      <Route path="/task" element={<TaskPage />} />
       <Route path="/files" element={<FilesPage />} />
     </Routes>
   )
