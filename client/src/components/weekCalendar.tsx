@@ -23,7 +23,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks = [] }) =>
         <div className="grid grid-cols-7 overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50">
             {dayNames.map((shortName, index) => {
                 const columnDate = addDays(startDate, index)
-                const isToday = isSameDay(columnDate, new Date(2026, 3, 7)) 
+                const isToday = isSameDay(columnDate, new Date()) 
                 const isWeekend = index >= 5
                 
                 const bodyBgClass = isToday || isWeekend ? 'bg-slate-50' : 'bg-white'
