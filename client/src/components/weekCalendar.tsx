@@ -17,6 +17,28 @@ interface WeekCalendarProps {
 }
 
 const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks = [] }) => {
+    const allTasks: CalendarTask[] = [
+        ...tasks,
+        { 
+            id: 'task-1', 
+            title: 'Quotes Generation Module', 
+            colorVariant: 'red', 
+            date: '2026-04-21' 
+        },
+        { 
+            id: 'task-2', 
+            title: 'Database schema design', 
+            colorVariant: 'yellow', 
+            date: '2026-04-21' 
+        },
+        { 
+            id: 'task-3', 
+            title: 'Real-time notifications', 
+            colorVariant: 'green', 
+            date: '2026-04-25' 
+        },
+    ]
+
     const dayNames = ['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.']
 
     return (
@@ -28,7 +50,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks = [] }) =>
                 
                 const bodyBgClass = isToday || isWeekend ? 'bg-slate-50' : 'bg-white'
 
-                const tasksForThisDay = tasks.filter(task => 
+                const tasksForThisDay = allTasks.filter(task => 
                     isSameDay(parseISO(task.date), columnDate)
                 )
 
