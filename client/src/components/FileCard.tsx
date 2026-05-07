@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { 
     ArrowDownTrayIcon, 
     GlobeAltIcon, 
@@ -8,6 +8,7 @@ import {
     PresentationChartBarIcon 
 } from '@heroicons/react/24/outline'
 import type { FileItem } from './filesFilters'
+import ImagePreviewModal from './ImagePreviewModal'
 
 interface FileCardProps {
     file: FileItem
@@ -16,6 +17,8 @@ interface FileCardProps {
 const isImageFile = (fileName: string): boolean => /\.(png|jpe?g|svg)$/i.test(fileName)
 
 const FileCard: React.FC<FileCardProps> = ({ file }) => {
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+
     const formatExtensionTag = (type: string): string => {
         const match = type.match(/\((.*?)\)/);
         if (match && match[1]) {
@@ -51,7 +54,18 @@ const FileCard: React.FC<FileCardProps> = ({ file }) => {
             <div className="flex flex-1 items-start gap-4">
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-slate-100 text-slate-500">
                     {file.url && isImageFile(file.name) ? (
-                        <img src={file.url} alt={file.name} className="h-full w-full object-cover" />
+                        <button
+                            type="button"
+                            onClick={() => setIsPreviewOpen(true)}
+                            className="h-full w-full overflow-hidden"
+                            aria-label={`Pokaż podgląd obrazu ${file.name}`}
+                        >
+                            <img
+                                src={file.url}
+                                alt={file.name}
+                                className="h-full w-full object-cover transition duration-200 hover:scale-[1.02]"
+                            />
+                        </button>
                     ) : (
                         renderFileIcon()
                     )}
@@ -127,6 +141,14 @@ const FileCard: React.FC<FileCardProps> = ({ file }) => {
                     Pobierz
                 </a>
             </div>
+            <ImagePreviewModal
+                isOpen={isPreviewOpen}
+                imageUrl={file.url ?? ''}
+                imageAlt={file.name}
+                title={file.name}
+                description={file.description ?? 'Podgląd pliku'}
+                onClose={() => setIsPreviewOpen(false)}
+            />
         </li>
     )
 }
