@@ -38,15 +38,15 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, imageUrl,
                 onClick={(event) => event.stopPropagation()}
             >
                 <div className="border-b border-slate-200 px-8 py-6">
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0">
+                    <div className="relative">
+                        <div className="min-w-0 pr-12">
                             <h2 className="truncate text-2xl font-semibold text-slate-900">{title}</h2>
                             <p className="mt-2 text-sm text-slate-500">{description}</p>
                         </div>
                         <button
                             type="button"
                             onClick={onClose}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                            className="absolute -right-2 -top-2 inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent text-slate-900 transition duration-150 hover:bg-transparent focus:outline-none focus:border-2 focus:border-slate-400 focus:bg-transparent"
                             aria-label="Zamknij podgląd obrazu"
                         >
                             <XMarkIcon className="h-5 w-5" />
