@@ -6,6 +6,7 @@ import { TaskMainContent } from '../components/TaskMainContent';
 import { TaskAttachments } from '../components/TaskAttachments';
 import { TaskSubtasks } from '../components/TaskSubtasks';
 import { TaskRelatedIssues } from '../components/TaskRelatedIssues';
+import { TaskActivity } from '../components/TaskActivity';
 import { TaskSidebarDetails } from '../components/TaskSidebarDetails';
 import { TaskLabels } from '../components/TaskLabels'
 
@@ -29,9 +30,10 @@ const TaskPage: React.FC = () => {
                             <TaskAttachments />
                             <TaskSubtasks />
                             <TaskRelatedIssues />
+                            <TaskActivity />
                         </div>
 
-                        <aside className="w-96 flex-shrink-0 space-y-6 pt-21">
+                        <aside className="w-96 shrink-0 space-y-6 pt-21">
                             <TaskSidebarDetails />
                             <TaskLabels />
                         </aside>
