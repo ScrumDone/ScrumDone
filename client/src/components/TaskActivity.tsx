@@ -87,7 +87,7 @@ export const TaskActivity = () => (
         <button
           key={tab}
           type="button"
-          className={`rounded-[10px] px-3.5 py-2 text-[15px] font-medium transition-colors ${index === 0 ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+          className={`rounded-lg px-3.5 py-2 text-[14px] font-medium leading-5 transition-colors ${index === 0 ? 'bg-slate-200 text-slate-900' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
         >
           {tab}
         </button>
@@ -99,7 +99,7 @@ export const TaskActivity = () => (
         <button
           key={reply}
           type="button"
-          className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[13px] font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] leading-4 font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
         >
           {reply}
         </button>
