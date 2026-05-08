@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDownIcon, EllipsisVerticalIcon, PaperClipIcon } from '@heroicons/react/24/outline';
+import { ArrowUturnLeftIcon, ChevronDownIcon, EllipsisVerticalIcon, FaceSmileIcon, HandThumbUpIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import Avatar from './Avatar';
 
 const activityTabs = ['Rozmowy', 'Komentarze', 'Historia', 'Wymagania'];
@@ -176,48 +176,26 @@ export const TaskActivity = () => {
 
     <div className="space-y-6">
       {threads.map((thread) => (
-        <article key={`${thread.author}-${thread.time}`}>
-          <div className="flex items-start gap-3">
-            <Avatar
-              initials={thread.initials}
-              size="sm"
-              className="shrink-0"
-              bgClassName={thread.bgClassName ?? 'bg-slate-200'}
-              textClassName="text-slate-700"
-            />
-
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="text-[15px] font-semibold text-slate-900">{thread.author}</span>
-                <span className="text-[13px] text-slate-500">{thread.date}, {thread.time}</span>
-              </div>
-
-              <div className="rounded-xl bg-slate-50 px-4 py-3 text-[15px] leading-6 text-slate-700">
-                {thread.message}
-              </div>
-            </div>
-          </div>
+        <article key={`${thread.author}-${thread.time}`} className="group">
+          <MessageBlock
+            author={thread.author}
+            initials={thread.initials}
+            date={thread.date}
+            time={thread.time}
+            message={thread.message}
+            bgClassName={thread.bgClassName}
+          />
 
           {thread.reply ? (
-            <div className="mt-5 ml-10 flex items-start gap-3">
-              <Avatar
+            <div className="mt-5 ml-10">
+              <MessageBlock
+                author={thread.reply.author}
                 initials={thread.reply.initials}
-                size="sm"
-                className="shrink-0"
-                bgClassName={thread.reply.bgClassName ?? 'bg-slate-200'}
-                textClassName="text-slate-700"
+                date={thread.reply.date}
+                time={thread.reply.time}
+                message={thread.reply.message}
+                bgClassName={thread.reply.bgClassName}
               />
-
-              <div className="min-w-0 flex-1">
-                <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <span className="text-[15px] font-semibold text-slate-900">{thread.reply.author}</span>
-                  <span className="text-[13px] text-slate-500">{thread.reply.date}, {thread.reply.time}</span>
-                </div>
-
-                <div className="rounded-xl bg-slate-50 px-4 py-3 text-[15px] leading-6 text-slate-700">
-                  {thread.reply.message}
-                </div>
-              </div>
             </div>
           ) : null}
         </article>
@@ -226,3 +204,56 @@ export const TaskActivity = () => {
     </section>
   );
 };
+
+type MessageBlockProps = {
+  author: string;
+  initials: string;
+  date: string;
+  time: string;
+  message: string;
+  bgClassName: string | undefined;
+};
+
+const MessageBlock = ({ author, initials, date, time, message, bgClassName }: MessageBlockProps) => (
+  <div className="flex items-start gap-3">
+    <Avatar
+      initials={initials}
+      size="sm"
+      className="shrink-0"
+      bgClassName={bgClassName ?? 'bg-slate-200'}
+      textClassName="text-slate-700"
+    />
+
+    <div className="group/message min-w-0 flex-1">
+      <div className="mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="text-[15px] font-medium text-slate-900">{author}</span>
+        <span className="text-[13px] text-slate-500">{date}, {time}</span>
+      </div>
+
+      <div className="rounded-xl bg-slate-50 px-4 py-3 text-[15px] leading-6 text-slate-700 transition-colors hover:bg-slate-100/80">
+        <p>{message}</p>
+      </div>
+
+      <div className="mt-3 flex items-center gap-4 text-slate-600 opacity-0 transition-opacity group-hover/message:opacity-100">
+        <button type="button" className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-900">
+          <HandThumbUpIcon className="h-5 w-5" />
+          <span className="text-[12px] font-semibold">Polub</span>
+        </button>
+
+        <button type="button" className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-900">
+          <ArrowUturnLeftIcon className="h-5 w-5" />
+          <span className="text-[12px] font-semibold">Odpowiedz</span>
+        </button>
+
+        <button type="button" className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-900">
+          <FaceSmileIcon className="h-5 w-5" />
+          <span className="text-[12px] font-semibold">Reakcja</span>
+        </button>
+
+        <button type="button" className="rounded p-1 transition-colors hover:bg-white hover:text-slate-900">
+          <EllipsisVerticalIcon className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  </div>
+);
