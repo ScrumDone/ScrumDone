@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ChevronDownIcon, EllipsisVerticalIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 import Avatar from './Avatar';
 
@@ -64,8 +65,48 @@ const activityThreads: ActivityThread[] = [
   },
 ];
 
-export const TaskActivity = () => (
-  <section className="rounded-xl border border-slate-200 bg-white p-5">
+const formatActivityDateTime = () => {
+  const now = new Date();
+  const date = new Intl.DateTimeFormat('pl-PL').format(now);
+  const time = new Intl.DateTimeFormat('pl-PL', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).format(now);
+
+  return { date, time };
+};
+
+export const TaskActivity = () => {
+  const [threads, setThreads] = useState<ActivityThread[]>(activityThreads);
+  const [comment, setComment] = useState('');
+
+  const submitComment = () => {
+    const trimmedComment = comment.trim();
+
+    if (!trimmedComment) {
+      return;
+    }
+
+    const { date, time } = formatActivityDateTime();
+
+    setThreads((currentThreads) => [
+      {
+        author: 'AN',
+        initials: 'AN',
+        date,
+        time,
+        message: trimmedComment,
+        bgClassName: 'bg-sky-500 text-white',
+      },
+      ...currentThreads,
+    ]);
+    setComment('');
+  };
+
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-5">
     <div className="mb-5 flex items-center justify-between">
       <div className="flex items-baseline gap-2">
         <div className="relative top-1.25">
@@ -99,6 +140,7 @@ export const TaskActivity = () => (
         <button
           key={reply}
           type="button"
+          onClick={() => setComment(reply)}
           className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[12px] leading-4 font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
         >
           {reply}
@@ -109,16 +151,31 @@ export const TaskActivity = () => (
     <div className="mb-6 flex items-start gap-3">
       <Avatar initials="AN" size="md" className="shrink-0" bgClassName="bg-sky-500" />
 
-      <div className="flex min-h-16.5 flex-1 items-start justify-between rounded-xl bg-slate-50 px-4 py-3">
-        <span className="pt-0.5 text-[15px] text-slate-400">Dodaj komentarz...</span>
-        <button type="button" className="rounded p-1 text-slate-500 transition-colors hover:bg-white hover:text-slate-900">
-          <PaperClipIcon className="h-5 w-5" />
-        </button>
-      </div>
+      <form
+        className="flex min-h-16.5 flex-1 items-start justify-between gap-3 rounded-xl bg-slate-50 px-4 py-3"
+        onSubmit={(event) => {
+          event.preventDefault();
+          submitComment();
+        }}
+      >
+        <textarea
+          value={comment}
+          onChange={(event) => setComment(event.target.value)}
+          placeholder="Dodaj komentarz..."
+          rows={2}
+          className="min-h-10 flex-1 resize-none border-0 bg-transparent pt-0.5 text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0"
+        />
+
+        <div className="flex items-center gap-1">
+          <button type="button" className="rounded p-1 text-slate-500 transition-colors hover:bg-white hover:text-slate-900">
+            <PaperClipIcon className="h-5 w-5" />
+          </button>
+        </div>
+      </form>
     </div>
 
     <div className="space-y-6">
-      {activityThreads.map((thread) => (
+      {threads.map((thread) => (
         <article key={`${thread.author}-${thread.time}`}>
           <div className="flex items-start gap-3">
             <Avatar
@@ -166,5 +223,6 @@ export const TaskActivity = () => (
         </article>
       ))}
     </div>
-  </section>
-);
+    </section>
+  );
+};
