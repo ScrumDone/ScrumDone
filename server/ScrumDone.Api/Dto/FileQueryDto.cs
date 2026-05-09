@@ -1,20 +1,24 @@
-    public class FileQueryDto : IPagination, ISort, ISearch
-    {
-        public List<string>? Labels { get; set; }
-        public string? Search { get; set; } = null;
+public enum FileInclude
+{
+    UsersWithAccess,
+    Project,
+    Company
+}
 
-        public Guid? ProjectId { get; set; }
-        public Guid? ClientId { get; set; }
-        public Guid? AuthorId { get; set; }
+public class FileQueryDto : IPagination, ISort, ISearch
+{
+    public string? Search { get; set; } = null;
+    public List<string>? Labels { get; set; }
+    public List<string>? FileType { get; set; }
 
-        public int Page { get; set; } = 1;
-        public int PageSize { get; set; } = 20;
+    public Guid? ProjectId { get; set; }
+    public Guid? ClientId { get; set; }
+    public Guid? AuthorId { get; set; }
+    public List<FileInclude>? Includes { get; set; }
 
-        public string? SortBy { get; set; }
-        public string? SortOrder { get; set; } 
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
 
-        // optional includes, heavy data that may benefit some views
-        // ensure clients know what possible includes there are
-        // consider using enums on the backend
-        // public List<string>? Include { get; set; } or some other structure
-    }
+    public string? SortBy { get; set; }
+    public string? SortOrder { get; set; } 
+}
