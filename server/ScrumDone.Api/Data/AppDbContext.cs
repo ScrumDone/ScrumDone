@@ -54,6 +54,11 @@ namespace ScrumDone.Api.Data
                 .HasOne(f => f.Author)
                 .WithMany(u => u.AuthoredFiles)
                 .HasForeignKey(f => f.AuthorId);
+
+            // modelBuilder.Entity<CooperationLog>()
+            //     .HasOne(f => f.User)
+            //     .WithMany(u => u.CreatedCooperationLogs)
+            //     .HasForeignKey(f => f.AuthorId);
         }
     }
 }
