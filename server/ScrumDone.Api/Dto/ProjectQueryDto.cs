@@ -9,8 +9,8 @@ public enum ProjectInclude
 public class ProjectQueryDto : IPagination, ISort, ISearch
 {
     public string? Search { get; set; }
-    public List<Guid>? ClientIds { get; set; }
     public List<Guid>? ProjectIds { get; set; }
+    public List<Guid>? ClientIds { get; set; }
     public List<Guid>? UsersIds { get; set; }
     public DateTimeOffset? StartDate { get; set; }
     public DateTimeOffset? ExpectedFinishDate { get; set; }

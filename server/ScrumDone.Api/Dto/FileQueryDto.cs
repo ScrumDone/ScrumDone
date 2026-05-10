@@ -2,7 +2,7 @@ public enum FileInclude
 {
     UsersWithAccess,
     Project,
-    Company
+    Client
 }
 
 public class FileQueryDto : IPagination, ISort, ISearch
