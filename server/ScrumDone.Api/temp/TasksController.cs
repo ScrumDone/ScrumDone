@@ -5,11 +5,11 @@ namespace ScrumDone.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public class TasksController : ControllerBase
     {
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetFiles([FromQuery] UserQueryDto query)
+        public async Task<IActionResult> GetFiles([FromQuery] TaskQueryDto query)
         {
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
