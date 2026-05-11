@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
-import { MapPin, Mail, UserPlus, Edit } from 'lucide-react';
+import { MapPin, Mail, UserPlus, Edit, Phone } from 'lucide-react';
 import { companies } from '../data/companies';
 
 const CompanyDetailsPage: React.FC = () => {
@@ -62,7 +62,7 @@ const CompanyDetailsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-12 mb-12 pb-12 border-b border-gray-200">
+                <div className="grid grid-cols-2 gap-12 mb-6 pb-6 border-b border-gray-200">
                   <div>
                     <div className="mb-1 flex items-center gap-3">
                       <MapPin className="w-5 h-5 text-gray-400" />
@@ -86,42 +86,37 @@ const CompanyDetailsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Contact Persons Section */}
                 <div>
                   <h3 className="mb-6 text-lg font-semibold text-gray-900">Osoby kontaktowe</h3>
-                  <div className="space-y-6">
+                  <div className="space-y-3">
                     {company.contacts.map((contact) => (
                       <div
                         key={contact.id}
-                        className="flex items-start justify-between border-b border-gray-100 pb-6 last:border-b-0"
+                        className="flex items-center justify-between bg-[#F9FAFB] rounded-[10px] p-4"
                       >
-                        <div>
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-3">
                             <h4 className="font-medium text-gray-900">{contact.name}</h4>
                             {contact.id === company.contacts[0].id && (
-                              <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                              <span className="rounded-full bg-scrumdone-blue-main px-2 py-1 text-xs font-medium text-white">
                                 Główny kontakt
                               </span>
                             )}
-                          </div>
-                          <p className="text-sm text-gray-500">{contact.role}</p>
-                          <div className="mt-2 space-y-1">
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">✉️</span> {contact.email}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">📱</span> {contact.phone}
-                            </p>
+                          </div >
+                          <p className="text-sm text-gray-500 mt-1">{contact.role}</p>
+                          <div className="mt-3 flex  items-center gap-64 text-sm text-gray-600">
+                            <div className="flex items-center gap-3">
+                                <Mail className="w-4 h-4 text-gray-400" />
+                                <span>{contact.email}</span>
+                            </div>
+                                                    
+                            <div className="flex items-center gap-3 text-sm text-gray-600">
+                                <Phone className="w-4 h-4 text-gray-400" />
+                                <span>{contact.phone}</span>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <button className="rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Edytuj
-                          </button>
-                          <button className="rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            Usuń
-                          </button>
-                        </div>
+
                       </div>
                     ))}
                   </div>
