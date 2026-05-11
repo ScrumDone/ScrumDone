@@ -36,8 +36,8 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
       >
         <div className="flex items-start justify-between px-6 pb-4 pt-8">
           <div>
-            <h2 className="mb-2 font-segoe-ui text-[18px] font-semibold tracking-[-0.44px] text-slate-900">Edytuj firmę</h2>
-            <p className="font-segoe-ui text-sm leading-5 tracking-[-0.15px] text-slate-500">Zaktualizuj informacje o firmie</p>
+            <h2 className="mb-1 text-[18px] font-semibold tracking-[-0.44px] text-slate-900">Edytuj firmę</h2>
+            <p className=" text-sm leading-5 tracking-[-0.15px] text-slate-500">Zaktualizuj informacje o firmie</p>
           </div>
           <button
             type="button"
@@ -118,7 +118,7 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
           </div>
 
           <div className="border-t border-slate-200 pt-5">
-            <h3 className="mb-2 block font-segoe-ui text-[15px] font-medium text-slate-800">Historia współpracy</h3>
+            <h3 className="mb-1 block text-[18px] leading-6.75 font-medium text-slate-800">Historia współpracy</h3>
             <p className="font-segoe-ui text-sm leading-5 tracking-[-0.15px] text-slate-500">Dodaj wydarzenie do historii współpracy z firmą</p>
 
             <button
