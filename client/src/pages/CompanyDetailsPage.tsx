@@ -5,18 +5,27 @@ import TopBar from '../components/topBar';
 import { MapPin, Mail, UserPlus, Edit, Phone } from 'lucide-react';
 import { companies, type Company } from '../data/companies';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
+import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
 
 const CompanyDetailsPage: React.FC = () => {
   const { companySlug } = useParams();
   const company = companies.find((item) => item.slug === companySlug);
   const [displayedCompany, setDisplayedCompany] = useState<Company | null>(company ?? null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isContactAddModalOpen, setIsContactAddModalOpen] = useState(false);
   const [draft, setDraft] = useState<CompanyEditDraft>({
     name: company?.name ?? '',
     nip: company?.nip ?? '',
     krs: company?.companyNumber ?? '',
     regon: company?.regon ?? '',
     address: company?.address ?? '',
+  });
+  const [contactDraft, setContactDraft] = useState<CompanyContactDraft>({
+    name: '',
+    role: '',
+    email: '',
+    phone: '',
+    isMainContact: false,
   });
   const mainContact = displayedCompany?.contacts[0];
 
@@ -29,7 +38,15 @@ const CompanyDetailsPage: React.FC = () => {
       regon: company?.regon ?? '',
       address: company?.address ?? '',
     });
+    setContactDraft({
+      name: '',
+      role: '',
+      email: '',
+      phone: '',
+      isMainContact: false,
+    });
     setIsEditModalOpen(false);
+    setIsContactAddModalOpen(false);
   }, [company]);
 
   if (!displayedCompany) {
@@ -62,6 +79,21 @@ const CompanyDetailsPage: React.FC = () => {
     setIsEditModalOpen(false);
   };
 
+  const openContactAddModal = () => {
+    setContactDraft({
+      name: '',
+      role: '',
+      email: '',
+      phone: '',
+      isMainContact: false,
+    });
+    setIsContactAddModalOpen(true);
+  };
+
+  const closeContactAddModal = () => {
+    setIsContactAddModalOpen(false);
+  };
+
   const saveCompanyChanges = () => {
     setDisplayedCompany((prev) =>
       prev
@@ -76,6 +108,10 @@ const CompanyDetailsPage: React.FC = () => {
         : prev,
     );
     setIsEditModalOpen(false);
+  };
+
+  const saveContactChanges = () => {
+    setIsContactAddModalOpen(false);
   };
 
   return (
@@ -119,7 +155,11 @@ const CompanyDetailsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  <button
+                    type="button"
+                    onClick={openContactAddModal}
+                    className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
                     <UserPlus className="w-4 h-4 text-gray-600" />
                     <span>Dodaj kontakt</span>
                   </button>
@@ -204,6 +244,14 @@ const CompanyDetailsPage: React.FC = () => {
         onClose={closeEditModal}
         onSave={saveCompanyChanges}
         onDraftChange={setDraft}
+      />
+
+      <CompanyContactAddModal
+        isOpen={isContactAddModalOpen}
+        draft={contactDraft}
+        onClose={closeContactAddModal}
+        onSave={saveContactChanges}
+        onDraftChange={setContactDraft}
       />
     </div>
   );
