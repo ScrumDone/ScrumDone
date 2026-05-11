@@ -5,36 +5,36 @@ namespace ScrumDone.Api.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class TasksController : ControllerBase
+public class NotificationsController : ControllerBase
 {
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<TaskDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<NotificationDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public IActionResult GetTasks([FromQuery] TaskQueryDto query)
+    public IActionResult GetNotifications([FromQuery] NotificationQueryDto query)
     {
         return StatusCode(StatusCodes.Status501NotImplemented);
     }
 
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(TaskDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotificationDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public IActionResult GetTaskById([FromRoute] Guid id)
+    public IActionResult GetNotificationById([FromRoute] Guid id)
     {
         return StatusCode(StatusCodes.Status501NotImplemented);
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(TaskDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(NotificationDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public IActionResult CreateTask([FromBody] TaskCreateDto dto)
+    public IActionResult CreateNotification([FromBody] NotificationCreateDto dto)
     {
         return StatusCode(StatusCodes.Status501NotImplemented);
     }
 
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(TaskDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotificationDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public IActionResult UpdateTask([FromRoute] Guid id, [FromBody] TaskUpdateDto dto)
+    public IActionResult UpdateNotification([FromRoute] Guid id, [FromBody] NotificationUpdateDto dto)
     {
         return StatusCode(StatusCodes.Status501NotImplemented);
     }
@@ -42,7 +42,7 @@ public class TasksController : ControllerBase
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-    public IActionResult DeleteTask([FromRoute] Guid id)
+    public IActionResult DeleteNotification([FromRoute] Guid id)
     {
         return StatusCode(StatusCodes.Status501NotImplemented);
     }
