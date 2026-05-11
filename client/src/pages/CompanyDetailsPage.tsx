@@ -1,0 +1,137 @@
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import SideBar from '../components/sideBar';
+import TopBar from '../components/topBar';
+import { MapPin, Mail, UserPlus, Edit, Phone } from 'lucide-react';
+import { companies } from '../data/companies';
+
+const CompanyDetailsPage: React.FC = () => {
+  const { companySlug } = useParams();
+  const company = companies.find((item) => item.slug === companySlug);
+
+  return (
+    <div className="min-h-screen w-full bg-[#F9FAFB]">
+      <SideBar />
+      <TopBar />
+
+      <main className="ml-64 pt-(--app-header-h)">
+        <div className="flex w-full flex-col">
+          {company ? (
+            <>
+              <div className="mx-8 mt-6">
+                <button className="flex items-center text-gray-500 hover:text-gray-900 text-sm font-medium" onClick ={() => window.history.back()}>
+                  <span>← Powrót do firm</span>
+                </button>
+              </div>
+
+              <div className="mx-8 mt-6 rounded-[14px] border border-gray-200 bg-white p-6">
+                <div className="flex items-start justify-between pb-8">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-16 w-16 mr-1 items-center justify-center rounded-lg bg-blue-100">
+                      <span className="text-2xl font-bold text-blue-600">
+                        {company.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-medium leading-8 text-gray-900">{company.name}</h1>
+                      <div className="mt-3 grid grid-cols-3 gap-6">
+                        <div>
+                          <p className="text-xs font-regular leading-4 text-gray-500 uppercase">NIP</p>
+                          <p className="text-sm font-medium leading-5 text-gray-900">{company.nip}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-regular leading-4 text-gray-500 uppercase">REGON</p>
+                          <p className="text-sm font-medium leading-5 text-gray-900">{company.regon}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-regular leading-4 text-gray-500 uppercase">Numer firmy</p>
+                          <p className="text-sm font-medium leading-5 text-gray-900">{company.companyNumber}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                      <UserPlus className="w-4 h-4 text-gray-600" />
+                      <span>Dodaj kontakt</span>
+                    </button>
+                    <button className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                      <Edit className="w-4 h-4 text-gray-600" />
+                      <span>Edytuj</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-12 mb-6 pb-6 border-b border-gray-200">
+                  <div>
+                    <div className="mb-1 flex items-center gap-3">
+                      <MapPin className="w-5 h-5 text-gray-400" />
+                      <h3 className="font-regular text-sm leading-5 text-gray-700">Adres</h3>
+                    </div>
+                    <p className="text-sm text-gray-800">{company.address}</p>
+                  </div>
+
+                  <div>
+                    <div className="mb-1 flex items-center gap-3">
+                      <Mail className="w-5 h-5 text-gray-400" />
+                      <h3 className="font-regular text-sm leading-5  text-gray-700">Adresy email</h3>
+                    </div>
+                    <div className="space-y-1">
+                      {company.emails.map((email, index) => (
+                        <p key={index} className="text-sm text-gray-800">
+                          {email}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="mb-6 text-lg font-semibold text-gray-900">Osoby kontaktowe</h3>
+                  <div className="space-y-3">
+                    {company.contacts.map((contact) => (
+                      <div
+                        key={contact.id}
+                        className="flex items-center justify-between bg-[#F9FAFB] rounded-[10px] p-4"
+                      >
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-3">
+                            <h4 className="font-medium text-gray-900">{contact.name}</h4>
+                            {contact.id === company.contacts[0].id && (
+                              <span className="rounded-full bg-scrumdone-blue-main px-2 py-1 text-xs font-medium text-white">
+                                Główny kontakt
+                              </span>
+                            )}
+                          </div >
+                          <p className="text-sm text-gray-500 mt-1">{contact.role}</p>
+                          <div className="mt-3 flex  items-center gap-64 text-sm text-gray-600">
+                            <div className="flex items-center gap-3">
+                                <Mail className="w-4 h-4 text-gray-400" />
+                                <span>{contact.email}</span>
+                            </div>
+                                                    
+                            <div className="flex items-center gap-3 text-sm text-gray-600">
+                                <Phone className="w-4 h-4 text-gray-400" />
+                                <span>{contact.phone}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
+              Nie znaleziono firmy o podanym adresie.
+            </section>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default CompanyDetailsPage;
