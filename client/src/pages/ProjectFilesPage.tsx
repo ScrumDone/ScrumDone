@@ -36,7 +36,7 @@ const ProjectFilesPage: React.FC = () => {
                 </button>
               </div>
 
-              <section className="overflow-hidden rounded-[18px] border border-slate-200 bg-white">
+              <section className="overflow-hidden rounded-[10px] border border-slate-200 bg-white">
                 <div className="hidden grid-cols-[5rem_2fr_1fr_1fr_16rem] gap-30 border-b border-slate-200 px-6 py-4 text-sm font-medium text-slate-500 md:grid">
                   <span>Podgląd</span>
                   <span>Nazwa</span>

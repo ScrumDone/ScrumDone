@@ -40,7 +40,7 @@ const ProjectFileRow: React.FC<ProjectFileRowProps> = ({ file }) => {
         <div className="flex items-center">
           <button
             onClick={() => setIsPreviewOpen(true)}
-            className="flex h-16 w-16 items-center justify-center rounded-3xl border border-slate-300 bg-white transition hover:border-scrumdone-blue-main hover:scale-105 active:scale-95"
+            className="flex h-16 w-16 items-center justify-center rounded-[4px] border border-slate-300 bg-white transition hover:border-scrumdone-blue-main hover:scale-105 active:scale-95"
           >
             {renderIcon()}
           </button>
