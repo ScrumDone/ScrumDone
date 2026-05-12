@@ -4,6 +4,7 @@
     {
         // To validate on POST if atleast one field != null
         public Guid Id { get; set; }
+        public Guid CompanyId { get; set; }
         public bool IsPrimary { get; set; } = false;
         public string? Name { get; set; }
         public string? Role { get; set; }

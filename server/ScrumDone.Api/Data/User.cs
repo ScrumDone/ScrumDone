@@ -14,9 +14,9 @@
         public Guid UserPermissionsTypeId { get; set; }
         public List<ProjectUserMTMRelation> Projects { get; set; } = new();
         public List<Message> Comments { get; set; } = new();
-        public List<Task> AssignedTasks { get; set; } = new();
+        public List<TaskUserMTMRelation> AssignedTasks { get; set; } = new();
         public List<Raport> CreatedRaports { get; set; } = new();
-        public UserPermissionsType UserPermissionsType { get; set; }
+        public UserPermissionsType PermissionsType { get; set; }
         public List<CompanyNote> CreatedCompanyNotes { get; set; } = new();
         public List<CooperationLog> CreatedCooperationLogs { get; set; } = new();
         public List<Notification> AuthoredNotifications { get; set; } = new();
