@@ -4,6 +4,8 @@ using ScrumDone.Api.Data;
 using Task = ScrumDone.Api.Data.Task;
 using TaskStatus = ScrumDone.Api.Data.TaskStatus;
 using File = ScrumDone.Api.Data.File;
+using Company = ScrumDone.Api.Data.Company;
+using Bogus.DataSets;
 public class DatabaseSeeder
 {
     public static void Seed(AppDbContext context)
@@ -101,7 +103,7 @@ public class DatabaseSeeder
             .RuleFor(p => p.Id, f => Guid.NewGuid())
             .RuleFor(p => p.Name, f => f.Commerce.ProductName() + " Project")
             .RuleFor(p => p.Description, f => f.Lorem.Paragraph())
-            .RuleFor(p => p.Company, f => f.PickRandom(companies))
+            .RuleFor(p => p.CompanyId, f => f.PickRandom(companies).Id)
             .RuleFor(p => p.ProfilePictureUrl, f => f.Image.PicsumUrl())
             .RuleFor(p => p.IsSetToScrum, f => f.Random.Bool())
             .RuleFor(p => p.TeamMembers, (f, CurrentProject) =>
@@ -254,8 +256,10 @@ public class DatabaseSeeder
 
         // var filesFaker = new Faker<File>("pl")
         //     .RuleFor(s => s.Id, f => Guid.NewGuid())
-        //     .RuleFor(s => s.ProjectId, f => f.PickRandom(projects).Id)
-        //     .RuleFor(s => s.Id, f => Guid.NewGuid());
+        //     .RuleFor(s => s.Description, f => f.Lorem.Sentence())
+        //     .RuleFor(s => s.OldFileName, f => f.Lorem.Word())
+        //     .RuleFor(s => s.FilePath, f => f.Image.PicsumUrl())
+        //     .RuleFor(s => s.AuthorId, f => f.PickRandom(users).Id);
 
         // var files = filesFaker.Generate(4);
         // context.Files.AddRange(files);
