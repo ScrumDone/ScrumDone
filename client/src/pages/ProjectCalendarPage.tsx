@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react'
-import { startOfWeek } from 'date-fns'
+import { startOfWeek, addDays, format, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns'
+import { pl } from 'date-fns/locale'
 import { useParams } from 'react-router-dom'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
 import ProjectTopBar from '../components/ProjectTopBar'
 import WeekCalendar from '../components/weekCalendar'
+import ProjectMonthCalendar from '../components/ProjectMonthCalendar'
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter'
 import CalendarNoDeadlineTasks, { type CalendarNoDeadlineTask } from '../components/calendarNoDeadlineTasks'
 import { projects } from '../data/projects'
@@ -24,61 +26,40 @@ const teamMembers: PersonFilter[] = [
 ]
 
 const noDeadlineTasks: CalendarNoDeadlineTask[] = [
-  {
-    id: 'code-refactoring-user-module',
-    title: 'Code refactoring - user module',
-    assigneeInitials: 'AN',
-    assigneeName: 'Artur Nowak',
-    accentColor: 'blue',
-    dotColor: 'green',
-  },
-  {
-    id: 'documentation-update',
-    title: 'Documentation update',
-    assigneeInitials: 'EB',
-    assigneeName: 'Eryk Baczyński',
-    accentColor: 'blue',
-    dotColor: 'orange',
-  },
-  {
-    id: 'e2e-testing-setup',
-    title: 'E2E testing setup',
-    assigneeInitials: 'EB',
-    assigneeName: 'Eryk Baczyński',
-    accentColor: 'blue',
-    dotColor: 'red',
-  },
-  {
-    id: 'mobile-responsiveness',
-    title: 'Mobile responsiveness',
-    assigneeInitials: 'MK',
-    assigneeName: 'Maria Kowalska',
-    accentColor: 'blue',
-    dotColor: 'orange',
-  },
+  { id: 'code-refactoring-user-module', title: 'Code refactoring - user module', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', accentColor: 'blue', dotColor: 'green' },
+  { id: 'documentation-update', title: 'Documentation update', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', accentColor: 'blue', dotColor: 'orange' },
+  { id: 'e2e-testing-setup', title: 'E2E testing setup', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', accentColor: 'blue', dotColor: 'red' },
+  { id: 'mobile-responsiveness', title: 'Mobile responsiveness', assigneeInitials: 'MK', assigneeName: 'Maria Kowalska', accentColor: 'blue', dotColor: 'orange' },
 ]
 
 const calendarTasks: CalendarTask[] = [
-  {
-    id: 'quotes-generation',
-    title: 'Quotes Generation',
-    colorVariant: 'red',
-    date: '2026-04-07',
-  },
-  {
-    id: 'giveaway-campaign',
-    title: 'Giveaway Campaign',
-    colorVariant: 'green',
-    date: '2026-04-09',
-  },
+  { id: 'quotes-generation', title: 'Quotes Generation', colorVariant: 'red', date: '2026-04-07' },
+  { id: 'giveaway-campaign', title: 'Giveaway Campaign', colorVariant: 'green', date: '2026-04-09' },
 ]
 
 const ProjectCalendarPage: React.FC = () => {
   const { projectSlug } = useParams()
   const project = projects.find((item) => item.slug === projectSlug)
+  
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 6))
 
-  const startDate = useMemo(() => startOfWeek(new Date(2026, 3, 6), { weekStartsOn: 1 }), [])
+  const handlePrev = () => {
+    setCurrentDate(prev => displayMode === 'week' ? subWeeks(prev, 1) : subMonths(prev, 1))
+  }
+
+  const handleNext = () => {
+    setCurrentDate(prev => displayMode === 'week' ? addWeeks(prev, 1) : addMonths(prev, 1))
+  }
+
+  const dateLabel = useMemo(() => {
+    if (displayMode === 'week') {
+      const start = startOfWeek(currentDate, { weekStartsOn: 1 })
+      const end = addDays(start, 6)
+      return `${format(start, 'd MMMM', { locale: pl })} - ${format(end, 'd MMMM yyyy', { locale: pl })}`
+    }
+    return format(currentDate, 'LLLL yyyy', { locale: pl })
+  }, [currentDate, displayMode])
 
   const monthButtonClass = (mode: 'week' | 'month') =>
     `rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer ${
@@ -105,13 +86,21 @@ const ProjectCalendarPage: React.FC = () => {
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         
                         <div className="flex items-center gap-2">
-                          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-900 transition-colors hover:bg-slate-100 cursor-pointer">
+                          <button 
+                            type="button" 
+                            onClick={handlePrev}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-900 transition-colors hover:bg-slate-100 cursor-pointer"
+                          >
                             <ChevronLeftIcon className="h-4 w-4" />
                           </button>
-                          <span className="font-segoe-ui text-[14px] leading-5 text-slate-900 mx-1">
-                            6 kwietnia - 12 kwietnia 2026
+                          <span className="font-segoe-ui text-[14px] leading-5 text-slate-900 mx-1 min-w-[180px] text-center capitalize">
+                            {dateLabel}
                           </span>
-                          <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-900 transition-colors hover:bg-slate-100 cursor-pointer">
+                          <button 
+                            type="button" 
+                            onClick={handleNext}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-900 transition-colors hover:bg-slate-100 cursor-pointer"
+                          >
                             <ChevronRightIcon className="h-4 w-4" />
                           </button>
                         </div>
@@ -135,7 +124,11 @@ const ProjectCalendarPage: React.FC = () => {
                       </div>
 
                       <div className="mt-2">
-                        <WeekCalendar startDate={startDate} tasks={calendarTasks} />
+                        {displayMode === 'week' ? (
+                          <WeekCalendar startDate={startOfWeek(currentDate, { weekStartsOn: 1 })} tasks={calendarTasks} />
+                        ) : (
+                          <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />
+                        )}
                       </div>
                     </div>
 
