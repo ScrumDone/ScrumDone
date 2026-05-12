@@ -15,6 +15,7 @@
 
         public Guid? AuthorId { get; set; }
         public Guid NotifiedId { get; set; }
+        public Guid NotificationTypeId { get; set; }
         public NotificationType NotificationType { get; set; }
         public User Author { get; set; }
         public User Notified { get; set; }

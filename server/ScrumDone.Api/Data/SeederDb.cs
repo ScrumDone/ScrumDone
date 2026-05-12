@@ -6,6 +6,7 @@ using TaskStatus = ScrumDone.Api.Data.TaskStatus;
 using File = ScrumDone.Api.Data.File;
 using Company = ScrumDone.Api.Data.Company;
 using Bogus.DataSets;
+using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 public class DatabaseSeeder
 {
     public static void Seed(AppDbContext context)
@@ -45,13 +46,15 @@ public class DatabaseSeeder
             new TaskPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#ff7d13", CreatedAt = DateTimeOffset.UtcNow },
             new TaskPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#EF4444", CreatedAt = DateTimeOffset.UtcNow }
         };
+        context.TaskPriorities.AddRange(priorities);
+
         var notificationTypes = new List<NotificationType>
         {
             new NotificationType { Id = Guid.NewGuid(), Name = "Message", HexColor = "#2045ac", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false },
             new NotificationType { Id = Guid.NewGuid(), Name = "Task", HexColor = "#0b7880", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false },
             new NotificationType { Id = Guid.NewGuid(), Name = "Deadline", HexColor = "#2357b8", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false }
         };
-        context.TaskPriorities.AddRange(priorities);
+        context.NotificationTypes.AddRange(notificationTypes);
 
         var companyFaker = new Faker<Company>("pl")
             .RuleFor(c => c.Id, f => Guid.NewGuid())
@@ -200,8 +203,11 @@ public class DatabaseSeeder
 
         var childMessageFaker = new Faker<Message>("pl")
             .RuleFor(m => m.Id, f => Guid.NewGuid())
-            .RuleFor(m => m.TaskId, f => f.PickRandom(tasks).Id)
             .RuleFor(m => m.ParentMessageId, f => f.PickRandom(messages).Id)
+            .RuleFor(m => m.TaskId, (f, currentMessage) => 
+            {
+                return messages.First(p => p.Id == currentMessage.ParentMessageId).TaskId;
+            })
             .RuleFor(m => m.AuthorId, f => f.PickRandom(users).Id)
             .RuleFor(m => m.Text, f => f.Lorem.Sentence())
             .RuleFor(m => m.IsEdited, f => f.Random.Bool())
@@ -254,16 +260,108 @@ public class DatabaseSeeder
         var sprints = sprintsFaker.Generate(6);
         context.Sprints.AddRange(sprints);
 
-        // var filesFaker = new Faker<File>("pl")
-        //     .RuleFor(s => s.Id, f => Guid.NewGuid())
-        //     .RuleFor(s => s.Description, f => f.Lorem.Sentence())
-        //     .RuleFor(s => s.OldFileName, f => f.Lorem.Word())
-        //     .RuleFor(s => s.FilePath, f => f.Image.PicsumUrl())
-        //     .RuleFor(s => s.AuthorId, f => f.PickRandom(users).Id);
+        var filesBaseFaker = new Faker<File>("pl")
+            .RuleFor(f => f.Id, f => Guid.NewGuid())
+            .RuleFor(f => f.Description, f => f.Lorem.Sentence())
+            .RuleFor(f => f.OldFileName, f => f.Lorem.Word())
+            .RuleFor(f => f.FilePath, f => f.Image.PicsumUrl())
+            .RuleFor(f => f.IsPublic, f => true);
 
-        // var files = filesFaker.Generate(4);
-        // context.Files.AddRange(files);
+        var filesGeneralFaker = filesBaseFaker.Clone()
+            .RuleFor(f => f.AuthorId, f => f.PickRandom(users).Id)
+            .RuleFor(f => f.IsPublic, f => f.Random.Bool())
+            .RuleFor(f => f.PermitedUsers, (f, currentFile) =>
+            {
+                if(currentFile.IsPublic) 
+                    return new List<FileAccessMTMRelation>();
 
+                var SelectedUsers = f.PickRandom(users, f.Random.Int(3,6)).ToList();
+                if(!SelectedUsers.Any(u => u.Id == currentFile.AuthorId))
+                {
+                    var author = users.First(u => u.Id == currentFile.AuthorId);
+                    SelectedUsers.Add(author);
+                }
+
+                return SelectedUsers.Select(member => new FileAccessMTMRelation
+                {
+                    UserId = member.Id,
+                    FileId = currentFile.Id
+                }).ToList();
+            });
+        var general_files = filesGeneralFaker.Generate(10);
+        context.Files.AddRange(general_files);
+
+        var fileTasksFaker = filesBaseFaker.Clone();
+        fileTasksFaker.RuleFor(f => f.TaskId, f => f.PickRandom(tasks).Id)
+        .RuleFor(f => f.ProjectId, (f, current) =>
+        {
+            return tasks.First(t => t.Id ==current.TaskId).ProjectId;
+        })
+        .RuleFor(f => f.AuthorId, (f, currentFile) => 
+            {
+                var selectedTeam = projects.First(p => p.Id == currentFile.ProjectId).TeamMembers.ToList();
+                return f.PickRandom(selectedTeam).UserId;
+            });
+        var tasksFiles = fileTasksFaker.Generate(4);
+        context.Files.AddRange(tasksFiles);
+
+        var fileProjectFaker = filesBaseFaker.Clone();
+        fileProjectFaker
+            .RuleFor(f => f.ProjectId, f => f.PickRandom(projects).Id)
+            .RuleFor(f => f.AuthorId, (f, currentFile) => 
+            {
+                var selectedTeam = projects.First(p => p.Id == currentFile.ProjectId).TeamMembers.ToList();
+                return f.PickRandom(selectedTeam).UserId;
+            });
+        var projectFiles = fileProjectFaker.Generate(4);
+        context.Files.AddRange(projectFiles);
+
+        var fileMessageFaker = filesBaseFaker.Clone();
+        fileMessageFaker
+            .RuleFor(f => f.MessageId, f => f.PickRandom(messages).Id)
+            .RuleFor(f => f.AuthorId, (f, currentFile) => 
+            {
+                return messages.First(m => m.Id == currentFile.MessageId).AuthorId;
+            });
+        var messageFiles = fileMessageFaker.Generate(4);
+        context.Files.AddRange(messageFiles);
+
+        var notificationFaker = new Faker<Notification>("pl")
+            .RuleFor(n => n.Id, f => Guid.NewGuid())
+            .RuleFor(n => n.Message, f => f.Lorem.Sentence(3, 5))
+            .RuleFor(n => n.IsRead, f => f.Random.Bool(0.3f))
+            .RuleFor(n => n.RelevantUrl, f => f.Internet.UrlRootedPath())
+            .RuleFor(n => n.NotificationTypeId, f => f.PickRandom(notificationTypes).Id)
+
+            .RuleFor(n => n.AuthorId, f => 
+            {
+                if (f.Random.Int(1, 10) <= 2) return null; 
+                return f.PickRandom(users).Id;             
+            })
+            .RuleFor(n => n.NotifiedId, (f, current) => 
+            {
+                var availableUsers = current.AuthorId.HasValue 
+                    ? users.Where(u => u.Id != current.AuthorId.Value).ToList() 
+                    : users;
+
+                return f.PickRandom(availableUsers).Id;
+            })
+            
+            .RuleFor(n => n.CreatedAt, f => DateTimeOffset.UtcNow)
+            .RuleFor(n => n.IsDeleted, f => false);
+
+        var notifications = notificationFaker.Generate(30);
+        context.Notifications.AddRange(notifications);
+
+        var raportFaker = new Faker<Raport>("pl")
+            .RuleFor(r => r.Id, f => Guid.NewGuid())
+            .RuleFor(r => r.Name, f => f.PickRandom("Raport: ", "Podsumowanie: ", "Analiza: ") + f.Commerce.ProductName())
+            .RuleFor(r => r.AuthorId, f => f.PickRandom(users).Id)
+            .RuleFor(r => r.CreatedAt, f => DateTimeOffset.UtcNow)
+            .RuleFor(r => r.IsDeleted, f => false);
+
+        var raports = raportFaker.Generate(10);
+        context.Raports.AddRange(raports);
 
         context.SaveChanges();
     }
