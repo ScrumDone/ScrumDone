@@ -8,6 +8,25 @@ import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintSelector, { type Sprint } from '../components/SprintSelector';
 import { projects } from '../data/projects';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type PriorityOption = {
   id: string;
@@ -80,7 +99,7 @@ const sprintsData: Sprint[] = [
   },
 ];
 
-const kanbanColumns: KanbanColumn[] = [
+const initialKanbanColumns: KanbanColumn[] = [
   {
     id: 'todo',
     title: 'Do zrobienia',
@@ -168,9 +187,26 @@ const PriorityFilterCard: React.FC = () => {
   );
 };
 
-const KanbanTaskCard: React.FC<{ task: KanbanTask }> = ({ task }) => {
+const KanbanTaskCard: React.FC<{ task: KanbanTask; isDragOverlay?: boolean }> = ({ task, isDragOverlay = false }) => {
+  const sortable = useSortable({ id: task.id, disabled: isDragOverlay });
+
+  const style = isDragOverlay
+    ? undefined
+    : {
+        transform: CSS.Transform.toString(sortable.transform),
+        transition: sortable.transition,
+      };
+
   return (
-    <article className="rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <article
+      ref={isDragOverlay ? undefined : sortable.setNodeRef}
+      style={style}
+      {...(isDragOverlay ? {} : sortable.attributes)}
+      {...(isDragOverlay ? {} : sortable.listeners)}
+      className={`rounded-[10px] border border-slate-200 bg-white px-3 py-3
+        shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab active:cursor-grabbing
+        ${isDragOverlay ? 'cursor-grabbing' : ''}
+        ${sortable.isDragging ? 'opacity-50' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         <h3 className="max-w-44 font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">
           {task.title}
@@ -198,24 +234,31 @@ const KanbanTaskCard: React.FC<{ task: KanbanTask }> = ({ task }) => {
 };
 
 const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
+  const { setNodeRef, isOver } = useDroppable({ id: column.id });
+
   return (
     <section className="flex min-h-80 self-start flex-col gap-3">
       <header className="flex items-center gap-3">
         <span className={`h-6 w-1 rounded-full ${column.accentClass}`} aria-hidden="true" />
         <h3 className="font-segoe-ui text-[16px] leading-6 font-normal text-slate-900 antialiased">{column.title}</h3>
         <span className="ml-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-slate-100 px-2 font-segoe-ui text-[12px] leading-4 font-medium text-slate-600 antialiased">
-          {column.count}
+          {column.tasks.length}
         </span>
       </header>
 
-      <div className="flex flex-1 flex-col gap-3 mt-4">
-        {column.tasks.length > 0 ? (
-          column.tasks.map((task) => <KanbanTaskCard key={task.id} task={task} />)
-        ) : (
-          <div className=" bg-slate-50 px-4 py-6 text-center font-segoe-ui text-[13px] leading-5 text-slate-400 antialiased">
-          </div>
-        )}
-      </div>
+      <SortableContext items={column.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+        <div
+          ref={setNodeRef}
+          className={`mt-4 flex flex-1 flex-col gap-3 rounded-lg transition-colors ${isOver ? 'bg-slate-50' : ''}`}
+        >
+          {column.tasks.length > 0 ? (
+            column.tasks.map((task) => <KanbanTaskCard key={task.id} task={task} />)
+          ) : (
+            <div className="bg-slate-50 px-4 py-6 text-center font-segoe-ui text-[13px] leading-5 text-slate-400 antialiased">
+            </div>
+          )}
+        </div>
+      </SortableContext>
     </section>
   );
 };
@@ -225,9 +268,66 @@ const ProjectKanbanPage: React.FC = () => {
   const project = projects.find((item) => item.slug === projectSlug);
   const [viewMode, setViewMode] = useState<'kanban' | 'scrum'>('kanban');
   const [currentSprintId, setCurrentSprintId] = useState('sprint-0');
+  const [columns, setColumns] = useState<KanbanColumn[]>(initialKanbanColumns);
+  const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleSprintChange = (sprintId: string) => {
     setCurrentSprintId(sprintId);
+  };
+
+  const findColumnByTaskId = (taskId: string) => columns.find((col) => col.tasks.some((task) => task.id === taskId));
+
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    const activeId = String(active.id);
+    const sourceColumn = findColumnByTaskId(activeId);
+    const task = sourceColumn?.tasks.find((item) => item.id === activeId) ?? null;
+    setActiveTask(task);
+  };
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setActiveTask(null);
+    if (!over) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    const sourceColumn = findColumnByTaskId(activeId);
+    const targetColumn = columns.find((col) => col.id === overId) ?? findColumnByTaskId(overId);
+
+    if (!sourceColumn || !targetColumn) return;
+    if (sourceColumn.id === targetColumn.id) return;
+
+    const taskToMove = sourceColumn.tasks.find((item) => item.id === activeId);
+    if (!taskToMove) return;
+
+    setColumns((prev) =>
+      prev.map((col) => {
+        if (col.id === sourceColumn.id) {
+          return {
+            ...col,
+            tasks: col.tasks.filter((item) => item.id !== activeId),
+          };
+        }
+
+        if (col.id === targetColumn.id) {
+          return {
+            ...col,
+            tasks: [...col.tasks, taskToMove],
+          };
+        }
+
+        return col;
+      })
+    );
   };
 
   return (
@@ -266,11 +366,22 @@ const ProjectKanbanPage: React.FC = () => {
                       </button>
                     </div>
 
-                    <div className="grid items-start gap-4 xl:grid-cols-4">
-                      {kanbanColumns.map((column) => (
-                        <KanbanColumnView key={column.id} column={column} />
-                      ))}
-                    </div>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCorners}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <div className="grid items-start gap-4 xl:grid-cols-4">
+                        {columns.map((column) => (
+                          <KanbanColumnView key={column.id} column={column} />
+                        ))}
+                      </div>
+
+                      <DragOverlay>
+                        {activeTask ? <KanbanTaskCard task={activeTask} isDragOverlay /> : null}
+                      </DragOverlay>
+                    </DndContext>
                   </div>
 
                   <aside className="flex flex-col gap-4">

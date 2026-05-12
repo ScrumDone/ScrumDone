@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ScrumDone.Api.Data;
@@ -11,9 +12,11 @@ using ScrumDone.Api.Data;
 namespace ScrumDone.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260422021607_notifications-subtasks")]
+    partial class notificationssubtasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -150,9 +153,6 @@ namespace ScrumDone.Api.Migrations
                     b.Property<Guid>("AuthorId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CompanyId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -178,11 +178,12 @@ namespace ScrumDone.Api.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AuthorId");
-
-                    b.HasIndex("CompanyId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("CooperationLogs");
                 });
@@ -201,10 +202,6 @@ namespace ScrumDone.Api.Migrations
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("FilePath")
                         .IsRequired()
@@ -637,6 +634,9 @@ namespace ScrumDone.Api.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ParentTaskId");
@@ -648,6 +648,8 @@ namespace ScrumDone.Api.Migrations
                     b.HasIndex("SprintId");
 
                     b.HasIndex("StatusId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Tasks");
                 });
@@ -903,21 +905,13 @@ namespace ScrumDone.Api.Migrations
 
             modelBuilder.Entity("ScrumDone.Api.Data.CooperationLog", b =>
                 {
-                    b.HasOne("ScrumDone.Api.Data.User", "Author")
+                    b.HasOne("ScrumDone.Api.Data.User", "User")
                         .WithMany("CreatedCooperationLogs")
-                        .HasForeignKey("AuthorId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ScrumDone.Api.Data.Company", "Company")
-                        .WithMany("Logs")
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Author");
-
-                    b.Navigation("Company");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ScrumDone.Api.Data.File", b =>
@@ -1108,6 +1102,10 @@ namespace ScrumDone.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ScrumDone.Api.Data.User", null)
+                        .WithMany("AssignedTasks")
+                        .HasForeignKey("UserId");
+
                     b.Navigation("ParentTask");
 
                     b.Navigation("Priority");
@@ -1147,7 +1145,7 @@ namespace ScrumDone.Api.Migrations
                         .IsRequired();
 
                     b.HasOne("ScrumDone.Api.Data.User", "User")
-                        .WithMany("AssignedTasks")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1159,20 +1157,18 @@ namespace ScrumDone.Api.Migrations
 
             modelBuilder.Entity("ScrumDone.Api.Data.User", b =>
                 {
-                    b.HasOne("ScrumDone.Api.Data.UserPermissionsType", "PermissionsType")
+                    b.HasOne("ScrumDone.Api.Data.UserPermissionsType", "UserPermissionsType")
                         .WithMany("Users")
                         .HasForeignKey("UserPermissionsTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("PermissionsType");
+                    b.Navigation("UserPermissionsType");
                 });
 
             modelBuilder.Entity("ScrumDone.Api.Data.Company", b =>
                 {
                     b.Navigation("ContactPeople");
-
-                    b.Navigation("Logs");
 
                     b.Navigation("Notes");
 
