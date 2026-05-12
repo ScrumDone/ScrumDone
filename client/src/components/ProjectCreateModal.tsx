@@ -1,6 +1,12 @@
-import React from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  CalendarDaysIcon,
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline';
 import Avatar from './Avatar';
+import { companies } from '../data/companies';
 
 export type TeamMemberOption = {
   id: string;
@@ -12,6 +18,7 @@ export type TeamMemberOption = {
 export type EditProjectDraft = {
   name: string;
   clientId?: string;
+  clientName: string;
   description: string;
   startDate: string;
   endDate: string;
@@ -38,11 +45,56 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
   onDraftChange,
   onToggleMember,
 }) => {
+  const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
+  const [memberSearchValue, setMemberSearchValue] = useState('');
+  const clientDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (clientDropdownRef.current && !clientDropdownRef.current.contains(event.target as Node)) {
+        setIsClientDropdownOpen(false);
+      }
+    };
+
+    if (isClientDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isClientDropdownOpen]);
+
+  const filteredCompanies = useMemo(() => companies, []);
+
+  const filteredMembers = useMemo(() => {
+    const normalizedSearch = memberSearchValue.trim().toLocaleLowerCase('pl-PL');
+
+    if (!normalizedSearch) {
+      return members;
+    }
+
+    return members.filter(
+      (member) =>
+        member.fullName.toLocaleLowerCase('pl-PL').includes(normalizedSearch) ||
+        member.email.toLocaleLowerCase('pl-PL').includes(normalizedSearch),
+    );
+  }, [memberSearchValue, members]);
+
+  const selectedClientLabel = draft.clientName || 'Wybierz klienta';
+
+  const handleClientSelect = (companyId: number, companyName: string) => {
+    onDraftChange((prev) => ({
+      ...prev,
+      clientId: String(companyId),
+      clientName: companyName,
+    }));
+    setIsClientDropdownOpen(false);
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4" onClick={onClose}>
-      <div className="w-full max-w-150 rounded-lg border border-slate-200 bg-white shadow-lg" onClick={(e) => e.stopPropagation()}>
+      <div className="flex max-h-[75vh] w-full max-w-150 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between px-6 pt-6">
           <div>
             <h2 className="font-segoe-ui text-[18px] font-semibold text-slate-900">Nowy projekt</h2>
@@ -53,54 +105,88 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-4">
+        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Nazwa projektu</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Nazwa projektu</label>
             <input
               type="text"
               value={draft.name}
               onChange={(e) => onDraftChange((prev) => ({ ...prev, name: e.target.value }))}
               placeholder="Wpisz nazwę projektu"
-              className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-1 text-sm text-slate-500 outline-none focus:border-scrumdone-blue-main"
+              className="h-14 w-full rounded-[14px] border border-slate-100 bg-slate-100 px-5 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Klient</label>
-            <div className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-1 text-sm text-slate-500">Wybierz klienta</div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Klient</label>
+            <div className="relative" ref={clientDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsClientDropdownOpen((prev) => !prev)}
+                className="flex h-14 w-full items-center justify-between rounded-[14px] border border-slate-100 bg-slate-100 px-5 text-left text-[15px] text-slate-500 outline-none transition-colors hover:border-slate-200 focus:border-scrumdone-blue-main"
+              >
+                <span className={draft.clientName ? 'text-slate-900' : 'text-slate-500'}>{selectedClientLabel}</span>
+                <ChevronDownIcon className={`h-4 w-4 text-slate-400 transition-transform ${isClientDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isClientDropdownOpen ? (
+                <div className="absolute left-0 top-full z-30 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
+                  <div className="max-h-56 overflow-y-auto">
+                    {filteredCompanies.map((company) => {
+                      return (
+                        <button
+                          key={company.id}
+                          type="button"
+                          onClick={() => handleClientSelect(company.id, company.name)}
+                          className="w-full rounded-xl px-4 py-4 text-left transition-colors hover:bg-slate-50"
+                        >
+                          <div className="font-segoe-ui text-[18px] font-medium leading-6 text-slate-900">{company.name}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Opis projektu</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Opis projektu</label>
             <textarea
               value={draft.description}
               onChange={(e) => onDraftChange((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="Wpisz opis projektu"
               rows={4}
-              className="w-full resize-none rounded-lg border border-slate-100 bg-slate-100 px-3 py-2 text-sm text-slate-500 outline-none focus:border-scrumdone-blue-main"
+              className="w-full resize-none rounded-[14px] border border-slate-100 bg-slate-100 px-5 py-4 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Data rozpoczęcia</label>
-              <input
-                type="text"
-                value={draft.startDate}
-                onChange={(e) => onDraftChange((prev) => ({ ...prev, startDate: e.target.value }))}
-                placeholder=""
-                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-1 text-sm text-slate-500 outline-none focus:border-scrumdone-blue-main"
-              />
+              <label className="mb-2 block text-sm font-medium text-slate-700">Data rozpoczęcia</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={draft.startDate}
+                  onChange={(e) => onDraftChange((prev) => ({ ...prev, startDate: e.target.value }))}
+                  placeholder="dd/mm/yyyy"
+                  className="h-14 w-full rounded-[14px] border border-slate-100 bg-slate-100 px-5 pr-11 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+                />
+                <CalendarDaysIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Data zakończenia</label>
-              <input
-                type="text"
-                value={draft.endDate}
-                onChange={(e) => onDraftChange((prev) => ({ ...prev, endDate: e.target.value }))}
-                placeholder=""
-                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-1 text-sm text-slate-500 outline-none focus:border-scrumdone-blue-main"
-              />
+              <label className="mb-2 block text-sm font-medium text-slate-700">Data zakończenia</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={draft.endDate}
+                  onChange={(e) => onDraftChange((prev) => ({ ...prev, endDate: e.target.value }))}
+                  placeholder="dd/mm/yyyy"
+                  className="h-14 w-full rounded-[14px] border border-slate-100 bg-slate-100 px-5 pr-11 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+                />
+                <CalendarDaysIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
+              </div>
             </div>
           </div>
 
@@ -113,11 +199,19 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Członkowie zespołu</label>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Członkowie zespołu</label>
+            <div className="mb-3 relative">
+              <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                value={memberSearchValue}
+                onChange={(event) => setMemberSearchValue(event.target.value)}
+                placeholder="Szukaj osoby..."
+                className="h-14 w-full rounded-[14px] border border-slate-100 bg-slate-100 py-3 pl-10 pr-3 text-[15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+              />
+            </div>
             <div className="w-full rounded-lg border border-slate-100 bg-white px-3 py-2">
-              <input placeholder="Szukaj osoby..." className="w-full bg-transparent text-sm text-slate-500 outline-none" />
-              <div className="max-h-48 overflow-y-auto mt-2">
-                {members.map((member) => (
+              <div className="max-h-48 overflow-y-auto">
+                {filteredMembers.map((member) => (
                   <label key={member.id} className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
                     <div className="flex items-center gap-3">
                       <Avatar initials={member.initials} size="md" />

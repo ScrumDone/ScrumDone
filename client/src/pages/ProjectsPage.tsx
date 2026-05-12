@@ -6,6 +6,20 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { projects } from '../data/projects';
 import ProjectCreateModal, { type EditProjectDraft, type TeamMemberOption } from '../components/ProjectCreateModal';
 
+const formatDateForDisplay = (dateValue: string) => {
+    if (!dateValue) {
+        return '';
+    }
+
+    const [year, month, day] = dateValue.split('-');
+
+    if (!year || !month || !day) {
+        return dateValue;
+    }
+
+    return `${Number(day)}.${month}.${year}`;
+};
+
 const ProjectsPage: React.FC = () => {
     const [projectsList, setProjectsList] = useState(projects);
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -17,6 +31,8 @@ const ProjectsPage: React.FC = () => {
 
     const [draft, setDraft] = useState<EditProjectDraft>({
         name: '',
+        clientId: '',
+        clientName: '',
         description: '',
         startDate: '',
         endDate: '',
@@ -24,7 +40,7 @@ const ProjectsPage: React.FC = () => {
     });
 
     const openNewModal = () => {
-        setDraft({ name: '', description: '', startDate: '', endDate: '', memberIds: [] });
+        setDraft({ name: '', clientId: '', clientName: '', description: '', startDate: '', endDate: '', memberIds: [] });
         setIsNewModalOpen(true);
     };
 
@@ -37,10 +53,10 @@ const ProjectsPage: React.FC = () => {
             id,
             slug: slug || `project-${id}`,
             name: draft.name,
-            clientName: draft.name,
+            clientName: draft.clientName || draft.name,
             description: draft.description,
-            startDate: draft.startDate,
-            endDate: draft.endDate,
+            startDate: formatDateForDisplay(draft.startDate),
+            endDate: formatDateForDisplay(draft.endDate),
             membersCount: draft.memberIds.length,
             progress: 0,
             status: 'Zaplanowany',
