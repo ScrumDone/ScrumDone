@@ -5,27 +5,35 @@ import {
     ChevronDownIcon,
     CheckIcon,
 } from '@heroicons/react/24/outline'
-import { format, startOfWeek, addDays, addWeeks, subWeeks } from 'date-fns'
+import { format, startOfWeek, addDays, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns'
 import { pl } from 'date-fns/locale' 
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
 import WeekCalendar from '../components/weekCalendar'
+import MonthCalendar from '../components/monthCalendar'
 import CalendarFilters from '../components/calendarFilters'
 import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
 
 type CalendarMode = 'Personal' | 'Team'
+type ViewMode = 'week' | 'month'
 const modeOptions: CalendarMode[] = ['Personal', 'Team']
+const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
 
 const CalendarPage: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date())
+    const [viewMode, setViewMode] = useState<ViewMode>('week')
     
     const startDate = startOfWeek(currentDate, { weekStartsOn: 1 })
     const endDate = addDays(startDate, 6)
 
     const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1))
     const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1))
+    const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1))
+    const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1))
 
-    const dateRangeText = `${format(startDate, 'd MMMM', { locale: pl })} - ${format(endDate, 'd MMMM yyyy', { locale: pl })}`
+    const dateRangeText = viewMode === 'week' 
+        ? `${format(startDate, 'd MMMM', { locale: pl })} - ${format(endDate, 'd MMMM yyyy', { locale: pl })}`
+        : `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`
 
     const [selectedMode, setSelectedMode] = useState<CalendarMode>('Personal')
     const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false)
@@ -58,9 +66,9 @@ const CalendarPage: React.FC = () => {
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
-                                            onClick={handlePrevWeek}
+                                            onClick={viewMode === 'week' ? handlePrevWeek : handlePrevMonth}
                                             className="rounded-lg border border-slate-200 p-2 text-slate-900 hover:bg-white transition-colors"
-                                            aria-label="Poprzedni tydzień"
+                                            aria-label={viewMode === 'week' ? "Poprzedni tydzień" : "Poprzedni miesiąc"}
                                         >
                                             <ChevronLeftIcon className="h-2.5 w-2.5" />
                                         </button>
@@ -71,9 +79,9 @@ const CalendarPage: React.FC = () => {
 
                                         <button
                                             type="button"
-                                            onClick={handleNextWeek}
+                                            onClick={viewMode === 'week' ? handleNextWeek : handleNextMonth}
                                             className="rounded-lg border border-slate-200 p-2 text-slate-900 hover:bg-white transition-colors"
-                                            aria-label="Następny tydzień"
+                                            aria-label={viewMode === 'week' ? "Następny tydzień" : "Następny miesiąc"}
                                         >
                                             <ChevronRightIcon className="h-2.5 w-2.5" />
                                         </button>
@@ -82,10 +90,14 @@ const CalendarPage: React.FC = () => {
 
                                 <div className="flex items-center gap-2">
                                     <div className="flex items-center rounded-[10px] bg-[#F3F3F5] p-1">
-                                        <button className="rounded-lg bg-[#ECEEF2] px-3 py-1.5 font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased">
+                                        <button 
+                                            onClick={() => setViewMode('week')}
+                                            className={`rounded-lg px-3 py-1.5 font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased transition-colors ${viewMode === 'week' ? 'bg-[#ECEEF2]' : 'hover:bg-[#ECEEF2]'}`}>
                                             Tydzień
                                         </button>
-                                        <button className="rounded-lg px-3 py-1.5 font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased transition-colors hover:bg-[#ECEEF2]">
+                                        <button 
+                                            onClick={() => setViewMode('month')}
+                                            className={`rounded-lg px-3 py-1.5 font-segoe-ui text-[14px] leading-5 text-slate-900 antialiased transition-colors ${viewMode === 'month' ? 'bg-[#ECEEF2]' : 'hover:bg-[#ECEEF2]'}`}>
                                             Miesiąc
                                         </button>
                                     </div>
@@ -125,9 +137,14 @@ const CalendarPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex-1">
-                                <div className="h-[calc(100vh-22rem)] min-h-96">
-                                    <WeekCalendar startDate={startDate} />
+                            {/* POPRAWIONA SEKCJA: flex-col z gap-6 zamiast sztywnej wysokości */}
+                            <div className="flex flex-1 flex-col gap-6">
+                                <div className={viewMode === 'week' ? "h-[calc(100vh-22rem)] min-h-96" : "w-full"}>
+                                    {viewMode === 'week' ? (
+                                        <WeekCalendar startDate={startDate} />
+                                    ) : (
+                                        <MonthCalendar currentDate={currentDate} />
+                                    )}
                                 </div>
                                 <CalendarNoDeadlineTasks />
                             </div>

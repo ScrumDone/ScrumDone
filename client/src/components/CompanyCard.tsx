@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Mail, Phone } from 'lucide-react';
 
 interface CompanyCardProps {
+  slug: string;
   name: string;
   nip: string;
   email: string;
@@ -13,6 +15,7 @@ interface CompanyCardProps {
 }
 
 const CompanyCard: React.FC<CompanyCardProps> = ({ 
+  slug,
   name, 
   nip, 
   email, 
@@ -22,8 +25,16 @@ const CompanyCard: React.FC<CompanyCardProps> = ({
   mainContactRole,
   contactsCount
 }) => {
+  const navigate = useNavigate();
+
+  const handleCardClick = () => {
+    navigate(`/companies/${slug}`);
+  };
   return (
-    <div className="bg-white p-6 rounded-xl border border-gray-200 flex flex-col hover:shadow-lg transition-shadow h-full">
+    <div 
+      onClick={handleCardClick}
+      className="bg-white p-6 rounded-xl border border-gray-200 flex flex-col hover:shadow-lg transition-shadow h-full cursor-pointer hover:border-scrumdone-blue-main/50"
+    >
       
       {/* NAGŁÓWEK */}
       <div className="flex items-center gap-3 mb-6">

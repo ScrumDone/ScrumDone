@@ -2,44 +2,8 @@ import React from 'react';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import CompanyCard from '../components/CompanyCard';
+import { companies } from '../data/companies';
 import { PlusIcon } from '@heroicons/react/24/outline';
-
-// Przykładowe dane
-const mockCompanies = [
-  { 
-    id: 1, 
-    name: 'Adoddle', 
-    nip: '1234567890', 
-    email: 'anna.wisniewska@adoddle.com', 
-    phone: '+48 123 456 789', 
-    projectsCount: 1,
-    mainContactName: 'Anna Wiśniewska',
-    mainContactRole: 'CEO',
-    contactsCount: 3
-  },
-  { 
-    id: 2, 
-    name: 'Nexus Tech', 
-    nip: '0987654321', 
-    email: 'piotr.zielinski@nexus.com', 
-    phone: '+48 987 654 321', 
-    projectsCount: 1,
-    mainContactName: 'Piotr Zielinski',
-    mainContactRole: 'Prezes Zarządu',
-    contactsCount: 2
-  },
-  { 
-    id: 3, 
-    name: 'Hadar Solutions', 
-    nip: '1122334455', 
-    email: 'katarzyna.lewandowska@hadar.com', 
-    phone: '+48 555 666 777', 
-    projectsCount: 1,
-    mainContactName: 'Katarzyna Lewandowska',
-    mainContactRole: 'Dyrektorka Generalna',
-    contactsCount: 3
-  },
-];
 
 const CompaniesPage: React.FC = () => {
     return (
@@ -66,12 +30,13 @@ const CompaniesPage: React.FC = () => {
 
                     {/* Siatka z kartami firm - stałe 3 kolumny na desktopie */}
                     <div className="grid grid-cols-3 gap-8">
-                        {mockCompanies.map((company) => (
+                        {companies.map((company) => (
                             <CompanyCard 
                                 key={company.id}
+                                slug={company.slug}
                                 name={company.name}
                                 nip={company.nip}
-                                email={company.email}
+                                email={company.emails[0]}
                                 phone={company.phone}
                                 projectsCount={company.projectsCount}
                                 mainContactName={company.mainContactName}
