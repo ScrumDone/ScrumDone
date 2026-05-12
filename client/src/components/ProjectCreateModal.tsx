@@ -80,6 +80,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
   }, [memberSearchValue, members]);
 
   const selectedClientLabel = draft.clientName || 'Wybierz klienta';
+  const sharedFieldClassName = 'w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-1 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main';
 
   const handleClientSelect = (companyId: number, companyName: string) => {
     onDraftChange((prev) => ({
@@ -113,7 +114,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
               value={draft.name}
               onChange={(e) => onDraftChange((prev) => ({ ...prev, name: e.target.value }))}
               placeholder="Wpisz nazwę projektu"
-              className="h-14 w-full rounded-[14px] border border-slate-100 bg-slate-100 px-5 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+              className={sharedFieldClassName}
             />
           </div>
 
@@ -123,14 +124,14 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsClientDropdownOpen((prev) => !prev)}
-                className="flex h-14 w-full items-center justify-between rounded-[14px] border border-slate-100 bg-slate-100 px-5 text-left text-[15px] text-slate-500 outline-none transition-colors hover:border-slate-200 focus:border-scrumdone-blue-main"
+                className="flex w-full items-center justify-between rounded-lg border border-slate-100 bg-slate-100 px-3 py-1 text-left text-[15px] text-slate-400 outline-none transition-colors hover:border-slate-200 focus:border-scrumdone-blue-main"
               >
                 <span className={draft.clientName ? 'text-slate-900' : 'text-slate-500'}>{selectedClientLabel}</span>
                 <ChevronDownIcon className={`h-4 w-4 text-slate-400 transition-transform ${isClientDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isClientDropdownOpen ? (
-                <div className="absolute left-0 top-full z-30 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_14px_30px_rgba(15,23,42,0.12)]">
+                <div className="absolute left-0 top-full z-30 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-md">
                   <div className="max-h-56 overflow-y-auto">
                     {filteredCompanies.map((company) => {
                       return (
@@ -138,9 +139,9 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
                           key={company.id}
                           type="button"
                           onClick={() => handleClientSelect(company.id, company.name)}
-                          className="w-full rounded-xl px-4 py-4 text-left transition-colors hover:bg-slate-50"
+                          className="w-full rounded-lg px-3 py-1 text-left transition-colors hover:bg-slate-100"
                         >
-                          <div className="font-segoe-ui text-[18px] font-medium leading-6 text-slate-900">{company.name}</div>
+                          <div className="font-segoe-ui text-[15px] leading-6 text-slate-900">{company.name}</div>
                         </button>
                       );
                     })}
@@ -157,7 +158,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
               onChange={(e) => onDraftChange((prev) => ({ ...prev, description: e.target.value }))}
               placeholder="Wpisz opis projektu"
               rows={4}
-              className="w-full resize-none rounded-[14px] border border-slate-100 bg-slate-100 px-5 py-4 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+              className="w-full resize-none rounded-lg border border-slate-100 bg-slate-100 px-3 py-1 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
             />
           </div>
 
@@ -170,9 +171,9 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
                   value={draft.startDate}
                   onChange={(e) => onDraftChange((prev) => ({ ...prev, startDate: e.target.value }))}
                   placeholder="dd/mm/yyyy"
-                  className="h-14 w-full rounded-[14px] border border-slate-100 bg-slate-100 px-5 pr-11 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+                  className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-1 pr-10 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
                 />
-                <CalendarDaysIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
+                <CalendarDaysIcon className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
               </div>
             </div>
             <div>
@@ -183,9 +184,9 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
                   value={draft.endDate}
                   onChange={(e) => onDraftChange((prev) => ({ ...prev, endDate: e.target.value }))}
                   placeholder="dd/mm/yyyy"
-                  className="h-14 w-full rounded-[14px] border border-slate-100 bg-slate-100 px-5 pr-11 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+                  className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-1 pr-10 text-[15px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
                 />
-                <CalendarDaysIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
+                <CalendarDaysIcon className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-300" />
               </div>
             </div>
           </div>
@@ -193,7 +194,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
           <div>
             <div className="mb-2 text-sm font-medium text-slate-700">Tryb pracy</div>
             <div className="flex gap-2">
-              <button type="button" className={`px-4 py-1 rounded-md ${draft.workMode === 'kanban' ? 'bg-[#00AEEF] text-white' : 'bg-white border'}`}>Kanban</button>
+              <button type="button" className={`rounded-md bg-scrumdone-blue-main px-4 py-1 text-sm text-white`}>Kanban</button>
               <button type="button" className={`px-4 py-1 rounded-md ${draft.workMode === 'scrum' ? 'bg-[#00AEEF] text-white' : 'bg-white border'}`}>Scrum</button>
             </div>
           </div>
@@ -206,7 +207,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
                 value={memberSearchValue}
                 onChange={(event) => setMemberSearchValue(event.target.value)}
                 placeholder="Szukaj osoby..."
-                className="h-14 w-full rounded-[14px] border border-slate-100 bg-slate-100 py-3 pl-10 pr-3 text-[15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+                className="w-full rounded-lg border border-slate-100 bg-slate-100 py-1 pl-10 pr-3 text-[15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
               />
             </div>
             <div className="w-full rounded-lg border border-slate-100 bg-white px-3 py-2">
