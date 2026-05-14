@@ -1,16 +1,17 @@
 ﻿namespace ScrumDone.Api.Data
 {
-    public class TaskLabel
+    public class AssignmentUserMTMRelation
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
-        public string HexColor { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset? DeletedAt { get; set; }
         public bool IsDeleted { get; set; } = false;
 
-        public List<TaskTaskLabelMTMRelation> Tasks { get; set; } = new();
+        public Guid AssignmentId { get; set; }
+        public Guid UserId { get; set; }
+        public User User { get; set; }
+        public Assignment Assignment { get; set; }
     }
 }

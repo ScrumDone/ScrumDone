@@ -1,6 +1,6 @@
 ﻿namespace ScrumDone.Api.Data
 {
-    public class TaskUserMTMRelation
+    public class AssignmentAssignmentLabelMTMRelation
     {
         public Guid Id { get; set; }
 
@@ -9,9 +9,9 @@
         public DateTimeOffset? DeletedAt { get; set; }
         public bool IsDeleted { get; set; } = false;
 
-        public Guid TaskId { get; set; }
-        public Guid UserId { get; set; }
-        public User User { get; set; }
-        public Task Task { get; set; }
+        public Guid AssignmentId { get; set; }
+        public Guid AssignmentLabelId { get; set; }
+        public Assignment Assignment { get; set; }
+        public AssignmentLabel AssignmentLabel { get; set; }
     }
 }

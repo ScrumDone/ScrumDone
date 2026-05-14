@@ -1,6 +1,6 @@
 ﻿namespace ScrumDone.Api.Data
 {
-    public class Task
+    public class Assignment
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
@@ -20,10 +20,10 @@
         public List<File> Attachments { get; set; } = new();
         public Project Project { get; set; }
         public Sprint? Sprint { get; set; }
-        public TaskStatus Status { get; set; }
-        public TaskPriority Priority { get; set; }
-        public List<TaskUserMTMRelation> Assignees { get; set; } = new();
-        public List<TaskTaskLabelMTMRelation> Labels { get; set; } = new();
+        public AssignmentStatus Status { get; set; }
+        public AssignmentPriority Priority { get; set; }
+        public List<AssignmentUserMTMRelation> Assignees { get; set; } = new();
+        public List<AssignmentAssignmentLabelMTMRelation> Labels { get; set; } = new();
         public List<Message> Comments { get; set; } = new();
     }
 }

@@ -1,8 +1,8 @@
 using System.Reflection.Emit;
 using Bogus;
 using ScrumDone.Api.Data;
-using Task = ScrumDone.Api.Data.Task;
-using TaskStatus = ScrumDone.Api.Data.TaskStatus;
+using Assignment = ScrumDone.Api.Data.Assignment;
+using AssignmentStatus = ScrumDone.Api.Data.AssignmentStatus;
 using File = ScrumDone.Api.Data.File;
 using Company = ScrumDone.Api.Data.Company;
 using Bogus.DataSets;
@@ -24,34 +24,34 @@ public class DatabaseSeeder
         };
         context.UserPermissionsTypes.AddRange(permissions);
 
-        var statuses = new List<TaskStatus>
+        var statuses = new List<AssignmentStatus>
         {
-            new TaskStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#E2E8F0", CreatedAt = DateTimeOffset.UtcNow },
-            new TaskStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = DateTimeOffset.UtcNow },
-            new TaskStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = DateTimeOffset.UtcNow }
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#E2E8F0", CreatedAt = DateTimeOffset.UtcNow },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = DateTimeOffset.UtcNow },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = DateTimeOffset.UtcNow }
         };
-        context.TaskStatuses.AddRange(statuses);
+        context.AssignmentStatuses.AddRange(statuses);
 
-        var labels = new List<TaskLabel>
+        var labels = new List<AssignmentLabel>
         {
-            new TaskLabel { Id = Guid.NewGuid(), Name = "Frontend", HexColor = "#20b828", CreatedAt = DateTimeOffset.UtcNow },
-            new TaskLabel { Id = Guid.NewGuid(), Name = "Backend", HexColor = "#3B82F6", CreatedAt = DateTimeOffset.UtcNow },
-            new TaskLabel { Id = Guid.NewGuid(), Name = "Documentation", HexColor = "#a82993", CreatedAt = DateTimeOffset.UtcNow }
+            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Frontend", HexColor = "#20b828", CreatedAt = DateTimeOffset.UtcNow },
+            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Backend", HexColor = "#3B82F6", CreatedAt = DateTimeOffset.UtcNow },
+            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Documentation", HexColor = "#a82993", CreatedAt = DateTimeOffset.UtcNow }
         };
-        context.TaskLabels.AddRange(labels);
+        context.AssignmentLabels.AddRange(labels);
 
-        var priorities = new List<TaskPriority>
+        var priorities = new List<AssignmentPriority>
         {
-            new TaskPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#34D399", CreatedAt = DateTimeOffset.UtcNow },
-            new TaskPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#ff7d13", CreatedAt = DateTimeOffset.UtcNow },
-            new TaskPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#EF4444", CreatedAt = DateTimeOffset.UtcNow }
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#34D399", CreatedAt = DateTimeOffset.UtcNow },
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#ff7d13", CreatedAt = DateTimeOffset.UtcNow },
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#EF4444", CreatedAt = DateTimeOffset.UtcNow }
         };
-        context.TaskPriorities.AddRange(priorities);
+        context.AssignmentPriorities.AddRange(priorities);
 
         var notificationTypes = new List<NotificationType>
         {
             new NotificationType { Id = Guid.NewGuid(), Name = "Message", HexColor = "#2045ac", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false },
-            new NotificationType { Id = Guid.NewGuid(), Name = "Task", HexColor = "#0b7880", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false },
+            new NotificationType { Id = Guid.NewGuid(), Name = "Assignment", HexColor = "#0b7880", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false },
             new NotificationType { Id = Guid.NewGuid(), Name = "Deadline", HexColor = "#2357b8", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false }
         };
         context.NotificationTypes.AddRange(notificationTypes);
@@ -124,7 +124,7 @@ public class DatabaseSeeder
         var projects = projectFaker.Generate(5);
         context.Projects.AddRange(projects);
 
-        var taskFaker = new Faker<Task>("pl")
+        var AssignmentFaker = new Faker<Assignment>("pl")
             .RuleFor(t => t.Id, f => Guid.NewGuid())
             .RuleFor(t => t.Name, f => f.Hacker.Verb() + " " + f.Hacker.Noun())
             .RuleFor(t => t.Description, f => f.Lorem.Sentence())
@@ -140,27 +140,27 @@ public class DatabaseSeeder
                     return DateTimeOffset.UtcNow.AddDays(f.Random.Int(0,4));
                 }
             })
-            .RuleFor(t => t.Labels, (f, currentTask) =>
+            .RuleFor(t => t.Labels, (f, currentAssignment) =>
             {
                var SelectedLabels = f.PickRandom(labels, f.Random.Int(0,3));
 
-               return SelectedLabels.Select(label => new TaskTaskLabelMTMRelation
+               return SelectedLabels.Select(label => new AssignmentAssignmentLabelMTMRelation
                {
-                   TaskId = currentTask.Id,
-                   TaskLabelId = label.Id
+                   AssignmentId = currentAssignment.Id,
+                   AssignmentLabelId = label.Id
                }).ToList();
             })
-            .RuleFor(t => t.Assignees, (f, currentTask) =>
+            .RuleFor(t => t.Assignees, (f, currentAssignment) =>
             {
-                var CurrentProject = projects.First(p => p.Id == currentTask.ProjectId);
+                var CurrentProject = projects.First(p => p.Id == currentAssignment.ProjectId);
                 var CurrentTeamIds = CurrentProject.TeamMembers.Select(tm => tm.UserId).ToList();
                 var NumberOfAssignees = f.Random.Int(0, Math.Min(2, CurrentTeamIds.Count()));
 
                 var SelectedUsersIds = f.PickRandom(CurrentTeamIds, NumberOfAssignees);
                 
-                return SelectedUsersIds.Select(SelectedUserId => new TaskUserMTMRelation
+                return SelectedUsersIds.Select(SelectedUserId => new AssignmentUserMTMRelation
                 {
-                    TaskId = currentTask.Id,
+                    AssignmentId = currentAssignment.Id,
                     UserId = SelectedUserId
                 }).ToList();
             })
@@ -175,8 +175,8 @@ public class DatabaseSeeder
             })
             .RuleFor(t => t.CreatedAt, f => DateTimeOffset.UtcNow);
 
-        var tasks = taskFaker.Generate(50);
-        context.Tasks.AddRange(tasks);
+        var assignments = AssignmentFaker.Generate(50);
+        context.Assignments.AddRange(assignments);
 
         var companyNoteFaker = new Faker<CompanyNote>("pl")
             .RuleFor(n => n.Id, f => Guid.NewGuid())
@@ -191,7 +191,7 @@ public class DatabaseSeeder
 
         var messageFaker = new Faker<Message>("pl")
             .RuleFor(m => m.Id, f => Guid.NewGuid())
-            .RuleFor(m => m.TaskId, f => f.PickRandom(tasks).Id)
+            .RuleFor(m => m.AssignmentId, f => f.PickRandom(assignments).Id)
             .RuleFor(m => m.AuthorId, f => f.PickRandom(users).Id)
             .RuleFor(m => m.Text, f => f.Lorem.Sentence())
             .RuleFor(m => m.IsEdited, f => f.Random.Bool())
@@ -204,9 +204,9 @@ public class DatabaseSeeder
         var childMessageFaker = new Faker<Message>("pl")
             .RuleFor(m => m.Id, f => Guid.NewGuid())
             .RuleFor(m => m.ParentMessageId, f => f.PickRandom(messages).Id)
-            .RuleFor(m => m.TaskId, (f, currentMessage) => 
+            .RuleFor(m => m.AssignmentId, (f, currentMessage) => 
             {
-                return messages.First(p => p.Id == currentMessage.ParentMessageId).TaskId;
+                return messages.First(p => p.Id == currentMessage.ParentMessageId).AssignmentId;
             })
             .RuleFor(m => m.AuthorId, f => f.PickRandom(users).Id)
             .RuleFor(m => m.Text, f => f.Lorem.Sentence())
@@ -251,10 +251,10 @@ public class DatabaseSeeder
             .RuleFor(s => s.EndDate, f => DateTimeOffset.UtcNow.AddDays(14))
             .RuleFor(s => s.CreatedAt, f => DateTimeOffset.UtcNow)
             .RuleFor(s =>s.IsKanban, f => f.Random.Bool())
-            .RuleFor(s => s.Tasks, (f, l) => 
+            .RuleFor(s => s.Assignments, (f, l) => 
             {
-                var tasksFromThisProject = tasks.Where(t => t.ProjectId == l.ProjectId).ToList();
-                return f.PickRandom(tasksFromThisProject, f.Random.Int(2, 5)).ToList();
+                var assignmentsFromThisProject = assignments.Where(t => t.ProjectId == l.ProjectId).ToList();
+                return f.PickRandom(assignmentsFromThisProject, f.Random.Int(2, 5)).ToList();
             });
 
         var sprints = sprintsFaker.Generate(6);
@@ -291,19 +291,19 @@ public class DatabaseSeeder
         var general_files = filesGeneralFaker.Generate(10);
         context.Files.AddRange(general_files);
 
-        var fileTasksFaker = filesBaseFaker.Clone();
-        fileTasksFaker.RuleFor(f => f.TaskId, f => f.PickRandom(tasks).Id)
+        var fileAssignmentFaker = filesBaseFaker.Clone();
+        fileAssignmentFaker.RuleFor(f => f.AssignmentId, f => f.PickRandom(assignments).Id)
         .RuleFor(f => f.ProjectId, (f, current) =>
         {
-            return tasks.First(t => t.Id ==current.TaskId).ProjectId;
+            return assignments.First(t => t.Id ==current.AssignmentId).ProjectId;
         })
         .RuleFor(f => f.AuthorId, (f, currentFile) => 
             {
                 var selectedTeam = projects.First(p => p.Id == currentFile.ProjectId).TeamMembers.ToList();
                 return f.PickRandom(selectedTeam).UserId;
             });
-        var tasksFiles = fileTasksFaker.Generate(4);
-        context.Files.AddRange(tasksFiles);
+        var assignmentsFiles = fileAssignmentFaker.Generate(4);
+        context.Files.AddRange(assignmentsFiles);
 
         var fileProjectFaker = filesBaseFaker.Clone();
         fileProjectFaker
