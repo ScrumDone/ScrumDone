@@ -17,6 +17,12 @@ export interface FileItem {
     project: string | null
     type: FileType
     tags: string[]
+    description?: string
+    author?: string
+    date?: string
+    size?: string
+    url?: string
+    isPublic?: boolean
 }
 
 interface SelectFilterProps {
