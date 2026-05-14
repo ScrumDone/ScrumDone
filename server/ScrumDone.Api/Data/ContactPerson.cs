@@ -17,7 +17,5 @@ namespace ScrumDone.Api.Data
         public DateTimeOffset UpdatedAt { get; set; }
         public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
-
-        public Guid CompanyId { get; set; }
     }
 }

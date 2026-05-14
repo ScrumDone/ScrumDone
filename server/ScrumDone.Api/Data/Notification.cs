@@ -32,7 +32,7 @@ namespace ScrumDone.Api.Data
     public enum NotificationResourceType
     {
         None,
-        Task,
+        Assignment,
         Project,
     }
 }

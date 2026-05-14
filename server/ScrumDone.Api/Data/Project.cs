@@ -18,7 +18,7 @@ namespace ScrumDone.Api.Data
         public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
 
-        public List<Task> Tasks { get; set; } = new();
+        public List<Assignment> Assignments { get; set; } = new();
         public List<File> Files { get; set; } = new();
         public List<ProjectUserMTMRelation> TeamMembers { get; set; } = new();
         public Company Company { get; set; }

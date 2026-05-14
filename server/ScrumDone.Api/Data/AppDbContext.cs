@@ -15,22 +15,22 @@ namespace ScrumDone.Api.Data
         public DbSet<Company> Companies { get; set; }
         public DbSet<CooperationLog> CooperationLogs { get; set; }
         public DbSet<Project> Projects { get; set; }
-        public DbSet<Task> Tasks { get; set; }
+        public DbSet<Assignment> Assignment { get; set; }
         public DbSet<Raport> Raports { get; set; }
         public DbSet<ContactPerson> ContactPeople { get; set; }
         public DbSet<CompanyNote> CompanyNotes { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<File> Files { get; set; }
-        public DbSet<TaskStatus> TaskStatuses { get; set; }
-        public DbSet<TaskPriority> TaskPriorities { get; set; }
+        public DbSet<AssignmentStatus> AssignmentStatuses { get; set; }
+        public DbSet<AssignmentPriority> AssignmentPriorities { get; set; }
         public DbSet<UserPermissionsType> UserPermissionsTypes { get; set; }
-        public DbSet<TaskLabel> TaskLabels { get; set; }
+        public DbSet<AssignmentLabel> AssignmentLabels { get; set; }
         public DbSet<Sprint> Sprints { get; set; }
         public DbSet<NotificationType> NotificationTypes { get; set; }
         public DbSet<ProjectUserMTMRelation> ProjectUserMTMTable { get; set; }
-        public DbSet<TaskUserMTMRelation> TaskUserMTMTable { get; set; }
-        public DbSet<TaskTaskLabelMTMRelation> TaskTaskLabelMTMTable { get; set; }
+        public DbSet<AssignmentUserMTMRelation> AssignmentUserMTMTable { get; set; }
+        public DbSet<AssignmentAssignmentLabelMTMRelation> AssignmentAssignmentLabelMTMTable { get; set; }
         public DbSet<FileAccessMTMRelation> FileAccessMTMTable { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -62,10 +62,10 @@ namespace ScrumDone.Api.Data
                 .HasForeignKey(f => f.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Task>()
-                .HasOne(t => t.ParentTask)
-                .WithMany(u => u.SubTasks)
-                .HasForeignKey(t => t.ParentTaskId)
+            modelBuilder.Entity<Assignment>()
+                .HasOne(t => t.ParentAssignment)
+                .WithMany(u => u.SubTAssignments)
+                .HasForeignKey(t => t.ParentAssignmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
 

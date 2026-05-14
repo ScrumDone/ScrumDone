@@ -16,7 +16,7 @@ namespace ScrumDone.Api.Data
         public Guid UserPermissionsTypeId { get; set; }
         public List<ProjectUserMTMRelation> Projects { get; set; } = new();
         public List<Message> Comments { get; set; } = new();
-        public List<TaskUserMTMRelation> AssignedTasks { get; set; } = new();
+        public List<AssignmentUserMTMRelation> Assignments { get; set; } = new();
         public List<Raport> CreatedRaports { get; set; } = new();
         public UserPermissionsType PermissionsType { get; set; }
         public List<CompanyNote> CreatedCompanyNotes { get; set; } = new();
