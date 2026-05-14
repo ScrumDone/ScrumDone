@@ -10,7 +10,12 @@ interface ProjectTopBarProps {
   onViewModeChange?: (mode: 'kanban' | 'scrum') => void;
 }
 
-const projectTabs = ['Tablica Kanban', 'Kalendarz', 'Sprinty', 'Repozytorium plikow'];
+const projectTabs = [
+  { label: 'Tablica Kanban', path: (slug: string) => `/projects/${slug}/tablica-kanban` },
+  { label: 'Kalendarz', path: null },
+  { label: 'Sprinty', path: (slug: string) => `/projects/${slug}/sprinty` },
+  { label: 'Repozytorium plików', path: (slug: string) => `/projects/${slug}/repozytorium-plikow` },
+];
 
 const editableTeamMembers: TeamMemberOption[] = [
   { id: 'artur-nowak', fullName: 'Artur Nowak', initials: 'AN', email: 'artur.nowak@randlab.pl' },
@@ -154,33 +159,23 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
 
       <div className="flex flex-wrap gap-8 px-6 py-3">
         {projectTabs.map((tab) => (
-          tab === 'Tablica Kanban' ? (
+          tab.path ? (
             <NavLink
-              key={tab}
-              to={`/projects/${displayedProject.slug}/tablica-kanban`}
+              key={tab.label}
+              to={tab.path(displayedProject.slug)}
               className={({ isActive }) =>
-                `text-sm leading-5 tracking-[-0.15px] transition-colors ${isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'}`
+                `text-sm leading-5 tracking-[-0.15px] transition-colors ${isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'} ${tab.label === 'Sprinty' && viewMode === 'kanban' ? 'hidden' : ''}`
               }
             >
-              {tab}
-            </NavLink>
-          ) : tab === 'Sprinty' ? (
-            <NavLink
-              key={tab}
-              to={`/projects/${displayedProject.slug}/sprinty`}
-              className={({ isActive }) =>
-                `text-sm leading-5 tracking-[-0.15px] transition-colors ${isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'} ${viewMode === 'kanban' ? 'hidden' : ''}`
-              }
-            >
-              {tab}
+              {tab.label}
             </NavLink>
           ) : (
-            <button
-              key={tab}
-              className={`text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950 ${(tab === 'Sprinty' && viewMode === 'kanban') ? 'hidden' : ''}`}
+            <span
+              key={tab.label}
+              className={`text-sm leading-5 tracking-[-0.15px] text-slate-800 ${tab.label === 'Sprinty' && viewMode === 'kanban' ? 'hidden' : ''}`}
             >
-              {tab}
-            </button>
+              {tab.label}
+            </span>
           )
         ))}
       </div>
