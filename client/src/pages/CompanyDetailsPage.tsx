@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
-import { MapPin, Mail, UserPlus, Edit, Phone } from 'lucide-react';
+import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon } from 'lucide-react';
 import { companies, type Company } from '../data/companies';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
@@ -28,6 +28,7 @@ const CompanyDetailsPage: React.FC = () => {
     isMainContact: false,
   });
   const mainContact = displayedCompany?.contacts[0];
+  const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
 
   useEffect(() => {
     setDisplayedCompany(company ?? null);
@@ -233,6 +234,48 @@ const CompanyDetailsPage: React.FC = () => {
                   ))}
                 </div>
               </div>
+            </div>
+            <div className="flex justify-between p-6 items-center">
+              <div className="relative inline-grid h-9 w-fit grid-cols-3 rounded-[14px] bg-[#E5E7EB] p-0.75 ml-3">
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-0.75 bottom-0.75 rounded-[14px] bg-[#F8FAFC]  transition-all duration-300 ease-out"
+                  style={{
+                    width: 'calc((100% - 6px) / 3)',
+                    left: activeTab === 'projects'
+                      ? '3px'
+                      : activeTab === 'history'
+                        ? 'calc(3px + ((100% - 6px) / 3))'
+                        : 'calc(3px + 2 * ((100% - 6px) / 3))',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('projects')}
+                  className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'projects' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
+                >
+                  Aktywne projekty (1)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('history')}
+                  className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'history' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
+                >
+                  Historia współpracy (3)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('notes')}
+                  className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'notes' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
+                >
+                  Notatki (3)
+                </button>
+              </div>
+              
+              <button className="h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] text-white rounded-lg inline-flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap mr-3">
+                  <PlusIcon className="w-4 h-4 stroke-2" />
+                  Podepnij projekt
+              </button>
             </div>
           </>
         </div>
