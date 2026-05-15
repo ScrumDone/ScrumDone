@@ -2,10 +2,54 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
-import { MapPin, Mail, UserPlus, Edit, Phone } from 'lucide-react';
+import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, FileSignature } from 'lucide-react';
 import { companies, type Company } from '../data/companies';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
+
+type CooperationHistoryItem = {
+  id: string;
+  title: string;
+  tag: string;
+  description: string;
+  dateLabel: string;
+  author: string;
+  changeFrom?: string;
+  changeTo?: string;
+  Icon: React.ComponentType<{ className?: string }>;
+};
+
+const cooperationHistory: CooperationHistoryItem[] = [
+  {
+    id: 'history-1',
+    title: 'Email sent',
+    tag: 'Wysłano email',
+    description: 'Wysłano email do Anny Wiśniewskiej z aktualizacją projektu.',
+    dateLabel: '20 marca 2026',
+    author: 'Artur Nowak',
+    Icon: MessageSquareText,
+  },
+  {
+    id: 'history-2',
+    title: 'Contact person changed',
+    tag: 'Zmiana osoby kontaktowej',
+    description: 'Zmieniono osobę kontaktową na Annę Wiśniewską.',
+    dateLabel: '15 stycznia 2026',
+    author: 'Artur Nowak',
+    changeFrom: 'Piotr Kowalski',
+    changeTo: 'Anna Wiśniewska',
+    Icon: UserRoundPen,
+  },
+  {
+    id: 'history-3',
+    title: 'Contract signed',
+    tag: 'Podpis umowy',
+    description: 'Podpisano umowę z Adoddle na rozwój aplikacji do zarządzania projektami.',
+    dateLabel: '10 stycznia 2026',
+    author: 'Artur Nowak',
+    Icon: FileSignature,
+  },
+];
 
 const CompanyDetailsPage: React.FC = () => {
   const { companySlug } = useParams();
@@ -28,6 +72,7 @@ const CompanyDetailsPage: React.FC = () => {
     isMainContact: false,
   });
   const mainContact = displayedCompany?.contacts[0];
+  const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
 
   useEffect(() => {
     setDisplayedCompany(company ?? null);
@@ -234,6 +279,96 @@ const CompanyDetailsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+            <div className="flex justify-between p-6 items-center">
+              <div className="relative inline-grid h-9 w-fit grid-cols-3 rounded-[14px] bg-[#E5E7EB] p-0.75 ml-3">
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-0.75 bottom-0.75 rounded-[14px] bg-[#F8FAFC]  transition-all duration-300 ease-out"
+                  style={{
+                    width: 'calc((100% - 6px) / 3)',
+                    left: activeTab === 'projects'
+                      ? '3px'
+                      : activeTab === 'history'
+                        ? 'calc(3px + ((100% - 6px) / 3))'
+                        : 'calc(3px + 2 * ((100% - 6px) / 3))',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('projects')}
+                  className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'projects' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
+                >
+                  Aktywne projekty (1)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('history')}
+                  className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'history' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
+                >
+                  Historia współpracy (3)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('notes')}
+                  className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'notes' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
+                >
+                  Notatki (3)
+                </button>
+              </div>
+              
+              <button className="h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] text-white rounded-lg inline-flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap mr-3">
+                  <PlusIcon className="w-4 h-4 stroke-2" />
+                  Podepnij projekt
+              </button>
+            </div>
+
+            {activeTab === 'history' && (
+              <section
+                className="mx-8 mb-8 rounded-[14px] border border-slate-200 bg-white p-6"
+                style={{
+                  ['--history-col-width' as string]: '56px',
+                  ['--history-icon-size' as string]: '40px',
+                } as React.CSSProperties}
+              >
+                <div className="space-y-8">
+                  {cooperationHistory.map((item, index) => (
+                    <article key={item.id} className="relative grid grid-cols-[var(--history-col-width)_minmax(0,1fr)] gap-4 lg:grid-cols-[var(--history-col-width)_minmax(0,1fr)_auto] lg:items-start">
+                      {index < cooperationHistory.length - 1 && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon-size)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
+                        />
+                      )}
+
+                      <div className="relative z-10 mx-auto flex h-[var(--history-icon-size)] w-[var(--history-icon-size)] items-center justify-center rounded-full border-2 border-scrumdone-blue-main bg-scrumdone-blue-200/40 text-scrumdone-blue-main">
+                        <item.Icon className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <h3 className="text-[16px] leading-6 font-medium text-slate-900 antialiased">{item.title}</h3>
+                        <span className="mt-2 inline-flex rounded-lg border text-[12px] font-medium border-scrumdone-blue-main px-1 py-0.5 text-scrumdone-blue-main">
+                          {item.tag}
+                        </span>
+
+                        <p className="mt-4 font-segoe-ui text-[14px] leading-6 text-slate-600 antialiased">{item.description}</p>
+
+                        {item.changeFrom && item.changeTo && (
+                          <p className="mt-2 font-segoe-ui text-[14px] leading-6 text-slate-700 antialiased">
+                            <span className="line-through text-slate-500">{item.changeFrom}</span>
+                            <span className="px-2">→</span>
+                            <span className="font-medium text-slate-900">{item.changeTo}</span>
+                          </p>
+                        )}
+
+                        <p className="mt-2 font-segoe-ui text-[12px] leading-5 text-slate-500 antialiased">Dodane przez: {item.author}</p>
+                      </div>
+
+                      <p className="font-segoe-ui text-[14px] leading-6 text-slate-500 antialiased lg:text-right">{item.dateLabel}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         </div>
       </main>
