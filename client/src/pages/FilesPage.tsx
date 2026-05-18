@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { DocumentTextIcon } from '@heroicons/react/24/outline'
+import { DocumentTextIcon, PlusIcon } from '@heroicons/react/24/outline'
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
 import FilesFilters, { type FileItem } from '../components/filesFilters'
+import FileAddModal, { type FileDraft } from '../components/FileAddModal'
 
-const FILES: FileItem[] = [
+const INITIAL_FILES: FileItem[] = [
     { id: 1, name: 'Brief UX nowego dashboardu.pdf', project: 'Adoddle', type: 'PDF', tags: ['UX', 'design', 'specyfikacja'] },
     { id: 2, name: 'Mapa procesu sprzedaży.xlsx', project: 'Nexus', type: 'Excel', tags: ['sprzedaż', 'harmonogram', 'zarządzanie'] },
     { id: 3, name: 'Umowa ramowa klienta.docx', project: 'Hadar', type: 'Word', tags: ['umowa', 'prawne', 'kontrakt'] },
@@ -18,7 +19,34 @@ const FILES: FileItem[] = [
 ]
 
 const FilesPage: React.FC = () => {
-    const [filteredFiles, setFilteredFiles] = useState<FileItem[]>(FILES)
+    const [allFiles, setAllFiles] = useState<FileItem[]>(INITIAL_FILES)
+    const [filteredFiles, setFilteredFiles] = useState<FileItem[]>(INITIAL_FILES)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+
+    const handleSaveFile = (draft: FileDraft) => {
+        const fileExtension = draft.name.split('.').pop()?.toUpperCase() || 'NIEZNANY'
+
+        let fileType: string = fileExtension
+        if (fileExtension === 'PNG') fileType = 'Obrazy (PNG)'
+        if (fileExtension === 'JPG' || fileExtension === 'JPEG') fileType = 'Obrazy (JPG)'
+        if (fileExtension === 'XLSX' || fileExtension === 'XLS') fileType = 'Excel'
+        if (fileExtension === 'DOCX' || fileExtension === 'DOC') fileType = 'Word'
+        if (fileExtension === 'PPTX' || fileExtension === 'PPT') fileType = 'PowerPoint'
+        if (fileExtension === 'ZIP' || fileExtension === 'RAR') fileType = 'Archiwa'
+
+        const newFileItem: FileItem = {
+            id: Date.now(),
+            name: draft.name,
+            project: draft.projectName || null,
+            type: fileType as FileItem['type'],
+            tags: draft.tags,
+        }
+
+        setAllFiles((prev) => [newFileItem, ...prev])
+        setFilteredFiles((prev) => [newFileItem, ...prev])
+        
+        setIsModalOpen(false)
+    }
 
     return (
         <div className="min-h-screen w-full bg-[#F9FAFB]">
@@ -27,9 +55,23 @@ const FilesPage: React.FC = () => {
 
             <main className="ml-64 pt-(--app-header-h)">
                 <div className="mx-auto max-w-7xl px-8 py-8">
-                    <h1 className="mb-6 font-segoe-ui text-[1.5rem] leading-8 font-normal text-black antialiased">Pliki</h1>
+                    
+                    <div className="flex items-center justify-between mb-10">
+                        <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-tight antialiased">
+                            Pliki
+                        </h1>
+                        
+                        <button 
+                            type="button"
+                            onClick={() => setIsModalOpen(true)} 
+                            className="h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] text-white rounded-lg inline-flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+                        >
+                            <PlusIcon className="w-4 h-4 stroke-2" />
+                            Dodaj plik
+                        </button>
+                    </div>
 
-                    <FilesFilters files={FILES} onFilteredFilesChange={setFilteredFiles} />
+                    <FilesFilters files={allFiles} onFilteredFilesChange={setFilteredFiles} />
 
                     <section className="mt-6 rounded-3xl border border-slate-200 bg-white">
                         {filteredFiles.length > 0 ? (
@@ -63,6 +105,12 @@ const FilesPage: React.FC = () => {
                     </section>
                 </div>
             </main>
+
+            <FileAddModal 
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSave={handleSaveFile}
+            />
         </div>
     )
 }
