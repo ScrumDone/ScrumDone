@@ -22,6 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="DTOs\Common\" />
+    <Folder Include="Mappers\" />
+    <Folder Include="Services\" />
     <Folder Include="Services\" />
   </ItemGroup>
 
