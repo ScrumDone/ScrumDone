@@ -27,6 +27,7 @@ namespace ScrumDone.Api.Data
         public DbSet<UserPermissionsType> UserPermissionsTypes { get; set; }
         public DbSet<AssignmentLabel> AssignmentLabels { get; set; }
         public DbSet<Sprint> Sprints { get; set; }
+        public DbSet<Reaction> Reactions { get; set; }
         public DbSet<NotificationType> NotificationTypes { get; set; }
         public DbSet<ProjectUserMTMRelation> ProjectUserMTMTable { get; set; }
         public DbSet<AssignmentUserMTMRelation> AssignmentUserMTMTable { get; set; }

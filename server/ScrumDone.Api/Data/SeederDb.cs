@@ -16,43 +16,46 @@ public class DatabaseSeeder
             return;
         }
 
+        var now = DateTimeOffset.UtcNow;
+        Random rnd = new Random();
+
         var permissions = new List<UserPermissionsType>
         {
-            new UserPermissionsType { Id = Guid.NewGuid(), Name = "Admin", CreatedAt = DateTimeOffset.UtcNow },
-            new UserPermissionsType { Id = Guid.NewGuid(), Name = "ProjectManager", CreatedAt = DateTimeOffset.UtcNow },
-            new UserPermissionsType { Id = Guid.NewGuid(), Name = "StandardUser", CreatedAt = DateTimeOffset.UtcNow }
+            new UserPermissionsType { Id = Guid.NewGuid(), Name = "Admin", CreatedAt = now.AddDays(-rnd.Next(14)) },
+            new UserPermissionsType { Id = Guid.NewGuid(), Name = "ProjectManager", CreatedAt = now.AddDays(-rnd.Next(14)) },
+            new UserPermissionsType { Id = Guid.NewGuid(), Name = "StandardUser", CreatedAt = now.AddDays(-rnd.Next(14)) }
         };
         context.UserPermissionsTypes.AddRange(permissions);
 
         var statuses = new List<AssignmentStatus>
         {
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#E2E8F0", CreatedAt = DateTimeOffset.UtcNow },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = DateTimeOffset.UtcNow },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = DateTimeOffset.UtcNow }
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#E2E8F0", CreatedAt = now.AddDays(-rnd.Next(14)) },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)) },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)) }
         };
         context.AssignmentStatuses.AddRange(statuses);
 
         var labels = new List<AssignmentLabel>
         {
-            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Frontend", HexColor = "#20b828", CreatedAt = DateTimeOffset.UtcNow },
-            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Backend", HexColor = "#3B82F6", CreatedAt = DateTimeOffset.UtcNow },
-            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Documentation", HexColor = "#a82993", CreatedAt = DateTimeOffset.UtcNow }
+            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Frontend", HexColor = "#20b828", CreatedAt = now.AddDays(-rnd.Next(14)) },
+            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Backend", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)) },
+            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Documentation", HexColor = "#a82993", CreatedAt = now.AddDays(-rnd.Next(14)) }
         };
         context.AssignmentLabels.AddRange(labels);
 
         var priorities = new List<AssignmentPriority>
         {
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#34D399", CreatedAt = DateTimeOffset.UtcNow },
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#ff7d13", CreatedAt = DateTimeOffset.UtcNow },
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#EF4444", CreatedAt = DateTimeOffset.UtcNow }
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#34D399", CreatedAt = now.AddDays(-rnd.Next(14)) },
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#ff7d13", CreatedAt = now.AddDays(-rnd.Next(14)) },
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#EF4444", CreatedAt = now.AddDays(-rnd.Next(14)) }
         };
         context.AssignmentPriorities.AddRange(priorities);
 
         var notificationTypes = new List<NotificationType>
         {
-            new NotificationType { Id = Guid.NewGuid(), Name = "Message", HexColor = "#2045ac", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false },
-            new NotificationType { Id = Guid.NewGuid(), Name = "Assignment", HexColor = "#0b7880", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false },
-            new NotificationType { Id = Guid.NewGuid(), Name = "Deadline", HexColor = "#2357b8", CreatedAt = DateTimeOffset.UtcNow, IsDeleted=false }
+            new NotificationType { Id = Guid.NewGuid(), Name = "Message", HexColor = "#2045ac", CreatedAt = now, IsDeleted=false },
+            new NotificationType { Id = Guid.NewGuid(), Name = "Assignment", HexColor = "#0b7880", CreatedAt = now, IsDeleted=false },
+            new NotificationType { Id = Guid.NewGuid(), Name = "Deadline", HexColor = "#2357b8", CreatedAt = now, IsDeleted=false }
         };
         context.NotificationTypes.AddRange(notificationTypes);
 
@@ -87,7 +90,7 @@ public class DatabaseSeeder
                     return f.Commerce.Ean8();
                 }
             })
-            .RuleFor(c => c.CreatedAt, f => DateTimeOffset.UtcNow);
+            .RuleFor(c => c.CreatedAt, f => now.AddDays(-rnd.Next(14)));
 
         var companies = companyFaker.Generate(5);
         context.Companies.AddRange(companies);
@@ -97,7 +100,7 @@ public class DatabaseSeeder
             .RuleFor(u => u.Name, f => f.Name.FullName())
             .RuleFor(u => u.ProfilePictureUrl, f => f.Internet.Avatar())
             .RuleFor(u => u.UserPermissionsTypeId, f => f.PickRandom(permissions).Id)
-            .RuleFor(u => u.CreatedAt, f => DateTimeOffset.UtcNow);
+            .RuleFor(u => u.CreatedAt, f => now.AddDays(-rnd.Next(14)));
 
         var users = userFaker.Generate(15);
         context.Users.AddRange(users);
@@ -119,30 +122,31 @@ public class DatabaseSeeder
                     ProjectId = CurrentProject.Id
                 }).ToList();
             })
-            .RuleFor(p => p.CreatedAt, f => DateTimeOffset.UtcNow);
+            .RuleFor(p => p.CreatedAt, f => now.AddDays(-rnd.Next(14)));
 
         var projects = projectFaker.Generate(5);
         context.Projects.AddRange(projects);
 
         var assignmentFaker = new Faker<Assignment>("pl")
-            .RuleFor(t => t.Id, f => Guid.NewGuid())
-            .RuleFor(t => t.Name, f => f.Hacker.Verb() + " " + f.Hacker.Noun())
-            .RuleFor(t => t.Description, f => f.Lorem.Sentence())
-            .RuleFor(t => t.ProjectId, f => f.PickRandom(projects).Id)
-            .RuleFor(t => t.StatusId, f => f.PickRandom(statuses).Id)
-            .RuleFor(t => t.PriorityId, f => f.PickRandom(priorities).Id)
-            .RuleFor(t => t.DueDate, f =>
+            .RuleFor(a => a.Id, f => Guid.NewGuid())
+            .RuleFor(a => a.ParentAssignmentId, f => null)
+            .RuleFor(a => a.Name, f => f.Hacker.Verb() + " " + f.Hacker.Noun())
+            .RuleFor(a => a.Description, f => f.Lorem.Sentence())
+            .RuleFor(a => a.ProjectId, f => f.PickRandom(projects).Id)
+            .RuleFor(a => a.StatusId, f => f.PickRandom(statuses).Id)
+            .RuleFor(a => a.PriorityId, f => f.PickRandom(priorities).Id)
+            .RuleFor(a => a.DueDate, f =>
             {
                 if (f.Random.Int(0,1) == 0)
                     return null;
                 else
                 {
-                    return DateTimeOffset.UtcNow.AddDays(f.Random.Int(0,4));
+                    return now.AddDays(f.Random.Int(0,4));
                 }
             })
-            .RuleFor(t => t.Labels, (f, currentAssignment) =>
+            .RuleFor(a => a.Labels, (f, currentAssignment) =>
             {
-               var SelectedLabels = f.PickRandom(labels, f.Random.Int(0,3));
+               var SelectedLabels = f.PickRandom(labels, f.Random.Int(0,Math.Min(3, labels.Count())));
 
                return SelectedLabels.Select(label => new AssignmentAssignmentLabelMTMRelation
                {
@@ -150,7 +154,7 @@ public class DatabaseSeeder
                    AssignmentLabelId = label.Id
                }).ToList();
             })
-            .RuleFor(t => t.Assignees, (f, currentAssignment) =>
+            .RuleFor(a => a.Assignees, (f, currentAssignment) =>
             {
                 var CurrentProject = projects.First(p => p.Id == currentAssignment.ProjectId);
                 var CurrentTeamIds = CurrentProject.TeamMembers.Select(tm => tm.UserId).ToList();
@@ -170,21 +174,36 @@ public class DatabaseSeeder
                     return null;
                 else
                 {
-                    return f.Random.Decimal();
+                    return f.Random.Decimal(0.5m, 20m);
                 }
             })
-            .RuleFor(t => t.CreatedAt, f => DateTimeOffset.UtcNow);
+            .RuleFor(t => t.CreatedAt, f => now.AddDays(-rnd.Next(14)));
 
         var assignments = assignmentFaker.Generate(50);
         context.Assignment.AddRange(assignments);
+
+        var childAssignmentFaker = assignmentFaker.Clone()
+            .RuleFor(a => a.ParentAssignmentId, f => f.PickRandom(assignments).Id)
+            .RuleFor(a => a.ProjectId, (f, current) =>
+            {
+                return assignments.First(a => a.Id == current.ParentAssignmentId).ProjectId;
+            })
+            .RuleFor(a => a.CreatedAt, (f, currentAssignment) =>
+            {
+                return assignments.First(a => a.Id == currentAssignment.ParentAssignmentId).CreatedAt;
+            });
+
+        var childAssignments = childAssignmentFaker.Generate(20);
+        context.Assignment.AddRange(childAssignments);
+
 
         var companyNoteFaker = new Faker<CompanyNote>("pl")
             .RuleFor(n => n.Id, f => Guid.NewGuid())
             .RuleFor(n => n.CompanyId, f => f.PickRandom(companies).Id)
             .RuleFor(n => n.UserId, f => f.PickRandom(users).Id)
             .RuleFor(n => n.Content, f => f.Lorem.Sentence())
-            .RuleFor(n => n.IsDeleted, f => f.Random.Bool())
-            .RuleFor(n => n.CreatedAt, f => DateTimeOffset.UtcNow);
+            .RuleFor(n => n.IsDeleted, f => false)
+            .RuleFor(n => n.CreatedAt, f => now);
 
         var notes = companyNoteFaker.Generate(10);
         context.CompanyNotes.AddRange(notes);
@@ -196,7 +215,10 @@ public class DatabaseSeeder
             .RuleFor(m => m.Text, f => f.Lorem.Sentence())
             .RuleFor(m => m.IsEdited, f => f.Random.Bool())
             .RuleFor(m => m.IsDeleted, f => false)
-            .RuleFor(m => m.CreatedAt, f => DateTimeOffset.UtcNow);
+            .RuleFor(m => m.CreatedAt, (f, currentMessage) =>
+            {
+                return assignments.First(a => a.Id == currentMessage.AssignmentId).CreatedAt;
+            });
 
         var messages = messageFaker.Generate(20);
         context.Messages.AddRange(messages);
@@ -212,10 +234,32 @@ public class DatabaseSeeder
             .RuleFor(m => m.Text, f => f.Lorem.Sentence())
             .RuleFor(m => m.IsEdited, f => f.Random.Bool())
             .RuleFor(m => m.IsDeleted, f => false)
-            .RuleFor(m => m.CreatedAt, f => DateTimeOffset.UtcNow);
+            .RuleFor(m => m.CreatedAt, (f, currentMessage) =>
+            {
+                return messages.First(m => m.Id == currentMessage.ParentMessageId).CreatedAt;
+            });
 
         var childMessages = childMessageFaker.Generate(10);
         context.Messages.AddRange(childMessages);
+
+        var emojis = new[] { "👍", "❤️", "😂", "😮", "😢", "👏", "🎉", "🔥", "👀", "🚀" };
+
+        var reactionFaker = new Faker<Reaction>("pl")
+            .RuleFor(r => r.Id, f => Guid.NewGuid())
+            .RuleFor(r => r.Emoji, f => f.PickRandom(emojis))
+            .RuleFor(r => r.CommentId, f => f.PickRandom(messages).Id)
+            .RuleFor(r => r.CreatedAt, (f, currentReaction) =>
+            {
+                return messages.First(m => m.Id == currentReaction.CommentId).CreatedAt;
+            }) 
+            .RuleFor(r => r.AuthorId, (f, current) =>
+            {
+                var currentAssignment = assignments.First(a => a.Id == messages.First(m => m.Id == current.CommentId).AssignmentId);
+                return f.PickRandom(currentAssignment.Assignees).Id;
+            }) ;
+        
+        var reactions = reactionFaker.Generate(30);
+        context.Reactions.AddRange(reactions);
 
         var contactPersonFaker = new Faker<ContactPerson>("pl")
             .RuleFor(p => p.Id, f => Guid.NewGuid())
@@ -225,9 +269,17 @@ public class DatabaseSeeder
             .RuleFor(p => p.Role, f => f.Name.JobTitle())
             .RuleFor(p => p.Phone, f => f.Phone.PhoneNumber())
             .RuleFor(p => p.IsDeleted, f => false)
-            .RuleFor(p => p.CreatedAt, f => DateTimeOffset.UtcNow);
+            .RuleFor(p => p.CreatedAt, f => now);
 
         var contactPeople = contactPersonFaker.Generate(15);
+
+        //Mark one person for each company as isPrimary
+        foreach (var companyGroup in contactPeople.GroupBy(c => c.CompanyId))
+        {
+            var primaryContact = companyGroup.First();
+            primaryContact.IsPrimary = true;
+        }
+
         context.ContactPeople.AddRange(contactPeople);
 
         var cooperationLogsFaker = new Faker<CooperationLog>("pl")
@@ -236,8 +288,22 @@ public class DatabaseSeeder
             .RuleFor(l => l.AuthorId, f => f.PickRandom(users).Id)
             .RuleFor(l => l.Title, f => f.Company.CatchPhrase())
             .RuleFor(l => l.Description, f => f.Lorem.Sentence())
+            .RuleFor(l => l.OldValue, (f, currentLog) =>
+            {
+                if(f.Random.Bool())
+                    return f.Lorem.Sentence();
+                else
+                    return null;
+            })
+            .RuleFor(l => l.NewValue, (f, currentLog) =>
+            {
+                if(currentLog.OldValue != null)
+                    return f.Lorem.Sentence();
+                else
+                    return null;
+            })
             .RuleFor(l => l.IsDeleted, f => false)
-            .RuleFor(l => l.CreatedAt, f => DateTimeOffset.UtcNow);
+            .RuleFor(l => l.CreatedAt, f => now);
 
         var CooperationLogs = cooperationLogsFaker.Generate(10);
         context.CooperationLogs.AddRange(CooperationLogs);
@@ -247,9 +313,9 @@ public class DatabaseSeeder
             .RuleFor(s => s.ProjectId, f => f.PickRandom(projects).Id)
             .RuleFor(s => s.Name, f => f.Company.CatchPhrase())
             .RuleFor(s => s.IsDeleted, f => false)
-            .RuleFor(s => s.StartDate, f => DateTimeOffset.UtcNow)
-            .RuleFor(s => s.EndDate, f => DateTimeOffset.UtcNow.AddDays(14))
-            .RuleFor(s => s.CreatedAt, f => DateTimeOffset.UtcNow)
+            .RuleFor(s => s.StartDate, f => now)
+            .RuleFor(s => s.EndDate, f => now.AddDays(14))
+            .RuleFor(s => s.CreatedAt, f => now)
             .RuleFor(s =>s.IsKanban, f => f.Random.Bool())
             .RuleFor(s => s.Assignments, (f, l) => 
             {
@@ -393,7 +459,15 @@ public class DatabaseSeeder
                 }
                 return null;
             })
-            .RuleFor(n => n.CreatedAt, f => f.Date.RecentOffset(30))
+            .RuleFor(n => n.SecondResourceType, (f, n) => 
+            {
+                if (n.SecondResourceId != null)
+                {
+                    return NotificationResourceType.Message;
+                }
+                return null;
+            })
+            .RuleFor(n => n.CreatedAt, f => now)
             .RuleFor(n => n.IsDeleted, f => false);
 
         var notifications = notificationFaker.Generate(30);
@@ -403,7 +477,7 @@ public class DatabaseSeeder
             .RuleFor(r => r.Id, f => Guid.NewGuid())
             .RuleFor(r => r.Name, f => f.PickRandom("Raport: ", "Podsumowanie: ", "Analiza: ") + f.Commerce.ProductName())
             .RuleFor(r => r.AuthorId, f => f.PickRandom(users).Id)
-            .RuleFor(r => r.CreatedAt, f => DateTimeOffset.UtcNow)
+            .RuleFor(r => r.CreatedAt, f => now)
             .RuleFor(r => r.IsDeleted, f => false);
 
         var raports = raportFaker.Generate(10);
