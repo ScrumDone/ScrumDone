@@ -164,6 +164,16 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
             >
               {tab}
             </NavLink>
+          ) : tab === 'Kalendarz' ? (
+            <NavLink
+              key={tab}
+              to={`/projects/${displayedProject.slug}/kalendarz`}
+              className={({ isActive }) =>
+                `text-sm leading-5 tracking-[-0.15px] transition-colors ${isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'}`
+              }
+            >
+              {tab}
+            </NavLink>
           ) : tab === 'Sprinty' ? (
             <NavLink
               key={tab}
