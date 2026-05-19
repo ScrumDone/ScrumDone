@@ -90,7 +90,14 @@ public class DatabaseSeeder
                     return f.Commerce.Ean8();
                 }
             })
-            .RuleFor(c => c.CreatedAt, f => now.AddDays(-rnd.Next(14)));
+            .RuleFor(c => c.CreatedAt, f => now.AddDays(-rnd.Next(15,30)))
+            .RuleFor(l => l.UpdatedAt, (f, currentCompany) => 
+            {
+                if (f.Random.Bool())
+                    return currentCompany.CreatedAt;
+                else
+                    return now;
+            });;
 
         var companies = companyFaker.Generate(5);
         context.Companies.AddRange(companies);
@@ -100,7 +107,14 @@ public class DatabaseSeeder
             .RuleFor(u => u.Name, f => f.Name.FullName())
             .RuleFor(u => u.ProfilePictureUrl, f => f.Internet.Avatar())
             .RuleFor(u => u.UserPermissionsTypeId, f => f.PickRandom(permissions).Id)
-            .RuleFor(u => u.CreatedAt, f => now.AddDays(-rnd.Next(14)));
+            .RuleFor(u => u.CreatedAt, f => now.AddDays(-rnd.Next(14)))
+            .RuleFor(l => l.UpdatedAt, (f, currentUser) => 
+            {
+                if (f.Random.Bool())
+                    return currentUser.CreatedAt;
+                else
+                    return now;
+            });
 
         var users = userFaker.Generate(15);
         context.Users.AddRange(users);
@@ -122,7 +136,14 @@ public class DatabaseSeeder
                     ProjectId = CurrentProject.Id
                 }).ToList();
             })
-            .RuleFor(p => p.CreatedAt, f => now.AddDays(-rnd.Next(14)));
+            .RuleFor(p => p.CreatedAt, f => now)
+            .RuleFor(l => l.UpdatedAt, f => 
+            {
+                if (f.Random.Bool())
+                    return DateTimeOffset.Now;
+                else
+                    return now;
+            });;
 
         var projects = projectFaker.Generate(5);
         context.Projects.AddRange(projects);
@@ -177,7 +198,14 @@ public class DatabaseSeeder
                     return f.Random.Decimal(0.5m, 20m);
                 }
             })
-            .RuleFor(t => t.CreatedAt, f => now.AddDays(-rnd.Next(14)));
+            .RuleFor(t => t.CreatedAt, f => now)
+            .RuleFor(l => l.UpdatedAt, f => 
+            {
+                if (f.Random.Bool())
+                    return DateTimeOffset.Now;
+                else
+                    return now;
+            });;
 
         var assignments = assignmentFaker.Generate(50);
         context.Assignment.AddRange(assignments);
@@ -191,7 +219,14 @@ public class DatabaseSeeder
             .RuleFor(a => a.CreatedAt, (f, currentAssignment) =>
             {
                 return assignments.First(a => a.Id == currentAssignment.ParentAssignmentId).CreatedAt;
-            });
+            })
+            .RuleFor(l => l.UpdatedAt, f => 
+            {
+                if (f.Random.Bool())
+                    return DateTimeOffset.Now;
+                else
+                    return now;
+            });;
 
         var childAssignments = childAssignmentFaker.Generate(20);
         context.Assignment.AddRange(childAssignments);
@@ -203,7 +238,14 @@ public class DatabaseSeeder
             .RuleFor(n => n.UserId, f => f.PickRandom(users).Id)
             .RuleFor(n => n.Content, f => f.Lorem.Sentence())
             .RuleFor(n => n.IsDeleted, f => false)
-            .RuleFor(n => n.CreatedAt, f => now);
+            .RuleFor(n => n.CreatedAt, f => now)
+            .RuleFor(l => l.UpdatedAt, f => 
+            {
+                if (f.Random.Bool())
+                    return DateTimeOffset.Now;
+                else
+                    return now;
+            });;
 
         var notes = companyNoteFaker.Generate(10);
         context.CompanyNotes.AddRange(notes);
@@ -218,6 +260,13 @@ public class DatabaseSeeder
             .RuleFor(m => m.CreatedAt, (f, currentMessage) =>
             {
                 return assignments.First(a => a.Id == currentMessage.AssignmentId).CreatedAt;
+            })
+            .RuleFor(l => l.UpdatedAt, f => 
+            {
+                if (f.Random.Bool())
+                    return DateTimeOffset.Now;
+                else
+                    return now;
             });
 
         var messages = messageFaker.Generate(20);
@@ -237,6 +286,13 @@ public class DatabaseSeeder
             .RuleFor(m => m.CreatedAt, (f, currentMessage) =>
             {
                 return messages.First(m => m.Id == currentMessage.ParentMessageId).CreatedAt;
+            })
+            .RuleFor(l => l.UpdatedAt, (f,currentMessage) => 
+            {
+                if (f.Random.Bool())
+                    return currentMessage.CreatedAt;
+                else
+                    return now;
             });
 
         var childMessages = childMessageFaker.Generate(10);
@@ -251,11 +307,12 @@ public class DatabaseSeeder
             .RuleFor(r => r.CreatedAt, (f, currentReaction) =>
             {
                 return messages.First(m => m.Id == currentReaction.CommentId).CreatedAt;
-            }) 
+            })
             .RuleFor(r => r.AuthorId, (f, current) =>
             {
                 var currentAssignment = assignments.First(a => a.Id == messages.First(m => m.Id == current.CommentId).AssignmentId);
-                return f.PickRandom(currentAssignment.Assignees).Id;
+                var currentUsers = projects.First(p => p.Id == currentAssignment.ProjectId).TeamMembers;
+                return f.PickRandom(currentUsers).Id;
             }) ;
         
         var reactions = reactionFaker.Generate(30);
@@ -269,7 +326,14 @@ public class DatabaseSeeder
             .RuleFor(p => p.Role, f => f.Name.JobTitle())
             .RuleFor(p => p.Phone, f => f.Phone.PhoneNumber())
             .RuleFor(p => p.IsDeleted, f => false)
-            .RuleFor(p => p.CreatedAt, f => now);
+            .RuleFor(p => p.CreatedAt, f => now)
+            .RuleFor(l => l.UpdatedAt, f => 
+            {
+                if (f.Random.Bool())
+                    return DateTimeOffset.Now;
+                else
+                    return now;
+            });
 
         var contactPeople = contactPersonFaker.Generate(15);
 
@@ -303,7 +367,14 @@ public class DatabaseSeeder
                     return null;
             })
             .RuleFor(l => l.IsDeleted, f => false)
-            .RuleFor(l => l.CreatedAt, f => now);
+            .RuleFor(l => l.CreatedAt, f => now)
+            .RuleFor(l => l.UpdatedAt, f => 
+            {
+                if (f.Random.Bool())
+                    return DateTimeOffset.Now;
+                else
+                    return now;
+            });
 
         var CooperationLogs = cooperationLogsFaker.Generate(10);
         context.CooperationLogs.AddRange(CooperationLogs);
@@ -316,6 +387,13 @@ public class DatabaseSeeder
             .RuleFor(s => s.StartDate, f => now)
             .RuleFor(s => s.EndDate, f => now.AddDays(14))
             .RuleFor(s => s.CreatedAt, f => now)
+            .RuleFor(l => l.UpdatedAt, f => 
+            {
+                if (f.Random.Bool())
+                    return DateTimeOffset.Now;
+                else
+                    return now;
+            })
             .RuleFor(s =>s.IsKanban, f => f.Random.Bool())
             .RuleFor(s => s.Assignments, (f, l) => 
             {
@@ -331,7 +409,15 @@ public class DatabaseSeeder
             .RuleFor(f => f.Description, f => f.Lorem.Sentence())
             .RuleFor(f => f.OldFileName, f => f.Lorem.Word())
             .RuleFor(f => f.FilePath, f => f.Image.PicsumUrl())
-            .RuleFor(f => f.IsPublic, f => true);
+            .RuleFor(f => f.IsPublic, f => true)
+            .RuleFor(l => l.CreatedAt, f => now)
+            .RuleFor(l => l.UpdatedAt, f => 
+            {
+                if (f.Random.Bool())
+                    return DateTimeOffset.Now;
+                else
+                    return now;
+            });
 
         var filesGeneralFaker = filesBaseFaker.Clone()
             .RuleFor(f => f.AuthorId, f => f.PickRandom(users).Id)
@@ -414,7 +500,6 @@ public class DatabaseSeeder
             .RuleFor(n => n.Message, f => f.Lorem.Sentence(3, 5))
             .RuleFor(n => n.IsRead, f => f.Random.Bool(0.3f))
             .RuleFor(n => n.NotificationTypeId, f => f.PickRandom(notificationTypes).Id)
-            
             .RuleFor(n => n.ResourceType, f => f.PickRandom<NotificationResourceType>())
             .RuleFor(n => n.ResourceId, (f, n) => 
             {
@@ -468,6 +553,13 @@ public class DatabaseSeeder
                 return null;
             })
             .RuleFor(n => n.CreatedAt, f => now)
+            .RuleFor(l => l.UpdatedAt, f =>
+            {
+                if (f.Random.Bool())
+                    return now;
+                else    
+                    return DateTimeOffset.Now;
+            })
             .RuleFor(n => n.IsDeleted, f => false);
 
         var notifications = notificationFaker.Generate(30);
@@ -478,6 +570,13 @@ public class DatabaseSeeder
             .RuleFor(r => r.Name, f => f.PickRandom("Raport: ", "Podsumowanie: ", "Analiza: ") + f.Commerce.ProductName())
             .RuleFor(r => r.AuthorId, f => f.PickRandom(users).Id)
             .RuleFor(r => r.CreatedAt, f => now)
+            .RuleFor(l => l.UpdatedAt, f =>
+            {
+                if (f.Random.Bool())
+                    return now;
+                else    
+                    return DateTimeOffset.Now;
+            })
             .RuleFor(r => r.IsDeleted, f => false);
 
         var raports = raportFaker.Generate(10);
