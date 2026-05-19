@@ -22,6 +22,7 @@ namespace ScrumDone.Api.Data
         public DbSet<Message> Messages { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<File> Files { get; set; }
+        public DbSet<FileLabel> FileLabels { get; set; }
         public DbSet<AssignmentStatus> AssignmentStatuses { get; set; }
         public DbSet<AssignmentPriority> AssignmentPriorities { get; set; }
         public DbSet<UserPermissionsType> UserPermissionsTypes { get; set; }
@@ -32,6 +33,7 @@ namespace ScrumDone.Api.Data
         public DbSet<ProjectUserMTMRelation> ProjectUserMTMTable { get; set; }
         public DbSet<AssignmentUserMTMRelation> AssignmentUserMTMTable { get; set; }
         public DbSet<AssignmentAssignmentLabelMTMRelation> AssignmentAssignmentLabelMTMTable { get; set; }
+        public DbSet<FileFileLabelMTMRelation> FileFileLabelMTMTable { get; set; }
         public DbSet<FileAccessMTMRelation> FileAccessMTMTable { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

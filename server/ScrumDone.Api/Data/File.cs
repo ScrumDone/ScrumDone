@@ -8,7 +8,7 @@ namespace ScrumDone.Api.Data
         public string OldFileName { get; set; }
         public string FilePath { get; set; }
         public bool IsPublic { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
@@ -25,5 +25,6 @@ namespace ScrumDone.Api.Data
         public Project? Project { get; set; }
         public Message? Message { get; set; }
         public List<FileAccessMTMRelation> PermitedUsers { get; set; } = new();
+        public List<FileFileLabelMTMRelation> Labels { get; set; } = new();
     }
 }

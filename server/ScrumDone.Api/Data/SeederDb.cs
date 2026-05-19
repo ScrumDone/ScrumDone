@@ -21,43 +21,51 @@ public class DatabaseSeeder
 
         var permissions = new List<UserPermissionsType>
         {
-            new UserPermissionsType { Id = Guid.NewGuid(), Name = "Admin", CreatedAt = now.AddDays(-rnd.Next(14)) },
-            new UserPermissionsType { Id = Guid.NewGuid(), Name = "ProjectManager", CreatedAt = now.AddDays(-rnd.Next(14)) },
-            new UserPermissionsType { Id = Guid.NewGuid(), Name = "StandardUser", CreatedAt = now.AddDays(-rnd.Next(14)) }
+            new UserPermissionsType { Id = Guid.NewGuid(), Name = "Admin", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new UserPermissionsType { Id = Guid.NewGuid(), Name = "ProjectManager", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new UserPermissionsType { Id = Guid.NewGuid(), Name = "StandardUser", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
         };
         context.UserPermissionsTypes.AddRange(permissions);
 
         var statuses = new List<AssignmentStatus>
         {
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#E2E8F0", CreatedAt = now.AddDays(-rnd.Next(14)) },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)) },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)) }
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#E2E8F0", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
         };
         context.AssignmentStatuses.AddRange(statuses);
 
         var labels = new List<AssignmentLabel>
         {
-            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Frontend", HexColor = "#20b828", CreatedAt = now.AddDays(-rnd.Next(14)) },
-            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Backend", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)) },
-            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Documentation", HexColor = "#a82993", CreatedAt = now.AddDays(-rnd.Next(14)) }
+            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Frontend", HexColor = "#20b828", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Backend", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Documentation", HexColor = "#a82993", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
         };
         context.AssignmentLabels.AddRange(labels);
 
         var priorities = new List<AssignmentPriority>
         {
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#34D399", CreatedAt = now.AddDays(-rnd.Next(14)) },
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#ff7d13", CreatedAt = now.AddDays(-rnd.Next(14)) },
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#EF4444", CreatedAt = now.AddDays(-rnd.Next(14)) }
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#34D399", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#ff7d13", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#EF4444", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
         };
         context.AssignmentPriorities.AddRange(priorities);
 
         var notificationTypes = new List<NotificationType>
         {
-            new NotificationType { Id = Guid.NewGuid(), Name = "Message", HexColor = "#2045ac", CreatedAt = now, IsDeleted=false },
-            new NotificationType { Id = Guid.NewGuid(), Name = "Assignment", HexColor = "#0b7880", CreatedAt = now, IsDeleted=false },
-            new NotificationType { Id = Guid.NewGuid(), Name = "Deadline", HexColor = "#2357b8", CreatedAt = now, IsDeleted=false }
+            new NotificationType { Id = Guid.NewGuid(), Name = "Message", HexColor = "#2045ac", CreatedAt = now, IsDeleted=false, UpdatedAt = now },
+            new NotificationType { Id = Guid.NewGuid(), Name = "Assignment", HexColor = "#0b7880", CreatedAt = now, IsDeleted=false, UpdatedAt = now },
+            new NotificationType { Id = Guid.NewGuid(), Name = "Deadline", HexColor = "#2357b8", CreatedAt = now, IsDeleted=false, UpdatedAt = now }
         };
         context.NotificationTypes.AddRange(notificationTypes);
+
+        var fileLabels = new List<FileLabel>
+        {
+            new FileLabel { Id = Guid.NewGuid(), Name = "Contract", HexColor = "#8965dd", CreatedAt = now, IsDeleted=false, UpdatedAt = now },
+            new FileLabel { Id = Guid.NewGuid(), Name = "Bill", HexColor = "#4d10af", CreatedAt = now, IsDeleted=false, UpdatedAt = now },
+            new FileLabel { Id = Guid.NewGuid(), Name = "Photo", HexColor = "#9c10dd", CreatedAt = now, IsDeleted=false, UpdatedAt = now }
+        };
+        context.FileLabels.AddRange(fileLabels);
 
         var companyFaker = new Faker<Company>("pl")
             .RuleFor(c => c.Id, f => Guid.NewGuid())
@@ -406,10 +414,26 @@ public class DatabaseSeeder
 
         var filesBaseFaker = new Faker<File>("pl")
             .RuleFor(f => f.Id, f => Guid.NewGuid())
-            .RuleFor(f => f.Description, f => f.Lorem.Sentence())
+            .RuleFor(f => f.Description, f => 
+            {
+                if (f.Random.Bool())
+                    return f.Lorem.Sentence();
+                else
+                    return null;
+            })
             .RuleFor(f => f.OldFileName, f => f.Lorem.Word())
             .RuleFor(f => f.FilePath, f => f.Image.PicsumUrl())
             .RuleFor(f => f.IsPublic, f => true)
+            .RuleFor(f => f.Labels, (f, currentFile) =>
+            {
+               var SelectedLabels = f.PickRandom(fileLabels, f.Random.Int(0,Math.Min(3, fileLabels.Count())));
+
+               return SelectedLabels.Select(fileLabel => new FileFileLabelMTMRelation
+               {
+                   FileId = currentFile.Id,
+                   FileLabelId = fileLabel.Id
+               }).ToList();
+            })
             .RuleFor(l => l.CreatedAt, f => now)
             .RuleFor(l => l.UpdatedAt, f => 
             {
@@ -537,7 +561,7 @@ public class DatabaseSeeder
                 {
                     var relatedMessages = messages.Where(m => m.AssignmentId == n.ResourceId).ToList();
 
-                    if (relatedMessages.Any() && f.Random.Bool())
+                    if (relatedMessages.Any())
                     {
                         return f.PickRandom(relatedMessages).Id;
                     }
