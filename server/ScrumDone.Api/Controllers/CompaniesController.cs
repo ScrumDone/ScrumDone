@@ -60,12 +60,12 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateCompanyNote([FromRoute] Guid id, [FromBody] CompanyNoteCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpPatch("{id:guid}/notes/{NotesId:guid}")]
+        [HttpPatch("{id:guid}/notes/{noteId:guid}")]
         [ProducesResponseType(typeof(CompanyNoteDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> UpdateCompanyNote([FromRoute] Guid id, [FromRoute] Guid noteId, [FromBody] CompanyNoteUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpDelete("{id:guid}/notes/{NotesId:guid}")]
+        [HttpDelete("{id:guid}/notes/{noteId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteCompanyNote([FromRoute] Guid id, [FromRoute] Guid noteId) => StatusCode(StatusCodes.Status501NotImplemented);
@@ -82,12 +82,12 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateCompanyContact([FromRoute] Guid id, [FromBody] ContactPersonCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpPatch("{id:guid}/contacts/{ContactId:guid}")]
+        [HttpPatch("{id:guid}/contacts/{contactId:guid}")]
         [ProducesResponseType(typeof(ContactPersonDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> UpdateCompanyContact([FromRoute] Guid id, [FromRoute] Guid contactId, [FromBody] ContactPersonUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpDelete("{id:guid}/contacts/{ContactId:guid}")]
+        [HttpDelete("{id:guid}/contacts/{contactId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteCompanyContact([FromRoute] Guid id, [FromRoute] Guid contactId) => StatusCode(StatusCodes.Status501NotImplemented);
@@ -105,14 +105,14 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateCompanyLog([FromBody] CooperationLogCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpPatch("{id:guid}/logs/{LogId:guid}")]
+        [HttpPatch("{id:guid}/logs/{logId:guid}")]
         [ProducesResponseType(typeof(CooperationLogDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> UpdateCompanyLog([FromRoute] Guid LogId, [FromBody] CooperationLogUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> UpdateCompanyLog([FromRoute] Guid logId, [FromBody] CooperationLogUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpDelete("{id:guid}/logs/{LogId:guid}")]
+        [HttpDelete("{id:guid}/logs/{logId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> DeleteCompanyLog([FromRoute] Guid LogId) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> DeleteCompanyLog([FromRoute] Guid logId) => StatusCode(StatusCodes.Status501NotImplemented);
     }
 }
