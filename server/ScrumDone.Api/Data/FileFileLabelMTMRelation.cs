@@ -2,7 +2,7 @@
 
 namespace ScrumDone.Api.Data
 {
-    public class ProjectUserMTMRelation : IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
+    public class FileFileLabelMTMRelation : IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
     {
         public Guid Id { get; set; }
 
@@ -11,9 +11,9 @@ namespace ScrumDone.Api.Data
         public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
 
-        public Guid ProjectId { get; set; }
-        public Guid UserId { get; set; }
-        public User User { get; set; }
-        public Project Project { get; set; }
+        public Guid FileId { get; set; }
+        public Guid FileLabelId { get; set; }
+        public File File { get; set; }
+        public FileLabel FileLabel { get; set; }
     }
 }

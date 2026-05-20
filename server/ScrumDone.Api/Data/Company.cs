@@ -19,5 +19,7 @@ namespace ScrumDone.Api.Data
         public List<ContactPerson> ContactPeople { get; set; } = new();
         public List<Project> Projects { get; set; } = new();
         public List<CompanyNote> Notes { get; set; } = new();
+        public List<CooperationLog> Logs { get; set; } = new();
+
     }
 }

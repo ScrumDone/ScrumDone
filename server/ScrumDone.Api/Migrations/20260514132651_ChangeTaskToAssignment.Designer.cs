@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ScrumDone.Api.Data;
@@ -11,9 +12,11 @@ using ScrumDone.Api.Data;
 namespace ScrumDone.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514132651_ChangeTaskToAssignment")]
+    partial class ChangeTaskToAssignment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -427,6 +430,7 @@ namespace ScrumDone.Api.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("FilePath")
@@ -496,70 +500,6 @@ namespace ScrumDone.Api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("FileAccessMTMTable");
-                });
-
-            modelBuilder.Entity("ScrumDone.Api.Data.FileFileLabelMTMRelation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FileId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("FileLabelId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FileId");
-
-                    b.HasIndex("FileLabelId");
-
-                    b.ToTable("FileFileLabelMTMTable");
-                });
-
-            modelBuilder.Entity("ScrumDone.Api.Data.FileLabel", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("HexColor")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("FileLabels");
                 });
 
             modelBuilder.Entity("ScrumDone.Api.Data.Message", b =>
@@ -646,9 +586,6 @@ namespace ScrumDone.Api.Migrations
 
                     b.Property<Guid?>("SecondResourceId")
                         .HasColumnType("uuid");
-
-                    b.Property<int?>("SecondResourceType")
-                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -834,7 +771,7 @@ namespace ScrumDone.Api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reactions");
+                    b.ToTable("Reaction");
                 });
 
             modelBuilder.Entity("ScrumDone.Api.Data.Sprint", b =>
@@ -1112,25 +1049,6 @@ namespace ScrumDone.Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ScrumDone.Api.Data.FileFileLabelMTMRelation", b =>
-                {
-                    b.HasOne("ScrumDone.Api.Data.File", "File")
-                        .WithMany("Labels")
-                        .HasForeignKey("FileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ScrumDone.Api.Data.FileLabel", "FileLabel")
-                        .WithMany("Assignments")
-                        .HasForeignKey("FileLabelId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("File");
-
-                    b.Navigation("FileLabel");
-                });
-
             modelBuilder.Entity("ScrumDone.Api.Data.Message", b =>
                 {
                     b.HasOne("ScrumDone.Api.Data.Assignment", "Assignment")
@@ -1294,14 +1212,7 @@ namespace ScrumDone.Api.Migrations
 
             modelBuilder.Entity("ScrumDone.Api.Data.File", b =>
                 {
-                    b.Navigation("Labels");
-
                     b.Navigation("PermitedUsers");
-                });
-
-            modelBuilder.Entity("ScrumDone.Api.Data.FileLabel", b =>
-                {
-                    b.Navigation("Assignments");
                 });
 
             modelBuilder.Entity("ScrumDone.Api.Data.Message", b =>
