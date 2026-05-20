@@ -5,7 +5,7 @@ namespace ScrumDone.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TasksController : ControllerBase
+    public class AssignmentController : ControllerBase
     {
     }
 }

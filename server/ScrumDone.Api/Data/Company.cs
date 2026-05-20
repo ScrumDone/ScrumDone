@@ -4,6 +4,7 @@ namespace ScrumDone.Api.Data
 {
     public class Company : IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
     {
+        // No list of emails from view
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string? Nip { get; set; }

@@ -23,4 +23,9 @@
         string? Role,
         bool? IsPrimary
     );
+
+    public record ContactPersonQueryDto(
+        int Page = 1,
+        int Limit = 10
+    );
 }

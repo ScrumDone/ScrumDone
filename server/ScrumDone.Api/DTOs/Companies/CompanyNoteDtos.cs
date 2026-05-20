@@ -1,4 +1,6 @@
-﻿namespace ScrumDone.Api.DTOs.Companies
+﻿using ScrumDone.Api.DTOs.Users;
+
+namespace ScrumDone.Api.DTOs.Companies
 {
     public record CompanyNoteDto(
         Guid Id,
@@ -15,5 +17,10 @@
 
     public record CompanyNoteUpdateDto(
         string Content
+    );
+
+    public record CompanyNoteQueryDto(
+        int Page = 1,
+        int Limit = 10
     );
 }

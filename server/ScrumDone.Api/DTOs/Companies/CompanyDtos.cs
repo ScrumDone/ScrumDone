@@ -1,4 +1,5 @@
 ﻿using ScrumDone.Api.Data;
+using ScrumDone.Api.DTOs.Common;
 
 namespace ScrumDone.Api.DTOs.Companies
 {
@@ -10,7 +11,7 @@ namespace ScrumDone.Api.DTOs.Companies
         DateTimeOffset CreatedAt,
         DateTimeOffset UpdatedAt,
 
-        ContactPerson MainContact,
+        ContactPersonDto MainContact,
 
         int ContactPeopleCount,
         int ProjectsCount
@@ -25,6 +26,7 @@ namespace ScrumDone.Api.DTOs.Companies
         string? Address,
         DateTimeOffset CreatedAt,
         DateTimeOffset UpdatedAt,
+        int ContactPeopleCount,
         int ProjectCount,
         IEnumerable<ContactPersonDto> Contacts
     );
@@ -43,5 +45,10 @@ namespace ScrumDone.Api.DTOs.Companies
         string? Krs,
         string? Regon,
         string? Address
+    );
+
+    public record CompanyQueryDto(
+        int Page = 1,
+        int Limit = 10
     );
 }

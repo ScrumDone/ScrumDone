@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ScrumDone.Api.DTOs.Common;
+using ScrumDone.Api.DTOs.Companies;
+using ScrumDone.Api.Services;
 
 namespace ScrumDone.Api.Controllers
 {
@@ -9,10 +12,19 @@ namespace ScrumDone.Api.Controllers
     {
         // project linking in /projects/{id} and filtering for companies in /projects
         // for now we assume all users have access
+        // order by may be added and automated later, but for now we just order by created date desc
+        // search (filtering) to be implemented later too
+
+        private readonly CompaniesService _companiesService;
+
+        public CompaniesController(CompaniesService companiesService) 
+        {
+            _companiesService = companiesService;
+        }
 
         // /companies
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<CompanyListItemDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResultDto<CompanyListItemDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetCompanies([FromQuery] CompanyQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
 
@@ -41,7 +53,7 @@ namespace ScrumDone.Api.Controllers
         [HttpGet("{id:guid}/notes")]
         [ProducesResponseType(typeof(PagedResultDto<CompanyNoteDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanyNotes([FromRoute] Guid id, [FromQuery] PaginationQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> GetCompanyNotes([FromRoute] Guid id, [FromQuery] CompanyNoteQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
 
         [HttpPost("{id:guid}/notes")]
         [ProducesResponseType(typeof(CompanyNoteDto), StatusCodes.Status201Created)]
@@ -61,9 +73,9 @@ namespace ScrumDone.Api.Controllers
         // /companies/{id}/contacts
 
         [HttpGet("{id:guid}/contacts")]
-        [ProducesResponseType(typeof(IEnumerable<ContactPersonDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResultDto<ContactPersonDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanyContacts([FromRoute] Guid id) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> GetCompanyContacts([FromRoute] Guid id, [FromQuery] ContactPersonQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
 
         [HttpPost("{id:guid}/contacts")]
         [ProducesResponseType(typeof(ContactPersonDto), StatusCodes.Status201Created)]
@@ -84,19 +96,19 @@ namespace ScrumDone.Api.Controllers
         // /companies/{id}/logs
 
         [HttpGet("{id:guid}/logs")]
-        [ProducesResponseType(typeof(IEnumerable<CompanyLogDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResultDto<CooperationLogDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanyLogs([FromRoute] Guid id) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> GetCompanyLogs([FromRoute] Guid id, [FromQuery] CooperationLogQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
 
         [HttpPost("{id:guid}/logs")]
-        [ProducesResponseType(typeof(CompanyLogDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(CooperationLogDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> CreateCompanyLog([FromBody] CompanyCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> CreateCompanyLog([FromBody] CooperationLogCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
         [HttpPatch("{id:guid}/logs/{LogId:guid}")]
-        [ProducesResponseType(typeof(CompanyLogDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CooperationLogDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> UpdateCompanyLog([FromRoute] Guid LogId, [FromBody] CompanyUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> UpdateCompanyLog([FromRoute] Guid LogId, [FromBody] CooperationLogUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
         [HttpDelete("{id:guid}/logs/{LogId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
