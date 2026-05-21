@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using ScrumDone.Api.Data;
+using ScrumDone.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,8 @@ builder.Services.AddRouting(options =>
 {
     options.LowercaseUrls = true;
 });
+
+builder.Services.AddTransient<CompaniesService>();
 
 var app = builder.Build();
 
