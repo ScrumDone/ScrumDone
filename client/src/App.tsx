@@ -9,6 +9,7 @@ import ReportsPage from './pages/ReportsPage'
 import TaskPage from './pages/TaskPage'
 import FilesPage from './pages/FilesPage'
 import ProjectDetailsPage from './pages/ProjectDetailsPage'
+import ProjectFilesPage from './pages/ProjectFilesPage'
 import ProjectKanbanPage from './pages/ProjectKanbanPage'
 import SprintsPage from './pages/SprintsPage'
 
@@ -20,6 +21,7 @@ const App: React.FC = () => {
       <Route path="/projects/:projectSlug" element={<ProjectDetailsPage />} />
       <Route path="/projects/:projectSlug/tablica-kanban" element={<ProjectKanbanPage />} />
       <Route path="/projects/:projectSlug/sprinty" element={<SprintsPage />} />
+      <Route path="/projects/:projectSlug/repozytorium-plikow" element={<ProjectFilesPage />} />
       <Route path="/companies" element={<Companiespage />} />
       <Route path="/companies/:companySlug" element={<CompanyDetailsPage />} />
       <Route path="/calendar" element={<CalendarPage />} />
