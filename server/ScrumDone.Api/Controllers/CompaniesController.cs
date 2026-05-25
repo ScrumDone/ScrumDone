@@ -15,9 +15,9 @@ namespace ScrumDone.Api.Controllers
         // order by may be added and automated later, but for now we just order by created date desc
         // search (filtering) to be implemented later too
 
-        private readonly CompaniesService _companiesService;
+        private readonly ICompaniesService _companiesService;
 
-        public CompaniesController(CompaniesService companiesService) 
+        public CompaniesController(ICompaniesService companiesService) 
         {
             _companiesService = companiesService;
         }
@@ -26,7 +26,10 @@ namespace ScrumDone.Api.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(PagedResultDto<CompanyListItemDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanies([FromQuery] CompanyQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> GetCompanies([FromQuery] CompanyQueryDto query)
+        {
+            return Ok(await _companiesService.GetCompaniesAsync(query));
+        }
 
         [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status200OK)]

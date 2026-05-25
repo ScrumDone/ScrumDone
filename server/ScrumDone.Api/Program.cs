@@ -31,7 +31,7 @@ builder.Services.AddRouting(options =>
     options.LowercaseUrls = true;
 });
 
-builder.Services.AddTransient<CompaniesService>();
+builder.Services.AddTransient<ICompaniesService, CompaniesService>();
 
 var app = builder.Build();
 
