@@ -13,7 +13,7 @@ namespace ScrumDone.Api.Services
 
         Task<CompanyDetailDto> CreateCompanyAsync(CompanyCreateDto dto);
 
-        Task<CompanyDetailDto> UpdateCompanyAsync(CompanyUpdateDto dto);
+        Task<CompanyDetailDto> UpdateCompanyAsync(Guid id, CompanyUpdateDto dto);
 
         Task DeleteCompanyAsync(Guid id);
     }

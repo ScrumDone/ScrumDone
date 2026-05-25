@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Companies;
 using ScrumDone.Api.Services;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ScrumDone.Api.Controllers
 {
@@ -34,22 +35,35 @@ namespace ScrumDone.Api.Controllers
         [HttpGet("{id:guid}")]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanyById([FromRoute] Guid id) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> GetCompanyById([FromRoute] Guid id)
+        {
+            return Ok(await _companiesService.GetCompanyByIdAsync(id));
+        }
 
         [HttpPost]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> CreateCompany([FromBody] CompanyCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> CreateCompany([FromBody] CompanyCreateDto dto)
+        {
+            return Ok(await _companiesService.CreateCompanyAsync(dto));
+        }
 
         [HttpPatch("{id:guid}")]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> UpdateCompany([FromRoute] Guid id, [FromBody] CompanyUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> UpdateCompany([FromRoute] Guid id, [FromBody] CompanyUpdateDto dto)
+        {
+            return Ok(await _companiesService.UpdateCompanyAsync(id, dto));
+        }
 
         [HttpDelete("{id:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> DeleteCompany([FromRoute] Guid id) => StatusCode(StatusCodes.Status501NotImplemented);
+        public async Task<IActionResult> DeleteCompany([FromRoute] Guid id)
+        {
+            await _companiesService.DeleteCompanyAsync(id);
+            return NoContent();
+        }
 
         // /companies/{id}/notes
 
