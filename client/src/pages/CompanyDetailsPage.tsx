@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
-import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, FileSignature } from 'lucide-react';
+import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, FileSignature, MoreVertical } from 'lucide-react';
 import { companies, type Company } from '../data/companies';
 import { projects } from '../data/projects';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
@@ -18,6 +18,14 @@ type CooperationHistoryItem = {
   changeFrom?: string;
   changeTo?: string;
   Icon: React.ComponentType<{ className?: string }>;
+};
+
+type NoteItem = {
+  id: string;
+  author: string;
+  avatarInitials: string;
+  dateLabel: string;
+  content: string;
 };
 
 const cooperationHistory: CooperationHistoryItem[] = [
@@ -52,6 +60,30 @@ const cooperationHistory: CooperationHistoryItem[] = [
   },
 ];
 
+const initialNotes: NoteItem[] = [
+  {
+    id: 'note-1',
+    author: 'Artur Nowak',
+    avatarInitials: 'AN',
+    dateLabel: '10 kwietnia 2026 16:45',
+    content: 'Anna Wiśniewska wspomniała o możliwości polecenia naszych usług innym firmom z branży.',
+  },
+  {
+    id: 'note-2',
+    author: 'Eryk Baczyński',
+    avatarInitials: 'EB',
+    dateLabel: '02 kwietnia 2026 09:15',
+    content: 'Spotkanie w przyszły wtorek o 10:00 - omówienie dalszych planów rozwoju aplikacji.',
+  },
+  {
+    id: 'note-3',
+    author: 'Artur Nowak',
+    avatarInitials: 'AN',
+    dateLabel: '15 marca 2026 14:30',
+    content: 'Klient bardzo zadowolony z postępów projektu. Planuje rozszerzenie współpracy o kolejne moduły.',
+  },
+];
+
 const CompanyDetailsPage: React.FC = () => {
   const { companySlug } = useParams();
   const company = companies.find((item) => item.slug === companySlug);
@@ -75,6 +107,9 @@ const CompanyDetailsPage: React.FC = () => {
   const mainContact = displayedCompany?.contacts[0];
   const activeProjects = displayedCompany ? projects.filter((project) => project.clientName === displayedCompany.name) : [];
   const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
+
+  const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
+  const [newNoteText, setNewNoteText] = useState('');
 
   useEffect(() => {
     setDisplayedCompany(company ?? null);
@@ -159,6 +194,26 @@ const CompanyDetailsPage: React.FC = () => {
 
   const saveContactChanges = () => {
     setIsContactAddModalOpen(false);
+  };
+
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteText.trim()) return;
+
+    const now = new Date();
+    const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+    const formattedDate = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    const newNote: NoteItem = {
+      id: `note-${Date.now()}`,
+      author: 'Artur Nowak',
+      avatarInitials: 'AN',
+      dateLabel: formattedDate,
+      content: newNoteText.trim(),
+    };
+
+    setNotes([newNote, ...notes]);
+    setNewNoteText('');
   };
 
   return (
@@ -281,6 +336,7 @@ const CompanyDetailsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+            
             <div className="flex justify-between p-6 items-center">
               <div className="relative inline-grid h-9 w-fit grid-cols-3 rounded-[14px] bg-[#E5E7EB] p-0.75 ml-3">
                 <span
@@ -314,7 +370,7 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('notes')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'notes' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Notatki (3)
+                  Notatki ({notes.length})
                 </button>
               </div>
               
@@ -422,6 +478,54 @@ const CompanyDetailsPage: React.FC = () => {
                       </div>
 
                       <p className="font-segoe-ui text-[14px] leading-6 text-slate-500 antialiased lg:text-right">{item.dateLabel}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {activeTab === 'notes' && (
+              <section className="mx-8 mb-8 rounded-[14px] border border-gray-200 bg-white p-6 flex flex-col gap-6">
+                <div>
+                  <h3 className="text-sm text-gray-900 mb-3">Dodaj nową notatkę</h3>
+                  <form onSubmit={handleAddNote} className="flex flex-col gap-3">
+                    <textarea
+                      value={newNoteText}
+                      onChange={(e) => setNewNoteText(e.target.value)}
+                      placeholder="Wpisz treść notatki..."
+                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newNoteText.trim()}
+                      className="self-start h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] disabled:opacity-50 disabled:hover:bg-scrumdone-blue-main text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+                    >
+                      <PlusIcon className="w-4 h-4 stroke-2" />
+                      <span>Dodaj notatkę</span>
+                    </button>
+                  </form>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {notes.map((note) => (
+                    <article key={note.id} className="rounded-xl bg-[#F9FAFB] border border-gray-200 p-4 flex flex-col gap-3 relative group">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00C2FF] text-white text-xs font-bold">
+                            {note.avatarInitials}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm text-gray-900 leading-none">{note.author}</span>
+                            <span className="text-xs font-normal text-gray-500 mt-1.5 leading-none">{note.dateLabel}</span>
+                          </div>
+                        </div>
+                        <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md">
+                          <MoreVertical className="w-5 h-5 stroke-[1.5]" />
+                        </button>
+                      </div>
+                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased">
+                        {note.content}
+                      </p>
                     </article>
                   ))}
                 </div>
