@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, FileSignature } from 'lucide-react';
 import { companies, type Company } from '../data/companies';
+import { projects } from '../data/projects';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
 
@@ -72,6 +73,7 @@ const CompanyDetailsPage: React.FC = () => {
     isMainContact: false,
   });
   const mainContact = displayedCompany?.contacts[0];
+  const activeProjects = displayedCompany ? projects.filter((project) => project.clientName === displayedCompany.name) : [];
   const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
 
   useEffect(() => {
@@ -249,7 +251,7 @@ const CompanyDetailsPage: React.FC = () => {
                   {displayedCompany.contacts.map((contact) => (
                     <div
                       key={contact.id}
-                      className="flex items-center justify-between bg-[#F9FAFB] rounded-[10px] p-4"
+                      className="flex items-center justify-between bg-[#F9FAFB] border border-gray-200 rounded-[10px] p-4"
                     >
                       <div className="flex flex-col">
                         <div className="flex items-center gap-3">
@@ -322,9 +324,65 @@ const CompanyDetailsPage: React.FC = () => {
               </button>
             </div>
 
+            {activeTab === 'projects' && (
+              <section className="mx-8 mb-8 border border-gray-200 rounded-[14px] overflow-hidden transition-shadow duration-200 hover:shadow-md">
+                <div className="space-y-6">
+                  {activeProjects.length > 0 ? (
+                    activeProjects.map((project) => (
+                      <Link
+                        key={project.id}
+                        to={`/projects/${project.slug}`}
+                        className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-2 hover:shadow-lg transition-shadow duration-300"
+                      >
+                        {/* NAZWA I STATUS */}
+                        <div className="flex justify-between items-start">
+                          <div className="flex flex-col gap-1">
+                            <h3 className="text-xl text-gray-900 font-medium">{project.name}</h3>
+                          </div>
+                          <span className="inline-flex items-center justify-center bg-scrumdone-blue-main text-white text-[12px] leading-4 font-medium px-2 py-0.5 rounded-lg whitespace-nowrap w-fit">
+                            {project.status}
+                          </span>
+                        </div>
+
+                        {/* OPIS */}
+                        <p className="text-sm text-gray-700 leading-relaxed min-h-0">
+                          {project.description}
+                        </p>
+
+                        {/* SZCZEGÓŁY W JEDNEJ LINII Z KROPKĄ */}
+                        <div className="flex items-center gap-2 text-gray-700 text-sm mt-1">
+                          <span>{project.startDate} - {project.endDate}</span>
+                          <span className="text-gray-400">•</span>
+                          <span>{project.membersCount} członków</span>
+                        </div>
+
+                        {/* PROGRESS BAR */}
+                        <div className="mt-2">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-gray-700">Postęp</span>
+                            <span className="text-gray-700">{project.progress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-300 rounded-full h-2">
+                            <div 
+                              className="bg-black h-2 rounded-full transition-all duration-500" 
+                              style={{ width: `${project.progress}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                      Brak aktywnych projektów powiązanych z tą firmą.
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
             {activeTab === 'history' && (
               <section
-                className="mx-8 mb-8 rounded-[14px] border border-slate-200 bg-white p-6"
+                className="mx-8 mb-8 rounded-[14px] border border-gray-200 bg-white p-6"
                 style={{
                   ['--history-col-width' as string]: '56px',
                   ['--history-icon-size' as string]: '40px',
@@ -336,7 +394,7 @@ const CompanyDetailsPage: React.FC = () => {
                       {index < cooperationHistory.length - 1 && (
                         <span
                           aria-hidden="true"
-                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon-size)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
+                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon shadow-md)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
                         />
                       )}
 

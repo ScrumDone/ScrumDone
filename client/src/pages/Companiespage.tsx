@@ -36,7 +36,7 @@ const CompaniesPage: React.FC = () => {
                                 slug={company.slug}
                                 name={company.name}
                                 nip={company.nip}
-                                email={company.emails[0]}
+                                email={company.emails?.[0] ?? ''}
                                 phone={company.phone}
                                 projectsCount={company.projectsCount}
                                 mainContactName={company.mainContactName}
