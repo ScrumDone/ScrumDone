@@ -5,7 +5,7 @@ namespace ScrumDone.Api.DTOs.Companies
     public record CompanyNoteDto(
         Guid Id,
         string Content,
-        bool IsEdited,
+        //bool IsEdited,
         UserSummaryDto Author,
         DateTimeOffset CreatedAt,
         DateTimeOffset UpdatedAt
