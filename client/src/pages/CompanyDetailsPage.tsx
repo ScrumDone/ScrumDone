@@ -7,6 +7,8 @@ import { companies, type Company } from '../data/companies';
 import { projects } from '../data/projects';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
+import CompanyAttachProjectModal from '../components/CompanyAttachProjectModal';
+import type { ProjectData } from '../data/projects';
 
 type CooperationHistoryItem = {
   id: string;
@@ -90,6 +92,9 @@ const CompanyDetailsPage: React.FC = () => {
   const [displayedCompany, setDisplayedCompany] = useState<Company | null>(company ?? null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isContactAddModalOpen, setIsContactAddModalOpen] = useState(false);
+  const [isAttachProjectModalOpen, setIsAttachProjectModalOpen] = useState(false);
+  const [selectedAttachProjectId, setSelectedAttachProjectId] = useState<number | null>(null);
+  const [projectClientOverrides, setProjectClientOverrides] = useState<Record<number, string>>({});
   const [draft, setDraft] = useState<CompanyEditDraft>({
     name: company?.name ?? '',
     nip: company?.nip ?? '',
@@ -105,7 +110,17 @@ const CompanyDetailsPage: React.FC = () => {
     isMainContact: false,
   });
   const mainContact = displayedCompany?.contacts[0];
-  const activeProjects = displayedCompany ? projects.filter((project) => project.clientName === displayedCompany.name) : [];
+
+  const getProjectClientName = (project: ProjectData) =>
+    projectClientOverrides[project.id] ?? project.clientName;
+
+  const activeProjects = displayedCompany
+    ? projects.filter((project) => getProjectClientName(project) === displayedCompany.name)
+    : [];
+
+  const availableAttachProjects = displayedCompany
+    ? projects.filter((project) => getProjectClientName(project) !== displayedCompany.name)
+    : [];
   const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
 
   const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
@@ -129,6 +144,9 @@ const CompanyDetailsPage: React.FC = () => {
     });
     setIsEditModalOpen(false);
     setIsContactAddModalOpen(false);
+    setIsAttachProjectModalOpen(false);
+    setSelectedAttachProjectId(null);
+    setProjectClientOverrides({});
   }, [company]);
 
   if (!displayedCompany) {
@@ -194,6 +212,28 @@ const CompanyDetailsPage: React.FC = () => {
 
   const saveContactChanges = () => {
     setIsContactAddModalOpen(false);
+  };
+
+  const openAttachProjectModal = () => {
+    setSelectedAttachProjectId(null);
+    setIsAttachProjectModalOpen(true);
+  };
+
+  const closeAttachProjectModal = () => {
+    setIsAttachProjectModalOpen(false);
+    setSelectedAttachProjectId(null);
+  };
+
+  const saveAttachProject = () => {
+    if (!displayedCompany || selectedAttachProjectId === null) {
+      return;
+    }
+
+    setProjectClientOverrides((prev) => ({
+      ...prev,
+      [selectedAttachProjectId]: displayedCompany.name,
+    }));
+    closeAttachProjectModal();
   };
 
   const handleAddNote = (e: React.FormEvent) => {
@@ -356,7 +396,7 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('projects')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'projects' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Aktywne projekty (1)
+                  Aktywne projekty ({activeProjects.length})
                 </button>
                 <button
                   type="button"
@@ -374,9 +414,13 @@ const CompanyDetailsPage: React.FC = () => {
                 </button>
               </div>
               
-              <button className="h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] text-white rounded-lg inline-flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap mr-3">
-                  <PlusIcon className="w-4 h-4 stroke-2" />
-                  Podepnij projekt
+              <button
+                type="button"
+                onClick={openAttachProjectModal}
+                className="mr-3 inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium leading-2.5 text-white transition-all hover:bg-[#00A0DD] active:scale-95"
+              >
+                <PlusIcon className="h-4 w-4 stroke-2" />
+                Podepnij projekt
               </button>
             </div>
 
@@ -549,6 +593,16 @@ const CompanyDetailsPage: React.FC = () => {
         onClose={closeContactAddModal}
         onSave={saveContactChanges}
         onDraftChange={setContactDraft}
+      />
+
+      <CompanyAttachProjectModal
+        isOpen={isAttachProjectModalOpen}
+        companyName={displayedCompany.name}
+        availableProjects={availableAttachProjects}
+        selectedProjectId={selectedAttachProjectId}
+        onClose={closeAttachProjectModal}
+        onSave={saveAttachProject}
+        onProjectSelect={setSelectedAttachProjectId}
       />
     </div>
   );
