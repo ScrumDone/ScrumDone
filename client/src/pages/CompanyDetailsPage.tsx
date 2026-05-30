@@ -8,6 +8,7 @@ import { projects } from '../data/projects';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
+import { useCompanyContacts } from '../hooks/useCompanyContacts';
 
 type CooperationHistoryItem = {
   id: string;
@@ -105,13 +106,14 @@ const CompanyDetailsPage: React.FC = () => {
     phone: '',
     isMainContact: false,
   });
-  const mainContact = displayedCompany?.contacts[0];
   const activeProjects = displayedCompany ? projects.filter((project) => project.clientName === displayedCompany.name) : [];
   const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
 
   const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
   const [newNoteText, setNewNoteText] = useState('');
   const { mutate: updateCompany, isPending: isSavingCompany, isError: isUpdateCompanyError, error: updateCompanyError, reset: resetUpdateCompany } = useUpdateCompany();
+  const companyId = company ? String(company.id) : '';
+  const { data: contactsData, isLoading: isContactsLoading } = useCompanyContacts(companyId);
 
   useEffect(() => {
     setDisplayedCompany(company ?? null);
@@ -147,6 +149,12 @@ const CompanyDetailsPage: React.FC = () => {
       </div>
     );
   }
+
+  const apiContacts = contactsData?.items;
+  const contactsToShow = apiContacts ?? displayedCompany.contacts;
+  const mainContactId = apiContacts
+    ? (apiContacts.find((contact) => contact.isPrimary)?.id ?? apiContacts[0]?.id)
+    : displayedCompany.contacts[0]?.id;
 
   const openEditModal = () => {
     resetUpdateCompany();
@@ -322,31 +330,34 @@ const CompanyDetailsPage: React.FC = () => {
 
               <div>
                 <h3 className="mb-6 text-lg font-semibold text-gray-900">Osoby kontaktowe</h3>
+                {isContactsLoading && !apiContacts && (
+                  <p className="text-sm text-gray-500">Ładowanie kontaktów...</p>
+                )}
                 <div className="space-y-3">
-                  {displayedCompany.contacts.map((contact) => (
+                  {contactsToShow.map((contact) => (
                     <div
                       key={contact.id}
                       className="flex items-center justify-between bg-[#F9FAFB] border border-gray-200 rounded-[10px] p-4"
                     >
                       <div className="flex flex-col">
                         <div className="flex items-center gap-3">
-                          <h4 className="font-medium text-gray-900">{contact.name}</h4>
-                          {mainContact && contact.id === mainContact.id && (
+                          <h4 className="font-medium text-gray-900">{contact.name ?? '—'}</h4>
+                          {mainContactId != null && contact.id === mainContactId && (
                             <span className="rounded-full bg-scrumdone-blue-main px-2 py-1 text-xs font-medium text-white">
                               Główny kontakt
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">{contact.role}</p>
+                        <p className="text-sm text-gray-500 mt-1">{contact.role ?? '—'}</p>
                         <div className="mt-3 mx-auto flex max-w-180 items-center justify-center gap-6 text-sm text-gray-600">
                           <div className="flex items-center gap-3">
                             <Mail className="w-4 h-4 text-gray-400" />
-                            <span>{contact.email}</span>
+                            <span>{contact.email ?? '—'}</span>
                           </div>
 
                           <div className="flex items-center gap-3 text-sm text-gray-600">
                             <Phone className="w-4 h-4 text-gray-400" />
-                            <span>{contact.phone}</span>
+                            <span>{contact.phone ?? '—'}</span>
                           </div>
                         </div>
                       </div>
