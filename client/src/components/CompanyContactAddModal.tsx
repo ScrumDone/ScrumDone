@@ -15,6 +15,8 @@ type CompanyContactAddModalProps = {
   onClose: () => void;
   onSave: () => void;
   onDraftChange: (updater: (prev: CompanyContactDraft) => CompanyContactDraft) => void;
+  isSaving?: boolean;
+  errorMessage?: string | null;
 };
 
 const CompanyContactAddModal: React.FC<CompanyContactAddModalProps> = ({
@@ -23,6 +25,8 @@ const CompanyContactAddModal: React.FC<CompanyContactAddModalProps> = ({
   onClose,
   onSave,
   onDraftChange,
+  isSaving = false,
+  errorMessage = null,
 }) => {
   if (!isOpen) {
     return null;
@@ -122,20 +126,25 @@ const CompanyContactAddModal: React.FC<CompanyContactAddModalProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-3 px-6 py-4">
+          {errorMessage && (
+            <p className="mr-auto text-sm text-red-600">{errorMessage}</p>
+          )}
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50"
+            disabled={isSaving}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Anuluj
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="inline-flex items-center gap-2 rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD]"
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <PlusIcon className="h-4 w-4" />
-            <span>Dodaj kontakt</span>
+            <span>{isSaving ? 'Dodawanie…' : 'Dodaj kontakt'}</span>
           </button>
         </div>
       </div>

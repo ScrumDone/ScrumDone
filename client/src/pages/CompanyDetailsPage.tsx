@@ -9,6 +9,7 @@ import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEd
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
 import { useCompanyContacts } from '../hooks/useCompanyContacts';
+import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
 
 type CooperationHistoryItem = {
   id: string;
@@ -114,6 +115,13 @@ const CompanyDetailsPage: React.FC = () => {
   const { mutate: updateCompany, isPending: isSavingCompany, isError: isUpdateCompanyError, error: updateCompanyError, reset: resetUpdateCompany } = useUpdateCompany();
   const companyId = company ? String(company.id) : '';
   const { data: contactsData, isLoading: isContactsLoading } = useCompanyContacts(companyId);
+  const {
+    mutate: addContact,
+    isPending: isAddingContact,
+    isError: isAddContactError,
+    error: addContactError,
+    reset: resetAddContact,
+  } = useAddCompanyContact();
 
   useEffect(() => {
     setDisplayedCompany(company ?? null);
@@ -174,6 +182,7 @@ const CompanyDetailsPage: React.FC = () => {
   };
 
   const openContactAddModal = () => {
+    resetAddContact();
     setContactDraft({
       name: '',
       role: '',
@@ -185,6 +194,7 @@ const CompanyDetailsPage: React.FC = () => {
   };
 
   const closeContactAddModal = () => {
+    resetAddContact();
     setIsContactAddModalOpen(false);
   };
 
@@ -221,7 +231,21 @@ const CompanyDetailsPage: React.FC = () => {
   };
 
   const saveContactChanges = () => {
-    setIsContactAddModalOpen(false);
+    addContact(
+      {
+        companyId: String(displayedCompany.id),
+        data: {
+          name: contactDraft.name || null,
+          role: contactDraft.role || null,
+          email: contactDraft.email || null,
+          phone: contactDraft.phone || null,
+          isPrimary: contactDraft.isMainContact,
+        },
+      },
+      {
+        onSuccess: () => closeContactAddModal(),
+      },
+    );
   };
 
   const handleAddNote = (e: React.FormEvent) => {
@@ -582,6 +606,8 @@ const CompanyDetailsPage: React.FC = () => {
         onClose={closeContactAddModal}
         onSave={saveContactChanges}
         onDraftChange={setContactDraft}
+        isSaving={isAddingContact}
+        errorMessage={isAddContactError ? addContactError?.message : null}
       />
     </div>
   );
