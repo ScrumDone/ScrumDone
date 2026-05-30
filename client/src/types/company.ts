@@ -10,3 +10,12 @@ export type CompanyListItem = {
   contactPeopleCount: number;
   projectsCount: number;
 };
+
+
+export type CompanyUpdateDto = {
+  name: string | null;
+  nip: string | null;
+  krs: string | null;
+  regon: string | null;
+  address: string | null;
+};

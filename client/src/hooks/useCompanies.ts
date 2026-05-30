@@ -4,7 +4,7 @@ import { getCompanies } from '../api/companies';
 
 export function useCompanies(page = 1, limit = 10) {
     return useQuery({
-        queryKey:['comapnies', {page, limit}],
+        queryKey: ['companies', { page, limit }],
         queryFn: () => getCompanies(page, limit),
     });
 }

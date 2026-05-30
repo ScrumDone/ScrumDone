@@ -7,6 +7,7 @@ import { companies, type Company } from '../data/companies';
 import { projects } from '../data/projects';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
+import { useUpdateCompany } from '../hooks/useUpdateCompany';
 
 type CooperationHistoryItem = {
   id: string;
@@ -110,6 +111,7 @@ const CompanyDetailsPage: React.FC = () => {
 
   const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
   const [newNoteText, setNewNoteText] = useState('');
+  const { mutate: updateCompany, isPending: isSavingCompany, isError: isUpdateCompanyError, error: updateCompanyError, reset: resetUpdateCompany } = useUpdateCompany();
 
   useEffect(() => {
     setDisplayedCompany(company ?? null);
@@ -147,6 +149,7 @@ const CompanyDetailsPage: React.FC = () => {
   }
 
   const openEditModal = () => {
+    resetUpdateCompany();
     setDraft({
       name: displayedCompany.name,
       nip: displayedCompany.nip,
@@ -158,6 +161,7 @@ const CompanyDetailsPage: React.FC = () => {
   };
 
   const closeEditModal = () => {
+    resetUpdateCompany();
     setIsEditModalOpen(false);
   };
 
@@ -177,19 +181,35 @@ const CompanyDetailsPage: React.FC = () => {
   };
 
   const saveCompanyChanges = () => {
-    setDisplayedCompany((prev) =>
-      prev
-        ? {
-            ...prev,
-            name: draft.name,
-            nip: draft.nip,
-            companyNumber: draft.krs,
-            regon: draft.regon,
-            address: draft.address,
-          }
-        : prev,
+    updateCompany(
+      {
+        id: String(displayedCompany.id),
+        data: {
+          name: draft.name,
+          nip: draft.nip || null,
+          krs: draft.krs || null,
+          regon: draft.regon || null,
+          address: draft.address || null,
+        },
+      },
+      {
+        onSuccess: () => {
+          setDisplayedCompany((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  name: draft.name,
+                  nip: draft.nip,
+                  companyNumber: draft.krs,
+                  regon: draft.regon,
+                  address: draft.address,
+                }
+              : prev,
+          );
+          closeEditModal();
+        },
+      },
     );
-    setIsEditModalOpen(false);
   };
 
   const saveContactChanges = () => {
@@ -541,6 +561,8 @@ const CompanyDetailsPage: React.FC = () => {
         onClose={closeEditModal}
         onSave={saveCompanyChanges}
         onDraftChange={setDraft}
+        isSaving={isSavingCompany}
+        errorMessage={isUpdateCompanyError ? updateCompanyError?.message : null}
       />
 
       <CompanyContactAddModal
