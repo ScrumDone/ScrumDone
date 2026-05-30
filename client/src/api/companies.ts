@@ -1,5 +1,6 @@
 import { apiGet } from './client';
-import { apiPatch } from './client';
+import { apiPatch } from './client'; 
+import { apiPost } from './client';
 import type { PagedResult } from '../types/api';
 import type { CompanyListItem } from '../types/company';
 import type { CompanyUpdateDto } from '../types/company';
@@ -16,4 +17,8 @@ export function patchCompany(id: string, data: CompanyUpdateDto) {
 
 export function getCompanyContacts(id: string) {
     return apiGet<PagedResult<ContactPerson>>(`/api/companies/${id}/contacts`);
+}
+
+export function addCompanyContact(id: string, data: ContactPerson) {
+    return apiPost<ContactPerson>(`/api/companies/${id}/contacts`, data);
 }
