@@ -4,8 +4,20 @@ import TopBar from '../components/topBar';
 import CompanyCard from '../components/CompanyCard';
 import { companies } from '../data/companies';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { useCompanies } from '../hooks/useCompanies';
 
 const CompaniesPage: React.FC = () => {
+
+    // const {data, isError, isLoading, error} = useCompanies(1,10);
+    // const companies = data?.items ?? [];
+    // if (isLoading) {
+    //     return <div>Ładowanie...</div>;
+    // }
+
+    // if (isError) {
+    //     return <div>Błąd: {error.message}</div>;
+    // }
+
     return (
         <div className="min-h-screen w-full bg-[#F9FAFB]">
             {/* Side bary */}
@@ -29,6 +41,22 @@ const CompaniesPage: React.FC = () => {
                     </div>
 
                     {/* Siatka z kartami firm - stałe 3 kolumny na desktopie */}
+                    {/* <div className="grid grid-cols-3 gap-8">
+                        {companies.map((company) => (
+                            <CompanyCard 
+                                key={company.id}
+                                slug={company.id.toString()}
+                                name={company.name}
+                                nip={company.nip ?? ''}
+                                email={company.mainContact.email ?? ''}
+                                phone={company.mainContact.phone ?? ''}
+                                projectsCount={company.projectsCount}
+                                mainContactName={company.mainContact.name}
+                                mainContactRole={company.mainContact.role}
+                                contactsCount={company.contactPeopleCount}
+                            />
+                        ))}
+                    </div> */}
                     <div className="grid grid-cols-3 gap-8">
                         {companies.map((company) => (
                             <CompanyCard 
