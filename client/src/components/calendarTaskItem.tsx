@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
 
@@ -37,10 +38,24 @@ const colorVariantMap: Record<TaskColor, { border: string; bg: string; dot: stri
 
 const CalendarTaskItem: React.FC<CalendarTaskItemProps> = ({ title, colorVariant }) => {
     const colors = colorVariantMap[colorVariant]
+    const navigate = useNavigate()
+
+    const handleClick = () => {
+        navigate('/task')
+    }
 
     return (
         <div
-            className={`flex items-center gap-2 rounded-sm border-l-4 px-3 py-2 ${colors.border} ${colors.bg}`}
+            role="button"
+            tabIndex={0}
+            onClick={handleClick}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    handleClick()
+                }
+            }}
+            className={`flex cursor-pointer items-center gap-2 rounded-sm border-l-4 px-3 py-2 transition-opacity hover:opacity-90 ${colors.border} ${colors.bg}`}
         >
             <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${colors.dot}`} />
             <p className="truncate font-segoe-ui text-[12px] leading-4 font-normal text-slate-900 antialiased">{title}</p>
