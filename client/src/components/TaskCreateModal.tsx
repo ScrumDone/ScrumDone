@@ -22,7 +22,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ isOpen, onClose, team
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 font-segoe-ui">
       <div 
-        className="relative flex h-full max-h-[850px] w-full max-w-[560px] flex-col overflow-hidden rounded-[12px] bg-white shadow-2xl"
+        className="relative flex h-full max-h-[686px] w-full max-w-[600px] flex-col overflow-hidden rounded-[12px] bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
