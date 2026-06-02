@@ -10,6 +10,8 @@ import CompanyContactAddModal, { type CompanyContactDraft } from '../components/
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
 import { useCompanyContacts } from '../hooks/useCompanyContacts';
 import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
+import { useAddCompanyNote } from '../hooks/useAddCompanyNote';
+import { useCompanyNotes } from '../hooks/useCompanyNotes';
 
 type CooperationHistoryItem = {
   id: string;
@@ -21,14 +23,6 @@ type CooperationHistoryItem = {
   changeFrom?: string;
   changeTo?: string;
   Icon: React.ComponentType<{ className?: string }>;
-};
-
-type NoteItem = {
-  id: string;
-  author: string;
-  avatarInitials: string;
-  dateLabel: string;
-  content: string;
 };
 
 const cooperationHistory: CooperationHistoryItem[] = [
@@ -63,30 +57,6 @@ const cooperationHistory: CooperationHistoryItem[] = [
   },
 ];
 
-const initialNotes: NoteItem[] = [
-  {
-    id: 'note-1',
-    author: 'Artur Nowak',
-    avatarInitials: 'AN',
-    dateLabel: '10 kwietnia 2026 16:45',
-    content: 'Anna Wiśniewska wspomniała o możliwości polecenia naszych usług innym firmom z branży.',
-  },
-  {
-    id: 'note-2',
-    author: 'Eryk Baczyński',
-    avatarInitials: 'EB',
-    dateLabel: '02 kwietnia 2026 09:15',
-    content: 'Spotkanie w przyszły wtorek o 10:00 - omówienie dalszych planów rozwoju aplikacji.',
-  },
-  {
-    id: 'note-3',
-    author: 'Artur Nowak',
-    avatarInitials: 'AN',
-    dateLabel: '15 marca 2026 14:30',
-    content: 'Klient bardzo zadowolony z postępów projektu. Planuje rozszerzenie współpracy o kolejne moduły.',
-  },
-];
-
 const CompanyDetailsPage: React.FC = () => {
   const { companySlug } = useParams();
   const company = companies.find((item) => item.slug === companySlug);
@@ -110,7 +80,6 @@ const CompanyDetailsPage: React.FC = () => {
   const activeProjects = displayedCompany ? projects.filter((project) => project.clientName === displayedCompany.name) : [];
   const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
 
-  const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
   const [newNoteText, setNewNoteText] = useState('');
   const { mutate: updateCompany, isPending: isSavingCompany, isError: isUpdateCompanyError, error: updateCompanyError, reset: resetUpdateCompany } = useUpdateCompany();
   const companyId = company ? String(company.id) : '';
@@ -122,6 +91,13 @@ const CompanyDetailsPage: React.FC = () => {
     error: addContactError,
     reset: resetAddContact,
   } = useAddCompanyContact();
+
+  // Integracja hooków dla notatek z backendu
+  const { data: notesData, isLoading: isNotesLoading, isError: isNotesError } = useCompanyNotes(companyId);
+  const { mutate: addNote, isPending: isAddingNote } = useAddCompanyNote();
+
+  const apiNotes = notesData?.items ?? [];
+  const totalNotesCount = notesData?.totalCount ?? 0;
 
   useEffect(() => {
     setDisplayedCompany(company ?? null);
@@ -250,22 +226,29 @@ const CompanyDetailsPage: React.FC = () => {
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNoteText.trim()) return;
+    if (!newNoteText.trim() || !companyId) return;
 
-    const now = new Date();
-    const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
-    const formattedDate = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    addNote(
+      {
+        companyId: companyId,
+        data: { content: newNoteText.trim() },
+      },
+      {
+        onSuccess: () => {
+          setNewNoteText('');
+        },
+      }
+    );
+  };
 
-    const newNote: NoteItem = {
-      id: `note-${Date.now()}`,
-      author: 'Artur Nowak',
-      avatarInitials: 'AN',
-      dateLabel: formattedDate,
-      content: newNoteText.trim(),
-    };
-
-    setNotes([newNote, ...notes]);
-    setNewNoteText('');
+  const formatBackendDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+      return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    } catch {
+      return 'Błędna data';
+    }
   };
 
   return (
@@ -425,7 +408,7 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('notes')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'notes' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Notatki ({notes.length})
+                  Notatki ({isNotesLoading ? '...' : totalNotesCount})
                 </button>
               </div>
               
@@ -445,7 +428,6 @@ const CompanyDetailsPage: React.FC = () => {
                         to={`/projects/${project.slug}`}
                         className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-2 hover:shadow-lg transition-shadow duration-300"
                       >
-                        {/* NAZWA I STATUS */}
                         <div className="flex justify-between items-start">
                           <div className="flex flex-col gap-1">
                             <h3 className="text-xl text-gray-900 font-medium">{project.name}</h3>
@@ -455,19 +437,16 @@ const CompanyDetailsPage: React.FC = () => {
                           </span>
                         </div>
 
-                        {/* OPIS */}
                         <p className="text-sm text-gray-700 leading-relaxed min-h-0">
                           {project.description}
                         </p>
 
-                        {/* SZCZEGÓŁY W JEDNEJ LINII Z KROPKĄ */}
                         <div className="flex items-center gap-2 text-gray-700 text-sm mt-1">
                           <span>{project.startDate} - {project.endDate}</span>
                           <span className="text-gray-400">•</span>
                           <span>{project.membersCount} członków</span>
                         </div>
 
-                        {/* PROGRESS BAR */}
                         <div className="mt-2">
                           <div className="flex justify-between text-sm mb-1">
                             <span className="text-gray-700">Postęp</span>
@@ -548,41 +527,63 @@ const CompanyDetailsPage: React.FC = () => {
                       value={newNoteText}
                       onChange={(e) => setNewNoteText(e.target.value)}
                       placeholder="Wpisz treść notatki..."
-                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all"
+                      disabled={isAddingNote}
+                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all disabled:opacity-60"
                     />
                     <button
                       type="submit"
-                      disabled={!newNoteText.trim()}
+                      disabled={!newNoteText.trim() || isAddingNote}
                       className="self-start h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] disabled:opacity-50 disabled:hover:bg-scrumdone-blue-main text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
                     >
                       <PlusIcon className="w-4 h-4 stroke-2" />
-                      <span>Dodaj notatkę</span>
+                      <span>{isAddingNote ? 'Dodawanie...' : 'Dodaj notatkę'}</span>
                     </button>
                   </form>
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  {notes.map((note) => (
-                    <article key={note.id} className="rounded-xl bg-[#F9FAFB] border border-gray-200 p-4 flex flex-col gap-3 relative group">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00C2FF] text-white text-xs font-bold">
-                            {note.avatarInitials}
+                  {isNotesLoading && (
+                    <p className="text-sm text-gray-500 py-4 animate-pulse">Ładowanie notatek z serwera...</p>
+                  )}
+
+                  {isNotesError && (
+                    <p className="text-sm text-red-500 py-4">Wystąpił błąd podczas pobierania notatek z backendu.</p>
+                  )}
+
+                  {!isNotesLoading && !isNotesError && apiNotes.length === 0 && (
+                    <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                      Brak notatek dla tej firmy. Dodaj pierwszą notatkę powyżej.
+                    </div>
+                  )}
+
+                  {!isNotesLoading && !isNotesError && apiNotes.map((note) => {
+                    const authorName = note.author ? `${note.author.firstName} ${note.author.lastName}` : 'Nieznany Autor';
+                    const initials = note.author ? `${note.author.firstName.charAt(0)}${note.author.lastName.charAt(0)}`.toUpperCase() : '??';
+
+                    return (
+                      <article key={note.id} className="rounded-xl bg-[#F9FAFB] border border-gray-200 p-4 flex flex-col gap-3 relative group">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00C2FF] text-white text-xs font-bold">
+                              {initials}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-sm text-gray-900 leading-none">{authorName}</span>
+                              <span className="text-xs font-normal text-gray-500 mt-1.5 leading-none">
+                                {formatBackendDate(note.createdAt)}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm text-gray-900 leading-none">{note.author}</span>
-                            <span className="text-xs font-normal text-gray-500 mt-1.5 leading-none">{note.dateLabel}</span>
-                          </div>
+                          <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md">
+                            <MoreVertical className="w-5 h-5 stroke-[1.5]" />
+                          </button>
                         </div>
-                        <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md">
-                          <MoreVertical className="w-5 h-5 stroke-[1.5]" />
-                        </button>
-                      </div>
-                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased">
-                        {note.content}
-                      </p>
-                    </article>
-                  ))}
+                        <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased whitespace-pre-wrap">
+                          {note.content}
+                        </p>
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
             )}
