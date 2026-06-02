@@ -1,20 +1,21 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ScrumDone.Api.Exceptions;
+using FluentValidation;
 
 namespace ScrumDone.Api.Middleware;
 
 public class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
-    private readonly IProblemDetailsService _problemDetailsService;
+    //private readonly IProblemDetailsService _problemDetailsService;
 
     public GlobalExceptionHandler(
-        ILogger<GlobalExceptionHandler> logger,
-        IProblemDetailsService problemDetailsService)
+        ILogger<GlobalExceptionHandler> logger)//,
+        //IProblemDetailsService problemDetailsService)
     {
         _logger = logger;
-        _problemDetailsService = problemDetailsService;
+        //_problemDetailsService = problemDetailsService;
     }
 
     public async ValueTask<bool> TryHandleAsync(
@@ -22,6 +23,7 @@ public class GlobalExceptionHandler : IExceptionHandler
     {
         var (status, title) = exception switch
         {
+            ValidationException => (400, "Bad Request"),
             BadRequestException => (400, "Bad Request"),
             NotFoundException => (404, "Not Found"),
             _ => (500, "Internal Server Error")
@@ -36,10 +38,11 @@ public class GlobalExceptionHandler : IExceptionHandler
         }
         else
         {
-            _logger.LogWarning(exception,
-                "Client error {Status} on {Path}",
+            _logger.LogWarning(
+                "Client error {Status} on {Path}: {Message}",
                 status,
-                context.Request.Path);
+                context.Request.Path,
+                exception.Message);
         }
         //context.Response.StatusCode = status;
 
@@ -48,9 +51,15 @@ public class GlobalExceptionHandler : IExceptionHandler
         {
             Status = status,
             Title = title,
-            Detail = status == 500
-                ? "An unexpected error occurred."
-                : exception.Message
+            Detail = exception switch
+            {
+                ValidationException ve => string.Join("; ", ve.Errors.Select(e => e.ErrorMessage)),
+                _ when status < 500 => exception.Message,
+                _ => "An unexpected error occurred."
+            }
+            //Detail = status >= 500
+            //    ? "An unexpected error occurred."
+            //    : exception.Message
         };
 
         context.Response.StatusCode = status;
@@ -60,6 +69,7 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         return true;
 
+        // use the block below instead to match ProblemDetails in model binding
         /*
         var result = await _problemDetailsService.TryWriteAsync(new ProblemDetailsContext
         {

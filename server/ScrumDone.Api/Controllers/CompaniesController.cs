@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Companies;
 using ScrumDone.Api.Services;
+using System.ComponentModel.DataAnnotations;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace ScrumDone.Api.Controllers
 {
@@ -27,8 +30,11 @@ namespace ScrumDone.Api.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(PagedResultDto<CompanyListItemDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanies([FromQuery] CompanyQueryDto query)
+        public async Task<IActionResult> GetCompanies(
+            [FromQuery] CompanyQueryDto query, 
+            [FromServices] IValidator<CompanyQueryDto> validator)
         {
+            await validator.ValidateAndThrowAsync(query);
             return Ok(await _companiesService.GetCompaniesAsync(query));
         }
 
@@ -43,16 +49,23 @@ namespace ScrumDone.Api.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> CreateCompany([FromBody] CompanyCreateDto dto)
+        public async Task<IActionResult> CreateCompany(
+            [FromBody] CompanyCreateDto dto, 
+            [FromServices] IValidator<CompanyCreateDto> validator)
         {
+            await validator.ValidateAndThrowAsync(dto);
             return Ok(await _companiesService.CreateCompanyAsync(dto));
         }
 
         [HttpPatch("{id}")]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> UpdateCompany([FromRoute] Guid id, [FromBody] CompanyUpdateDto dto)
+        public async Task<IActionResult> UpdateCompany(
+            [FromRoute] Guid id, 
+            [FromBody] CompanyUpdateDto dto, 
+            [FromServices] IValidator<CompanyUpdateDto> validator)
         {
+            await validator.ValidateAndThrowAsync(dto);
             return Ok(await _companiesService.UpdateCompanyAsync(id, dto));
         }
 
