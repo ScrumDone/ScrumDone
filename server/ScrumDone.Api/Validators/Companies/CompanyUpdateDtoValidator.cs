@@ -3,12 +3,11 @@ using ScrumDone.Api.DTOs.Companies;
 
 namespace ScrumDone.Api.Validators.Companies
 {
-    internal sealed class CompanyUpdateDtoValidator : AbstractValidator<CompanyUpdateDto>
+    public sealed class CompanyUpdateDtoValidator : AbstractValidator<CompanyUpdateDto>
     {
         public CompanyUpdateDtoValidator()
         {
             RuleFor(x => x.Name)
-                .NotEmpty()
                 .MaximumLength(200)
                 .When(x => x.Name is not null);
 

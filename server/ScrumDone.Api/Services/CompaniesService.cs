@@ -1,11 +1,8 @@
-﻿using Bogus.DataSets;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using ScrumDone.Api.Data;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Companies;
 using ScrumDone.Api.Exceptions;
-using System.Text.RegularExpressions;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ScrumDone.Api.Services
 {
@@ -19,24 +16,27 @@ namespace ScrumDone.Api.Services
         }
 
         // companies
+        // mappers to be added later
 
         public async Task<PagedResultDto<CompanyListItemDto>> GetCompaniesAsync(CompanyQueryDto query)
         {
-            var page = query.Page;// <= 0 ? 1 : query.Page;
-            var limit = query.Limit;// <= 0 ? 10 : query.Limit;
+            var page = query.Page;
+            var limit = query.Limit;
 
+            // what if table is empty? will the endpoint crash?
+            // what if more pages than elements?
+            var total = await _context.Companies.CountAsync();
             var companies = await _context.Companies
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .Include(c => c.ContactPeople)
-                .Include(c => c.Projects)
+                .Include(p => p.Projects)
                 .ToListAsync();
 
             var companyItems = new List<CompanyListItemDto>();
             foreach (var company in companies)
             {
-                var mainContactPerson = company.ContactPeople.FirstOrDefault(cp => cp.IsPrimary);
-
+                // what if null? we don't want to crash here
                 ContactPersonDto? mainContactDto = company.ContactPeople
                     .Where(cp => cp.IsPrimary)
                     .Select(cp => new ContactPersonDto(
@@ -69,7 +69,7 @@ namespace ScrumDone.Api.Services
                 companyItems,
                 query.Page,
                 query.Limit,
-                await _context.Companies.CountAsync()
+                total
             );
 
             return result;
@@ -81,7 +81,7 @@ namespace ScrumDone.Api.Services
                 .Include(c => c.ContactPeople)
                 .Include(c => c.Projects)
                 .FirstOrDefaultAsync(c => c.Id == id)
-            ?? throw new NotFoundException(nameof(Data.Company), id);
+            ?? throw new NotFoundException(nameof(Company), id);
 
             var companyDetail = new CompanyDetailDto
             (
@@ -111,7 +111,7 @@ namespace ScrumDone.Api.Services
 
         public async Task<CompanyDetailDto> CreateCompanyAsync(CompanyCreateDto dto)
         {
-            var company = new Data.Company
+            var company = new Company
             {
                 Name = dto.Name,
                 Nip = dto.Nip,
@@ -133,6 +133,8 @@ namespace ScrumDone.Api.Services
                 company.Address,
                 company.CreatedAt,
                 company.UpdatedAt,
+                // those below should always be 0/null
+                // but they are included for consistency and optional future bulk posts
                 company.ContactPeople.Count,
                 company.Projects.Count,
                 company.ContactPeople.Select(cp => new ContactPersonDto
@@ -151,8 +153,11 @@ namespace ScrumDone.Api.Services
 
         public async Task<CompanyDetailDto> UpdateCompanyAsync(Guid id, CompanyUpdateDto dto)
         {
-            var company = await _context.Companies.FirstOrDefaultAsync(c => c.Id == id)
-                ?? throw new NotFoundException(nameof(Data.Company), id);
+            var company = await _context.Companies
+                .Include(c => c.ContactPeople)
+                .Include(p => p.Projects)
+                .FirstOrDefaultAsync(c => c.Id == id)
+                ?? throw new NotFoundException(nameof(Company), id);
 
             if (dto.Name != null) company.Name = dto.Name;
             if (dto.Nip != null) company.Nip = dto.Nip;
@@ -191,7 +196,7 @@ namespace ScrumDone.Api.Services
         public async Task DeleteCompanyAsync(Guid id)
         {
             var company = await _context.Companies.FirstOrDefaultAsync(c => c.Id == id)
-                ?? throw new NotFoundException(nameof(Data.Company), id);
+                ?? throw new NotFoundException(nameof(Company), id);
 
             _context.Remove(company);
             await _context.SaveChangesAsync();

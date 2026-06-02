@@ -3,7 +3,7 @@ using ScrumDone.Api.DTOs.Companies;
 
 namespace ScrumDone.Api.Validators.Companies
 {
-    internal sealed class CompanyQueryDtoValidator : AbstractValidator<CompanyQueryDto>
+    public sealed class CompanyQueryDtoValidator : AbstractValidator<CompanyQueryDto>
     {
         public CompanyQueryDtoValidator() 
         {

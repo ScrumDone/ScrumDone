@@ -9,6 +9,6 @@
     {
         public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
         public bool HasNextPage => Page < TotalPages;
-        public bool HasPreviousPage => Page > 1;
+        public bool HasPreviousPage => Page > 1 && Page <= TotalPages + 1;
     }
 }

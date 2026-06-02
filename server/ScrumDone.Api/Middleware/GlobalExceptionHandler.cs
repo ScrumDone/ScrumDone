@@ -65,7 +65,13 @@ public class GlobalExceptionHandler : IExceptionHandler
         context.Response.StatusCode = status;
         context.Response.ContentType = "application/problem+json";
 
-        await context.Response.WriteAsJsonAsync(problemDetails, ct);
+        //await context.Response.WriteAsJsonAsync(problemDetails, ct);
+
+        await Results.Problem(
+            statusCode: status,
+            title: problemDetails.Title,
+            detail: problemDetails.Detail
+        ).ExecuteAsync(context);
 
         return true;
 
