@@ -39,7 +39,7 @@ namespace ScrumDone.Api.Services
         {
             var note = new CompanyNote
             {
-                Id = new Guid(),
+                Id = Guid.NewGuid(),
                 Content = query.Content,
                 UserId = _context.Users.First().Id, // TODO solve this issue
                 CompanyId = id,
@@ -82,7 +82,6 @@ namespace ScrumDone.Api.Services
             .ExecuteUpdateAsync(n => n.SetProperty(e => e.IsDeleted, true));
 
             return affectedRows > 0;
-        }
-
+        } 
     }
 }
