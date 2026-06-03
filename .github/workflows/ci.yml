@@ -20,13 +20,13 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore ScrumDone.slnx
+        run: dotnet restore server/ScrumDone.slnx
 
       - name: Build
-        run: dotnet build ScrumDone.slnx --no-restore
+        run: dotnet build server/ScrumDone.slnx --no-restore
 
       - name: Test
-        run: dotnet test ScrumDone.slnx --no-restore --verbosity minimal
+        run: dotnet test server/ScrumDone.slnx --no-restore --verbosity minimal
 
   docker:
     name: Docker Build
