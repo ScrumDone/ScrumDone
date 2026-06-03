@@ -20,7 +20,7 @@ namespace ScrumDone.Api.Validators.Companies
                 .When(x => x.Krs is not null);
 
             RuleFor(x => x.Regon)
-                .Must(r => r!.Length == 9 || r!.Length == 14)
+                .Matches(@"^\d{9}(\d{5})?$")  // 9 digits or 14 digits
                 .When(x => x.Regon is not null);
 
             RuleFor(x => x.Address)

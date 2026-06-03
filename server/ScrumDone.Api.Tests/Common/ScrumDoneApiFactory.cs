@@ -29,9 +29,7 @@ internal sealed class ScrumDoneApiFactory : WebApplicationFactory<Program>
         builder.ConfigureLogging(logging =>
         {
             logging.ClearProviders();
-            logging.AddFilter("Microsoft", LogLevel.Warning);
-            logging.AddFilter("ScrumDone.Api", LogLevel.Warning);
-            logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.None);
+            logging.SetMinimumLevel(LogLevel.Warning);
         });
     }
 

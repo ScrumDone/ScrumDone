@@ -5,6 +5,8 @@ using ScrumDone.Api.Data;
 using ScrumDone.Api.Middleware;
 using ScrumDone.Api.Services;
 using ScrumDone.Api.Validators;
+using MicroElements.OpenApi.FluentValidation;
+using MicroElements.AspNetCore.OpenApi.FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,7 +31,13 @@ builder.Services.AddControllers();
 
 builder.Services.AddValidatorsFromAssemblyContaining<ValidatorAssemblyMarker>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+
+builder.Services.AddScoped<IValidatorRegistry, ServiceProviderValidatorRegistry>();
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddFluentValidationRules();
+});
 
 builder.Services.AddRouting(options => 
 {
@@ -59,6 +67,7 @@ if (!app.Environment.IsEnvironment("Testing"))
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
