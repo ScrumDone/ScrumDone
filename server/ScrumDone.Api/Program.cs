@@ -1,7 +1,10 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using ScrumDone.Api.Data;
+using ScrumDone.Api.Middleware;
 using ScrumDone.Api.Services;
+using ScrumDone.Api.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,15 +26,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("LocalConnection")));
 
 builder.Services.AddControllers();
+
+builder.Services.AddValidatorsFromAssemblyContaining<ValidatorAssemblyMarker>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddRouting(options =>
+builder.Services.AddRouting(options => 
 {
     options.LowercaseUrls = true;
 });
 
-builder.Services.AddTransient<CompaniesService>();
+builder.Services.AddTransient<ICompaniesService, CompaniesService>();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -52,6 +60,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 app.UseHttpsRedirection();
 
