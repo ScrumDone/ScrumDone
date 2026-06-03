@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Companies;
 using ScrumDone.Api.Services;
+using System.ComponentModel.DataAnnotations;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace ScrumDone.Api.Controllers
 {
@@ -15,9 +19,9 @@ namespace ScrumDone.Api.Controllers
         // order by may be added and automated later, but for now we just order by created date desc
         // search (filtering) to be implemented later too
 
-        private readonly CompaniesService _companiesService;
+        private readonly ICompaniesService _companiesService;
 
-        public CompaniesController(CompaniesService companiesService) 
+        public CompaniesController(ICompaniesService companiesService) 
         {
             _companiesService = companiesService;
         }
@@ -25,69 +29,100 @@ namespace ScrumDone.Api.Controllers
         // /companies
         [HttpGet]
         [ProducesResponseType(typeof(PagedResultDto<CompanyListItemDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanies([FromQuery] CompanyQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCompanies(
+            [FromQuery] CompanyQueryDto query, 
+            [FromServices] IValidator<CompanyQueryDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(query);
+            return Ok(await _companiesService.GetCompaniesAsync(query));
+        }
 
-        [HttpGet("{id:guid}")]
+        [HttpGet("{id}")]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanyById([FromRoute] Guid id) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCompanyById([FromRoute] Guid id)
+        {
+            return Ok(await _companiesService.GetCompanyByIdAsync(id));
+        }
 
         [HttpPost]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> CreateCompany([FromBody] CompanyCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CreateCompany(
+            [FromBody] CompanyCreateDto dto, 
+            [FromServices] IValidator<CompanyCreateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return Ok(await _companiesService.CreateCompanyAsync(dto));
+        }
 
-        [HttpPatch("{id:guid}")]
+        [HttpPatch("{id}")]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> UpdateCompany([FromRoute] Guid id, [FromBody] CompanyUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateCompany(
+            [FromRoute] Guid id, 
+            [FromBody] CompanyUpdateDto dto, 
+            [FromServices] IValidator<CompanyUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return Ok(await _companiesService.UpdateCompanyAsync(id, dto));
+        }
 
-        [HttpDelete("{id:guid}")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> DeleteCompany([FromRoute] Guid id) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteCompany([FromRoute] Guid id)
+        {
+            await _companiesService.DeleteCompanyAsync(id);
+            return NoContent();
+        }
 
         // /companies/{id}/notes
 
-        [HttpGet("{id:guid}/notes")]
+        [HttpGet("{id}/notes")]
         [ProducesResponseType(typeof(PagedResultDto<CompanyNoteDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetCompanyNotes([FromRoute] Guid id, [FromQuery] CompanyNoteQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpPost("{id:guid}/notes")]
+        [HttpPost("{id}/notes")]
         [ProducesResponseType(typeof(CompanyNoteDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateCompanyNote([FromRoute] Guid id, [FromBody] CompanyNoteCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpPatch("{id:guid}/notes/{noteId:guid}")]
+        [HttpPatch("{id}/notes/{noteId}")]
         [ProducesResponseType(typeof(CompanyNoteDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> UpdateCompanyNote([FromRoute] Guid id, [FromRoute] Guid noteId, [FromBody] CompanyNoteUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpDelete("{id:guid}/notes/{noteId:guid}")]
+        [HttpDelete("{id}/notes/{noteId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteCompanyNote([FromRoute] Guid id, [FromRoute] Guid noteId) => StatusCode(StatusCodes.Status501NotImplemented);
 
         // /companies/{id}/contacts
 
-        [HttpGet("{id:guid}/contacts")]
+        [HttpGet("{id}/contacts")]
         [ProducesResponseType(typeof(PagedResultDto<ContactPersonDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetCompanyContacts([FromRoute] Guid id, [FromQuery] ContactPersonQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpPost("{id:guid}/contacts")]
+        [HttpPost("{id}/contacts")]
         [ProducesResponseType(typeof(ContactPersonDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateCompanyContact([FromRoute] Guid id, [FromBody] ContactPersonCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpPatch("{id:guid}/contacts/{contactId:guid}")]
+        [HttpPatch("{id}/contacts/{contactId}")]
         [ProducesResponseType(typeof(ContactPersonDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> UpdateCompanyContact([FromRoute] Guid id, [FromRoute] Guid contactId, [FromBody] ContactPersonUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpDelete("{id:guid}/contacts/{contactId:guid}")]
+        [HttpDelete("{id}/contacts/{contactId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteCompanyContact([FromRoute] Guid id, [FromRoute] Guid contactId) => StatusCode(StatusCodes.Status501NotImplemented);
@@ -95,22 +130,22 @@ namespace ScrumDone.Api.Controllers
 
         // /companies/{id}/logs
 
-        [HttpGet("{id:guid}/logs")]
+        [HttpGet("{id}/logs")]
         [ProducesResponseType(typeof(PagedResultDto<CooperationLogDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetCompanyLogs([FromRoute] Guid id, [FromQuery] CooperationLogQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpPost("{id:guid}/logs")]
+        [HttpPost("{id}/logs")]
         [ProducesResponseType(typeof(CooperationLogDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateCompanyLog([FromBody] CooperationLogCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpPatch("{id:guid}/logs/{logId:guid}")]
+        [HttpPatch("{id}/logs/{logId}")]
         [ProducesResponseType(typeof(CooperationLogDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> UpdateCompanyLog([FromRoute] Guid logId, [FromBody] CooperationLogUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
 
-        [HttpDelete("{id:guid}/logs/{logId:guid}")]
+        [HttpDelete("{id}/logs/{logId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteCompanyLog([FromRoute] Guid logId) => StatusCode(StatusCodes.Status501NotImplemented);

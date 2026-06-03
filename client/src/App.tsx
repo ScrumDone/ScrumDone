@@ -12,9 +12,11 @@ import ProjectDetailsPage from './pages/ProjectDetailsPage'
 import ProjectFilesPage from './pages/ProjectFilesPage'
 import ProjectKanbanPage from './pages/ProjectKanbanPage'
 import SprintsPage from './pages/SprintsPage'
+import  { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
 const App: React.FC = () => {
   return (
+    <>
     <Routes>
       <Route path="/" element={<Homepage />} />
       <Route path="/projects" element={<ProjectsPage />} />
@@ -29,6 +31,8 @@ const App: React.FC = () => {
       <Route path="/task" element={<TaskPage />} />
       <Route path="/files" element={<FilesPage />} />
     </Routes>
+    <ReactQueryDevtools initialIsOpen={false} />
+    </>
   )
 }
 

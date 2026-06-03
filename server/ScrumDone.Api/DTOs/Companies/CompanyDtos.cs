@@ -11,7 +11,7 @@ namespace ScrumDone.Api.DTOs.Companies
         DateTimeOffset CreatedAt,
         DateTimeOffset UpdatedAt,
 
-        ContactPersonDto MainContact,
+        ContactPersonDto? MainContact,
 
         int ContactPeopleCount,
         int ProjectsCount
