@@ -3,6 +3,7 @@ using ScrumDone.Api.Data;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Companies;
 using ScrumDone.Api.Exceptions;
+using ScrumDone.Api.Mappers;
 
 namespace ScrumDone.Api.Services
 {
@@ -16,63 +17,34 @@ namespace ScrumDone.Api.Services
         }
 
         // companies
-        // mappers to be added later
 
         public async Task<PagedResultDto<CompanyListItemDto>> GetCompaniesAsync(CompanyQueryDto query)
         {
-            var page = query.Page;
-            var limit = query.Limit;
-
-            // what if table is empty? will the endpoint crash?
-            // what if more pages than elements?
             var total = await _context.Companies.CountAsync();
             var companies = await _context.Companies
-                .Skip((page - 1) * limit)
-                .Take(limit)
-                .Include(c => c.ContactPeople)
-                .Include(p => p.Projects)
+                .Skip((query.Page - 1) * query.Limit)
+                .Take(query.Limit)
+                .Select(c => new CompanyListItemDto(
+                    c.Id,
+                    c.Name,
+                    c.Nip,
+                    c.CreatedAt,
+                    c.UpdatedAt,
+                    c.ContactPeople
+                        .Where(cp => cp.IsPrimary)
+                        .Select(cp => new ContactPersonDto(cp.Id, cp.Name, cp.Role, cp.Email, cp.Phone, cp.IsPrimary))
+                        .FirstOrDefault(),
+                    c.ContactPeople.Count,
+                    c.Projects.Count
+                ))
                 .ToListAsync();
 
-            var companyItems = new List<CompanyListItemDto>();
-            foreach (var company in companies)
-            {
-                // what if null? we don't want to crash here
-                ContactPersonDto? mainContactDto = company.ContactPeople
-                    .Where(cp => cp.IsPrimary)
-                    .Select(cp => new ContactPersonDto(
-                        cp.Id,
-                        cp.Name,
-                        cp.Role,
-                        cp.Email,
-                        cp.Phone,
-                        cp.IsPrimary
-                    ))
-                    .FirstOrDefault();
-
-                var companyItem = new CompanyListItemDto
-                (
-                    company.Id,
-                    company.Name,
-                    company.Nip,
-                    company.CreatedAt,
-                    company.UpdatedAt,
-                    mainContactDto,
-                    company.ContactPeople?.Count ?? 0,
-                    company.Projects?.Count ?? 0
-                );
-
-                companyItems.Add(companyItem);
-            }
-
-            var result = new PagedResultDto<CompanyListItemDto>
-            (
-                companyItems,
+            return new PagedResultDto<CompanyListItemDto>(
+                companies,
                 query.Page,
                 query.Limit,
                 total
             );
-
-            return result;
         }
 
         public async Task<CompanyDetailDto> GetCompanyByIdAsync(Guid id)
@@ -83,30 +55,7 @@ namespace ScrumDone.Api.Services
                 .FirstOrDefaultAsync(c => c.Id == id)
             ?? throw new NotFoundException(nameof(Company), id);
 
-            var companyDetail = new CompanyDetailDto
-            (
-                company.Id,
-                company.Name,
-                company.Nip,
-                company.Krs,
-                company.Regon,
-                company.Address,
-                company.CreatedAt,
-                company.UpdatedAt,
-                company.ContactPeople.Count,
-                company.Projects.Count,
-                company.ContactPeople.Select(cp => new ContactPersonDto
-                (
-                    cp.Id,
-                    cp.Name,
-                    cp.Role,
-                    cp.Email,
-                    cp.Phone,
-                    cp.IsPrimary
-                ))
-            );
-
-            return companyDetail;
+            return company.ToDetailDto();
         }
 
         public async Task<CompanyDetailDto> CreateCompanyAsync(CompanyCreateDto dto)
@@ -123,32 +72,7 @@ namespace ScrumDone.Api.Services
             _context.Companies.Add(company);
             await _context.SaveChangesAsync();
 
-            var companyDetail = new CompanyDetailDto
-            (
-                company.Id,
-                company.Name,
-                company.Nip,
-                company.Krs,
-                company.Regon,
-                company.Address,
-                company.CreatedAt,
-                company.UpdatedAt,
-                // those below should always be 0/null
-                // but they are included for consistency and optional future bulk posts
-                company.ContactPeople.Count,
-                company.Projects.Count,
-                company.ContactPeople.Select(cp => new ContactPersonDto
-                (
-                    cp.Id,
-                    cp.Name,
-                    cp.Role,
-                    cp.Email,
-                    cp.Phone,
-                    cp.IsPrimary
-                ))
-            );
-
-            return companyDetail;
+            return company.ToDetailDto();
         }
 
         public async Task<CompanyDetailDto> UpdateCompanyAsync(Guid id, CompanyUpdateDto dto)
@@ -167,30 +91,7 @@ namespace ScrumDone.Api.Services
 
             await _context.SaveChangesAsync();
 
-            var companyDetail = new CompanyDetailDto
-            (
-                company.Id,
-                company.Name,
-                company.Nip,
-                company.Krs,
-                company.Regon,
-                company.Address,
-                company.CreatedAt,
-                company.UpdatedAt,
-                company.ContactPeople.Count,
-                company.Projects.Count,
-                company.ContactPeople.Select(cp => new ContactPersonDto
-                (
-                    cp.Id,
-                    cp.Name,
-                    cp.Role,
-                    cp.Email,
-                    cp.Phone,
-                    cp.IsPrimary
-                ))
-            );
-
-            return companyDetail;
+            return company.ToDetailDto();
         }
 
         public async Task DeleteCompanyAsync(Guid id)
@@ -203,6 +104,5 @@ namespace ScrumDone.Api.Services
 
             return;
         }
-
     }
 }
