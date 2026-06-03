@@ -1,5 +1,5 @@
 
-## Build 
+## Build:
 
 - Install Docker https://docs.docker.com/desktop/setup/install/windows-install/
 - Run the docker engine (opening downloaded docker dektop should do it)
@@ -14,7 +14,10 @@
 ## Rebuild api only for faster development:
 - `docker compose up -d --build scrumdone-api`
 
-## For every endpoint
+## Run tests with:
+- `dotnet test ScrumDone.slnx --no-restore --verbosity minimal`
+
+## For every endpoint:
 - Create enpoint inside controller
 - Add Service inside service contract
 - Add implementation inside related service file

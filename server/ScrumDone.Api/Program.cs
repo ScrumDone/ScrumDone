@@ -43,13 +43,16 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    var db = scope.ServiceProvider.GetService<AppDbContext>();
-    db.Database.Migrate();
-    if (app.Environment.IsDevelopment())
+    using (var scope = app.Services.CreateScope())
     {
-        DatabaseSeeder.Seed(db);
+        var db = scope.ServiceProvider.GetService<AppDbContext>();
+        db.Database.Migrate();
+        if (app.Environment.IsDevelopment())
+        {
+            DatabaseSeeder.Seed(db);
+        }
     }
 }
 
@@ -63,7 +66,10 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("AllowFrontend");
 
