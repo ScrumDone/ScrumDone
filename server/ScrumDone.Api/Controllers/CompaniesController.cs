@@ -29,7 +29,8 @@ namespace ScrumDone.Api.Controllers
         // /companies
         [HttpGet]
         [ProducesResponseType(typeof(PagedResultDto<CompanyListItemDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetCompanies(
             [FromQuery] CompanyQueryDto query, 
             [FromServices] IValidator<CompanyQueryDto> validator)
@@ -40,7 +41,8 @@ namespace ScrumDone.Api.Controllers
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetCompanyById([FromRoute] Guid id)
         {
             return Ok(await _companiesService.GetCompanyByIdAsync(id));
@@ -48,7 +50,8 @@ namespace ScrumDone.Api.Controllers
 
         [HttpPost]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CreateCompany(
             [FromBody] CompanyCreateDto dto, 
             [FromServices] IValidator<CompanyCreateDto> validator)
@@ -59,7 +62,8 @@ namespace ScrumDone.Api.Controllers
 
         [HttpPatch("{id}")]
         [ProducesResponseType(typeof(CompanyDetailDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateCompany(
             [FromRoute] Guid id, 
             [FromBody] CompanyUpdateDto dto, 
@@ -71,7 +75,8 @@ namespace ScrumDone.Api.Controllers
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteCompany([FromRoute] Guid id)
         {
             await _companiesService.DeleteCompanyAsync(id);
