@@ -166,13 +166,13 @@ namespace ScrumDone.Api.Services
             return updatedNote;
         }
 
-        public async Task<bool> DeleteCompanyNote(Guid id, Guid noteId)
+        public async Task DeleteCompanyNote(Guid id, Guid noteId)
         {
             var affectedRows = await _context.CompanyNotes
             .Where(n => n.Id == noteId && n.CompanyId == id)
             .ExecuteUpdateAsync(n => n.SetProperty(e => e.IsDeleted, true));
 
-            return affectedRows > 0;
+            return;
         } 
     }
 }
