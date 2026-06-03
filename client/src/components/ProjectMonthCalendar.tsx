@@ -1,5 +1,7 @@
 import React from 'react'
 import { format, startOfMonth, startOfWeek, addDays, isSameDay, isSameMonth, parseISO } from 'date-fns'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import CalendarTaskItem from './calendarTaskItem'
 
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
@@ -14,6 +16,27 @@ interface CalendarTask {
 interface ProjectMonthCalendarProps {
     currentDate: Date
     tasks: CalendarTask[]
+}
+
+const DraggableTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
+    const style = { 
+        transform: transform ? CSS.Translate.toString(transform) : undefined 
+    }
+    
+    if (isDragging) {
+        return (
+            <div ref={setNodeRef} className="opacity-30">
+                <CalendarTaskItem title={task.title} colorVariant={task.colorVariant} />
+            </div>
+        )
+    }
+
+    return (
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-none">
+            <CalendarTaskItem title={task.title} colorVariant={task.colorVariant} />
+        </div>
+    )
 }
 
 const ProjectMonthCalendar: React.FC<ProjectMonthCalendarProps> = ({ currentDate, tasks }) => {
@@ -41,15 +64,19 @@ const ProjectMonthCalendar: React.FC<ProjectMonthCalendarProps> = ({ currentDate
             <div className="grid grid-cols-7">
                 {days.map((day, index) => {
                     const dayOfWeek = index % 7
+                    const dateString = format(day, 'yyyy-MM-dd')
                     const isCurrentMonth = isSameMonth(day, currentDate)
                     const isWeekendDay = isWeekend(dayOfWeek)
                     const tasksForThisDay = tasks.filter(task => 
                         isSameDay(parseISO(task.date), day)
                     )
+                    
+                    const { setNodeRef } = useDroppable({ id: dateString })
 
                     return (
                         <div
                             key={day.toISOString()}
+                            ref={setNodeRef}
                             className={`h-[90px] border-r border-b border-slate-200 last:border-r-0 p-1.5 flex flex-col overflow-hidden ${
                                 isCurrentMonth && !isWeekendDay ? 'bg-white' : 'bg-slate-50/50'
                             } ${index >= 28 ? 'border-b-0' : ''}`}
@@ -64,11 +91,7 @@ const ProjectMonthCalendar: React.FC<ProjectMonthCalendarProps> = ({ currentDate
                             {/* Scroll zadań */}
                             <div className="flex-1 overflow-y-auto space-y-0.5 scrollbar-hide">
                                 {tasksForThisDay.map((task) => (
-                                    <CalendarTaskItem 
-                                        key={task.id} 
-                                        title={task.title} 
-                                        colorVariant={task.colorVariant} 
-                                    />
+                                    <DraggableTask key={task.id} task={task} />
                                 ))}
                             </div>
                         </div>
