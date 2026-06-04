@@ -74,9 +74,7 @@ namespace ScrumDone.Api.Services
 
             return company.ToDetailDto();
         }
-
-        //notes
-        public async Task<CompanyDetailDto> UpdateCompanyAsync(Guid id, CompanyUpdateDto dto)
+                public async Task<CompanyDetailDto> UpdateCompanyAsync(Guid id, CompanyUpdateDto dto)
         {
             var company = await _context.Companies
                 .Include(c => c.ContactPeople)
@@ -106,8 +104,11 @@ namespace ScrumDone.Api.Services
             return;
         }
 
+        //notes
         public async Task<PagedResultDto<CompanyNoteDto>> GetCompanyNotesAsync(Guid id, CompanyNoteQueryDto query)
         {
+            var total = await _context.CompanyNotes.CountAsync();
+
             var notes = await _context.CompanyNotes
             .Skip((query.Page - 1) * query.Limit) 
             .Take(query.Limit)
@@ -115,7 +116,7 @@ namespace ScrumDone.Api.Services
             .Select(note => note.ToListItemDto())
             .ToListAsync();
             
-            var  notesPaginated = new PagedResultDto<CompanyNoteDto>(notes, query.Page, query.Limit, notes.Count());
+            var  notesPaginated = new PagedResultDto<CompanyNoteDto>(notes, query.Page, query.Limit, total);
             return notesPaginated;
         }
 
@@ -131,11 +132,11 @@ namespace ScrumDone.Api.Services
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false,
             };
+
             _context.CompanyNotes.Add(note);
             await _context.SaveChangesAsync();
 
-
-            return new CompanyNoteDto(note.Id, note.Content, new DTOs.Users.UserSummaryDto(note.User.Id, note.User.Name, note.User.ProfilePictureUrl), note.CreatedAt, note.UpdatedAt);  
+            return note.ToListItemDto(); 
         }
 
         public async Task<CompanyNoteDto> UpdateCompanyNoteAsync(Guid id, Guid noteId, CompanyNoteUpdateDto dto)
@@ -144,12 +145,10 @@ namespace ScrumDone.Api.Services
             .Where(n => n.Id == noteId && n.CompanyId == id)
             .ExecuteUpdateAsync(n => n.SetProperty(e => e.Content, dto.Content));
 
-            var updatedNote = await _context.CompanyNotes
-                .Where(n => n.Id == noteId)
-                .Select(note => note.ToListItemDto())
-                .FirstAsync();
+            var updatedNote = await _context.CompanyNotes.FirstOrDefaultAsync(n => n.Id == noteId)
+                ?? throw new NotFoundException(nameof(Company), id);
 
-            return updatedNote;
+            return updatedNote.ToListItemDto();
         }
 
         public async Task DeleteCompanyNoteAsync(Guid id, Guid noteId)
