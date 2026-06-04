@@ -19,12 +19,12 @@ namespace ScrumDone.Api.Services
         Task DeleteCompanyAsync(Guid id);
 
         //Notes
-        Task<PagedResultDto<CompanyNoteDto>> GetCompanyNotes(Guid id, CompanyNoteQueryDto query);
+        Task<PagedResultDto<CompanyNoteDto>> GetCompanyNotesAsync(Guid id, CompanyNoteQueryDto query);
 
-        Task<CompanyNoteDto> CreateCompanyNote(Guid id, CompanyNoteCreateDto query);
+        Task<CompanyNoteDto> CreateCompanyNoteAsync(Guid id, CompanyNoteCreateDto query);
 
-        Task<CompanyNoteDto> UpdateCompanyNote(Guid id, Guid noteId, CompanyNoteUpdateDto query);
+        Task<CompanyNoteDto> UpdateCompanyNoteAsync(Guid id, Guid noteId, CompanyNoteUpdateDto query);
 
-        Task DeleteCompanyNote(Guid id, Guid noteId);
+        Task DeleteCompanyNoteAsync(Guid id, Guid noteId);
     }
 }

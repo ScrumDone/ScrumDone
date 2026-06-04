@@ -96,7 +96,7 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<CompanyNoteQueryDto> validator)
         {
             await validator.ValidateAndThrowAsync(query);
-            return Ok(await _companiesService.GetCompanyNotes(id, query));
+            return Ok(await _companiesService.GetCompanyNotesAsync(id, query));
         }
         
 
@@ -110,7 +110,7 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<CompanyNoteCreateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return Ok(await _companiesService.CreateCompanyNote(id, dto));
+            return Ok(await _companiesService.CreateCompanyNoteAsync(id, dto));
         }
 
         [HttpPatch("{id}/notes/{noteId}")]
@@ -124,7 +124,7 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<CompanyNoteUpdateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return Ok(await _companiesService.UpdateCompanyNote(id, noteId, dto));
+            return Ok(await _companiesService.UpdateCompanyNoteAsync(id, noteId, dto));
         }
 
         [HttpDelete("{id}/notes/{noteId}")]
@@ -134,7 +134,7 @@ namespace ScrumDone.Api.Controllers
             [FromRoute] Guid id, 
             [FromRoute] Guid noteId)
         {
-            await _companiesService.DeleteCompanyNote(id, noteId);
+            await _companiesService.DeleteCompanyNoteAsync(id, noteId);
             return NoContent();
         }
 
