@@ -11,6 +11,7 @@ import ProjectMonthCalendar from '../components/ProjectMonthCalendar'
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter'
 import CalendarNoDeadlineTasks, { type CalendarNoDeadlineTask } from '../components/calendarNoDeadlineTasks'
 import { projects } from '../data/projects'
+import { useProjectViewMode } from '../hooks/useProjectViewMode'
 
 type CalendarTask = {
   id: string
@@ -40,7 +41,8 @@ const calendarTasks: CalendarTask[] = [
 const ProjectCalendarPage: React.FC = () => {
   const { projectSlug } = useParams()
   const project = projects.find((item) => item.slug === projectSlug)
-  
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug)
+
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 6))
 
@@ -77,7 +79,7 @@ const ProjectCalendarPage: React.FC = () => {
         <div className="flex w-full flex-col">
           {project ? (
             <>
-              <ProjectTopBar project={project} viewMode="scrum" />
+              <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
               <section className="mx-6 mt-6 pb-8">
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">

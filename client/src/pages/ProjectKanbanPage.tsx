@@ -9,6 +9,7 @@ import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarP
 import SprintSelector, { type Sprint } from '../components/SprintSelector';
 import TaskCreateModal from '../components/TaskCreateModal';
 import { projects } from '../data/projects';
+import { useProjectViewMode } from '../hooks/useProjectViewMode';
 import {
   DndContext,
   DragOverlay,
@@ -179,7 +180,7 @@ const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
 const ProjectKanbanPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((item) => item.slug === projectSlug);
-  const [viewMode, setViewMode] = useState<'kanban' | 'scrum'>('kanban');
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
   const [currentSprintId, setCurrentSprintId] = useState('sprint-0');
   const [columns, setColumns] = useState<KanbanColumn[]>(initialKanbanColumns);
   const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);
@@ -237,7 +238,7 @@ const ProjectKanbanPage: React.FC = () => {
         <div className="flex w-full flex-col">
           {project ? (
             <>
-              <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setViewMode} />
+              <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
               <section className="mx-6 mt-6 pb-8">
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
