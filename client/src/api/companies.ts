@@ -5,6 +5,7 @@ import type { PagedResult } from '../types/api';
 import type { CompanyListItem } from '../types/company';
 import type { CompanyUpdateDto } from '../types/company';
 import type { ContactPerson, ContactPersonCreateDto } from '../types/contact';
+import type { CooperationLog, CooperationLogCreateDto } from '../types/log';
 
 
 export function getCompanies(page = 1, limit = 10) {
@@ -21,4 +22,12 @@ export function getCompanyContacts(id: string) {
 
 export function addCompanyContact(id: string, data: ContactPersonCreateDto) {
     return apiPost<ContactPerson>(`/api/companies/${id}/contacts`, data);
+}
+
+export function getCompanyLogs(id: string) {
+    return apiGet<PagedResult<CooperationLog>>(`/api/companies/${id}/logs`);
+}
+
+export function addCompanyLog(id: string, data: CooperationLogCreateDto) {
+    return apiPost<CooperationLog>(`/api/companies/${id}/logs`, data);
 }
