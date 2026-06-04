@@ -10,7 +10,12 @@ interface ProjectTopBarProps {
   onViewModeChange?: (mode: 'kanban' | 'scrum') => void;
 }
 
-const projectTabs = ['Tablica Kanban', 'Kalendarz', 'Sprinty', 'Repozytorium plikow'];
+const projectTabs = [
+  { label: 'Tablica Kanban', path: (slug: string) => `/projects/${slug}/tablica-kanban` },
+  { label: 'Kalendarz', path: (slug: string) => `/projects/${slug}/kalendarz` },
+  { label: 'Sprinty', path: (slug: string) => `/projects/${slug}/sprinty` },
+  { label: 'Repozytorium plików', path: (slug: string) => `/projects/${slug}/repozytorium-plikow` },
+];
 
 const editableTeamMembers: TeamMemberOption[] = [
   { id: 'artur-nowak', fullName: 'Artur Nowak', initials: 'AN', email: 'artur.nowak@randlab.pl' },
@@ -18,7 +23,8 @@ const editableTeamMembers: TeamMemberOption[] = [
   { id: 'maria-kowalska', fullName: 'Maria Kowalska', initials: 'MK', email: 'maria.k@randlab.pl' },
 ];
 
-const getDefaultMemberIds = (membersCount: number) => editableTeamMembers.slice(0, membersCount).map((member) => member.id);
+const getDefaultMemberIds = (membersCount: number) =>
+  editableTeamMembers.slice(0, membersCount).map((member) => member.id);
 
 const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   project,
@@ -64,7 +70,6 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   const toggleMember = (memberId: string) => {
     setDraft((prev) => {
       const alreadySelected = prev.memberIds.includes(memberId);
-
       return {
         ...prev,
         memberIds: alreadySelected
@@ -87,27 +92,30 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   };
 
   return (
-    <section className=" bg-white border-b border-slate-200">
+    <section className="bg-white border-b border-slate-200">
       <div className="border-b border-slate-200 px-6 py-5">
         <div className="mb-4">
-          <Link to="/projects" className="inline-flex items-center gap-2 leading-5 text-sm text-slate-600 hover:text-slate-900">
+          <Link
+            to="/projects"
+            className="inline-flex items-center gap-2 leading-5 text-sm text-slate-600 hover:text-slate-900"
+          >
             <ArrowLeftIcon className="h-4 w-4" />
-            Powrot do projektów
+            Powrót do projektów
           </Link>
         </div>
 
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="flex min-w-88 flex-1 gap-4">
-            {/* <div className="flex h-16 w-16 items-center justify-center rounded-[10px] border border-slate-200 bg-slate-50 text-lg font-semibold text-slate-700">
-              {project.name.slice(0, 1)}
-            </div> */}
-
             <div className="flex flex-col gap-2">
-              <h1 className="text-2xl leading-8  text-slate-900 tracking-[0.07]">{displayedProject.name}</h1>
+              <h1 className="text-2xl leading-8 text-slate-900 tracking-[0.07]">
+                {displayedProject.name}
+              </h1>
               <a className="w-fit text-sm leading-5 tracking-[-0.15] text-scrumdone-blue-main">
                 {displayedProject.clientName}
               </a>
-              <p className="text-[16px] tracking-[-0.31px] text-slate-600">{displayedProject.description}</p>
+              <p className="text-[16px] tracking-[-0.31px] text-slate-600">
+                {displayedProject.description}
+              </p>
 
               <div className="mt-1 flex flex-wrap items-center gap-6 text-slate-600">
                 <div className="inline-flex items-center gap-2 text-sm leading-5 tracking-[-0.15]">
@@ -127,14 +135,18 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
               <button
                 type="button"
                 onClick={() => onViewModeChange?.('kanban')}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'kanban' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'}`}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  viewMode === 'kanban' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'
+                }`}
               >
                 Kanban
               </button>
               <button
                 type="button"
                 onClick={() => onViewModeChange?.('scrum')}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'scrum' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'}`}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  viewMode === 'scrum' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'
+                }`}
               >
                 Scrum
               </button>
@@ -153,36 +165,30 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
       </div>
 
       <div className="flex flex-wrap gap-8 px-6 py-3">
-        {projectTabs.map((tab) => (
-          tab === 'Tablica Kanban' ? (
+        {projectTabs.map((tab) =>
+          tab.path ? (
             <NavLink
-              key={tab}
-              to={`/projects/${displayedProject.slug}/tablica-kanban`}
+              key={tab.label}
+              to={tab.path(displayedProject.slug)}
               className={({ isActive }) =>
-                `text-sm leading-5 tracking-[-0.15px] transition-colors ${isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'}`
+                `text-sm leading-5 tracking-[-0.15px] transition-colors ${
+                  isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'
+                } ${tab.label === 'Sprinty' && viewMode === 'kanban' ? 'hidden' : ''}`
               }
             >
-              {tab}
-            </NavLink>
-          ) : tab === 'Sprinty' ? (
-            <NavLink
-              key={tab}
-              to={`/projects/${displayedProject.slug}/sprinty`}
-              className={({ isActive }) =>
-                `text-sm leading-5 tracking-[-0.15px] transition-colors ${isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'} ${viewMode === 'kanban' ? 'hidden' : ''}`
-              }
-            >
-              {tab}
+              {tab.label}
             </NavLink>
           ) : (
-            <button
-              key={tab}
-              className={`text-sm leading-5 tracking-[-0.15px] text-slate-800 hover:text-slate-950 ${(tab === 'Sprinty' && viewMode === 'kanban') ? 'hidden' : ''}`}
+            <span
+              key={tab.label}
+              className={`text-sm leading-5 tracking-[-0.15px] text-slate-800 ${
+                tab.label === 'Sprinty' && viewMode === 'kanban' ? 'hidden' : ''
+              }`}
             >
-              {tab}
-            </button>
+              {tab.label}
+            </span>
           )
-        ))}
+        )}
       </div>
 
       <ProjectEditModal

@@ -3,7 +3,7 @@ import Avatar from './Avatar'
 
 type TaskAccentColor = 'blue' | 'orange' | 'red' | 'green' | 'yellow'
 
-type TaskDotColor = 'red' | 'yellow' | 'green' | 'blue'
+type TaskDotColor = 'red' | 'yellow' | 'green' | 'blue' | 'orange'
 
 export interface CalendarNoDeadlineTask {
     id: string
@@ -44,6 +44,7 @@ const dotClassMap: Record<TaskDotColor, string> = {
     yellow: 'bg-scrumdone-yellow-500',
     green: 'bg-scrumdone-green-500',
     blue: 'bg-scrumdone-blue-main',
+    orange: 'bg-scrumdone-orange',
 }
 
 const defaultTasks: CalendarNoDeadlineTask[] = [
@@ -70,7 +71,7 @@ export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProp
     const backgroundClass = backgroundClassMap[task.accentColor]
 
     return (
-        <article className={`flex-none w-full max-w-75 rounded-xl border border-l-4 p-3.75 ${accentClassMap[task.accentColor]} ${backgroundClass}`}>
+        <article className={`flex-none w-full max-w-75 rounded-xl border border-l-4 p-3 ${accentClassMap[task.accentColor]} ${backgroundClass}`}>
             <div className="mb-3 flex items-center gap-3">
                 <span className={`h-2 w-2 shrink-0 rounded-full ${dotClassMap[task.dotColor]}`} aria-hidden="true" />
                 <h2 className="font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">

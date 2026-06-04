@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
-import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, FileSignature } from 'lucide-react';
+import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, FileSignature, MoreVertical } from 'lucide-react';
 import { companies, type Company } from '../data/companies';
+import { projects } from '../data/projects';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
+import { useUpdateCompany } from '../hooks/useUpdateCompany';
+import { useCompanyContacts } from '../hooks/useCompanyContacts';
+import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
 
 type CooperationHistoryItem = {
   id: string;
@@ -17,6 +21,14 @@ type CooperationHistoryItem = {
   changeFrom?: string;
   changeTo?: string;
   Icon: React.ComponentType<{ className?: string }>;
+};
+
+type NoteItem = {
+  id: string;
+  author: string;
+  avatarInitials: string;
+  dateLabel: string;
+  content: string;
 };
 
 const cooperationHistory: CooperationHistoryItem[] = [
@@ -51,6 +63,30 @@ const cooperationHistory: CooperationHistoryItem[] = [
   },
 ];
 
+const initialNotes: NoteItem[] = [
+  {
+    id: 'note-1',
+    author: 'Artur Nowak',
+    avatarInitials: 'AN',
+    dateLabel: '10 kwietnia 2026 16:45',
+    content: 'Anna Wiśniewska wspomniała o możliwości polecenia naszych usług innym firmom z branży.',
+  },
+  {
+    id: 'note-2',
+    author: 'Eryk Baczyński',
+    avatarInitials: 'EB',
+    dateLabel: '02 kwietnia 2026 09:15',
+    content: 'Spotkanie w przyszły wtorek o 10:00 - omówienie dalszych planów rozwoju aplikacji.',
+  },
+  {
+    id: 'note-3',
+    author: 'Artur Nowak',
+    avatarInitials: 'AN',
+    dateLabel: '15 marca 2026 14:30',
+    content: 'Klient bardzo zadowolony z postępów projektu. Planuje rozszerzenie współpracy o kolejne moduły.',
+  },
+];
+
 const CompanyDetailsPage: React.FC = () => {
   const { companySlug } = useParams();
   const company = companies.find((item) => item.slug === companySlug);
@@ -71,8 +107,21 @@ const CompanyDetailsPage: React.FC = () => {
     phone: '',
     isMainContact: false,
   });
-  const mainContact = displayedCompany?.contacts[0];
+  const activeProjects = displayedCompany ? projects.filter((project) => project.clientName === displayedCompany.name) : [];
   const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
+
+  const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
+  const [newNoteText, setNewNoteText] = useState('');
+  const { mutate: updateCompany, isPending: isSavingCompany, isError: isUpdateCompanyError, error: updateCompanyError, reset: resetUpdateCompany } = useUpdateCompany();
+  const companyId = company ? String(company.id) : '';
+  const { data: contactsData, isLoading: isContactsLoading } = useCompanyContacts(companyId);
+  const {
+    mutate: addContact,
+    isPending: isAddingContact,
+    isError: isAddContactError,
+    error: addContactError,
+    reset: resetAddContact,
+  } = useAddCompanyContact();
 
   useEffect(() => {
     setDisplayedCompany(company ?? null);
@@ -109,7 +158,14 @@ const CompanyDetailsPage: React.FC = () => {
     );
   }
 
+  const apiContacts = contactsData?.items;
+  const contactsToShow = apiContacts ?? displayedCompany.contacts;
+  const mainContactId = apiContacts
+    ? (apiContacts.find((contact) => contact.isPrimary)?.id ?? apiContacts[0]?.id)
+    : displayedCompany.contacts[0]?.id;
+
   const openEditModal = () => {
+    resetUpdateCompany();
     setDraft({
       name: displayedCompany.name,
       nip: displayedCompany.nip,
@@ -121,10 +177,12 @@ const CompanyDetailsPage: React.FC = () => {
   };
 
   const closeEditModal = () => {
+    resetUpdateCompany();
     setIsEditModalOpen(false);
   };
 
   const openContactAddModal = () => {
+    resetAddContact();
     setContactDraft({
       name: '',
       role: '',
@@ -136,27 +194,78 @@ const CompanyDetailsPage: React.FC = () => {
   };
 
   const closeContactAddModal = () => {
+    resetAddContact();
     setIsContactAddModalOpen(false);
   };
 
   const saveCompanyChanges = () => {
-    setDisplayedCompany((prev) =>
-      prev
-        ? {
-            ...prev,
-            name: draft.name,
-            nip: draft.nip,
-            companyNumber: draft.krs,
-            regon: draft.regon,
-            address: draft.address,
-          }
-        : prev,
+    updateCompany(
+      {
+        id: String(displayedCompany.id),
+        data: {
+          name: draft.name,
+          nip: draft.nip || null,
+          krs: draft.krs || null,
+          regon: draft.regon || null,
+          address: draft.address || null,
+        },
+      },
+      {
+        onSuccess: () => {
+          setDisplayedCompany((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  name: draft.name,
+                  nip: draft.nip,
+                  companyNumber: draft.krs,
+                  regon: draft.regon,
+                  address: draft.address,
+                }
+              : prev,
+          );
+          closeEditModal();
+        },
+      },
     );
-    setIsEditModalOpen(false);
   };
 
   const saveContactChanges = () => {
-    setIsContactAddModalOpen(false);
+    addContact(
+      {
+        companyId: String(displayedCompany.id),
+        data: {
+          name: contactDraft.name || null,
+          role: contactDraft.role || null,
+          email: contactDraft.email || null,
+          phone: contactDraft.phone || null,
+          isPrimary: contactDraft.isMainContact,
+        },
+      },
+      {
+        onSuccess: () => closeContactAddModal(),
+      },
+    );
+  };
+
+  const handleAddNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteText.trim()) return;
+
+    const now = new Date();
+    const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+    const formattedDate = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    const newNote: NoteItem = {
+      id: `note-${Date.now()}`,
+      author: 'Artur Nowak',
+      avatarInitials: 'AN',
+      dateLabel: formattedDate,
+      content: newNoteText.trim(),
+    };
+
+    setNotes([newNote, ...notes]);
+    setNewNoteText('');
   };
 
   return (
@@ -245,31 +354,34 @@ const CompanyDetailsPage: React.FC = () => {
 
               <div>
                 <h3 className="mb-6 text-lg font-semibold text-gray-900">Osoby kontaktowe</h3>
+                {isContactsLoading && !apiContacts && (
+                  <p className="text-sm text-gray-500">Ładowanie kontaktów...</p>
+                )}
                 <div className="space-y-3">
-                  {displayedCompany.contacts.map((contact) => (
+                  {contactsToShow.map((contact) => (
                     <div
                       key={contact.id}
-                      className="flex items-center justify-between bg-[#F9FAFB] rounded-[10px] p-4"
+                      className="flex items-center justify-between bg-[#F9FAFB] border border-gray-200 rounded-[10px] p-4"
                     >
                       <div className="flex flex-col">
                         <div className="flex items-center gap-3">
-                          <h4 className="font-medium text-gray-900">{contact.name}</h4>
-                          {mainContact && contact.id === mainContact.id && (
+                          <h4 className="font-medium text-gray-900">{contact.name ?? '—'}</h4>
+                          {mainContactId != null && contact.id === mainContactId && (
                             <span className="rounded-full bg-scrumdone-blue-main px-2 py-1 text-xs font-medium text-white">
                               Główny kontakt
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">{contact.role}</p>
+                        <p className="text-sm text-gray-500 mt-1">{contact.role ?? '—'}</p>
                         <div className="mt-3 mx-auto flex max-w-180 items-center justify-center gap-6 text-sm text-gray-600">
                           <div className="flex items-center gap-3">
                             <Mail className="w-4 h-4 text-gray-400" />
-                            <span>{contact.email}</span>
+                            <span>{contact.email ?? '—'}</span>
                           </div>
 
                           <div className="flex items-center gap-3 text-sm text-gray-600">
                             <Phone className="w-4 h-4 text-gray-400" />
-                            <span>{contact.phone}</span>
+                            <span>{contact.phone ?? '—'}</span>
                           </div>
                         </div>
                       </div>
@@ -279,6 +391,7 @@ const CompanyDetailsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+            
             <div className="flex justify-between p-6 items-center">
               <div className="relative inline-grid h-9 w-fit grid-cols-3 rounded-[14px] bg-[#E5E7EB] p-0.75 ml-3">
                 <span
@@ -312,7 +425,7 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('notes')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'notes' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Notatki (3)
+                  Notatki ({notes.length})
                 </button>
               </div>
               
@@ -322,9 +435,65 @@ const CompanyDetailsPage: React.FC = () => {
               </button>
             </div>
 
+            {activeTab === 'projects' && (
+              <section className="mx-8 mb-8 border border-gray-200 rounded-[14px] overflow-hidden transition-shadow duration-200 hover:shadow-md">
+                <div className="space-y-6">
+                  {activeProjects.length > 0 ? (
+                    activeProjects.map((project) => (
+                      <Link
+                        key={project.id}
+                        to={`/projects/${project.slug}`}
+                        className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-2 hover:shadow-lg transition-shadow duration-300"
+                      >
+                        {/* NAZWA I STATUS */}
+                        <div className="flex justify-between items-start">
+                          <div className="flex flex-col gap-1">
+                            <h3 className="text-xl text-gray-900 font-medium">{project.name}</h3>
+                          </div>
+                          <span className="inline-flex items-center justify-center bg-scrumdone-blue-main text-white text-[12px] leading-4 font-medium px-2 py-0.5 rounded-lg whitespace-nowrap w-fit">
+                            {project.status}
+                          </span>
+                        </div>
+
+                        {/* OPIS */}
+                        <p className="text-sm text-gray-700 leading-relaxed min-h-0">
+                          {project.description}
+                        </p>
+
+                        {/* SZCZEGÓŁY W JEDNEJ LINII Z KROPKĄ */}
+                        <div className="flex items-center gap-2 text-gray-700 text-sm mt-1">
+                          <span>{project.startDate} - {project.endDate}</span>
+                          <span className="text-gray-400">•</span>
+                          <span>{project.membersCount} członków</span>
+                        </div>
+
+                        {/* PROGRESS BAR */}
+                        <div className="mt-2">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-gray-700">Postęp</span>
+                            <span className="text-gray-700">{project.progress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-300 rounded-full h-2">
+                            <div 
+                              className="bg-black h-2 rounded-full transition-all duration-500" 
+                              style={{ width: `${project.progress}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                      Brak aktywnych projektów powiązanych z tą firmą.
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
             {activeTab === 'history' && (
               <section
-                className="mx-8 mb-8 rounded-[14px] border border-slate-200 bg-white p-6"
+                className="mx-8 mb-8 rounded-[14px] border border-gray-200 bg-white p-6"
                 style={{
                   ['--history-col-width' as string]: '56px',
                   ['--history-icon-size' as string]: '40px',
@@ -336,7 +505,7 @@ const CompanyDetailsPage: React.FC = () => {
                       {index < cooperationHistory.length - 1 && (
                         <span
                           aria-hidden="true"
-                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon-size)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
+                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon shadow-md)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
                         />
                       )}
 
@@ -369,6 +538,54 @@ const CompanyDetailsPage: React.FC = () => {
                 </div>
               </section>
             )}
+
+            {activeTab === 'notes' && (
+              <section className="mx-8 mb-8 rounded-[14px] border border-gray-200 bg-white p-6 flex flex-col gap-6">
+                <div>
+                  <h3 className="text-sm text-gray-900 mb-3">Dodaj nową notatkę</h3>
+                  <form onSubmit={handleAddNote} className="flex flex-col gap-3">
+                    <textarea
+                      value={newNoteText}
+                      onChange={(e) => setNewNoteText(e.target.value)}
+                      placeholder="Wpisz treść notatki..."
+                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newNoteText.trim()}
+                      className="self-start h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] disabled:opacity-50 disabled:hover:bg-scrumdone-blue-main text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+                    >
+                      <PlusIcon className="w-4 h-4 stroke-2" />
+                      <span>Dodaj notatkę</span>
+                    </button>
+                  </form>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {notes.map((note) => (
+                    <article key={note.id} className="rounded-xl bg-[#F9FAFB] border border-gray-200 p-4 flex flex-col gap-3 relative group">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00C2FF] text-white text-xs font-bold">
+                            {note.avatarInitials}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm text-gray-900 leading-none">{note.author}</span>
+                            <span className="text-xs font-normal text-gray-500 mt-1.5 leading-none">{note.dateLabel}</span>
+                          </div>
+                        </div>
+                        <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md">
+                          <MoreVertical className="w-5 h-5 stroke-[1.5]" />
+                        </button>
+                      </div>
+                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased">
+                        {note.content}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         </div>
       </main>
@@ -379,6 +596,8 @@ const CompanyDetailsPage: React.FC = () => {
         onClose={closeEditModal}
         onSave={saveCompanyChanges}
         onDraftChange={setDraft}
+        isSaving={isSavingCompany}
+        errorMessage={isUpdateCompanyError ? updateCompanyError?.message : null}
       />
 
       <CompanyContactAddModal
@@ -387,6 +606,8 @@ const CompanyDetailsPage: React.FC = () => {
         onClose={closeContactAddModal}
         onSave={saveContactChanges}
         onDraftChange={setContactDraft}
+        isSaving={isAddingContact}
+        errorMessage={isAddContactError ? addContactError?.message : null}
       />
     </div>
   );

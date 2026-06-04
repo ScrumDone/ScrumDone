@@ -52,54 +52,21 @@ const FilesPage: React.FC = () => {
         <div className="min-h-screen w-full bg-[#F9FAFB]">
             <SideBar />
             <TopBar />
-
             <main className="ml-64 pt-(--app-header-h)">
                 <div className="mx-auto max-w-7xl px-8 py-8">
-                    
-                    <div className="flex items-center justify-between mb-10">
-                        <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-tight antialiased">
-                            Pliki
-                        </h1>
-                        
-                        <button 
-                            type="button"
-                            onClick={() => setIsModalOpen(true)} 
-                            className="h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] text-white rounded-lg inline-flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
-                        >
-                            <PlusIcon className="w-4 h-4 stroke-2" />
-                            Dodaj plik
-                        </button>
+                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <h1 className="font-segoe-ui text-[1.5rem] leading-8 font-normal text-black antialiased">Pliki</h1>
                     </div>
-
-                    <FilesFilters files={allFiles} onFilteredFilesChange={setFilteredFiles} />
-
-                    <section className="mt-6 rounded-3xl border border-slate-200 bg-white">
+                    <FilesFilters files={files} onFilteredFilesChange={setFilteredFiles} />
+                    <section className="mt-6">
                         {filteredFiles.length > 0 ? (
-                            <ul className="divide-y divide-slate-200">
-                                {filteredFiles.map((file) => (
-                                    <li key={file.id} className="flex flex-col gap-3 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
-                                        <div>
-                                            <p className="font-segoe-ui text-lg font-medium text-slate-900">{file.name}</p>
-                                            <p className="text-sm text-slate-500">
-                                                Projekt: {file.project ?? 'Bez projektu'} | Typ: {file.type}
-                                            </p>
-                                        </div>
-
-                                        <div className="flex flex-wrap gap-2">
-                                            {file.tags.map((tag) => (
-                                                <span key={`${file.id}-${tag}`} className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
-                                                    {tag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </li>
-                                ))}
+                            <ul className="flex flex-col gap-4">
+                                {filteredFiles.map((file) => <FileCard key={file.id} file={file} />)}
                             </ul>
                         ) : (
                             <div className="flex flex-col items-center px-6 py-12 text-center">
                                 <DocumentTextIcon className="mb-4 h-14 w-14 text-slate-400" />
-                                <h3 className="text-xl font-semibold text-slate-800">Brak plików dla wybranych filtrów</h3>
-                                <p className="mt-2 max-w-xl text-slate-600">Zmień wyszukiwaną nazwę, projekt, typ lub odznacz część tagów.</p>
+                                <h3 className="text-xl font-semibold text-slate-800">Brak plików</h3>
                             </div>
                         )}
                     </section>
