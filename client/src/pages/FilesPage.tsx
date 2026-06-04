@@ -3,6 +3,7 @@ import { DocumentTextIcon, PlusIcon } from '@heroicons/react/24/outline'
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
 import FilesFilters, { type FileItem } from '../components/filesFilters'
+import FileCard from '../components/FileCard'
 import FileAddModal, { type FileDraft } from '../components/FileAddModal'
 
 const INITIAL_FILES: FileItem[] = [
@@ -44,7 +45,7 @@ const FilesPage: React.FC = () => {
 
         setAllFiles((prev) => [newFileItem, ...prev])
         setFilteredFiles((prev) => [newFileItem, ...prev])
-        
+
         setIsModalOpen(false)
     }
 
@@ -54,14 +55,29 @@ const FilesPage: React.FC = () => {
             <TopBar />
             <main className="ml-64 pt-(--app-header-h)">
                 <div className="mx-auto max-w-7xl px-8 py-8">
-                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                        <h1 className="font-segoe-ui text-[1.5rem] leading-8 font-normal text-black antialiased">Pliki</h1>
+                    <div className="flex items-center justify-between mb-10">
+                        <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-tight antialiased">
+                            Pliki
+                        </h1>
+
+                        <button
+                            type="button"
+                            onClick={() => setIsModalOpen(true)}
+                            className="h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] text-white rounded-lg inline-flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+                        >
+                            <PlusIcon className="w-4 h-4 stroke-2" />
+                            Dodaj plik
+                        </button>
                     </div>
-                    <FilesFilters files={files} onFilteredFilesChange={setFilteredFiles} />
-                    <section className="mt-6">
+
+                    <FilesFilters files={allFiles} onFilteredFilesChange={setFilteredFiles} />
+
+                    <section className="mt-6 rounded-3xl border border-slate-200 bg-white">
                         {filteredFiles.length > 0 ? (
                             <ul className="flex flex-col gap-4">
-                                {filteredFiles.map((file) => <FileCard key={file.id} file={file} />)}
+                                {filteredFiles.map((file) => (
+                                    <FileCard key={file.id} file={file} />
+                                ))}
                             </ul>
                         ) : (
                             <div className="flex flex-col items-center px-6 py-12 text-center">
@@ -73,7 +89,7 @@ const FilesPage: React.FC = () => {
                 </div>
             </main>
 
-            <FileAddModal 
+            <FileAddModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onSave={handleSaveFile}
