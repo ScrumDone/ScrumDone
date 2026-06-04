@@ -6,6 +6,7 @@ namespace ScrumDone.Api.Data
     {
         // To validate on POST if atleast one field != null
         public Guid Id { get; set; }
+        public Guid CompanyId { get; set; }
         public bool IsPrimary { get; set; } = false;
         public string? Name { get; set; }
         public string? Role { get; set; }
@@ -16,7 +17,5 @@ namespace ScrumDone.Api.Data
         public DateTimeOffset UpdatedAt { get; set; }
         public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
-
-        public Guid CompanyId { get; set; }
     }
 }

@@ -6,6 +6,7 @@ import CompanyCreateModal from '../components/CompanyCreateModal';
 import { companies as companiesSeed, type Company } from '../data/companies';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import type { CompanyEditDraft } from '../components/CompanyEditModal';
+// import { useCompanies } from '../hooks/useCompanies';
 
 const slugifyCompanyName = (name: string) => {
     const normalized = name
@@ -22,7 +23,12 @@ const slugifyCompanyName = (name: string) => {
 const CompaniesPage: React.FC = () => {
     const [companiesList, setCompaniesList] = useState<Company[]>(companiesSeed);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    
+
+    // const { data, isError, isLoading, error } = useCompanies(1, 10);
+    // const companies = data?.items ?? [];
+    // if (isLoading) return <div>Ładowanie...</div>;
+    // if (isError) return <div>Błąd: {error.message}</div>;
+
     const [createDraft, setCreateDraft] = useState<CompanyEditDraft>({
         name: '',
         nip: '',
@@ -92,7 +98,7 @@ const CompaniesPage: React.FC = () => {
                         <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal antialiased">
                             Firmy
                         </h1>
-                        
+
                         <button
                             type="button"
                             onClick={openCreateModal}
@@ -103,14 +109,32 @@ const CompaniesPage: React.FC = () => {
                         </button>
                     </div>
 
+                    {/* Przyszła siatka z danymi z API - do odkomentowania po podpięciu backendu */}
+                    {/* <div className="grid grid-cols-3 gap-8">
+                        {companies.map((company) => (
+                            <CompanyCard
+                                key={company.id}
+                                slug={company.id.toString()}
+                                name={company.name}
+                                nip={company.nip ?? ''}
+                                email={company.mainContact.email ?? ''}
+                                phone={company.mainContact.phone ?? ''}
+                                projectsCount={company.projectsCount}
+                                mainContactName={company.mainContact.name}
+                                mainContactRole={company.mainContact.role}
+                                contactsCount={company.contactPeopleCount}
+                            />
+                        ))}
+                    </div> */}
+
                     <div className="grid grid-cols-3 gap-8">
                         {companiesList.map((company) => (
-                            <CompanyCard 
+                            <CompanyCard
                                 key={company.id}
                                 slug={company.slug}
                                 name={company.name}
                                 nip={company.nip}
-                                email={company.emails[0] ?? ''}
+                                email={company.emails?.[0] ?? ''}
                                 phone={company.phone}
                                 projectsCount={company.projectsCount}
                                 mainContactName={company.mainContactName}

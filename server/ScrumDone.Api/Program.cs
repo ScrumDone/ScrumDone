@@ -1,6 +1,10 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using ScrumDone.Api.Data;
+using ScrumDone.Api.Middleware;
+using ScrumDone.Api.Services;
+using ScrumDone.Api.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,13 +26,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("LocalConnection")));
 
 builder.Services.AddControllers();
+
+builder.Services.AddValidatorsFromAssemblyContaining<ValidatorAssemblyMarker>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddRouting(options =>
+builder.Services.AddRouting(options => 
 {
     options.LowercaseUrls = true;
 });
+
+builder.Services.AddTransient<ICompaniesService, CompaniesService>();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
@@ -36,6 +47,10 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetService<AppDbContext>();
     db.Database.Migrate();
+    if (app.Environment.IsDevelopment())
+    {
+        DatabaseSeeder.Seed(db);
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -44,6 +59,9 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 app.UseHttpsRedirection();
 

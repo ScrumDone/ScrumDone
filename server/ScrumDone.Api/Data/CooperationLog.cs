@@ -4,6 +4,8 @@ namespace ScrumDone.Api.Data
 {
     public class CooperationLog : IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
     {
+        // no cooperation log type
+
         public Guid Id { get; set; }
         public string Title { get; set; }
         public string? Description { get; set; }
@@ -16,6 +18,8 @@ namespace ScrumDone.Api.Data
         public DateTimeOffset? DeletedAt { get; set; }
 
         public Guid AuthorId { get; set; }
-        public User User { get; set; }
+        public Guid CompanyId { get; set; }
+        public User Author { get; set; }
+        public Company Company { get; set; }
     }
 }
