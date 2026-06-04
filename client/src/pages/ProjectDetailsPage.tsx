@@ -4,10 +4,12 @@ import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
 import { projects } from '../data/projects';
+import { useProjectViewMode } from '../hooks/useProjectViewMode';
 
 const ProjectDetailsPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((item) => item.slug === projectSlug);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
 
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB]">
@@ -18,7 +20,7 @@ const ProjectDetailsPage: React.FC = () => {
         <div className="flex w-full flex-col">
           {project ? (
             <>
-              <ProjectTopBar project={project} viewMode="scrum" />
+              <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
             </>
 
