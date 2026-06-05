@@ -6,28 +6,33 @@ import CompanyCreateModal from '../components/CompanyCreateModal';
 import { companies as companiesSeed, type Company } from '../data/companies';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import type { CompanyEditDraft } from '../components/CompanyEditModal';
-// import { useCompanies } from '../hooks/useCompanies';
+import { useCreateCompany } from '../hooks/useCreateCompany';
+import type { CompanyCreateDto } from '../types/company';
 
-const slugifyCompanyName = (name: string) => {
-    const normalized = name
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-
-    return normalized || `firma-${Date.now()}`;
+const emptyToNull = (value: string): string | null => {
+    const trimmed = value.trim();
+    return trimmed === '' ? null : trimmed;
 };
 
+const toCompanyCreateDto = (draft: CompanyEditDraft): CompanyCreateDto => ({
+    name: draft.name.trim(),
+    nip: emptyToNull(draft.nip),
+    krs: emptyToNull(draft.krs),
+    regon: emptyToNull(draft.regon),
+    address: emptyToNull(draft.address),
+});
+
 const CompaniesPage: React.FC = () => {
-    const [companiesList, setCompaniesList] = useState<Company[]>(companiesSeed);
+    const [companiesList] = useState<Company[]>(companiesSeed);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    // const { data, isError, isLoading, error } = useCompanies(1, 10);
-    // const companies = data?.items ?? [];
-    // if (isLoading) return <div>Ładowanie...</div>;
-    // if (isError) return <div>Błąd: {error.message}</div>;
+    const {
+        mutate: createCompany,
+        isPending: isCreatingCompany,
+        isError: isCreateCompanyError,
+        error: createCompanyError,
+        reset: resetCreateCompany,
+    } = useCreateCompany();
 
     const [createDraft, setCreateDraft] = useState<CompanyEditDraft>({
         name: '',
@@ -43,6 +48,7 @@ const CompaniesPage: React.FC = () => {
 
     const closeCreateModal = () => {
         setIsCreateModalOpen(false);
+        resetCreateCompany();
         setCreateDraft({
             name: '',
             nip: '',
@@ -53,30 +59,17 @@ const CompaniesPage: React.FC = () => {
     };
 
     const handleCreateCompany = () => {
-        const trimmedName = createDraft.name.trim();
-        if (!trimmedName) return;
+        const dto = toCompanyCreateDto(createDraft);
+        if (!dto.name) return;
 
-        const nextId = companiesList.reduce((max, c) => Math.max(max, c.id), 0) + 1;
-
-        const newCompany: Company = {
-            id: nextId,
-            name: trimmedName,
-            slug: slugifyCompanyName(trimmedName),
-            nip: createDraft.nip.trim() || '—',
-            regon: createDraft.regon.trim() || '—',
-            companyNumber: createDraft.krs.trim() || '—',
-            address: createDraft.address.trim() || '—',
-            emails: [''],
-            phone: '—',
-            projectsCount: 0,
-            mainContactName: '—',
-            mainContactRole: '—',
-            contactsCount: 0,
-            contacts: [],
-        };
-
-        setCompaniesList((prev) => [newCompany, ...prev]);
-        closeCreateModal();
+        createCompany(
+            { data: dto },
+            {
+                onSuccess: () => {
+                    closeCreateModal();
+                },
+            },
+        );
     };
 
     return (
@@ -90,6 +83,8 @@ const CompaniesPage: React.FC = () => {
                 onClose={closeCreateModal}
                 onSave={handleCreateCompany}
                 onDraftChange={setCreateDraft}
+                isSaving={isCreatingCompany}
+                errorMessage={isCreateCompanyError ? createCompanyError?.message : null}
             />
 
             <main className="ml-64 pt-(--app-header-h)">
@@ -108,24 +103,6 @@ const CompaniesPage: React.FC = () => {
                             Dodaj firmę
                         </button>
                     </div>
-
-                    {/* Przyszła siatka z danymi z API - do odkomentowania po podpięciu backendu */}
-                    {/* <div className="grid grid-cols-3 gap-8">
-                        {companies.map((company) => (
-                            <CompanyCard
-                                key={company.id}
-                                slug={company.id.toString()}
-                                name={company.name}
-                                nip={company.nip ?? ''}
-                                email={company.mainContact.email ?? ''}
-                                phone={company.mainContact.phone ?? ''}
-                                projectsCount={company.projectsCount}
-                                mainContactName={company.mainContact.name}
-                                mainContactRole={company.mainContact.role}
-                                contactsCount={company.contactPeopleCount}
-                            />
-                        ))}
-                    </div> */}
 
                     <div className="grid grid-cols-3 gap-8">
                         {companiesList.map((company) => (
