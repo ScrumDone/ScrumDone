@@ -129,7 +129,8 @@ namespace ScrumDone.Api.Controllers
 
         [HttpDelete("{id}/notes/{noteId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteCompanyNote(
             [FromRoute] Guid id, 
             [FromRoute] Guid noteId)

@@ -107,26 +107,32 @@ namespace ScrumDone.Api.Services
         //notes
         public async Task<PagedResultDto<CompanyNoteDto>> GetCompanyNotesAsync(Guid id, CompanyNoteQueryDto query)
         {
-            var total = await _context.CompanyNotes.CountAsync();
+            var baseQuery = _context.CompanyNotes.Where(n => n.CompanyId == id);
+            var total = await baseQuery.CountAsync();
 
-            var notes = await _context.CompanyNotes
-            .Skip((query.Page - 1) * query.Limit) 
-            .Take(query.Limit)
-            .Where(n => n.CompanyId == id)
-            .Select(note => note.ToListItemDto())
-            .ToListAsync();
+            var notesFromDb = await baseQuery
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((query.Page - 1) * query.Limit) 
+                .Take(query.Limit)
+                .Include(n => n.User)
+                .ToListAsync();
             
+            var notes = notesFromDb.Select(note => note.ToListItemDto());
+
             var  notesPaginated = new PagedResultDto<CompanyNoteDto>(notes, query.Page, query.Limit, total);
             return notesPaginated;
         }
 
         public async Task<CompanyNoteDto> CreateCompanyNoteAsync(Guid id, CompanyNoteCreateDto query)
         {
+            var currentUser = await _context.Users.FirstAsync();
+
             var note = new CompanyNote
             {
                 Id = Guid.NewGuid(),
                 Content = query.Content,
-                UserId = _context.Users.First().Id, // TODO solve this issue
+                UserId = currentUser.Id,
+                User = currentUser,
                 CompanyId = id,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
@@ -145,20 +151,20 @@ namespace ScrumDone.Api.Services
             .Where(n => n.Id == noteId && n.CompanyId == id)
             .ExecuteUpdateAsync(n => n.SetProperty(e => e.Content, dto.Content));
 
-            var updatedNote = await _context.CompanyNotes.FirstOrDefaultAsync(n => n.Id == noteId)
-                ?? throw new NotFoundException(nameof(Company), id);
+            var updatedNote = await _context.CompanyNotes.Include(n => n.User).FirstOrDefaultAsync(n => n.Id == noteId)
+                ?? throw new NotFoundException(nameof(CompanyNote), noteId);
 
             return updatedNote.ToListItemDto();
         }
 
         public async Task DeleteCompanyNoteAsync(Guid id, Guid noteId)
         {
-            var note = _context.CompanyNotes.FirstOrDefaultAsync(n => n.CompanyId == id && n.Id == noteId)
+            var note = await _context.CompanyNotes.FirstOrDefaultAsync(n => n.CompanyId == id && n.Id == noteId)
                 ?? throw new NotFoundException(nameof(CompanyNote), noteId);
 
             _context.Remove(note);
             await _context.SaveChangesAsync();
             return;
-        } 
+        }
     }
 }

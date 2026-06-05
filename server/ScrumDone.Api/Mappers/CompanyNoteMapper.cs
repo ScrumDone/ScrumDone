@@ -11,7 +11,6 @@ namespace ScrumDone.Api.Mappers
         [MapProperty(nameof(CompanyNote.User),nameof(CompanyNoteDto.Author), Use = nameof(UserSummary))]
         public static partial CompanyNoteDto ToListItemDto(this CompanyNote companyNote);
 
-
         private static UserSummaryDto UserSummary(User user)
         {
             return new UserSummaryDto(user.Id, user.Name, user.ProfilePictureUrl);
