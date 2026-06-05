@@ -12,6 +12,10 @@ export function getCompanies(page = 1, limit = 10) {
     return apiGet<PagedResult<CompanyListItem>>('/api/companies', { page, limit });
   }
 
+export function getCompanyDetails(id: string) {
+    return apiGet<CompanyDetail>(`/api/companies/${id}`);
+}
+
 export function patchCompany(id: string, data: CompanyUpdateDto) {
     return apiPatch<CompanyListItem>(`/api/companies/${id}`, data);
 }
