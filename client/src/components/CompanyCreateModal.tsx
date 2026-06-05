@@ -8,6 +8,8 @@ type CompanyCreateModalProps = {
   onClose: () => void;
   onSave: () => void;
   onDraftChange: React.Dispatch<React.SetStateAction<CompanyEditDraft>>;
+  isSaving?: boolean;
+  errorMessage?: string | null;
 };
 
 const inputClassName =
@@ -19,6 +21,8 @@ const CompanyCreateModal: React.FC<CompanyCreateModalProps> = ({
   onClose,
   onSave,
   onDraftChange,
+  isSaving = false,
+  errorMessage = null,
 }) => {
   if (!isOpen) return null;
 
@@ -121,19 +125,24 @@ const CompanyCreateModal: React.FC<CompanyCreateModalProps> = ({
         </div>
 
         <div className="flex shrink-0 items-center justify-end gap-4 px-6 pb-4 pt-4">
+          {errorMessage && (
+            <p className="mr-auto text-sm text-red-600">{errorMessage}</p>
+          )}
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[10px] border border-[#E0E0E0] bg-white px-6 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50"
+            disabled={isSaving}
+            className="rounded-[10px] border border-[#E0E0E0] bg-white px-6 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:opacity-50"
           >
             Anuluj
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="rounded-[10px] bg-[#00BFFF] px-6 py-2.5 text-sm font-medium text-white hover:brightness-95"
+            disabled={isSaving}
+            className="rounded-[10px] bg-[#00BFFF] px-6 py-2.5 text-sm font-medium text-white hover:brightness-95 disabled:opacity-50"
           >
-            Dodaj firmę
+            {isSaving ? 'Dodawanie…' : 'Dodaj firmę'}
           </button>
         </div>
       </div>
