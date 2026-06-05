@@ -147,8 +147,10 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetCompanyContacts(
             [FromRoute] Guid id,
-            [FromQuery] ContactPersonQueryDto query)
+            [FromQuery] ContactPersonQueryDto query,
+            [FromServices] IValidator<ContactPersonQueryDto> validator)
         {
+            await validator.ValidateAndThrowAsync(query);
             return Ok(await _companiesService.GetCompanyContactsAsync(id, query));
         }
 
@@ -158,8 +160,10 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CreateCompanyContact(
             [FromRoute] Guid id,
-            [FromBody] ContactPersonCreateDto dto)
+            [FromBody] ContactPersonCreateDto dto,
+            [FromServices] IValidator<ContactPersonCreateDto> validator)
         {
+            await validator.ValidateAndThrowAsync(dto);
             return Ok(await _companiesService.CreateCompanyContactAsync(id, dto));
         }
 
@@ -170,8 +174,10 @@ namespace ScrumDone.Api.Controllers
         public async Task<IActionResult> UpdateCompanyContact(
             [FromRoute] Guid id,
             [FromRoute] Guid contactId,
-            [FromBody] ContactPersonUpdateDto dto)
+            [FromBody] ContactPersonUpdateDto dto,
+            [FromServices] IValidator<ContactPersonUpdateDto> validator)
         {
+            await validator.ValidateAndThrowAsync(dto);
             return Ok(await _companiesService.UpdateCompanyContactAsync(id, contactId, dto));
         }
 
