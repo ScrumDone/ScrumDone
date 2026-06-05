@@ -74,7 +74,7 @@ namespace ScrumDone.Api.Services
 
             return company.ToDetailDto();
         }
-                public async Task<CompanyDetailDto> UpdateCompanyAsync(Guid id, CompanyUpdateDto dto)
+        public async Task<CompanyDetailDto> UpdateCompanyAsync(Guid id, CompanyUpdateDto dto)
         {
             var company = await _context.Companies
                 .Include(c => c.ContactPeople)
@@ -164,6 +164,74 @@ namespace ScrumDone.Api.Services
 
             _context.Remove(note);
             await _context.SaveChangesAsync();
+            return;
+        }
+
+        //Contacts
+
+        public async Task<PagedResultDto<ContactPersonDto>> GetCompanyContactsAsync(Guid id, ContactPersonQueryDto query)
+        {
+            var baseQuery = _context.ContactPeople.Where(c => c.CompanyId == id);
+            var total = await baseQuery.CountAsync();
+
+            var contactsFromDb = await baseQuery
+                .OrderByDescending(n => n.CreatedAt)
+                .OrderByDescending(c => c.IsPrimary)
+                .Skip(query.Page-1 * query.Limit)
+                .Take(query.Limit)
+                .ToListAsync();
+
+            var contacts = contactsFromDb.Select(c => c.ToListItemDto());
+
+            var contactsPaginated = new PagedResultDto<ContactPersonDto> (contacts, query.Page, query.Limit, total);
+            return contactsPaginated;
+        }
+
+        public async Task<ContactPersonDto> CreateCompanyContactAsync(Guid id, ContactPersonCreateDto dto)
+        {
+            var contact = new ContactPerson{
+                Id = Guid.NewGuid(),
+                CompanyId = id,
+                IsPrimary = dto.IsPrimary ?? false,
+                Name = dto.Name,
+                Role = dto.Role,
+                Email = dto.Email,
+                Phone = dto.Phone  
+            };
+
+            _context.ContactPeople.Add(contact);
+            await _context.SaveChangesAsync();
+
+            return contact.ToContactPersonDto();
+        }
+
+        public async Task<ContactPersonDto> UpdateCompanyContactAsync(Guid id, Guid contactId,  ContactPersonUpdateDto dto)
+        {
+            var contact = await _context.ContactPeople
+                .FirstOrDefaultAsync(c => c.CompanyId == id && c.Id == contactId)
+                ?? throw new NotFoundException(nameof(ContactPerson), contactId);
+
+            if (dto.Name != null) contact.Name = dto.Name;
+            if (dto.Role != null) contact.Role = dto.Role;
+            if (dto.Email != null) contact.Email = dto.Email;
+            if (dto.Phone != null) contact.Phone = dto.Phone;
+            if (dto.IsPrimary != null) contact.IsPrimary = dto.IsPrimary.Value;
+
+            _context.ContactPeople.Add(contact);
+            await _context.SaveChangesAsync();
+
+            return contact.ToContactPersonDto();
+        }
+
+        public async Task DeleteCompanyContactAsync(Guid id, Guid contactId)
+        {
+            var contact = await _context.ContactPeople
+                .FirstOrDefaultAsync(c => c.CompanyId == id && c.Id == contactId)
+                ??throw new NotFoundException(nameof(ContactPerson), contactId);
+
+            _context.ContactPeople.Remove(contact);
+            await _context.SaveChangesAsync();
+        
             return;
         }
     }
