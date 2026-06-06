@@ -328,9 +328,9 @@ const SprintsPage: React.FC = () => {
       <main className="ml-64 pt-(--app-header-h)">
         <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
-        <section className="mx-6 mt-6 pb-8">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-            <div className="min-w-0 space-y-6">
+        <section className="mx-6 mt-6 mb-8">
+          <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
+            <div className="min-w-0 space-y-6 pr-1">
               {/* Aktywne sprinty */}
               {groupedSprints.active.length > 0 && (
                 <div>
@@ -536,7 +536,7 @@ const SprintsPage: React.FC = () => {
             </div>
 
             {/* Filtry po prawej */}
-            <aside className="flex flex-col gap-4">
+            <aside className="sticky top-(--app-header-h) flex max-h-[calc(100vh-var(--app-header-h))] flex-col gap-4 overflow-y-auto pl-1">
               {/* Sprinty */}
               <section className="rounded-[10px] border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Sprinty</h3>
