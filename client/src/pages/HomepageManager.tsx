@@ -27,26 +27,22 @@ const Homepage: React.FC = () => {
                     <div className="grid grid-cols-3 gap-6">
                         <div className="bg-white rounded-xl border border-gray-200 p-6">
                             <h1 className="font-segoe-ui  text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-6">
-                                Dzisiaj
+                                Zablokowane zadania
                             </h1>
                             <div className="flex flex-col gap-3">
                                 <WelcomePageTask
-                                    taskName="Quotes Generation Module"
+                                    taskName="API Integration with Payment Gateway"
                                     projectName="Adoddle"
-                                    initials="AN"
-                                    fullName="Artur Nowak"
-                                    colorVariant="red"
-                                    dotColorVariant="red"
-                                    badgeColorVariant="red"
+                                    initials="EB"
+                                    fullName="Eryk Baczyński"
+                                    isBlocked={true}
                                 />
                                 <WelcomePageTask
                                     taskName="Database schema design"
                                     projectName="Nexus"
                                     initials="AR"
                                     fullName="Aleksander Radecki"
-                                    colorVariant="red"
-                                    dotColorVariant="yellow"
-                                    badgeColorVariant="green"
+                                    isBlocked={true}
                                 />
                             </div>
                         </div>
