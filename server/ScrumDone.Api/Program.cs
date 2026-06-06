@@ -1,12 +1,12 @@
 using FluentValidation;
+using MicroElements.AspNetCore.OpenApi.FluentValidation;
+using MicroElements.OpenApi.FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using ScrumDone.Api.Data;
 using ScrumDone.Api.Middleware;
 using ScrumDone.Api.Services;
 using ScrumDone.Api.Validators;
-using MicroElements.OpenApi.FluentValidation;
-using MicroElements.AspNetCore.OpenApi.FluentValidation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +28,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("LocalConnection")));
 
 builder.Services.AddControllers();
+
+builder.Services.Configure<SchemaGenerationOptions>(o =>
+{
+    o.SetNotNullableIfMinLengthGreaterThenZero = false;
+    //o.RuleFilter = rule => !rule.HasCondition; // <- uncomment this
+});
 
 builder.Services.AddValidatorsFromAssemblyContaining<ValidatorAssemblyMarker>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

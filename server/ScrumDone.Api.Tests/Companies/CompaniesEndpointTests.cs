@@ -11,19 +11,22 @@ namespace ScrumDone.Api.Tests.Companies;
 
 public class CompaniesEndpointTests
 {
+    // POST /api/companies
+
     [Fact]
     public async Task CreateCompany_WithValidData_ReturnsCreatedCompany()
     {
         using var app = new ScrumDoneApiFactory();
         using var client = app.CreateClient();
 
-        var request = new CompanyCreateDto(
-            Name: "ACME Software",
-            Nip: "1234567890",
-            Krs: "9876543210",
-            Regon: "123456789",
-            Address: "Main Street 1"
-        );
+        var request = new CompanyCreateDto
+        {
+            Name = "ACME Software",
+            Nip = "1234567890",
+            Krs = "9876543210",
+            Regon = "123456789",
+            Address = "Main Street 1"
+        };
 
         var response = await client.PostAsJsonAsync("/api/companies", request);
 
@@ -47,13 +50,7 @@ public class CompaniesEndpointTests
         using var app = new ScrumDoneApiFactory();
         using var client = app.CreateClient();
 
-        var request = new CompanyCreateDto(
-            Name: "Minimal Company",
-            Nip: null,
-            Krs: null,
-            Regon: null,
-            Address: null
-        );
+        var request = new CompanyCreateDto { Name = "Minimal Company" };
 
         var response = await client.PostAsJsonAsync("/api/companies", request);
 
@@ -73,13 +70,7 @@ public class CompaniesEndpointTests
         using var app = new ScrumDoneApiFactory();
         using var client = app.CreateClient();
 
-        var request = new CompanyCreateDto(
-            Name: "",
-            Nip: "too-short",
-            Krs: null,
-            Regon: null,
-            Address: null
-        );
+        var request = new CompanyCreateDto { Name = "", Nip = "too-short" };
 
         var response = await client.PostAsJsonAsync("/api/companies", request);
 
@@ -98,7 +89,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/companies",
-            new CompanyCreateDto("", null, null, null, null));
+            new CompanyCreateDto { Name = "" });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -113,7 +104,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/companies",
-            new CompanyCreateDto(new string('A', 201), null, null, null, null));
+            new CompanyCreateDto { Name = new string('A', 201) });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -128,7 +119,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/companies",
-            new CompanyCreateDto("Valid Name", "123", null, null, null));
+            new CompanyCreateDto { Name = "Valid Name", Nip = "123" });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -143,7 +134,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/companies",
-            new CompanyCreateDto("Valid Name", null, "123", null, null));
+            new CompanyCreateDto { Name = "Valid Name", Krs = "123" });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -158,7 +149,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/companies",
-            new CompanyCreateDto("Valid Name", null, null, "123", null));
+            new CompanyCreateDto { Name = "Valid Name", Regon = "123" });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -173,7 +164,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/companies",
-            new CompanyCreateDto("Valid Name", null, null, "123456789", null));
+            new CompanyCreateDto { Name = "Valid Name", Regon = "123456789" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
@@ -185,7 +176,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/companies",
-            new CompanyCreateDto("Valid Name", null, null, "12345678901234", null));
+            new CompanyCreateDto { Name = "Valid Name", Regon = "12345678901234" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
@@ -197,7 +188,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/companies",
-            new CompanyCreateDto("Valid Name", null, null, null, new string('A', 501)));
+            new CompanyCreateDto { Name = "Valid Name", Address = new string('A', 501) });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -387,14 +378,75 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PatchAsJsonAsync($"/api/companies/{companyId}",
-            new CompanyUpdateDto("New Name", null, null, null, "New Address"));
+            new { name = "New Name", address = "New Address" });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var company = await TestResponse.ReadJsonAsync<CompanyDetailDto>(response);
         Assert.Equal("New Name", company.Name);
+        Assert.Equal("1234567890", company.Nip); // unchanged — not in request body
+        Assert.Equal("New Address", company.Address);
+    }
+
+    [Fact]
+    public async Task UpdateCompany_OmittedField_IsNotUpdated()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var companyId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Companies.Add(new Company
+            {
+                Id = companyId,
+                Name = "Original Name",
+                Nip = "1234567890"
+            });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        // Only send Address — Nip and Name should be untouched
+        var response = await client.PatchAsJsonAsync($"/api/companies/{companyId}",
+            new { Address = "New Address" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var company = await TestResponse.ReadJsonAsync<CompanyDetailDto>(response);
+        Assert.Equal("Original Name", company.Name);
         Assert.Equal("1234567890", company.Nip);
         Assert.Equal("New Address", company.Address);
+    }
+
+    [Fact]
+    public async Task UpdateCompany_NullField_ClearsValue()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var companyId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Companies.Add(new Company
+            {
+                Id = companyId,
+                Name = "Company",
+                Nip = "1234567890"
+            });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        // Explicitly send null for Nip — should clear it
+        var response = await client.PatchAsJsonAsync($"/api/companies/{companyId}",
+            new { nip = (string?)null });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var company = await TestResponse.ReadJsonAsync<CompanyDetailDto>(response);
+        Assert.Null(company.Nip);
+        Assert.Equal("Company", company.Name); // unchanged
     }
 
     [Fact]
@@ -404,7 +456,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PatchAsJsonAsync($"/api/companies/{Guid.NewGuid()}",
-            new CompanyUpdateDto("New Name", null, null, null, null));
+            new CompanyUpdateDto { Name = "New Name" });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
@@ -427,7 +479,7 @@ public class CompaniesEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PatchAsJsonAsync($"/api/companies/{companyId}",
-            new CompanyUpdateDto(new string('A', 201), null, null, null, null));
+            new CompanyUpdateDto { Name = new string('A', 201) });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
