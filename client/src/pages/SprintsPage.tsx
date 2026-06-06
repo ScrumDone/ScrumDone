@@ -1,6 +1,24 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
@@ -88,6 +106,37 @@ const taskColorMap: Record<string, string> = {
   yellow: 'bg-yellow-500',
   green: 'bg-green-500',
   blue: 'bg-blue-500',
+};
+
+type BacklogTaskCardProps = {
+  task: BacklogTask;
+  isDragOverlay?: boolean;
+};
+
+const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay = false }) => {
+  const sortable = useSortable({ id: task.id, disabled: isDragOverlay });
+  const style = isDragOverlay
+    ? undefined
+    : { transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition };
+
+  return (
+    <div
+      ref={isDragOverlay ? undefined : sortable.setNodeRef}
+      style={style}
+      {...(isDragOverlay ? {} : sortable.attributes)}
+      {...(isDragOverlay ? {} : sortable.listeners)}
+      className={`rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing shadow-md' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+    >
+      <div className="mb-1 flex items-start gap-2">
+        <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${taskColorMap[task.color]}`} />
+        <p className="font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Avatar initials={task.assigneeInitials} size="xs" />
+        <span className="font-segoe-ui text-[10px] tracking-[0.12px] leading-4 text-slate-700">{task.assigneeName}</span>
+      </div>
+    </div>
+  );
 };
 
 const polishMonths = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
@@ -207,7 +256,8 @@ const SprintsPage: React.FC = () => {
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
   const [sprints, setSprints] = useState<SprintData[]>(allSprintsData);
   const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
-  void setBacklogTasks; // używane w kroku 5 (drag and drop)
+  void setBacklogTasks; // używane w kroku 5 (drop do sprintu)
+  const [activeBacklogTask, setActiveBacklogTask] = useState<BacklogTask | null>(null);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-4', 'sprint-5', 'sprint-3']));
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
   const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
@@ -349,6 +399,20 @@ const SprintsPage: React.FC = () => {
     completed: sprints.filter((s) => s.status === 'Ukończony'),
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    const task = backlogTasks.find((item) => item.id === String(active.id));
+    setActiveBacklogTask(task ?? null);
+  };
+
+  const handleDragEnd = (_event: DragEndEvent) => {
+    setActiveBacklogTask(null);
+  };
+
   if (!project) {
     return (
       <div className="min-h-screen w-full bg-[#F9FAFB]">
@@ -372,7 +436,13 @@ const SprintsPage: React.FC = () => {
         <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
         <section className="mx-6 mt-6 mb-8">
-          <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
             <div className="min-w-0 space-y-6 pr-1">
               {/* Aktywne sprinty */}
               {groupedSprints.active.length > 0 && (
@@ -696,23 +766,21 @@ const SprintsPage: React.FC = () => {
                     +
                   </button>
                 </div>
-                <div className="flex flex-col gap-2">
-                  {backlogTasks.map((task) => (
-                    <div key={task.id} className="rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100">
-                      <div className=" flex mb-1 items-start gap-2">
-                        <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${taskColorMap[task.color]}`} />
-                        <p className="font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Avatar initials={task.assigneeInitials} size="xs" />
-                        <span className="font-segoe-ui text-[10px] tracking-[0.12px] leading-4 text-slate-700">{task.assigneeName}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <SortableContext items={backlogTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                  <div className="flex flex-col gap-2">
+                    {backlogTasks.map((task) => (
+                      <BacklogTaskCard key={task.id} task={task} />
+                    ))}
+                  </div>
+                </SortableContext>
               </section>
             </aside>
-          </div>
+            </div>
+
+            <DragOverlay>
+              {activeBacklogTask ? <BacklogTaskCard task={activeBacklogTask} isDragOverlay /> : null}
+            </DragOverlay>
+          </DndContext>
         </section>
       </main>
 
