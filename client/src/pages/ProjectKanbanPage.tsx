@@ -104,6 +104,7 @@ const initialKanbanColumns: KanbanColumn[] = [
       { id: 'dev-env', title: 'Development environment', assigneeInitials: 'MK', assigneeName: 'Maria Kowalska', dateLabel: '01 lut', dotColor: 'red' },
     ],
   },
+  { id: "blocked", title: 'Zablokowane', accentClass: 'bg-scrumdone-red-500', count: 0, tasks: [] },
 ];
 
 // --- Komponenty Wewnętrzne ---
@@ -136,7 +137,7 @@ const KanbanTaskCard: React.FC<{ task: KanbanTask; isDragOverlay?: boolean }> = 
       className={`rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="max-w-44 font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">{task.title}</h3>
+        <h3 className="min-w-0 flex-1 truncate font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">{task.title}</h3>
         <button type="button" className="rounded-full p-1 text-slate-700 hover:bg-slate-50">
           <EllipsisVerticalIcon className="h-4 w-4" />
         </button>
@@ -156,17 +157,17 @@ const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
-    <section className="flex min-h-80 self-start flex-col gap-3">
-      <header className="flex items-center gap-3">
+    <section className="flex min-h-80 min-w-0 self-start flex-col gap-2">
+      <header className="flex items-center gap-2">
         <span className={`h-6 w-1 rounded-full ${column.accentClass}`} aria-hidden="true" />
-        <h3 className="font-segoe-ui text-[16px] leading-6 font-normal text-slate-900 antialiased">{column.title}</h3>
-        <span className="ml-2 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-slate-100 px-2 text-[12px] font-medium text-slate-600 antialiased">
+        <h3 className="min-w-0 truncate font-segoe-ui text-[16px] leading-6 font-normal text-slate-900 antialiased">{column.title}</h3>
+        <span className="ml-1 inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 px-2 text-[12px] font-medium text-slate-600 antialiased">
           {column.tasks.length}
         </span>
       </header>
 
       <SortableContext items={column.tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-        <div ref={setNodeRef} className={`mt-4 flex flex-1 flex-col gap-3 rounded-lg transition-colors ${isOver ? 'bg-slate-50' : ''}`}>
+        <div ref={setNodeRef} className={`mt-2 flex flex-1 flex-col gap-2 rounded-lg transition-colors ${isOver ? 'bg-slate-50' : ''}`}>
           {column.tasks.map((task) => <KanbanTaskCard key={task.id} task={task} />)}
           {column.tasks.length === 0 && <div className="bg-slate-50/50 border-2 border-dashed border-slate-100 rounded-lg h-24" />}
         </div>
@@ -272,7 +273,7 @@ const ProjectKanbanPage: React.FC = () => {
                       onDragStart={handleDragStart}
                       onDragEnd={handleDragEnd}
                     >
-                      <div className="grid items-start gap-4 xl:grid-cols-4">
+                      <div className="grid items-start gap-2 xl:grid-cols-5">
                         {columns.map((column) => (
                           <KanbanColumnView key={column.id} column={column} />
                         ))}

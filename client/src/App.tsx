@@ -14,12 +14,14 @@ import ProjectKanbanPage from './pages/ProjectKanbanPage'
 import ProjectCalendarPage from './pages/ProjectCalendarPage'
 import SprintsPage from './pages/SprintsPage'
 import  { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import HomepageManager from './pages/HomepageManager'
 
 const App: React.FC = () => {
   return (
     <>
     <Routes>
       <Route path="/" element={<Homepage />} />
+      <Route path="/homepage-manager" element={<HomepageManager />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/projects/:projectSlug" element={<ProjectDetailsPage />} />
       <Route path="/projects/:projectSlug/tablica-kanban" element={<ProjectKanbanPage />} />
