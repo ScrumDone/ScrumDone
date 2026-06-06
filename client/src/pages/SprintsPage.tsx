@@ -19,6 +19,47 @@ type TaskItem = {
   color: 'red' | 'yellow' | 'green' | 'blue';
 };
 
+type BacklogTask = {
+  id: string;
+  name: string;
+  assigneeInitials: string;
+  assigneeName: string;
+  color: TaskItem['color'];
+};
+
+const BACKLOG_ID = 'backlog';
+
+const initialBacklogTasks: BacklogTask[] = [
+  {
+    id: 'code-refactor',
+    name: 'Code refactoring - user module',
+    color: 'green',
+    assigneeInitials: 'AN',
+    assigneeName: 'Artur Nowak',
+  },
+  {
+    id: 'doc-update',
+    name: 'Documentation update',
+    color: 'yellow',
+    assigneeInitials: 'EB',
+    assigneeName: 'Eryk Baczyński',
+  },
+  {
+    id: 'e2e-setup',
+    name: 'E2E testing setup',
+    color: 'red',
+    assigneeInitials: 'EB',
+    assigneeName: 'Eryk Baczyński',
+  },
+  {
+    id: 'mobile-responsive',
+    name: 'Mobile responsiveness',
+    color: 'yellow',
+    assigneeInitials: 'MK',
+    assigneeName: 'Maria Kowalska',
+  },
+];
+
 type SprintData = {
   id: string;
   title: string;
@@ -165,6 +206,8 @@ const SprintsPage: React.FC = () => {
   const project = projects.find((item) => item.slug === projectSlug);
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
   const [sprints, setSprints] = useState<SprintData[]>(allSprintsData);
+  const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
+  void setBacklogTasks; // używane w kroku 5 (drag and drop)
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-4', 'sprint-5', 'sprint-3']));
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
   const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
@@ -640,9 +683,11 @@ const SprintsPage: React.FC = () => {
               </section>
 
               {/* Backlog */}
-              <section className="rounded-[10px] border border-gray-200 bg-white p-4">
+              <section className="rounded-[10px] border border-gray-200 bg-white p-4" data-backlog-id={BACKLOG_ID}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-segoe-ui text-[14px] font-medium text-slate-900">Backlog (4)</h3>
+                  <h3 className="font-segoe-ui text-[14px] font-medium text-slate-900">
+                    Backlog ({backlogTasks.length})
+                  </h3>
                   <button
                     type="button"
                     className="flex h-6 w-6 items-center justify-center rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium text-white hover:bg-blue-600"
@@ -652,19 +697,14 @@ const SprintsPage: React.FC = () => {
                   </button>
                 </div>
                 <div className="flex flex-col gap-2">
-                  {[
-                    { id: 'code-refactor', name: 'Code refactoring - user module', color: 'green', assignee: 'AN', assigneeName: 'Artur Nowak' },
-                    { id: 'doc-update', name: 'Documentation update', color: 'yellow', assignee: 'EB', assigneeName: 'Eryk Baczyński' },
-                    { id: 'e2e-setup', name: 'E2E testing setup', color: 'red', assignee: 'EB', assigneeName: 'Eryk Baczyński' },
-                    { id: 'mobile-responsive', name: 'Mobile responsiveness', color: 'yellow', assignee: 'MK', assigneeName: 'Maria Kowalska' },
-                  ].map((task) => (
+                  {backlogTasks.map((task) => (
                     <div key={task.id} className="rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100">
                       <div className=" flex mb-1 items-start gap-2">
-                        <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${taskColorMap[task.color as keyof typeof taskColorMap]}`} />
+                        <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${taskColorMap[task.color]}`} />
                         <p className="font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Avatar initials={task.assignee} size="xs" />
+                        <Avatar initials={task.assigneeInitials} size="xs" />
                         <span className="font-segoe-ui text-[10px] tracking-[0.12px] leading-4 text-slate-700">{task.assigneeName}</span>
                       </div>
                     </div>
