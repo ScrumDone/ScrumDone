@@ -1,5 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ScrumDone.Api.DTOs.Assignments;
+using ScrumDone.Api.DTOs.Common;
+using ScrumDone.Api.DTOs.Projects;
+using ScrumDone.Api.DTOs.Sprints;
+using ScrumDone.Api.DTOs.Users;
+using ScrumDone.Api.Services;
 
 namespace ScrumDone.Api.Controllers
 {
@@ -7,5 +14,217 @@ namespace ScrumDone.Api.Controllers
     [ApiController]
     public class ProjectsController : ControllerBase
     {
+        // assignments are created and listed via /projects/{id}/assignments
+        // sprints are created via /projects/{id}/sprints
+        // labels are scoped per project via /projects/{id}/assignment-labels
+        // order by created date desc unless otherwise specified
+        // client-side filters (priority, status, assignee, label) applied after load — not query params here
+
+        private readonly IProjectsService _projectsService;
+
+        public ProjectsController(IProjectsService projectsService)
+        {
+            _projectsService = projectsService;
+        }
+
+        // /projects
+
+        [HttpGet]
+        [ProducesResponseType(typeof(PagedResultDto<ProjectListItemDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> GetProjects(
+            [FromQuery] ProjectQueryDto query,
+            [FromServices] IValidator<ProjectQueryDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(query);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpGet("{id:guid}")]
+        [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> GetProject([FromRoute] Guid id)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpPost]
+        [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> CreateProject(
+            [FromBody] ProjectCreateDto dto,
+            [FromServices] IValidator<ProjectCreateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpPatch("{id:guid}")]
+        [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> UpdateProject(
+            [FromRoute] Guid id,
+            [FromBody] ProjectUpdateDto dto,
+            [FromServices] IValidator<ProjectUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpDelete("{id:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> DeleteProject([FromRoute] Guid id)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        // /projects/{id}/members
+
+        [HttpGet("{id:guid}/members")]
+        [ProducesResponseType(typeof(IEnumerable<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> GetMembers([FromRoute] Guid id)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpPost("{id:guid}/members/{userId:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> AddMember([FromRoute] Guid id, [FromRoute] Guid userId)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpDelete("{id:guid}/members/{userId:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> RemoveMember([FromRoute] Guid id, [FromRoute] Guid userId)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        // /projects/{id}/sprints
+
+        [HttpGet("{id:guid}/sprints")]
+        [ProducesResponseType(typeof(IEnumerable<SprintSummaryDto>), StatusCodes.Status200OK)]  // ← Summary
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> GetSprints(
+            [FromRoute] Guid id,
+            [FromQuery] SprintQueryDto query)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpPost("{id:guid}/sprints")]
+        [ProducesResponseType(typeof(SprintSummaryDto), StatusCodes.Status201Created)]  // ← Summary
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> CreateSprint(
+            [FromRoute] Guid id,
+            [FromBody] SprintCreateDto dto,
+            [FromServices] IValidator<SprintCreateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        // /projects/{id}/assignments
+        // loads full dataset for the project — client filters by priority, status, assignee, label locally
+        // backlog=true returns assignments with no sprint assigned
+
+        [HttpGet("{id:guid}/assignments")]
+        [ProducesResponseType(typeof(IEnumerable<AssignmentListItemDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> GetAssignments(
+            [FromRoute] Guid id,
+            [FromQuery] AssignmentQueryDto query,
+            [FromServices] IValidator<AssignmentQueryDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(query);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpPost("{id:guid}/assignments")]
+        [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> CreateAssignment(
+            [FromRoute] Guid id,
+            [FromBody] AssignmentCreateDto dto,
+            [FromServices] IValidator<AssignmentCreateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        // /projects/{id}/assignment-labels
+        // labels are scoped per project — not global
+
+        [HttpGet("{id:guid}/assignment-labels")]
+        [ProducesResponseType(typeof(IEnumerable<AssignmentLabelDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> GetAssignmentLabels([FromRoute] Guid id)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpPost("{id:guid}/assignment-labels")]
+        [ProducesResponseType(typeof(AssignmentLabelDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> CreateAssignmentLabel(
+            [FromRoute] Guid id,
+            [FromBody] AssignmentLabelCreateDto dto,
+            [FromServices] IValidator<AssignmentLabelCreateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpPatch("{id:guid}/assignment-labels/{labelId:guid}")]
+        [ProducesResponseType(typeof(AssignmentLabelDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> UpdateAssignmentLabel(
+            [FromRoute] Guid id,
+            [FromRoute] Guid labelId,
+            [FromBody] AssignmentLabelUpdateDto dto,
+            [FromServices] IValidator<AssignmentLabelUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpDelete("{id:guid}/assignment-labels/{labelId:guid}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> DeleteAssignmentLabel(
+            [FromRoute] Guid id,
+            [FromRoute] Guid labelId)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
     }
+
 }

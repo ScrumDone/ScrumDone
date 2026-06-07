@@ -5,7 +5,8 @@ namespace ScrumDone.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AssignmentController : ControllerBase
+    public class UsersController : ControllerBase
     {
+        // get all users
     }
 }
