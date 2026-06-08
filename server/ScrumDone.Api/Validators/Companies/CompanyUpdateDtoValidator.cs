@@ -8,24 +8,28 @@ namespace ScrumDone.Api.Validators.Companies
         public CompanyUpdateDtoValidator()
         {
             RuleFor(x => x.Name)
+                .NotNull() // name is required so can't be deleted
+                .MinimumLength(1)
                 .MaximumLength(200)
-                .When(x => x.Name is not null);
+                // when in setProperties (when to be updated)
+                .When(x =>
+                    x.SetProperties.Contains(nameof(CompanyUpdateDto.Name)));
 
             RuleFor(x => x.Nip)
                 .Length(10)
-                .When(x => x.Nip is not null);
+                .When(x => x.SetProperties.Contains(nameof(CompanyUpdateDto.Nip)));
 
             RuleFor(x => x.Krs)
                 .Length(10)
-                .When(x => x.Krs is not null);
+                .When(x => x.SetProperties.Contains(nameof(CompanyUpdateDto.Krs)));
 
             RuleFor(x => x.Regon)
-                .Must(r => r!.Length == 9 || r!.Length == 14)
-                .When(x => x.Regon is not null);
+                .Matches(@"^\d{9}(\d{5})?$")
+                .When(x => x.SetProperties.Contains(nameof(CompanyUpdateDto.Regon)));
 
             RuleFor(x => x.Address)
                 .MaximumLength(500)
-                .When(x => x.Address is not null);
+                .When(x => x.SetProperties.Contains(nameof(CompanyUpdateDto.Address)));
         }
     }
 }

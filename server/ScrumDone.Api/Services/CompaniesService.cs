@@ -5,6 +5,7 @@ using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Companies;
 using ScrumDone.Api.Exceptions;
 using ScrumDone.Api.Mappers;
+using System.Text.Json;
 
 namespace ScrumDone.Api.Services
 {
@@ -22,7 +23,7 @@ namespace ScrumDone.Api.Services
         {
             var total = await _context.Companies.CountAsync();
             var companies = await _context.Companies
-                .Skip((query.Page - 1) * query.Limit)
+                .Skip((query.Page - 1) * (query.Limit))
                 .Take(query.Limit)
                 .Select(c => new CompanyListItemDto(
                     c.Id,
@@ -82,11 +83,11 @@ namespace ScrumDone.Api.Services
                 .FirstOrDefaultAsync(c => c.Id == id)
                 ?? throw new NotFoundException(nameof(Company), id);
 
-            if (dto.Name != null) company.Name = dto.Name;
-            if (dto.Nip != null) company.Nip = dto.Nip;
-            if (dto.Krs != null) company.Krs = dto.Krs;
-            if (dto.Regon != null) company.Regon = dto.Regon;
-            if (dto.Address != null) company.Address = dto.Address;
+            if (dto.SetProperties.Contains(nameof(dto.Name))) company.Name = dto.Name!;
+            if (dto.SetProperties.Contains(nameof(dto.Nip))) company.Nip = dto.Nip;
+            if (dto.SetProperties.Contains(nameof(dto.Krs))) company.Krs = dto.Krs;
+            if (dto.SetProperties.Contains(nameof(dto.Regon))) company.Regon = dto.Regon;
+            if (dto.SetProperties.Contains(nameof(dto.Address))) company.Address = dto.Address;
 
             await _context.SaveChangesAsync();
 

@@ -58,7 +58,8 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<CompanyCreateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return Ok(await _companiesService.CreateCompanyAsync(dto));
+            var result = await _companiesService.CreateCompanyAsync(dto);
+            return CreatedAtAction(nameof(GetCompanyById), new { id = result.Id }, result);
         }
 
         [HttpPatch("{id}")]
