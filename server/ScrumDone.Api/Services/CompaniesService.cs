@@ -175,9 +175,9 @@ namespace ScrumDone.Api.Services
             var total = await baseQuery.CountAsync();
 
             var contactsFromDb = await baseQuery
-                .OrderByDescending(n => n.CreatedAt)
                 .OrderByDescending(c => c.IsPrimary)
-                .Skip(query.Page-1 * query.Limit)
+                .ThenBy(n => n.CreatedAt)
+                .Skip((query.Page-1) * query.Limit)
                 .Take(query.Limit)
                 .ToListAsync();
 
@@ -217,7 +217,6 @@ namespace ScrumDone.Api.Services
             if (dto.Phone != null) contact.Phone = dto.Phone;
             if (dto.IsPrimary != null) contact.IsPrimary = dto.IsPrimary.Value;
 
-            _context.ContactPeople.Add(contact);
             await _context.SaveChangesAsync();
 
             return contact.ToContactPersonDto();
