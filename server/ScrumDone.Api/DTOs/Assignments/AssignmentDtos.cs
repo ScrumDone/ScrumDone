@@ -71,7 +71,7 @@ namespace ScrumDone.Api.DTOs.Assignments
         public required string Description { get; set; }
         public required Guid ProjectId { get; set; }
         public required Guid StatusId { get; set; }
-        public required Guid PriorityId { get; set; }
+        public Guid? PriorityId { get; set; }
         public DateTimeOffset? DueDate { get; set; }
         public decimal? TimeEstimate { get; set; }
         public Guid? SprintId { get; set; }
@@ -94,54 +94,45 @@ namespace ScrumDone.Api.DTOs.Assignments
         //    - null -> set to empty, add to set properties
         //    - value -> set to value, add to set properties
 
-        private string? _name;
-        private string? _description;
-        private Guid? _statusId;
-        private Guid? _priorityId;
-        private DateTimeOffset? _dueDate;
-        private decimal? _timeEstimate;
-        private Guid? _sprintId;
-        private Guid? _parentAssignmentId;
-
         public string? Name
         {
-            get => _name;
-            set { _name = value; _setProperties.Add(nameof(Name)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(Name)); }
         }
         public string? Description
         {
-            get => _description;
-            set { _description = value; _setProperties.Add(nameof(Description)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(Description)); }
         }
         public Guid? StatusId
         {
-            get => _statusId;
-            set { _statusId = value; _setProperties.Add(nameof(StatusId)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(StatusId)); }
         }
         public Guid? PriorityId
         {
-            get => _priorityId;
-            set { _priorityId = value; _setProperties.Add(nameof(PriorityId)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(PriorityId)); }
         }
         public DateTimeOffset? DueDate
         {
-            get => _dueDate;
-            set { _dueDate = value; _setProperties.Add(nameof(DueDate)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(DueDate)); }
         }
         public decimal? TimeEstimate
         {
-            get => _timeEstimate;
-            set { _timeEstimate = value; _setProperties.Add(nameof(TimeEstimate)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(TimeEstimate)); }
         }
         public Guid? SprintId
         {
-            get => _sprintId;
-            set { _sprintId = value; _setProperties.Add(nameof(SprintId)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(SprintId)); }
         }
         public Guid? ParentAssignmentId
         {
-            get => _parentAssignmentId;
-            set { _parentAssignmentId = value; _setProperties.Add(nameof(ParentAssignmentId)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(ParentAssignmentId)); }
         }
     }
 
@@ -155,7 +146,7 @@ namespace ScrumDone.Api.DTOs.Assignments
 
     public class AssignmentQueryDto
     {
-        // thse queries can be absolutely massive if no filters
+        // these queries can be absolutely massive if no filters
         // need a way to limit the size
         public Guid? SprintId { get; set; }
         public bool? Backlog { get; set; }           // true = no sprint assigned
@@ -167,6 +158,8 @@ namespace ScrumDone.Api.DTOs.Assignments
         public DateTimeOffset? DueTo { get; set; }
         //public bool? OnlyMine { get; set; }          // scoped to X-User-Id
         public DateTimeOffset? DueOn { get; set; }   // home page: specific day
+        public int Page { get; set; } = 1;
+        public int LimitPerStatus { get; set; } = 10;
     }
 
     public class AssignmentLabelCreateDto
@@ -180,18 +173,15 @@ namespace ScrumDone.Api.DTOs.Assignments
         private readonly HashSet<string> _setProperties = new();
         [JsonIgnore] public IReadOnlySet<string> SetProperties => _setProperties;
 
-        private string? _name;
-        private string? _hexColor;
-
         public string? Name
         {
-            get => _name;
-            set { _name = value; _setProperties.Add(nameof(Name)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(Name)); }
         }
         public string? HexColor
         {
-            get => _hexColor;
-            set { _hexColor = value; _setProperties.Add(nameof(HexColor)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(HexColor)); }
         }
     }
 }

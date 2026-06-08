@@ -14,7 +14,7 @@ namespace ScrumDone.Api.DTOs.Sprints
         bool IsKanban,
         int AssignmentCount,
         int CompletedCount,       // frontend calculates percentage and planned/active/finished
-        IEnumerable<AssignmentListItemDto>? Assignments
+        IEnumerable<AssignmentListItemDto>? Assignments 
     );
 
     // Full detail — kanban selected sprint, sprint expanded with assignments
@@ -55,24 +55,20 @@ namespace ScrumDone.Api.DTOs.Sprints
         //    - null -> set to empty, add to set properties
         //    - value -> set to value, add to set properties
 
-        private string? _name;
-        private DateTimeOffset? _startDate;
-        private DateTimeOffset? _endDate;
-
         public string? Name
         {
-            get => _name;
-            set { _name = value; _setProperties.Add(nameof(Name)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(Name)); }
         }
         public DateTimeOffset? StartDate
         {
-            get => _startDate;
-            set { _startDate = value; _setProperties.Add(nameof(StartDate)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(StartDate)); }
         }
         public DateTimeOffset? EndDate
         {
-            get => _endDate;
-            set { _endDate = value; _setProperties.Add(nameof(EndDate)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(EndDate)); }
         }
     }
 

@@ -81,54 +81,45 @@ namespace ScrumDone.Api.DTOs.Projects
         //    - null -> set to empty, add to set properties
         //    - value -> set to value, add to set properties
 
-        private string? _name;
-        private string? _description;
-        private bool? _isActive;
-        private bool? _isSetToScrum;
-        private DateTimeOffset? _startDate;
-        private DateTimeOffset? _expectedFinishDate;
-        private Guid? _companyId;
-        private string? _profilePictureUrl;
-
         public string? Name
         {
-            get => _name;
-            set { _name = value; _setProperties.Add(nameof(Name)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(Name)); }
         }
         public string? Description
         {
-            get => _description;
-            set { _description = value; _setProperties.Add(nameof(Description)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(Description)); }
         }
         public bool? IsActive
         {
-            get => _isActive;
-            set { _isActive = value; _setProperties.Add(nameof(IsActive)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(IsActive)); }
         }
         public bool? IsSetToScrum
         {
-            get => _isSetToScrum;
-            set { _isSetToScrum = value; _setProperties.Add(nameof(IsSetToScrum)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(IsSetToScrum)); }
         }
         public DateTimeOffset? StartDate
         {
-            get => _startDate;
-            set { _startDate = value; _setProperties.Add(nameof(StartDate)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(StartDate)); }
         }
         public DateTimeOffset? ExpectedFinishDate
         {
-            get => _expectedFinishDate;
-            set { _expectedFinishDate = value; _setProperties.Add(nameof(ExpectedFinishDate)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(ExpectedFinishDate)); }
         }
         public Guid? CompanyId
         {
-            get => _companyId;
-            set { _companyId = value; _setProperties.Add(nameof(CompanyId)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(CompanyId)); }
         }
         public string? ProfilePictureUrl
         {
-            get => _profilePictureUrl;
-            set { _profilePictureUrl = value; _setProperties.Add(nameof(ProfilePictureUrl)); }
+            get => field;
+            set { field = value; _setProperties.Add(nameof(ProfilePictureUrl)); }
         }
     }
 
@@ -144,6 +135,18 @@ namespace ScrumDone.Api.DTOs.Projects
 
     // Team member management
 
-    //public record TeamMemberIdsDto(IEnumerable<Guid> UserIds);
+    public class TeamMembersQueryDto{
+        int Page { get; set; } = 1;
+        int Limit { get; set; } = 20;
+    }
+
+    public record TeamMembersDto(
+        Guid UserId,
+        string Name,
+        string ProfilePictureUrl
+    );
+
+
+    // adding and removing users does not require own dto (I think)
 }
 
