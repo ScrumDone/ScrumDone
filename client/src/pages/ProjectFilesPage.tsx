@@ -6,6 +6,7 @@ import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
 import ProjectFileRow, { type FileItem } from '../components/ProjectFileCard';
 import { projects } from '../data/projects';
+import { useProjectViewMode } from '../hooks/useProjectViewMode';
 
 const FILES: FileItem[] = [
   { id: 1, name: 'Umowa_Adoddle_2026.pdf', size: '2.3 MB', author: 'Artur Nowak', date: '15.01.2026', type: 'PDF' },
@@ -16,6 +17,7 @@ const FILES: FileItem[] = [
 const ProjectFilesPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((p) => p.slug === projectSlug);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
 
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB]">
@@ -25,7 +27,7 @@ const ProjectFilesPage: React.FC = () => {
       <main className="ml-64 pt-(--app-header-h)">
         {project ? (
           <>
-            <ProjectTopBar project={project} viewMode="scrum" />
+            <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
             <div className="mx-auto w-full px-6 py-6">
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

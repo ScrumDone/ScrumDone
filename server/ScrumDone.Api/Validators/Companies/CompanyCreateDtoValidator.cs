@@ -5,10 +5,11 @@ namespace ScrumDone.Api.Validators.Companies
 {
     public sealed class CompanyCreateDtoValidator : AbstractValidator<CompanyCreateDto>
     {
+        // try allowing different validation than regex
         public CompanyCreateDtoValidator()
         {
             RuleFor(x => x.Name)
-                .NotEmpty()
+                .MinimumLength(1)
                 .MaximumLength(200);
 
             RuleFor(x => x.Nip)
@@ -20,7 +21,7 @@ namespace ScrumDone.Api.Validators.Companies
                 .When(x => x.Krs is not null);
 
             RuleFor(x => x.Regon)
-                .Must(r => r!.Length == 9 || r!.Length == 14)
+                .Matches(@"^\d{9}(\d{5})?$")
                 .When(x => x.Regon is not null);
 
             RuleFor(x => x.Address)

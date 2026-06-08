@@ -1,4 +1,6 @@
 using FluentValidation;
+using MicroElements.AspNetCore.OpenApi.FluentValidation;
+using MicroElements.OpenApi.FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using ScrumDone.Api.Data;
@@ -27,9 +29,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllers();
 
+builder.Services.Configure<SchemaGenerationOptions>(o =>
+{
+    o.SetNotNullableIfMinLengthGreaterThenZero = false;
+    //o.RuleFilter = rule => !rule.HasCondition; // <- uncomment this
+});
+
 builder.Services.AddValidatorsFromAssemblyContaining<ValidatorAssemblyMarker>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+
+builder.Services.AddScoped<IValidatorRegistry, ServiceProviderValidatorRegistry>();
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddFluentValidationRules();
+});
 
 builder.Services.AddRouting(options => 
 {
@@ -43,19 +57,23 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    var db = scope.ServiceProvider.GetService<AppDbContext>();
-    db.Database.Migrate();
-    if (app.Environment.IsDevelopment())
+    using (var scope = app.Services.CreateScope())
     {
-        DatabaseSeeder.Seed(db);
+        var db = scope.ServiceProvider.GetService<AppDbContext>();
+        db.Database.Migrate();
+        if (app.Environment.IsDevelopment())
+        {
+            DatabaseSeeder.Seed(db);
+        }
     }
 }
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
@@ -63,7 +81,10 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("AllowFrontend");
 
