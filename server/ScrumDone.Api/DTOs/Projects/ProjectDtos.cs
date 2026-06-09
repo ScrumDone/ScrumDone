@@ -129,6 +129,8 @@ namespace ScrumDone.Api.DTOs.Projects
     {
         public int Page { get; set; } = 1;
         public int Limit { get; set; } = 10;
+        public Guid? CompanyId { get; set; }
+        public Guid? UserId { get; set; }
         //public bool? OnlyMine { get; set; }    // scoped to X-User-Id
         public bool? IsActive { get; set; }
     }

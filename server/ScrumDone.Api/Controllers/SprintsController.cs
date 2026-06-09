@@ -27,7 +27,7 @@ namespace ScrumDone.Api.Controllers
 
         // /sprints/{id}
 
-        [HttpGet("{id:guid}")]
+        [HttpGet("{id}")]
         [ProducesResponseType(typeof(SprintDetailDto), StatusCodes.Status200OK)]  // ← Detail
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -36,7 +36,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpPatch("{id:guid}")]
+        [HttpPatch("{id}")]
         [ProducesResponseType(typeof(SprintDetailDto), StatusCodes.Status200OK)]  // ← Detail
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -50,7 +50,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpDelete("{id:guid}")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -63,7 +63,7 @@ namespace ScrumDone.Api.Controllers
         // returns all assignments for this sprint — no pagination, sprint is the natural bound
         // backlog handled via GET /projects/{id}/assignments?backlog=true instead
 
-        [HttpGet("{id:guid}/assignments")]
+        [HttpGet("{id}/assignments")]
         [ProducesResponseType(typeof(IEnumerable<AssignmentListItemDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -72,6 +72,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-
+        // add assignment to sprint and remove from sprint handled through UpdateAssignment
+        
     }
 }

@@ -18,7 +18,7 @@ namespace ScrumDone.Api.Controllers
         // sprints are created via /projects/{id}/sprints
         // labels are scoped per project via /projects/{id}/assignment-labels
         // order by created date desc unless otherwise specified
-        // client-side filters (priority, status, assignee, label) applied after load — not query params here
+        // client-side filters (priority, status, assignee, label) applied after load — not query params here //Why not?
 
         private readonly IProjectsService _projectsService;
 
@@ -41,7 +41,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpGet("{id:guid}")]
+        [HttpGet("{id}")]
         [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -62,7 +62,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpPatch("{id:guid}")]
+        [HttpPatch("{id}")]
         [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -76,7 +76,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpDelete("{id:guid}")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -87,7 +87,7 @@ namespace ScrumDone.Api.Controllers
 
         // /projects/{id}/members
 
-        [HttpGet("{id:guid}/members")]
+        [HttpGet("{id}/members")]
         [ProducesResponseType(typeof(IEnumerable<UserSummaryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -96,7 +96,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpPost("{id:guid}/members/{userId:guid}")]
+        [HttpPost("{id}/members/{userId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -106,7 +106,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpDelete("{id:guid}/members/{userId:guid}")]
+        [HttpDelete("{id}/members/{userId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -117,7 +117,7 @@ namespace ScrumDone.Api.Controllers
 
         // /projects/{id}/sprints
 
-        [HttpGet("{id:guid}/sprints")]
+        [HttpGet("{id}/sprints")]
         [ProducesResponseType(typeof(IEnumerable<SprintSummaryDto>), StatusCodes.Status200OK)]  // ← Summary
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -128,7 +128,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpPost("{id:guid}/sprints")]
+        [HttpPost("{id}/sprints")]
         [ProducesResponseType(typeof(SprintSummaryDto), StatusCodes.Status201Created)]  // ← Summary
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -146,7 +146,7 @@ namespace ScrumDone.Api.Controllers
         // loads full dataset for the project — client filters by priority, status, assignee, label locally
         // backlog=true returns assignments with no sprint assigned
 
-        [HttpGet("{id:guid}/assignments")]
+        [HttpGet("{id}/assignments")]
         [ProducesResponseType(typeof(IEnumerable<AssignmentListItemDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -160,7 +160,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpPost("{id:guid}/assignments")]
+        [HttpPost("{id}/assignments")]
         [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -174,10 +174,35 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
+        [HttpPatch("{id}/assignments/{assignmentId}")]
+        [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> UpdateAssignment(
+            [FromRoute] Guid id,
+            [FromBody] AssignmentUpdateDto dto,
+            [FromServices] IValidator<AssignmentUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        [HttpDelete("{id}/assignments/{assignmentId}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> DeleteAssignment(
+            [FromRoute] Guid id)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
         // /projects/{id}/assignment-labels
         // labels are scoped per project — not global
 
-        [HttpGet("{id:guid}/assignment-labels")]
+        [HttpGet("{id}/assignment-labels")]
         [ProducesResponseType(typeof(IEnumerable<AssignmentLabelDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -186,7 +211,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpPost("{id:guid}/assignment-labels")]
+        [HttpPost("{id}/assignment-labels")]
         [ProducesResponseType(typeof(AssignmentLabelDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -200,7 +225,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpPatch("{id:guid}/assignment-labels/{labelId:guid}")]
+        [HttpPatch("{id}/assignment-labels/{labelId}")]
         [ProducesResponseType(typeof(AssignmentLabelDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
