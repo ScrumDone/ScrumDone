@@ -199,22 +199,54 @@ namespace ScrumDone.Api.Controllers
 
         [HttpGet("{id}/logs")]
         [ProducesResponseType(typeof(PagedResultDto<CooperationLogDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanyLogs([FromRoute] Guid id, [FromQuery] CooperationLogQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCompanyLogs(
+            [FromRoute] Guid id,
+            [FromQuery] CooperationLogQueryDto query,
+            [FromServices] IValidator<CooperationLogQueryDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(query);
+            return Ok(await _companiesService.GetCompanyLogsAsync(id, query));
+        }
 
         [HttpPost("{id}/logs")]
         [ProducesResponseType(typeof(CooperationLogDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> CreateCompanyLog([FromBody] CooperationLogCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CreateCompanyLog(
+            [FromRoute] Guid id,
+            [FromBody] CooperationLogCreateDto dto,
+            [FromServices] IValidator<CooperationLogCreateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            var result = await _companiesService.CreateCompanyLogAsync(id, dto);
+            return CreatedAtAction(nameof(GetCompanyLogs), new { id = result.Id }, result);
+        }
 
         [HttpPatch("{id}/logs/{logId}")]
         [ProducesResponseType(typeof(CooperationLogDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> UpdateCompanyLog([FromRoute] Guid logId, [FromBody] CooperationLogUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateCompanyLog(
+            [FromRoute] Guid id, 
+            [FromRoute] Guid logId, 
+            [FromBody] CooperationLogUpdateDto dto,
+            [FromServices] IValidator<CooperationLogUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return Ok(await _companiesService.UpdateCompanyLogAsync(id, logId, dto));
+        }
 
         [HttpDelete("{id}/logs/{logId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> DeleteCompanyLog([FromRoute] Guid logId) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> DeleteCompanyLog(
+            [FromRoute] Guid id,
+            [FromRoute] Guid logId)
+        {
+            await _companiesService.DeleteCompanyLogAsync(id, logId);
+            return NoContent();
+        }
     }
 }
