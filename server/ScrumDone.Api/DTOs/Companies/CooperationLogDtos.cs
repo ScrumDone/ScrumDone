@@ -16,8 +16,10 @@ namespace ScrumDone.Api.DTOs.Companies
 
     public class CooperationLogCreateDto
     {
-        public string? Title { get; set; }
+        public required string Title { get; set; }
         public string? Description { get; set; }
+        public string? OldValue { get; set; }
+        public string? NewValue { get; set; }
     }
 
 
@@ -27,7 +29,7 @@ namespace ScrumDone.Api.DTOs.Companies
         [JsonIgnore]
         public IReadOnlySet<string> SetProperties => _setProperties;
 
-        public string? Title
+        public required string Title
         {
             get => field;
             set { field = value; _setProperties.Add(nameof(Title)); }
@@ -36,6 +38,18 @@ namespace ScrumDone.Api.DTOs.Companies
         {
             get => field;
             set { field = value; _setProperties.Add(nameof(Description)); }
+        }
+
+        public string? OldValue
+        {
+            get => field;
+            set { field = value; _setProperties.Add(nameof(OldValue)); }
+        }
+
+        public string? NewValue
+        {
+            get => field;
+            set { field = value; _setProperties.Add(nameof(NewValue)); }
         }
     }
 
