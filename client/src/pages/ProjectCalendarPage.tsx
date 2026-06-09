@@ -10,8 +10,9 @@ import WeekCalendar from '../components/weekCalendar'
 import ProjectMonthCalendar from '../components/ProjectMonthCalendar'
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter'
 import CalendarNoDeadlineTasks, { type CalendarNoDeadlineTask } from '../components/calendarNoDeadlineTasks'
+import CalendarTaskItem from '../components/calendarTaskItem'
 import { projects } from '../data/projects'
-import { useProjectViewMode } from '../hooks/useProjectViewMode'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 
 type CalendarTask = {
   id: string
@@ -33,7 +34,7 @@ const noDeadlineTasks: CalendarNoDeadlineTask[] = [
   { id: 'mobile-responsiveness', title: 'Mobile responsiveness', assigneeInitials: 'MK', assigneeName: 'Maria Kowalska', accentColor: 'blue', dotColor: 'orange' },
 ]
 
-const calendarTasks: CalendarTask[] = [
+const initialCalendarTasks: CalendarTask[] = [
   { id: 'quotes-generation', title: 'Quotes Generation', colorVariant: 'red', date: '2026-04-07' },
   { id: 'giveaway-campaign', title: 'Giveaway Campaign', colorVariant: 'green', date: '2026-04-09' },
 ]
@@ -41,18 +42,27 @@ const calendarTasks: CalendarTask[] = [
 const ProjectCalendarPage: React.FC = () => {
   const { projectSlug } = useParams()
   const project = projects.find((item) => item.slug === projectSlug)
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug)
-
+  
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 6))
+  const [calendarTasks, setCalendarTasks] = useState<CalendarTask[]>(initialCalendarTasks)
+  const [activeId, setActiveId] = useState<string | null>(null)
 
-  const handlePrev = () => {
-    setCurrentDate(prev => displayMode === 'week' ? subWeeks(prev, 1) : subMonths(prev, 1))
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+
+  const handleDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id))
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveId(null)
+    if (!over) return
+    setCalendarTasks((prev) => prev.map((t) => t.id === String(active.id) ? { ...t, date: String(over.id) } : t))
   }
 
-  const handleNext = () => {
-    setCurrentDate(prev => displayMode === 'week' ? addWeeks(prev, 1) : addMonths(prev, 1))
-  }
+  const activeTask = useMemo(() => calendarTasks.find(t => t.id === activeId), [activeId, calendarTasks])
+
+  const handlePrev = () => setCurrentDate(prev => displayMode === 'week' ? subWeeks(prev, 1) : subMonths(prev, 1))
+  const handleNext = () => setCurrentDate(prev => displayMode === 'week' ? addWeeks(prev, 1) : addMonths(prev, 1))
 
   const dateLabel = useMemo(() => {
     if (displayMode === 'week') {
@@ -64,112 +74,69 @@ const ProjectCalendarPage: React.FC = () => {
   }, [currentDate, displayMode])
 
   const monthButtonClass = (mode: 'week' | 'month') =>
-    `rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer ${
-      displayMode === mode 
-        ? 'bg-slate-200/50 text-slate-900'
-        : 'bg-transparent text-slate-900 hover:text-slate-700'
-    }`
+    `rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer ${displayMode === mode ? 'bg-slate-200/50 text-slate-900' : 'bg-transparent text-slate-900 hover:text-slate-700'}`
 
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB]">
       <SideBar />
       <TopBar />
-
       <main className="ml-64 pt-(--app-header-h)">
-        <div className="flex w-full flex-col">
-          {project ? (
-            <>
-              <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
-
-              <section className="mx-6 mt-6 pb-8">
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-                  <div className="min-w-0 space-y-4">
-                    <div className="flex flex-col gap-4 p-0">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        
-                        <div className="flex items-center gap-2">
-                          <button 
-                            type="button" 
-                            onClick={handlePrev}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-900 transition-colors hover:bg-slate-100 cursor-pointer"
-                          >
-                            <ChevronLeftIcon className="h-4 w-4" />
-                          </button>
-                          <span className="font-segoe-ui text-[14px] leading-5 text-slate-900 mx-1 min-w-[180px] text-center capitalize">
-                            {dateLabel}
-                          </span>
-                          <button 
-                            type="button" 
-                            onClick={handleNext}
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-900 transition-colors hover:bg-slate-100 cursor-pointer"
-                          >
-                            <ChevronRightIcon className="h-4 w-4" />
-                          </button>
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="flex w-full flex-col">
+            {project ? (
+              <>
+                <ProjectTopBar project={project} viewMode="scrum" />
+                <section className="mx-6 mt-6 pb-8">
+                  <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
+                    <div className="min-w-0 space-y-4">
+                      <div className="flex flex-col gap-4 p-0">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={handlePrev} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 cursor-pointer"><ChevronLeftIcon className="h-4 w-4" /></button>
+                            <span className="font-segoe-ui text-[14px] text-slate-900 mx-1 min-w-[180px] text-center capitalize">{dateLabel}</span>
+                            <button type="button" onClick={handleNext} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 cursor-pointer"><ChevronRightIcon className="h-4 w-4" /></button>
+                          </div>
+                          <div className="inline-flex rounded-xl bg-slate-100/50 p-1">
+                            <button onClick={() => setDisplayMode('week')} className={monthButtonClass('week')}>Tydzień</button>
+                            <button onClick={() => setDisplayMode('month')} className={monthButtonClass('month')}>Miesiąc</button>
+                          </div>
                         </div>
-
-                        <div className="inline-flex rounded-xl bg-slate-100/50 p-1">
-                          <button
-                            type="button"
-                            onClick={() => setDisplayMode('week')}
-                            className={monthButtonClass('week')}
-                          >
-                            Tydzień
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDisplayMode('month')}
-                            className={monthButtonClass('month')}
-                          >
-                            Miesiąc
-                          </button>
+                        <div className="mt-2">
+                          {displayMode === 'week' ? <WeekCalendar startDate={startOfWeek(currentDate, { weekStartsOn: 1 })} tasks={calendarTasks} /> : <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />}
                         </div>
                       </div>
-
-                      <div className="mt-2">
-                        {displayMode === 'week' ? (
-                          <WeekCalendar startDate={startOfWeek(currentDate, { weekStartsOn: 1 })} tasks={calendarTasks} />
-                        ) : (
-                          <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />
-                        )}
-                      </div>
+                      <CalendarNoDeadlineTasks tasks={noDeadlineTasks} />
                     </div>
-
-                    <CalendarNoDeadlineTasks tasks={noDeadlineTasks} />
+                    <aside className="flex flex-col gap-4">
+                      <CalendarPeopleFilter people={teamMembers} title="Członkowie zespołu" />
+                      <section className="rounded-[10px] border border-slate-200 bg-white p-4">
+                        <h3 className="mb-3 font-segoe-ui text-[18px] leading-7 font-normal text-slate-900 antialiased">Priorytet</h3>
+                        <div className="flex flex-col gap-3">
+                          {[{ id: 'wysoki', label: 'Wysoki', colorClass: 'bg-scrumdone-red-500' }, { id: 'sredni', label: 'Średni', colorClass: 'bg-scrumdone-yellow-500' }, { id: 'niski', label: 'Niski', colorClass: 'bg-scrumdone-green-500' }].map((option) => (
+                            <label key={option.id} className="flex items-center gap-2 cursor-pointer">
+                              <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 text-slate-900 accent-slate-900 cursor-pointer" />
+                              <span className={`h-2 w-2 rounded-full ${option.colorClass}`} />
+                              <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{option.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </section>
+                    </aside>
                   </div>
-
-                  <aside className="flex flex-col gap-4">
-                    <CalendarPeopleFilter people={teamMembers} title="Członkowie zespołu" />
-
-                    <section className="rounded-[10px] border border-slate-200 bg-white p-4">
-                      <h3 className="mb-3 font-segoe-ui text-[18px] leading-7 font-normal text-slate-900 antialiased">Priorytet</h3>
-                      <div className="flex flex-col gap-3">
-                        {[
-                          { id: 'wysoki', label: 'Wysoki', colorClass: 'bg-scrumdone-red-500' },
-                          { id: 'sredni', label: 'Średni', colorClass: 'bg-scrumdone-yellow-500' },
-                          { id: 'niski', label: 'Niski', colorClass: 'bg-scrumdone-green-500' },
-                        ].map((option) => (
-                          <label key={option.id} className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              defaultChecked
-                              className="h-4 w-4 rounded border-slate-300 text-slate-900 accent-slate-900 cursor-pointer"
-                            />
-                            <span className={`h-2 w-2 rounded-full ${option.colorClass}`} />
-                            <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </section>
-                  </aside>
-                </div>
-              </section>
-            </>
-          ) : (
-            <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
-              Nie znaleziono projektu o podanym adresie.
-            </section>
-          )}
-        </div>
+                </section>
+              </>
+            ) : (
+              <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">Nie znaleziono projektu o podanym adresie.</section>
+            )}
+          </div>
+          <DragOverlay>
+            {activeTask ? (
+              <div className="cursor-grabbing">
+                <CalendarTaskItem title={activeTask.title} colorVariant={activeTask.colorVariant} />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </main>
     </div>
   )

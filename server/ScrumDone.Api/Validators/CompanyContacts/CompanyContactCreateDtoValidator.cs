@@ -9,8 +9,8 @@ namespace ScrumDone.Api.Validators.Companies
         public CompanyContactCreateDtoValidator()
         {
             RuleFor(c => c)
-                .Must(c => !AreAllNull(c))
-                .WithMessage("All values are null");
+                .Must(c => !AreRelevantNull(c))
+                .WithMessage("All relevant values are null");
 
             RuleFor(c => c.Name).MaximumLength(50);
 
@@ -21,13 +21,13 @@ namespace ScrumDone.Api.Validators.Companies
             RuleFor(c => c.Email).MaximumLength(50);
         }
 
-        private bool AreAllNull(ContactPersonCreateDto dto)
+        // Don't want tu accept empty person only with IsPrimary = true
+        private bool AreRelevantNull(ContactPersonCreateDto dto)
         {
             return dto.Name == null &&
                    dto.Role == null &&
                    dto.Email == null &&
-                   dto.Phone == null &&
-                   dto.IsPrimary == null;
+                   dto.Phone == null;
         }
     }
 }
