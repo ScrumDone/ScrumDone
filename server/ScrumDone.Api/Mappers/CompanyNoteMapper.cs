@@ -13,7 +13,7 @@ namespace ScrumDone.Api.Mappers
 
         private static UserSummaryDto UserSummary(User user)
         {
-            return new UserSummaryDto(user.Id, user.Name, user.ProfilePictureUrl);
+            return new UserSummaryDto(user.Id, user.Name);
         }
     }
 }
