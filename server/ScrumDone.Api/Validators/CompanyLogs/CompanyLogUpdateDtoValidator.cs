@@ -8,16 +8,16 @@ namespace ScrumDone.Api.Validators.Companies
         public CompanyLogUpdateDtoValidator()
         {
             RuleFor(x => x.Title)
-                .MaximumLength(50);
+                .MaximumLength(100);
 
             RuleFor(x => x.Description)
-                .MaximumLength(400);
+                .MaximumLength(1000);
 
             RuleFor(x => x.OldValue)
-                .MaximumLength(100);
+                .MaximumLength(200);
 
             RuleFor(x => x.NewValue)
-                .MaximumLength(100);
+                .MaximumLength(200);
         }
     }
 }

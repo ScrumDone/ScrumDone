@@ -9,16 +9,16 @@ namespace ScrumDone.Api.Validators.Companies
         {
             RuleFor(x => x.Title)
                 .NotEmpty()
-                .MaximumLength(50);
+                .MaximumLength(100);
 
             RuleFor(x => x.Description)
-                .MaximumLength(400);
+                .MaximumLength(1000);
 
             RuleFor(x => x.OldValue)
-                .MaximumLength(100);
+                .MaximumLength(200);
 
             RuleFor(x => x.NewValue)
-                .MaximumLength(100);
+                .MaximumLength(200);
         }
     }
 }
