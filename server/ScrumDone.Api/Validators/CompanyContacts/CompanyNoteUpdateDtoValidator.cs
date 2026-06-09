@@ -7,10 +7,6 @@ namespace ScrumDone.Api.Validators.Companies
     {
         public CompanyContactUpdateDtoValidator()
         {
-            RuleFor(c => c)
-                .Must(c => !AreAllNull(c))
-                .WithMessage("All values are null");
-
             RuleFor(c => c.Name).MaximumLength(50);
 
             RuleFor(c => c.Role).MaximumLength(50);

@@ -125,7 +125,14 @@ namespace ScrumDone.Api.Services
         }
 
         public async Task<CompanyNoteDto> CreateCompanyNoteAsync(Guid id, CompanyNoteCreateDto query)
-        {
+        {            
+            var companyExist = await _context.Companies.AnyAsync(c => c.Id == id);
+            
+            if (!companyExist) 
+            {
+                throw new NotFoundException(nameof(Company), id);
+            }
+
             var currentUser = await _context.Users.FirstAsync();
 
             var note = new CompanyNote
@@ -148,14 +155,16 @@ namespace ScrumDone.Api.Services
 
         public async Task<CompanyNoteDto> UpdateCompanyNoteAsync(Guid id, Guid noteId, CompanyNoteUpdateDto dto)
         {
-            await _context.CompanyNotes
-            .Where(n => n.Id == noteId && n.CompanyId == id)
-            .ExecuteUpdateAsync(n => n.SetProperty(e => e.Content, dto.Content));
+            var note = await _context.CompanyNotes
+            .Include(n => n.User)
+            .FirstOrDefaultAsync(n => n.Id == noteId && n.CompanyId == id)
+            ?? throw new NotFoundException(nameof(CompanyNote), noteId);
 
-            var updatedNote = await _context.CompanyNotes.Include(n => n.User).FirstOrDefaultAsync(n => n.Id == noteId)
-                ?? throw new NotFoundException(nameof(CompanyNote), noteId);
+            note.Content = dto.Content;
 
-            return updatedNote.ToListItemDto();
+            await _context.SaveChangesAsync();
+
+            return note.ToListItemDto();
         }
 
         public async Task DeleteCompanyNoteAsync(Guid id, Guid noteId)
@@ -190,6 +199,13 @@ namespace ScrumDone.Api.Services
 
         public async Task<ContactPersonDto> CreateCompanyContactAsync(Guid id, ContactPersonCreateDto dto)
         {
+            var companyExist = await _context.Companies.AnyAsync(c => c.Id == id);
+            
+            if (!companyExist) 
+            {
+                throw new NotFoundException(nameof(Company), id);
+            }
+
             var contact = new ContactPerson{
                 Id = Guid.NewGuid(),
                 CompanyId = id,
@@ -212,11 +228,11 @@ namespace ScrumDone.Api.Services
                 .FirstOrDefaultAsync(c => c.CompanyId == id && c.Id == contactId)
                 ?? throw new NotFoundException(nameof(ContactPerson), contactId);
 
-            if (dto.Name != null) contact.Name = dto.Name;
-            if (dto.Role != null) contact.Role = dto.Role;
-            if (dto.Email != null) contact.Email = dto.Email;
-            if (dto.Phone != null) contact.Phone = dto.Phone;
-            if (dto.IsPrimary != null) contact.IsPrimary = dto.IsPrimary.Value;
+            if (dto.SetProperties.Contains(nameof(dto.Name))) contact.Name = dto.Name!;
+            if (dto.SetProperties.Contains(nameof(dto.Role))) contact.Role = dto.Role!;
+            if (dto.SetProperties.Contains(nameof(dto.Email))) contact.Email = dto.Email!;
+            if (dto.SetProperties.Contains(nameof(dto.Phone))) contact.Phone = dto.Phone!;
+            if (dto.SetProperties.Contains(nameof(dto.IsPrimary))) if (dto.IsPrimary != null) contact.IsPrimary = dto.IsPrimary.Value;
 
             await _context.SaveChangesAsync();
 
