@@ -8,6 +8,7 @@ namespace ScrumDone.Api.Validators.Companies
         public CompanyLogUpdateDtoValidator()
         {
             RuleFor(x => x.Title)
+                .NotEmpty()
                 .MaximumLength(100);
 
             RuleFor(x => x.Description)

@@ -32,7 +32,7 @@ namespace ScrumDone.Api.DTOs.Companies
         public string? Title
         {
             get => field;
-            set { field = value; if (value != null) _setProperties.Add(nameof(Title)); }
+            set { field = value; _setProperties.Add(nameof(Title)); }
         }
         public string? Description
         {
