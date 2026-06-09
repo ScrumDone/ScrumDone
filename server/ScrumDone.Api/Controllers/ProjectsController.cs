@@ -142,10 +142,6 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        // /projects/{id}/assignments
-        // loads full dataset for the project — client filters by priority, status, assignee, label locally
-        // backlog=true returns assignments with no sprint assigned
-
         // /projects/{id}/assignment-labels
         // labels are scoped per project — not global
 
