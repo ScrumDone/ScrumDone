@@ -54,11 +54,13 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks = [] }) =>
         <div className="grid grid-cols-7 overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50">
             {dayNames.map((shortName, index) => {
                 const columnDate = addDays(startDate, index)
-                const dateString = format(columnDate, 'yyyy-MM-dd')
+                const dateString = format(columnDate, 'yyyy-MM-dd'); 
                 const isToday = isSameDay(columnDate, new Date()) 
                 const isWeekend = index >= 5
+                
+                const { setNodeRef } = useDroppable({ id: dateString });
+                
                 const bodyBgClass = isToday || isWeekend ? 'bg-slate-50' : 'bg-white'
-                const { setNodeRef } = useDroppable({ id: dateString })
 
                 const tasksForThisDay = allTasks.filter(task => 
                     isSameDay(parseISO(task.date), columnDate)

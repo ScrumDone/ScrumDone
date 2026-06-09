@@ -38,6 +38,7 @@ const Homepage: React.FC = () => {
                                     colorVariant="red"
                                     dotColorVariant="red"
                                     badgeColorVariant="red"
+                                    isBlocked={false}
                                 />
                                 <WelcomePageTask
                                     taskName="Database schema design"
@@ -47,6 +48,7 @@ const Homepage: React.FC = () => {
                                     colorVariant="red"
                                     dotColorVariant="yellow"
                                     badgeColorVariant="green"
+                                    isBlocked={false}
                                 />
                             </div>
                         </div>

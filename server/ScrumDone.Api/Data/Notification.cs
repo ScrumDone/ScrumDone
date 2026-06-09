@@ -15,6 +15,7 @@ namespace ScrumDone.Api.Data
         public Guid? ResourceId { get; set; }
         // Optional Relevant entity like comment of a task
         public Guid? SecondResourceId { get; set; }
+        public NotificationResourceType? SecondResourceType { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
@@ -23,6 +24,7 @@ namespace ScrumDone.Api.Data
 
         public Guid? AuthorId { get; set; }
         public Guid NotifiedId { get; set; }
+        public Guid NotificationTypeId { get; set; }
         public NotificationType NotificationType { get; set; }
         public User Author { get; set; }
         public User Notified { get; set; }
@@ -31,7 +33,8 @@ namespace ScrumDone.Api.Data
     public enum NotificationResourceType
     {
         None,
-        Task,
+        Assignment,
         Project,
+        Message
     }
 }

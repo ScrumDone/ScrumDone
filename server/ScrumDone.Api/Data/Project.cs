@@ -5,6 +5,7 @@ namespace ScrumDone.Api.Data
     public class Project : IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
     {
         public Guid Id { get; set; }
+        public Guid CompanyId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public string? ProfilePictureUrl { get; set; }
@@ -17,7 +18,7 @@ namespace ScrumDone.Api.Data
         public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
 
-        public List<Task> Tasks { get; set; } = new();
+        public List<Assignment> Assignments { get; set; } = new();
         public List<File> Files { get; set; } = new();
         public List<ProjectUserMTMRelation> TeamMembers { get; set; } = new();
         public Company Company { get; set; }

@@ -15,6 +15,8 @@ type CompanyEditModalProps = {
   onClose: () => void;
   onSave: () => void;
   onDraftChange: (updater: (prev: CompanyEditDraft) => CompanyEditDraft) => void;
+  isSaving?: boolean;
+  errorMessage?: string | null;
 };
 
 const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
@@ -23,6 +25,8 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
   onClose,
   onSave,
   onDraftChange,
+  isSaving = false,
+  errorMessage = null,
 }) => {
   if (!isOpen) {
     return null;
@@ -132,19 +136,24 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-3 px-6 py-4">
+          {errorMessage && (
+            <p className="mr-auto text-sm text-red-600">{errorMessage}</p>
+          )}
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50"
+            disabled={isSaving}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Anuluj
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD]"
+            disabled={isSaving}
+            className="rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Zapisz zmiany
+            {isSaving ? 'Zapisywanie…' : 'Zapisz zmiany'}
           </button>
         </div>
       </div>
