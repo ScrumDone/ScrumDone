@@ -29,10 +29,10 @@ namespace ScrumDone.Api.DTOs.Companies
         [JsonIgnore]
         public IReadOnlySet<string> SetProperties => _setProperties;
 
-        public required string Title
+        public string? Title
         {
             get => field;
-            set { field = value; _setProperties.Add(nameof(Title)); }
+            set { field = value; if (value != null) _setProperties.Add(nameof(Title)); }
         }
         public string? Description
         {
