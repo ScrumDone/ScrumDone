@@ -2,7 +2,7 @@
 {
     public record UserSummaryDto(
         Guid Id,
-        string Name,
-        string? ProfilePictureUrl
+        string Name
+        // string? ProfilePictureUrl
     );
 }
