@@ -144,23 +144,55 @@ namespace ScrumDone.Api.Controllers
 
         [HttpGet("{id}/contacts")]
         [ProducesResponseType(typeof(PagedResultDto<ContactPersonDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetCompanyContacts([FromRoute] Guid id, [FromQuery] ContactPersonQueryDto query) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCompanyContacts(
+            [FromRoute] Guid id,
+            [FromQuery] ContactPersonQueryDto query,
+            [FromServices] IValidator<ContactPersonQueryDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(query);
+            return Ok(await _companiesService.GetCompanyContactsAsync(id, query));
+        }
 
         [HttpPost("{id}/contacts")]
         [ProducesResponseType(typeof(ContactPersonDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> CreateCompanyContact([FromRoute] Guid id, [FromBody] ContactPersonCreateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CreateCompanyContact(
+            [FromRoute] Guid id,
+            [FromBody] ContactPersonCreateDto dto,
+            [FromServices] IValidator<ContactPersonCreateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return Ok(await _companiesService.CreateCompanyContactAsync(id, dto));
+        }
 
         [HttpPatch("{id}/contacts/{contactId}")]
         [ProducesResponseType(typeof(ContactPersonDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> UpdateCompanyContact([FromRoute] Guid id, [FromRoute] Guid contactId, [FromBody] ContactPersonUpdateDto dto) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateCompanyContact(
+            [FromRoute] Guid id,
+            [FromRoute] Guid contactId,
+            [FromBody] ContactPersonUpdateDto dto,
+            [FromServices] IValidator<ContactPersonUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return Ok(await _companiesService.UpdateCompanyContactAsync(id, contactId, dto));
+        }
 
         [HttpDelete("{id}/contacts/{contactId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> DeleteCompanyContact([FromRoute] Guid id, [FromRoute] Guid contactId) => StatusCode(StatusCodes.Status501NotImplemented);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteCompanyContact(
+            [FromRoute] Guid id,
+            [FromRoute] Guid contactId)
+        {
+            await _companiesService.DeleteCompanyContactAsync(id, contactId);
+            return NoContent();
+        }
 
 
         // /companies/{id}/logs
