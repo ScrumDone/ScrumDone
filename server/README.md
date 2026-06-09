@@ -35,6 +35,12 @@
     - omission in body -> no update
     - null -> set to empty
     - value -> set to value
+- for better llm prompts use raw api docs from `http://localhost:8080/openapi/v1.json`
+- because we don't have user sessions yet frontend should pick a random user for testing
+- there is one big GET /assigment endpoint, USE QUERIES MINDFULLY TO AVOID PAGINATION LIMIT AND MANY REQUESTS. For instance:
+    - when building kanban each status can be build by one request (specified `statusId`)
+    - when building callendar use `duefrom`, `dueto`
+    - when building sprint planner make one query for each expanded sprint
 
 ## FAQ:
 - when running docker with `-d` logs won't display. Either avoid that or look through `docker logs -f scrumdone-api`

@@ -13,6 +13,7 @@ namespace ScrumDone.Api.Data
         public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
 
+        // add link to project
         public List<AssignmentAssignmentLabelMTMRelation> Assignments { get; set; } = new();
     }
 }
