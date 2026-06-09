@@ -11,8 +11,6 @@ namespace ScrumDone.Api.DTOs.Projects
         int Count
     );
 
-    // List item — home page projects, projects main screen
-
     public record ProjectListItemDto(
         Guid Id,
         string Name,
@@ -23,15 +21,13 @@ namespace ScrumDone.Api.DTOs.Projects
         DateTimeOffset UpdatedAt,
         DateTimeOffset? StartDate,
         DateTimeOffset? ExpectedFinishDate,
-        string? ProfilePictureUrl,
+        //string? ProfilePictureUrl,
         Guid? CompanyId,
         string? CompanyName,
         int TeamMemberCount,
         int AssignmentCount,
         IEnumerable<AssignmentStatusCountDto> AssignmentStatusCounts
     );
-
-    // Full detail — project main screen
 
     public record ProjectDetailDto(
         Guid Id,
@@ -43,7 +39,7 @@ namespace ScrumDone.Api.DTOs.Projects
         DateTimeOffset UpdatedAt,
         DateTimeOffset StartDate,
         DateTimeOffset? ExpectedFinishDate,
-        string? ProfilePictureUrl,
+        //string? ProfilePictureUrl,
         Guid? CompanyId,
         string? CompanyName,
         int TeamMemberCount,
@@ -53,8 +49,6 @@ namespace ScrumDone.Api.DTOs.Projects
         IEnumerable<SprintSummaryDto> Sprints
     );
 
-    // Create
-
     public class ProjectCreateDto
     {
         public required string Name { get; set; }
@@ -63,11 +57,10 @@ namespace ScrumDone.Api.DTOs.Projects
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? ExpectedFinishDate { get; set; }
         public Guid? CompanyId { get; set; }
-        public string? ProfilePictureUrl { get; set; }
+        // public string? ProfilePictureUrl { get; set; }
         public IEnumerable<Guid> TeamMemberIds { get; set; }
     }
 
-        // Update — PATCH partial update pattern
 
     public class ProjectUpdateDto
     {
@@ -116,14 +109,13 @@ namespace ScrumDone.Api.DTOs.Projects
             get => field;
             set { field = value; _setProperties.Add(nameof(CompanyId)); }
         }
-        public string? ProfilePictureUrl
-        {
-            get => field;
-            set { field = value; _setProperties.Add(nameof(ProfilePictureUrl)); }
-        }
+        //not yet time for this
+        //public string? ProfilePictureUrl
+        //{
+        //    get => field;
+        //    set { field = value; _setProperties.Add(nameof(ProfilePictureUrl)); }
+        //}
     }
-
-    // Query
 
     public class ProjectQueryDto
     {
@@ -142,13 +134,10 @@ namespace ScrumDone.Api.DTOs.Projects
         int Limit { get; set; } = 20;
     }
 
-    public record TeamMembersDto(
-        Guid UserId,
-        string Name,
-        string ProfilePictureUrl
-    );
-
-
-    // adding and removing users does not require own dto (I think)
+    //public record TeamMembersDto(
+    //    Guid UserId,
+    //    string Name,
+    //    string ProfilePictureUrl
+    //);
 }
 

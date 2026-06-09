@@ -63,14 +63,14 @@ namespace ScrumDone.Api.Controllers
         // returns all assignments for this sprint — no pagination, sprint is the natural bound
         // backlog handled via GET /projects/{id}/assignments?backlog=true instead
 
-        [HttpGet("{id}/assignments")]
-        [ProducesResponseType(typeof(IEnumerable<AssignmentListItemDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetAssignments([FromRoute] Guid id)
-        {
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
+        //[HttpGet("{id}/assignments")]
+        //[ProducesResponseType(typeof(IEnumerable<AssignmentListItemDto>), StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //[ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        //public async Task<IActionResult> GetAssignments([FromRoute] Guid id)
+        //{
+        //    return StatusCode(StatusCodes.Status501NotImplemented);
+        //}
 
         // add assignment to sprint and remove from sprint handled through UpdateAssignment
         

@@ -16,8 +16,9 @@ public class DatabaseSeeder
             return;
         }
 
+        Randomizer.Seed = new Random(123);
+        Random rnd = new Random(123);
         var now = DateTimeOffset.UtcNow;
-        Random rnd = new Random();
 
         var permissions = new List<UserPermissionsType>
         {
@@ -31,9 +32,7 @@ public class DatabaseSeeder
         {
             new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#E2E8F0", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
             new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In review", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Blocked", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
         };
         context.AssignmentStatuses.AddRange(statuses);
 
@@ -70,7 +69,7 @@ public class DatabaseSeeder
         context.FileLabels.AddRange(fileLabels);
 
         var companyFaker = new Faker<Company>("pl")
-            .RuleFor(c => c.Id, f => Guid.NewGuid())
+            .RuleFor(c => c.Id, f => f.Random.Guid())
             .RuleFor(c => c.Name, f => f.Company.CompanyName())
             .RuleFor(c => c.Address, f => f.Address.FullAddress())
             .RuleFor(c => c.Nip, f => 
@@ -113,7 +112,7 @@ public class DatabaseSeeder
         context.Companies.AddRange(companies);
 
         var userFaker = new Faker<User>("pl")
-            .RuleFor(u => u.Id, f => Guid.NewGuid())
+            .RuleFor(u => u.Id, f => f.Random.Guid())
             .RuleFor(u => u.Name, f => f.Name.FullName())
             .RuleFor(u => u.ProfilePictureUrl, f => f.Internet.Avatar())
             .RuleFor(u => u.UserPermissionsTypeId, f => f.PickRandom(permissions).Id)
@@ -130,7 +129,7 @@ public class DatabaseSeeder
         context.Users.AddRange(users);
 
         var projectFaker = new Faker<Project>("pl")
-            .RuleFor(p => p.Id, f => Guid.NewGuid())
+            .RuleFor(p => p.Id, f => f.Random.Guid())
             .RuleFor(p => p.Name, f => f.Commerce.ProductName() + " Project")
             .RuleFor(p => p.Description, f => f.Lorem.Paragraph())
             .RuleFor(p => p.CompanyId, f => f.PickRandom(companies).Id)
@@ -159,7 +158,7 @@ public class DatabaseSeeder
         context.Projects.AddRange(projects);
 
         var assignmentFaker = new Faker<Assignment>("pl")
-            .RuleFor(a => a.Id, f => Guid.NewGuid())
+            .RuleFor(a => a.Id, f => f.Random.Guid())
             .RuleFor(a => a.ParentAssignmentId, f => null)
             .RuleFor(a => a.Name, f => f.Hacker.Verb() + " " + f.Hacker.Noun())
             .RuleFor(a => a.Description, f => f.Lorem.Sentence())
@@ -243,7 +242,7 @@ public class DatabaseSeeder
 
 
         var companyNoteFaker = new Faker<CompanyNote>("pl")
-            .RuleFor(n => n.Id, f => Guid.NewGuid())
+            .RuleFor(n => n.Id, f => f.Random.Guid())
             .RuleFor(n => n.CompanyId, f => f.PickRandom(companies).Id)
             .RuleFor(n => n.UserId, f => f.PickRandom(users).Id)
             .RuleFor(n => n.Content, f => f.Lorem.Sentence())
@@ -261,7 +260,7 @@ public class DatabaseSeeder
         context.CompanyNotes.AddRange(notes);
 
         var messageFaker = new Faker<Message>("pl")
-            .RuleFor(m => m.Id, f => Guid.NewGuid())
+            .RuleFor(m => m.Id, f => f.Random.Guid())
             .RuleFor(m => m.AssignmentId, f => f.PickRandom(assignments).Id)
             .RuleFor(m => m.AuthorId, f => f.PickRandom(users).Id)
             .RuleFor(m => m.Text, f => f.Lorem.Sentence())
@@ -283,7 +282,7 @@ public class DatabaseSeeder
         context.Messages.AddRange(messages);
 
         var childMessageFaker = new Faker<Message>("pl")
-            .RuleFor(m => m.Id, f => Guid.NewGuid())
+            .RuleFor(m => m.Id, f => f.Random.Guid())
             .RuleFor(m => m.ParentMessageId, f => f.PickRandom(messages).Id)
             .RuleFor(m => m.AssignmentId, (f, currentMessage) => 
             {
@@ -311,7 +310,7 @@ public class DatabaseSeeder
         var emojis = new[] { "👍", "❤️", "😂", "😮", "😢", "👏", "🎉", "🔥", "👀", "🚀" };
 
         var reactionFaker = new Faker<Reaction>("pl")
-            .RuleFor(r => r.Id, f => Guid.NewGuid())
+            .RuleFor(r => r.Id, f => f.Random.Guid())
             .RuleFor(r => r.Emoji, f => f.PickRandom(emojis))
             .RuleFor(r => r.CommentId, f => f.PickRandom(messages).Id)
             .RuleFor(r => r.CreatedAt, (f, currentReaction) =>
@@ -329,7 +328,7 @@ public class DatabaseSeeder
         context.Reactions.AddRange(reactions);
 
         var contactPersonFaker = new Faker<ContactPerson>("pl")
-            .RuleFor(p => p.Id, f => Guid.NewGuid())
+            .RuleFor(p => p.Id, f => f.Random.Guid())
             .RuleFor(p => p.CompanyId, f => f.PickRandom(companies).Id)
             .RuleFor(p => p.Name, f => f.Name.FullName())
             .RuleFor(p => p.Email, f => f.Internet.Email())
@@ -357,7 +356,7 @@ public class DatabaseSeeder
         context.ContactPeople.AddRange(contactPeople);
 
         var cooperationLogsFaker = new Faker<CooperationLog>("pl")
-            .RuleFor(l => l.Id, f => Guid.NewGuid())
+            .RuleFor(l => l.Id, f => f.Random.Guid())
             .RuleFor(l => l.CompanyId, f => f.PickRandom(companies).Id)
             .RuleFor(l => l.AuthorId, f => f.PickRandom(users).Id)
             .RuleFor(l => l.Title, f => f.Company.CatchPhrase())
@@ -390,7 +389,7 @@ public class DatabaseSeeder
         context.CooperationLogs.AddRange(CooperationLogs);
 
         var sprintsFaker = new Faker<Sprint>("pl")
-            .RuleFor(s => s.Id, f => Guid.NewGuid())
+            .RuleFor(s => s.Id, f => f.Random.Guid())
             .RuleFor(s => s.ProjectId, f => f.PickRandom(projects).Id)
             .RuleFor(s => s.Name, f => f.Company.CatchPhrase())
             .RuleFor(s => s.IsDeleted, f => false)
@@ -415,7 +414,7 @@ public class DatabaseSeeder
         context.Sprints.AddRange(sprints);
 
         var filesBaseFaker = new Faker<File>("pl")
-            .RuleFor(f => f.Id, f => Guid.NewGuid())
+            .RuleFor(f => f.Id, f => f.Random.Guid())
             .RuleFor(f => f.Description, f => 
             {
                 if (f.Random.Bool())
@@ -522,7 +521,7 @@ public class DatabaseSeeder
         };
 
         var notificationFaker = new Faker<Notification>("pl")
-            .RuleFor(n => n.Id, f => Guid.NewGuid())
+            .RuleFor(n => n.Id, f => f.Random.Guid())
             .RuleFor(n => n.Message, f => f.Lorem.Sentence(3, 5))
             .RuleFor(n => n.IsRead, f => f.Random.Bool(0.3f))
             .RuleFor(n => n.NotificationTypeId, f => f.PickRandom(notificationTypes).Id)
@@ -592,7 +591,7 @@ public class DatabaseSeeder
         context.Notifications.AddRange(notifications);
 
         var raportFaker = new Faker<Raport>("pl")
-            .RuleFor(r => r.Id, f => Guid.NewGuid())
+            .RuleFor(r => r.Id, f => f.Random.Guid())
             .RuleFor(r => r.Name, f => f.PickRandom("Raport: ", "Podsumowanie: ", "Analiza: ") + f.Commerce.ProductName())
             .RuleFor(r => r.AuthorId, f => f.PickRandom(users).Id)
             .RuleFor(r => r.CreatedAt, f => now)

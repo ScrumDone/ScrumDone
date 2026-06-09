@@ -146,59 +146,6 @@ namespace ScrumDone.Api.Controllers
         // loads full dataset for the project — client filters by priority, status, assignee, label locally
         // backlog=true returns assignments with no sprint assigned
 
-        [HttpGet("{id}/assignments")]
-        [ProducesResponseType(typeof(IEnumerable<AssignmentListItemDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetAssignments(
-            [FromRoute] Guid id,
-            [FromQuery] AssignmentQueryDto query,
-            [FromServices] IValidator<AssignmentQueryDto> validator)
-        {
-            await validator.ValidateAndThrowAsync(query);
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
-
-        [HttpPost("{id}/assignments")]
-        [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> CreateAssignment(
-            [FromRoute] Guid id,
-            [FromBody] AssignmentCreateDto dto,
-            [FromServices] IValidator<AssignmentCreateDto> validator)
-        {
-            await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
-
-        [HttpPatch("{id}/assignments/{assignmentId}")]
-        [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> UpdateAssignment(
-            [FromRoute] Guid id,
-            [FromBody] AssignmentUpdateDto dto,
-            [FromServices] IValidator<AssignmentUpdateDto> validator)
-        {
-            await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
-
-        [HttpDelete("{id}/assignments/{assignmentId}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> DeleteAssignment(
-            [FromRoute] Guid id)
-        {
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
-
         // /projects/{id}/assignment-labels
         // labels are scoped per project — not global
 
@@ -247,6 +194,16 @@ namespace ScrumDone.Api.Controllers
         public async Task<IActionResult> DeleteAssignmentLabel(
             [FromRoute] Guid id,
             [FromRoute] Guid labelId)
+        {
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
+        // /projects/{id}/statuses
+
+        [HttpGet]
+        [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> GetUsers()
         {
             return StatusCode(StatusCodes.Status501NotImplemented);
         }

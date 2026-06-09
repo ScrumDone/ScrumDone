@@ -21,8 +21,6 @@ namespace ScrumDone.Api.DTOs.Assignments
         string HexColor
     );
 
-    // List item — home page, calendar, kanban, sprint expanded view
-
     public record AssignmentListItemDto(
         Guid Id,
         string Name,
@@ -35,14 +33,13 @@ namespace ScrumDone.Api.DTOs.Assignments
         AssignmentPriorityDto Priority,
         IEnumerable<UserSummaryDto> Assignees,
         IEnumerable<AssignmentLabelDto> Labels,
+        // flat list, frontend can compute tree with ParentAssignmentId if needed
         IEnumerable<Guid> SubtaskIds,
         Guid ProjectId,
         string ProjectName,
         Guid? SprintId,
         Guid? ParentAssignmentId
     );
-
-    // Full detail — assignment detail view
 
     public record AssignmentDetailDto(
         Guid Id,
@@ -56,14 +53,16 @@ namespace ScrumDone.Api.DTOs.Assignments
         AssignmentPriorityDto Priority,
         IEnumerable<UserSummaryDto> Assignees,
         IEnumerable<AssignmentLabelDto> Labels,
-        IEnumerable<Guid> SubtaskIds,
-        Guid ProjectId,
+        IEnumerable<AssignmentListItemDto> Subtask,
+        // All tasks in a tree
+        IEnumerable<AssignmentListItemDto> ConnectedTasks,
         string ProjectName,
+        Guid ProjectId,
+        string? SprintName,
         Guid? SprintId,
+        string? ParentAssignmentName,
         Guid? ParentAssignmentId
     );
-
-    // Create
 
     public class AssignmentCreateDto
     {
@@ -79,8 +78,6 @@ namespace ScrumDone.Api.DTOs.Assignments
         public IEnumerable<Guid> AssigneeIds { get; set; } = [];
         public IEnumerable<Guid> LabelIds { get; set; } = [];
     }
-
-    // Update — PATCH partial update pattern
 
     public class AssignmentUpdateDto
     {
@@ -136,30 +133,28 @@ namespace ScrumDone.Api.DTOs.Assignments
         }
     }
 
-    // Assignees and labels managed via dedicated endpoints — not in update DTO
-
-    //public record AssigneeIdsDto(IEnumerable<Guid> UserIds);
-    //public record LabelIdsDto(IEnumerable<Guid> LabelIds);
-
-    // Query
-    // to check
-
     public class AssignmentQueryDto
     {
         // these queries can be absolutely massive if no filters
         // need a way to limit the size
-        public Guid? SprintId { get; set; }
+        public IEnumerable<Guid>? SprintIds { get; set; }
+        public IEnumerable<Guid>? ProjectIds { get; set; }
         public bool? Backlog { get; set; }           // true = no sprint assigned
-        public Guid? AssigneeId { get; set; }
-        public Guid? PriorityId { get; set; }
-        public Guid? StatusId { get; set; }
-        public Guid? LabelId { get; set; }
+        public IEnumerable<Guid>? AssigneeIds { get; set; }
+        public IEnumerable<Guid>? PriorityIds { get; set; }
+        public IEnumerable<Guid>? StatusIds { get; set; }
+        public IEnumerable<Guid>? LabelIds { get; set; }
         public DateTimeOffset? DueFrom { get; set; } // calendar range
         public DateTimeOffset? DueTo { get; set; }
         //public bool? OnlyMine { get; set; }          // scoped to X-User-Id
-        public DateTimeOffset? DueOn { get; set; }   // home page: specific day
-        public int Page { get; set; } = 1;
-        public int LimitPerStatus { get; set; } = 10;
+
+        public bool? ExcludeNoDeadline { get; set; } = false; // for calendar view to include backlog items with no deadline
+                                                     
+        
+        // pagination doesn't work for kanban view
+        // I think we will need to validate it manually to warn if it gets too big
+        public int Page { get; set; } = 1; 
+        public int Limit { get; set; } = 10; 
     }
 
     public class AssignmentLabelCreateDto

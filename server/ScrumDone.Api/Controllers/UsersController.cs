@@ -13,6 +13,11 @@ namespace ScrumDone.Api.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
+        // We don't have login yet, I propose only listing preseeded users
+        // As of now we don't log authors anyways (asside from company notes)
+        // If time allows we can persue it further with artifitial sessions
+        // I would leave ony GET users for now
+
         private readonly IUsersService _usersService;
 
         public UsersController(IUsersService usersService)
@@ -28,7 +33,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
             return Ok(await _usersService.GetUsersAsync());
         }
-
+        /*
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -93,5 +98,6 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
             return Ok(await _usersService.GetUserRolesAsync());
         }
+        */
     }
 }

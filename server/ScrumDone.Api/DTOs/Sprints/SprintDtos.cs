@@ -3,8 +3,6 @@ using System.Text.Json.Serialization;
 
 namespace ScrumDone.Api.DTOs.Sprints
 {
-    // Summary — sprint list in sprints screen, kanban sprint selector
-
     public record SprintSummaryDto(
         Guid Id,
         string? Name,
@@ -17,7 +15,6 @@ namespace ScrumDone.Api.DTOs.Sprints
         IEnumerable<AssignmentListItemDto>? Assignments 
     );
 
-    // Full detail — kanban selected sprint, sprint expanded with assignments
 
     public record SprintDetailDto(
         Guid Id,
@@ -30,8 +27,6 @@ namespace ScrumDone.Api.DTOs.Sprints
         int CompletedCount,
         IEnumerable<AssignmentListItemDto> Assignments
     );
-
-    // Create
 
     public class SprintCreateDto
     {
@@ -76,7 +71,7 @@ namespace ScrumDone.Api.DTOs.Sprints
     {
         public int Page { get; set; } = 1;
         public int Limit { get; set; } = 10;
-        public bool IncludeAssignments { get; set; } = false;
+        // public bool IncludeAssignments { get; set; } = false;
     }
 
 }

@@ -49,6 +49,19 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
+        [HttpPost]
+        [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        public async Task<IActionResult> CreateAssignment(
+            [FromBody] AssignmentCreateDto dto,
+            [FromServices] IValidator<AssignmentCreateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            return StatusCode(StatusCodes.Status501NotImplemented);
+        }
+
         [HttpPatch("{id:guid}")]
         [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -76,14 +89,14 @@ namespace ScrumDone.Api.Controllers
         // read-only convenience view — subtasks created via POST /projects/{id}/assignments with parentAssignmentId
         // returns AssignmentListItemDto[] which includes SubtaskIds for hover-highlight chaining
 
-        [HttpGet("{id:guid}/subtasks")]
-        [ProducesResponseType(typeof(IEnumerable<AssignmentListItemDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetSubtasks([FromRoute] Guid id)
-        {
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
+        //[HttpGet("{id:guid}/subtasks")]
+        //[ProducesResponseType(typeof(IEnumerable<AssignmentListItemDto>), StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status404NotFound)]
+        //[ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        //public async Task<IActionResult> GetSubtasks([FromRoute] Guid id)
+        //{
+        //    return StatusCode(StatusCodes.Status501NotImplemented);
+        //}
 
         // /assignments/{id}/assignees
         // attach/detach users — TaskUserMTMTable
