@@ -9,7 +9,8 @@ namespace ScrumDone.Api.Validators.Companies
         {
             RuleFor(x => x.Title)
                 .NotEmpty()
-                .MaximumLength(100);
+                .MaximumLength(100)
+                .When(x => x.SetProperties.Contains(nameof(CooperationLogUpdateDto.Title)));
 
             RuleFor(x => x.Description)
                 .MaximumLength(1000);

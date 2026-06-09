@@ -313,7 +313,7 @@ namespace ScrumDone.Api.Services
                 .FirstOrDefaultAsync(l => l.Id == logId && l.CompanyId == id)
             ?? throw new NotFoundException(nameof(CooperationLog), logId);
 
-            if (dto.SetProperties.Contains(nameof(dto.Title))) log.Title = dto.Title;
+            if (dto.SetProperties.Contains(nameof(dto.Title))) log.Title = dto.Title!;
             if (dto.SetProperties.Contains(nameof(dto.Description))) log.Description = dto.Description;
             if (dto.SetProperties.Contains(nameof(dto.OldValue))) log.OldValue = dto.OldValue;
             if (dto.SetProperties.Contains(nameof(dto.NewValue))) log.NewValue = dto.NewValue;

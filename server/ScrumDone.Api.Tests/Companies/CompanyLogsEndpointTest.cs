@@ -205,4 +205,37 @@ public class CompanyLogsEndpointTests
         var page = await TestResponse.ReadJsonAsync<PagedResultDto<CooperationLogDto>>(getResponse);
         Assert.Empty(page.Items);
     }
+
+    [Fact]
+    public async Task UpdateCompanyLog_ExplicitNullTitle_ReturnsBadRequestProblem()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var companyId = Guid.NewGuid();
+        var logId = Guid.NewGuid();
+        var authorId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Companies.Add(new Company { Id = companyId, Name = "C" });
+            db.Users.Add(new User { Id = authorId, Name = "A" });
+            db.CooperationLogs.Add(new CooperationLog
+            {
+                Id = logId,
+                CompanyId = companyId,
+                AuthorId = authorId,
+                Title = "Old Valid Title"
+            });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.PatchAsJsonAsync($"/api/companies/{companyId}/logs/{logId}",
+            new { title = (string?)null });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var problem = await TestResponse.ReadJsonAsync<ValidationProblemDetails>(response);
+        Assert.True(TestResponse.HasValidationError(problem, "Title"));
+    }
 }
