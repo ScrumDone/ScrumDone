@@ -33,6 +33,10 @@ export function createCompanyNote(companyId: string, data: CompanyNoteCreateDto)
   return apiPost<CompanyNote>(`/api/companies/${companyId}/notes`, data);
 }
 
+export function getCompanyNotes(companyId: string, page = 1, limit = 10) {
+  return apiGet<PagedResult<CompanyNote>>(`/api/companies/${companyId}/notes`, { page, limit });
+}  
+  
 export function createCompany(data: CompanyCreateDto) {
   return apiPost<CompanyDetail>('/api/companies', data);
 }

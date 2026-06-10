@@ -23,7 +23,7 @@ export type UserSummary = {
   id: string;
   name: string;
   profilePictureUrl: string | null;
-}
+};
 
 export type CompanyNote = {
   id: string;
@@ -36,7 +36,7 @@ export type CompanyNote = {
 
 export type CompanyNoteCreateDto = {
   content: string;
-}
+};
 
 export type CompanyCreateDto = {
   name: string;                     
