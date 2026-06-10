@@ -2,8 +2,8 @@ import React from 'react';
 import { CalendarIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 
-interface ProjectCardProps {
-  id: string | number;
+export interface ProjectCardProps {
+  id: string;
   name: string;
   clientName: string;
   description: string;
@@ -19,7 +19,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 }) => {
   return (
     <Link
-      to={`/projects/${id}`}
+      to={`/projects/${id}/tablica-kanban`}
       className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-300"
     >
       
