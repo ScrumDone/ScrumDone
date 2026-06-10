@@ -8,6 +8,7 @@ import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
 import { projects } from '../data/projects';
+import { useProjectViewMode } from '../hooks/useProjectViewMode';
 
 type TaskItem = {
   id: string;
@@ -162,6 +163,7 @@ const allSprintsData: SprintData[] = [
 const SprintsPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((item) => item.slug === projectSlug);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
   const [sprints, setSprints] = useState<SprintData[]>(allSprintsData);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-4', 'sprint-5', 'sprint-3']));
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
@@ -324,7 +326,7 @@ const SprintsPage: React.FC = () => {
       <TopBar />
 
       <main className="ml-64 pt-(--app-header-h)">
-        <ProjectTopBar project={project} viewMode="scrum" />
+        <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
         <section className="mx-6 mt-6 pb-8">
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">

@@ -14,7 +14,7 @@ export function useAddCompanyContact() {
     mutationFn: ({ companyId, data }: AddCompanyContactInput) =>
       addCompanyContact(companyId, data),
     onSuccess: (_contact, { companyId }) => {
-      queryClient.invalidateQueries({ queryKey: ['companies', companyId, 'contacts'] });
+      queryClient.invalidateQueries({ queryKey: ['companies', companyId] });
     },
   });
 }
