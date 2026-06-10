@@ -48,10 +48,9 @@ const ProjectsPage: React.FC = () => {
 
     const saveNewProject = () => {
         const id = Date.now();
-        const slug = draft.name.trim().toLowerCase().replace(/\s+/g, '-');
         const newProject = {
             id,
-            slug: slug || `project-${id}`,
+            slug: `project-${id}`,
             name: draft.name,
             clientName: draft.clientName || draft.name,
             description: draft.description,

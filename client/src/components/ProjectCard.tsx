@@ -3,7 +3,7 @@ import { CalendarIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 
 interface ProjectCardProps {
-  slug: string;
+  id: string | number;
   name: string;
   clientName: string;
   description: string;
@@ -14,12 +14,12 @@ interface ProjectCardProps {
   status: string;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ 
-  slug, name, clientName, description, startDate, endDate, membersCount, progress, status 
+const ProjectCard: React.FC<ProjectCardProps> = ({
+  id, name, clientName, description, startDate, endDate, membersCount, progress, status,
 }) => {
   return (
     <Link
-      to={`/projects/${slug}`}
+      to={`/projects/${id}`}
       className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-300"
     >
       
