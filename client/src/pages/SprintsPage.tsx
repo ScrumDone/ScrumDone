@@ -205,18 +205,19 @@ const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = fal
   );
 };
 
-type PlannedSprintDropZoneProps = {
+type SprintDropZoneProps = {
   sprintId: string;
   children: React.ReactNode;
+  className?: string;
 };
 
-const PlannedSprintDropZone: React.FC<PlannedSprintDropZoneProps> = ({ sprintId, children }) => {
+const SprintDropZone: React.FC<SprintDropZoneProps> = ({ sprintId, children, className = '' }) => {
   const { setNodeRef, isOver } = useDroppable({ id: sprintId });
 
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-28 bg-slate-50 px-5 py-4 transition-colors ${isOver ? 'bg-sky-50 ring-2 ring-inset ring-sky-400' : ''}`}
+      className={`min-h-28 bg-slate-50 transition-colors ${isOver ? 'bg-sky-50 ring-2 ring-inset ring-sky-400' : ''} ${className}`}
     >
       {children}
     </div>
@@ -516,31 +517,24 @@ const SprintsPage: React.FC = () => {
       return;
     }
 
-    const sourceSprint = sprints.find(
-      (sprint) => sprint.status === 'Zaplanowany' && sprint.tasks.some((task) => task.id === activeId),
-    );
+    const sourceSprint = sprints.find((sprint) => sprint.tasks.some((task) => task.id === activeId));
     const sprintTask = sourceSprint?.tasks.find((task) => task.id === activeId);
     if (sourceSprint && sprintTask) {
       setActiveDragItem({ source: 'sprint', task: sprintTask, sprintId: sourceSprint.id });
     }
   };
 
-  const findPlannedSprintByDropTarget = (overId: string) => {
+  const findSprintByDropTarget = (overId: string) => {
     const sprintById = sprints.find((sprint) => sprint.id === overId);
-    if (sprintById?.status === 'Zaplanowany') {
+    if (sprintById) {
       return sprintById;
     }
 
-    return sprints.find(
-      (sprint) =>
-        sprint.status === 'Zaplanowany' && sprint.tasks.some((task) => task.id === overId),
-    );
+    return sprints.find((sprint) => sprint.tasks.some((task) => task.id === overId));
   };
 
-  const findPlannedSprintWithTask = (taskId: string) =>
-    sprints.find(
-      (sprint) => sprint.status === 'Zaplanowany' && sprint.tasks.some((task) => task.id === taskId),
-    );
+  const findSprintWithTask = (taskId: string) =>
+    sprints.find((sprint) => sprint.tasks.some((task) => task.id === taskId));
 
   const isBacklogDropTarget = (overId: string) =>
     overId === BACKLOG_ID || backlogTasks.some((task) => task.id === overId);
@@ -553,7 +547,7 @@ const SprintsPage: React.FC = () => {
 
     const activeId = String(active.id);
     const overId = String(over.id);
-    const sourceSprint = findPlannedSprintWithTask(activeId);
+    const sourceSprint = findSprintWithTask(activeId);
     const backlogTask = backlogTasks.find((task) => task.id === activeId);
 
     if (isBacklogDropTarget(overId)) {
@@ -577,7 +571,7 @@ const SprintsPage: React.FC = () => {
       return;
     }
 
-    const targetSprint = findPlannedSprintByDropTarget(overId);
+    const targetSprint = findSprintByDropTarget(overId);
     if (!targetSprint || !expandedSprints.has(targetSprint.id)) {
       return;
     }
@@ -698,26 +692,23 @@ const SprintsPage: React.FC = () => {
                         </div>
 
                         {expandedSprints.has(sprint.id) && (
-                          <div className="bg-slate-50 px-4 py-3">
-                            <div className="space-y-3">
-                              {sprint.tasks.map((task) => (
-                                <div key={task.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3">
-                                  <div className="flex items-center gap-3">
-                                    <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
-                                    <p className={`font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}>{task.name}</p>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    <Avatar initials={task.assigneeInitials} size="xs" />
-                                    <span className="font-segoe-ui text-xs text-slate-700">{task.assigneeInitials === 'AN' ? 'Artur Nowak' : task.assigneeInitials === 'EB' ? 'Eryk Baczyński' : 'Maria Kowalska'}</span>
-                                    <span className={`rounded-lg px-2.5 py-1 font-segoe-ui text-xs font-medium ${task.status === 'Ukończone' ? 'border border-green-600 text-green-600' : 'bg-slate-100 text-slate-700'}`}>
-                                      {task.status}
-                                    </span>
-                                    <span className="font-segoe-ui text-xs text-slate-500">{task.daysLeft}</span>
-                                  </div>
+                          <SprintDropZone sprintId={sprint.id} className="px-4 py-3">
+                            {sprint.tasks.length === 0 ? (
+                              <div className="py-7 text-center">
+                                <p className="font-segoe-ui text-sm font-medium text-slate-500">
+                                  Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
+                                </p>
+                              </div>
+                            ) : (
+                              <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-3">
+                                  {sprint.tasks.map((task) => (
+                                    <SprintTaskRow key={task.id} task={task} />
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          </div>
+                              </SortableContext>
+                            )}
+                          </SprintDropZone>
                         )}
                       </div>
                     ))}
@@ -771,11 +762,11 @@ const SprintsPage: React.FC = () => {
                         </div>
 
                         {expandedSprints.has(sprint.id) && (
-                          <PlannedSprintDropZone sprintId={sprint.id}>
+                          <SprintDropZone sprintId={sprint.id} className="px-5 py-4">
                             {sprint.tasks.length === 0 ? (
                               <div className="py-7 text-center">
                                 <p className="font-segoe-ui text-sm font-medium text-slate-500">
-                                  Brak zadań w tym sprincie
+                                  Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
                                 </p>
                               </div>
                             ) : (
@@ -787,7 +778,7 @@ const SprintsPage: React.FC = () => {
                                 </div>
                               </SortableContext>
                             )}
-                          </PlannedSprintDropZone>
+                          </SprintDropZone>
                         )}
                       </div>
                     ))}
@@ -839,28 +830,24 @@ const SprintsPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Tasks */}
                         {expandedSprints.has(sprint.id) && (
-                          <div className="bg-slate-50 px-5 py-3">
-                            <div className="space-y-2">
-                              {sprint.tasks.map((task) => (
-                              <div key={task.id} className="flex items-center justify-between rounded-lg bg-white px-4 py-3">
-                                <div className="flex items-center gap-3">
-                                  <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
-                                  <p className={`font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}>{task.name}</p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <Avatar initials={task.assigneeInitials} size="xs" />
-                                  <span className="font-segoe-ui text-xs text-slate-700">{task.assigneeInitials === 'AN' ? 'Artur Nowak' : task.assigneeInitials === 'EB' ? 'Eryk Baczyński' : 'Maria Kowalska'}</span>
-                                  <span className={`rounded-full px-2.5 py-1 font-segoe-ui text-xs font-medium ${task.status === 'Ukończone' ? 'border border-green-600 text-green-600' : 'bg-slate-100 text-slate-700'}`}>
-                                    {task.status}
-                                  </span>
-                                  <span className="font-segoe-ui text-xs text-slate-500">{task.daysLeft}</span>
-                                </div>
+                          <SprintDropZone sprintId={sprint.id} className="px-5 py-3">
+                            {sprint.tasks.length === 0 ? (
+                              <div className="py-7 text-center">
+                                <p className="font-segoe-ui text-sm font-medium text-slate-500">
+                                  Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
+                                </p>
                               </div>
-                              ))}
-                            </div>
-                          </div>
+                            ) : (
+                              <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-2">
+                                  {sprint.tasks.map((task) => (
+                                    <SprintTaskRow key={task.id} task={task} />
+                                  ))}
+                                </div>
+                              </SortableContext>
+                            )}
+                          </SprintDropZone>
                         )}
                       </div>
                     ))}
