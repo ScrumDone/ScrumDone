@@ -1,4 +1,7 @@
 import type { ContactPerson } from './contact';
+import type { UserSummary } from './user';
+
+export type { UserSummary };
 
 export type CompanyListItem = {
   id: string;
@@ -17,12 +20,6 @@ export type CompanyUpdateDto = {
   krs: string | null;
   regon: string | null;
   address: string | null;
-};
-
-export type UserSummary = {
-  id: string;
-  name: string;
-  profilePictureUrl: string | null;
 };
 
 export type CompanyNote = {
