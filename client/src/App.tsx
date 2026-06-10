@@ -11,15 +11,21 @@ import FilesPage from './pages/FilesPage'
 import ProjectDetailsPage from './pages/ProjectDetailsPage'
 import ProjectFilesPage from './pages/ProjectFilesPage'
 import ProjectKanbanPage from './pages/ProjectKanbanPage'
+import ProjectCalendarPage from './pages/ProjectCalendarPage'
 import SprintsPage from './pages/SprintsPage'
+import  { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import HomepageManager from './pages/HomepageManager'
 
 const App: React.FC = () => {
   return (
+    <>
     <Routes>
       <Route path="/" element={<Homepage />} />
+      <Route path="/homepage-manager" element={<HomepageManager />} />
       <Route path="/projects" element={<ProjectsPage />} />
       <Route path="/projects/:projectSlug" element={<ProjectDetailsPage />} />
       <Route path="/projects/:projectSlug/tablica-kanban" element={<ProjectKanbanPage />} />
+      <Route path="/projects/:projectSlug/kalendarz" element={<ProjectCalendarPage />} />
       <Route path="/projects/:projectSlug/sprinty" element={<SprintsPage />} />
       <Route path="/projects/:projectSlug/repozytorium-plikow" element={<ProjectFilesPage />} />
       <Route path="/companies" element={<Companiespage />} />
@@ -29,6 +35,8 @@ const App: React.FC = () => {
       <Route path="/task" element={<TaskPage />} />
       <Route path="/files" element={<FilesPage />} />
     </Routes>
+    <ReactQueryDevtools initialIsOpen={false} />
+    </>
   )
 }
 

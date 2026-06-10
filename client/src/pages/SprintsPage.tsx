@@ -1,6 +1,26 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+  useDroppable,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
@@ -8,6 +28,7 @@ import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
 import { projects } from '../data/projects';
+import { useProjectViewMode } from '../hooks/useProjectViewMode';
 
 type TaskItem = {
   id: string;
@@ -17,6 +38,47 @@ type TaskItem = {
   daysLeft: string;
   color: 'red' | 'yellow' | 'green' | 'blue';
 };
+
+type BacklogTask = {
+  id: string;
+  name: string;
+  assigneeInitials: string;
+  assigneeName: string;
+  color: TaskItem['color'];
+};
+
+const BACKLOG_ID = 'backlog';
+
+const initialBacklogTasks: BacklogTask[] = [
+  {
+    id: 'code-refactor',
+    name: 'Code refactoring - user module',
+    color: 'green',
+    assigneeInitials: 'AN',
+    assigneeName: 'Artur Nowak',
+  },
+  {
+    id: 'doc-update',
+    name: 'Documentation update',
+    color: 'yellow',
+    assigneeInitials: 'EB',
+    assigneeName: 'Eryk Baczyński',
+  },
+  {
+    id: 'e2e-setup',
+    name: 'E2E testing setup',
+    color: 'red',
+    assigneeInitials: 'EB',
+    assigneeName: 'Eryk Baczyński',
+  },
+  {
+    id: 'mobile-responsive',
+    name: 'Mobile responsiveness',
+    color: 'yellow',
+    assigneeInitials: 'MK',
+    assigneeName: 'Maria Kowalska',
+  },
+];
 
 type SprintData = {
   id: string;
@@ -47,6 +109,149 @@ const taskColorMap: Record<string, string> = {
   green: 'bg-green-500',
   blue: 'bg-blue-500',
 };
+
+type BacklogTaskCardProps = {
+  task: BacklogTask;
+  isDragOverlay?: boolean;
+};
+
+const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay = false }) => {
+  const sortable = useSortable({ id: task.id, disabled: isDragOverlay });
+  const style = isDragOverlay
+    ? undefined
+    : { transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition };
+
+  return (
+    <div
+      ref={isDragOverlay ? undefined : sortable.setNodeRef}
+      style={style}
+      {...(isDragOverlay ? {} : sortable.attributes)}
+      {...(isDragOverlay ? {} : sortable.listeners)}
+      className={`rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing shadow-md' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+    >
+      <div className="mb-1 flex items-start gap-2">
+        <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${taskColorMap[task.color]}`} />
+        <p className="font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <Avatar initials={task.assigneeInitials} size="xs" />
+        <span className="font-segoe-ui text-[10px] tracking-[0.12px] leading-4 text-slate-700">{task.assigneeName}</span>
+      </div>
+    </div>
+  );
+};
+
+const getAssigneeName = (initials: string) =>
+  personFilterOptions.find((person) => person.initials === initials)?.fullName ?? initials;
+
+const backlogToSprintTask = (task: BacklogTask): TaskItem => ({
+  id: task.id,
+  name: task.name,
+  assigneeInitials: task.assigneeInitials,
+  color: task.color,
+  status: 'Nieukończone',
+  daysLeft: '—',
+});
+
+const sprintTaskToBacklog = (task: TaskItem): BacklogTask => ({
+  id: task.id,
+  name: task.name,
+  assigneeInitials: task.assigneeInitials,
+  assigneeName: getAssigneeName(task.assigneeInitials),
+  color: task.color,
+});
+
+const syncSprintCounts = (sprint: SprintData): SprintData => ({
+  ...sprint,
+  totalTasks: sprint.tasks.length,
+  completedTasks: sprint.tasks.filter((task) => task.status === 'Ukończone').length,
+});
+
+type SprintTaskRowProps = {
+  task: TaskItem;
+  isDragOverlay?: boolean;
+};
+
+const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = false }) => {
+  const sortable = useSortable({ id: task.id, disabled: isDragOverlay });
+  const style = isDragOverlay
+    ? undefined
+    : { transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition };
+
+  return (
+    <div
+      ref={isDragOverlay ? undefined : sortable.setNodeRef}
+      style={style}
+      {...(isDragOverlay ? {} : sortable.attributes)}
+      {...(isDragOverlay ? {} : sortable.listeners)}
+      className={`flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing shadow-md' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+    >
+      <div className="flex items-center gap-3">
+        <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
+        <p className={`font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}>
+          {task.name}
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        <Avatar initials={task.assigneeInitials} size="xs" />
+        <span className="font-segoe-ui text-xs text-slate-700">{getAssigneeName(task.assigneeInitials)}</span>
+        <span
+          className={`rounded-lg px-2.5 py-1 font-segoe-ui text-xs font-medium ${task.status === 'Ukończone' ? 'border border-green-600 text-green-600' : 'bg-slate-100 text-slate-700'}`}
+        >
+          {task.status}
+        </span>
+        <span className="font-segoe-ui text-xs text-slate-500">{task.daysLeft}</span>
+      </div>
+    </div>
+  );
+};
+
+type SprintDropZoneProps = {
+  sprintId: string;
+  children: React.ReactNode;
+  className?: string;
+  isHighlighted?: boolean;
+};
+
+const SprintDropZone: React.FC<SprintDropZoneProps> = ({
+  sprintId,
+  children,
+  className = '',
+  isHighlighted = false,
+}) => {
+  const { setNodeRef, isOver } = useDroppable({ id: sprintId });
+  const showHighlight = isOver || isHighlighted;
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`min-h-28 bg-slate-50 transition-colors ${showHighlight ? 'bg-sky-50 ring-2 ring-inset ring-sky-400' : ''} ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
+
+type BacklogDropZoneProps = {
+  children: React.ReactNode;
+};
+
+const BacklogDropZone: React.FC<BacklogDropZoneProps> = ({ children }) => {
+  const { setNodeRef, isOver } = useDroppable({ id: BACKLOG_ID });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`rounded-lg transition-colors ${isOver ? 'bg-sky-50 ring-2 ring-inset ring-sky-400' : ''}`}
+    >
+      {children}
+    </div>
+  );
+};
+
+type ActiveDragItem =
+  | { source: 'backlog'; task: BacklogTask }
+  | { source: 'sprint'; task: TaskItem; sprintId: string };
 
 const polishMonths = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
 
@@ -162,7 +367,11 @@ const allSprintsData: SprintData[] = [
 const SprintsPage: React.FC = () => {
   const { projectSlug } = useParams();
   const project = projects.find((item) => item.slug === projectSlug);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
   const [sprints, setSprints] = useState<SprintData[]>(allSprintsData);
+  const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
+  const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
+  const [dragOverSprintId, setDragOverSprintId] = useState<string | null>(null);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-4', 'sprint-5', 'sprint-3']));
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
   const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
@@ -304,6 +513,138 @@ const SprintsPage: React.FC = () => {
     completed: sprints.filter((s) => s.status === 'Ukończony'),
   };
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragStart = ({ active }: DragStartEvent) => {
+    const activeId = String(active.id);
+    const backlogTask = backlogTasks.find((item) => item.id === activeId);
+    if (backlogTask) {
+      setActiveDragItem({ source: 'backlog', task: backlogTask });
+      return;
+    }
+
+    const sourceSprint = sprints.find((sprint) => sprint.tasks.some((task) => task.id === activeId));
+    const sprintTask = sourceSprint?.tasks.find((task) => task.id === activeId);
+    if (sourceSprint && sprintTask) {
+      setActiveDragItem({ source: 'sprint', task: sprintTask, sprintId: sourceSprint.id });
+    }
+  };
+
+  const findSprintByDropTarget = (overId: string) => {
+    const sprintById = sprints.find((sprint) => sprint.id === overId);
+    if (sprintById) {
+      return sprintById;
+    }
+
+    return sprints.find((sprint) => sprint.tasks.some((task) => task.id === overId));
+  };
+
+  const findSprintWithTask = (taskId: string) =>
+    sprints.find((sprint) => sprint.tasks.some((task) => task.id === taskId));
+
+  const isBacklogDropTarget = (overId: string) =>
+    overId === BACKLOG_ID || backlogTasks.some((task) => task.id === overId);
+
+  const isSprintDropHighlighted = (sprintId: string) =>
+    dragOverSprintId === sprintId && expandedSprints.has(sprintId);
+
+  const handleDragOver = ({ over }: DragOverEvent) => {
+    if (!over) {
+      setDragOverSprintId(null);
+      return;
+    }
+
+    const overId = String(over.id);
+
+    if (isBacklogDropTarget(overId)) {
+      setDragOverSprintId(null);
+      return;
+    }
+
+    const targetSprint = findSprintByDropTarget(overId);
+    setDragOverSprintId(targetSprint?.id ?? null);
+  };
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    setActiveDragItem(null);
+    setDragOverSprintId(null);
+    if (!over) {
+      return;
+    }
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    const sourceSprint = findSprintWithTask(activeId);
+    const backlogTask = backlogTasks.find((task) => task.id === activeId);
+
+    if (isBacklogDropTarget(overId)) {
+      if (!sourceSprint) {
+        return;
+      }
+
+      const sprintTask = sourceSprint.tasks.find((task) => task.id === activeId);
+      if (!sprintTask) {
+        return;
+      }
+
+      setSprints((currentSprints) =>
+        currentSprints.map((sprint) =>
+          sprint.id === sourceSprint.id
+            ? syncSprintCounts({ ...sprint, tasks: sprint.tasks.filter((task) => task.id !== activeId) })
+            : sprint,
+        ),
+      );
+      setBacklogTasks((currentTasks) => [...currentTasks, sprintTaskToBacklog(sprintTask)]);
+      return;
+    }
+
+    const targetSprint = findSprintByDropTarget(overId);
+    if (!targetSprint || !expandedSprints.has(targetSprint.id)) {
+      return;
+    }
+
+    if (sourceSprint?.id === targetSprint.id) {
+      return;
+    }
+
+    if (backlogTask) {
+      setBacklogTasks((currentTasks) => currentTasks.filter((task) => task.id !== activeId));
+      setSprints((currentSprints) =>
+        currentSprints.map((sprint) =>
+          sprint.id === targetSprint.id
+            ? syncSprintCounts({
+                ...sprint,
+                tasks: [...sprint.tasks, backlogToSprintTask(backlogTask)],
+              })
+            : sprint,
+        ),
+      );
+      return;
+    }
+
+    if (sourceSprint) {
+      const sprintTask = sourceSprint.tasks.find((task) => task.id === activeId);
+      if (!sprintTask) {
+        return;
+      }
+
+      setSprints((currentSprints) =>
+        currentSprints.map((sprint) => {
+          if (sprint.id === sourceSprint.id) {
+            return syncSprintCounts({ ...sprint, tasks: sprint.tasks.filter((task) => task.id !== activeId) });
+          }
+          if (sprint.id === targetSprint.id) {
+            return syncSprintCounts({ ...sprint, tasks: [...sprint.tasks, sprintTask] });
+          }
+          return sprint;
+        }),
+      );
+    }
+  };
+
   if (!project) {
     return (
       <div className="min-h-screen w-full bg-[#F9FAFB]">
@@ -323,12 +664,21 @@ const SprintsPage: React.FC = () => {
       <SideBar />
       <TopBar />
 
-      <main className="ml-64 pt-(--app-header-h)">
-        <ProjectTopBar project={project} viewMode="scrum" />
+      <main className="ml-64 flex h-screen flex-col overflow-hidden pt-(--app-header-h)">
+        <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
-        <section className="mx-6 mt-6 pb-8">
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-            <div className="min-w-0 space-y-6">
+        <section className="mx-6 mt-6 mb-6 flex min-h-0 flex-1 flex-col overflow-y-auto xl:overflow-hidden">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragCancel={() => setDragOverSprintId(null)}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="grid min-h-0 flex-1 gap-6 overflow-hidden xl:grid-cols-[minmax(0,1fr)_18rem]">
+            <div className="min-w-0 space-y-6 overscroll-contain pr-1 xl:min-h-0 xl:overflow-y-auto">
               {/* Aktywne sprinty */}
               {groupedSprints.active.length > 0 && (
                 <div>
@@ -337,7 +687,7 @@ const SprintsPage: React.FC = () => {
                     {groupedSprints.active.map((sprint) => (
                       <div
                         key={sprint.id}
-                        className="overflow-hidden rounded-xl border-2 border-sky-400"
+                        className={`overflow-hidden rounded-xl border-2 border-sky-400 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
                       >
                         <div className="border-b border-slate-200 bg-white px-5 py-4">
                           <div className="flex items-center justify-between gap-4">
@@ -375,26 +725,27 @@ const SprintsPage: React.FC = () => {
                         </div>
 
                         {expandedSprints.has(sprint.id) && (
-                          <div className="bg-slate-50 px-4 py-3">
-                            <div className="space-y-3">
-                              {sprint.tasks.map((task) => (
-                                <div key={task.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3">
-                                  <div className="flex items-center gap-3">
-                                    <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
-                                    <p className={`font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}>{task.name}</p>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    <Avatar initials={task.assigneeInitials} size="xs" />
-                                    <span className="font-segoe-ui text-xs text-slate-700">{task.assigneeInitials === 'AN' ? 'Artur Nowak' : task.assigneeInitials === 'EB' ? 'Eryk Baczyński' : 'Maria Kowalska'}</span>
-                                    <span className={`rounded-lg px-2.5 py-1 font-segoe-ui text-xs font-medium ${task.status === 'Ukończone' ? 'border border-green-600 text-green-600' : 'bg-slate-100 text-slate-700'}`}>
-                                      {task.status}
-                                    </span>
-                                    <span className="font-segoe-ui text-xs text-slate-500">{task.daysLeft}</span>
-                                  </div>
+                          <SprintDropZone
+                            sprintId={sprint.id}
+                            className="px-4 py-3"
+                            isHighlighted={isSprintDropHighlighted(sprint.id)}
+                          >
+                            {sprint.tasks.length === 0 ? (
+                              <div className="py-7 text-center">
+                                <p className="font-segoe-ui text-sm font-medium text-slate-500">
+                                  Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
+                                </p>
+                              </div>
+                            ) : (
+                              <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-3">
+                                  {sprint.tasks.map((task) => (
+                                    <SprintTaskRow key={task.id} task={task} />
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          </div>
+                              </SortableContext>
+                            )}
+                          </SprintDropZone>
                         )}
                       </div>
                     ))}
@@ -410,7 +761,7 @@ const SprintsPage: React.FC = () => {
                     {groupedSprints.planned.map((sprint) => (
                       <div
                         key={sprint.id}
-                        className="overflow-hidden rounded-xl border border-slate-200"
+                        className={`overflow-hidden rounded-xl border border-slate-200 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
                       >
                         <div className="border-b border-slate-200 bg-white px-5 py-4">
                           <div className="flex items-center justify-between gap-4">
@@ -448,9 +799,27 @@ const SprintsPage: React.FC = () => {
                         </div>
 
                         {expandedSprints.has(sprint.id) && (
-                          <div className="bg-slate-50 px-5 py-11 text-center">
-                            <p className="font-segoe-ui text-sm font-medium text-slate-500">Brak zadań w tym sprincie</p>
-                          </div>
+                          <SprintDropZone
+                            sprintId={sprint.id}
+                            className="px-5 py-4"
+                            isHighlighted={isSprintDropHighlighted(sprint.id)}
+                          >
+                            {sprint.tasks.length === 0 ? (
+                              <div className="py-7 text-center">
+                                <p className="font-segoe-ui text-sm font-medium text-slate-500">
+                                  Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
+                                </p>
+                              </div>
+                            ) : (
+                              <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-3">
+                                  {sprint.tasks.map((task) => (
+                                    <SprintTaskRow key={task.id} task={task} />
+                                  ))}
+                                </div>
+                              </SortableContext>
+                            )}
+                          </SprintDropZone>
                         )}
                       </div>
                     ))}
@@ -466,9 +835,8 @@ const SprintsPage: React.FC = () => {
                     {groupedSprints.completed.map((sprint) => (
                       <div
                         key={sprint.id}
-                        className="rounded-xl border border-slate-200 overflow-hidden"
+                        className={`overflow-hidden rounded-xl border border-slate-200 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
                       >
-                        {/* Header */}
                         <div className="border-b border-slate-200 bg-white px-5 py-4">
                           <div className="flex items-center justify-between gap-4">
                             <button
@@ -502,28 +870,28 @@ const SprintsPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Tasks */}
                         {expandedSprints.has(sprint.id) && (
-                          <div className="bg-slate-50 px-5 py-3">
-                            <div className="space-y-2">
-                              {sprint.tasks.map((task) => (
-                              <div key={task.id} className="flex items-center justify-between rounded-lg bg-white px-4 py-3">
-                                <div className="flex items-center gap-3">
-                                  <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
-                                  <p className={`font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}>{task.name}</p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <Avatar initials={task.assigneeInitials} size="xs" />
-                                  <span className="font-segoe-ui text-xs text-slate-700">{task.assigneeInitials === 'AN' ? 'Artur Nowak' : task.assigneeInitials === 'EB' ? 'Eryk Baczyński' : 'Maria Kowalska'}</span>
-                                  <span className={`rounded-full px-2.5 py-1 font-segoe-ui text-xs font-medium ${task.status === 'Ukończone' ? 'border border-green-600 text-green-600' : 'bg-slate-100 text-slate-700'}`}>
-                                    {task.status}
-                                  </span>
-                                  <span className="font-segoe-ui text-xs text-slate-500">{task.daysLeft}</span>
-                                </div>
+                          <SprintDropZone
+                            sprintId={sprint.id}
+                            className="px-5 py-3"
+                            isHighlighted={isSprintDropHighlighted(sprint.id)}
+                          >
+                            {sprint.tasks.length === 0 ? (
+                              <div className="py-7 text-center">
+                                <p className="font-segoe-ui text-sm font-medium text-slate-500">
+                                  Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
+                                </p>
                               </div>
-                              ))}
-                            </div>
-                          </div>
+                            ) : (
+                              <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-2">
+                                  {sprint.tasks.map((task) => (
+                                    <SprintTaskRow key={task.id} task={task} />
+                                  ))}
+                                </div>
+                              </SortableContext>
+                            )}
+                          </SprintDropZone>
                         )}
                       </div>
                     ))}
@@ -534,7 +902,7 @@ const SprintsPage: React.FC = () => {
             </div>
 
             {/* Filtry po prawej */}
-            <aside className="flex flex-col gap-4">
+            <aside className="flex min-h-0 flex-col gap-4 overscroll-contain pl-1 xl:min-h-0 xl:overflow-y-auto">
               {/* Sprinty */}
               <section className="rounded-[10px] border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Sprinty</h3>
@@ -638,9 +1006,11 @@ const SprintsPage: React.FC = () => {
               </section>
 
               {/* Backlog */}
-              <section className="rounded-[10px] border border-gray-200 bg-white p-4">
+              <section className="rounded-[10px] border border-gray-200 bg-white p-4" data-backlog-id={BACKLOG_ID}>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-segoe-ui text-[14px] font-medium text-slate-900">Backlog (4)</h3>
+                  <h3 className="font-segoe-ui text-[14px] font-medium text-slate-900">
+                    Backlog ({backlogTasks.length})
+                  </h3>
                   <button
                     type="button"
                     className="flex h-6 w-6 items-center justify-center rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium text-white hover:bg-blue-600"
@@ -649,28 +1019,29 @@ const SprintsPage: React.FC = () => {
                     +
                   </button>
                 </div>
-                <div className="flex flex-col gap-2">
-                  {[
-                    { id: 'code-refactor', name: 'Code refactoring - user module', color: 'green', assignee: 'AN', assigneeName: 'Artur Nowak' },
-                    { id: 'doc-update', name: 'Documentation update', color: 'yellow', assignee: 'EB', assigneeName: 'Eryk Baczyński' },
-                    { id: 'e2e-setup', name: 'E2E testing setup', color: 'red', assignee: 'EB', assigneeName: 'Eryk Baczyński' },
-                    { id: 'mobile-responsive', name: 'Mobile responsiveness', color: 'yellow', assignee: 'MK', assigneeName: 'Maria Kowalska' },
-                  ].map((task) => (
-                    <div key={task.id} className="rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100">
-                      <div className=" flex mb-1 items-start gap-2">
-                        <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${taskColorMap[task.color as keyof typeof taskColorMap]}`} />
-                        <p className="font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Avatar initials={task.assignee} size="xs" />
-                        <span className="font-segoe-ui text-[10px] tracking-[0.12px] leading-4 text-slate-700">{task.assigneeName}</span>
-                      </div>
+                <BacklogDropZone>
+                  <SortableContext items={backlogTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                    <div className="flex flex-col gap-2">
+                      {backlogTasks.map((task) => (
+                        <BacklogTaskCard key={task.id} task={task} />
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </SortableContext>
+                </BacklogDropZone>
               </section>
             </aside>
-          </div>
+            </div>
+            </div>
+
+            <DragOverlay>
+              {activeDragItem?.source === 'backlog' ? (
+                <BacklogTaskCard task={activeDragItem.task} isDragOverlay />
+              ) : null}
+              {activeDragItem?.source === 'sprint' ? (
+                <SprintTaskRow task={activeDragItem.task} isDragOverlay />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         </section>
       </main>
 

@@ -3,12 +3,45 @@ import { useParams, Link } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, FileSignature, MoreVertical } from 'lucide-react';
-import { companies, type Company } from '../data/companies';
+import { companies } from '../data/companies';
 import { projects } from '../data/projects';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
 import CompanyAttachProjectModal from '../components/CompanyAttachProjectModal';
 import type { ProjectData } from '../data/projects';
+import { useUpdateCompany } from '../hooks/useUpdateCompany';
+import { useCompany } from '../hooks/useCompany';
+import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
+import { useAddCompanyNote } from '../hooks/useAddCompanyNote';
+import { useCompanyNotes } from '../hooks/useCompanyNotes';
+import type { ContactPerson } from '../types/contact';
+import type { CompanyNote } from '../types/company';
+
+const isGuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+const emptyDisplay = (value: string | null | undefined) => value?.trim() || '—';
+
+const formatBackendDate = (date: string) =>
+  new Date(date).toLocaleString('pl-PL', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+type CompanyDisplay = {
+  id: string;
+  name: string;
+  nip: string;
+  regon: string;
+  companyNumber: string;
+  address: string;
+  emails: string[];
+  contacts: ContactPerson[];
+  projectCount: number;
+};
 
 type CooperationHistoryItem = {
   id: string;
@@ -29,6 +62,21 @@ type NoteItem = {
   dateLabel: string;
   content: string;
 };
+
+const toNoteItem = (note: CompanyNote): NoteItem => {
+  const authorName = note.author?.name?.trim() || 'Nieznany autor';
+  const nameParts = authorName.split(' ').filter(Boolean);
+
+  return {
+    id: note.id,
+    author: authorName,
+    avatarInitials: nameParts.map((part) => part.charAt(0)).join('').toUpperCase().slice(0, 2) || '??',
+    dateLabel: formatBackendDate(note.createdAt),
+    content: note.content,
+  };
+};
+
+const isOptimisticNoteId = (id: string) => id.startsWith('note-');
 
 const cooperationHistory: CooperationHistoryItem[] = [
   {
@@ -88,19 +136,62 @@ const initialNotes: NoteItem[] = [
 
 const CompanyDetailsPage: React.FC = () => {
   const { companySlug } = useParams();
-  const company = companies.find((item) => item.slug === companySlug);
-  const [displayedCompany, setDisplayedCompany] = useState<Company | null>(company ?? null);
+  const companyId = companySlug ?? '';
+  const isApiRoute = isGuid(companyId);
+
+  const { data: apiCompany, isLoading, isError, error } = useCompany(isApiRoute ? companyId : '');
+  const mockCompany = !isApiRoute ? companies.find((item) => item.slug === companySlug) : undefined;
+
+  const displayedCompany: CompanyDisplay | null = apiCompany
+    ? {
+        id: apiCompany.id,
+        name: apiCompany.name,
+        nip: emptyDisplay(apiCompany.nip),
+        regon: emptyDisplay(apiCompany.regon),
+        companyNumber: emptyDisplay(apiCompany.krs),
+        address: emptyDisplay(apiCompany.address),
+        emails: [
+          ...new Set(
+            apiCompany.contacts
+              .map((contact) => contact.email)
+              .filter((email): email is string => Boolean(email?.trim())),
+          ),
+        ],
+        contacts: apiCompany.contacts,
+        projectCount: apiCompany.projectCount,
+      }
+    : mockCompany
+      ? {
+          id: String(mockCompany.id),
+          name: mockCompany.name,
+          nip: mockCompany.nip,
+          regon: mockCompany.regon,
+          companyNumber: mockCompany.companyNumber,
+          address: mockCompany.address,
+          emails: mockCompany.emails.filter(Boolean),
+          contacts: mockCompany.contacts.map((contact, index) => ({
+            id: String(contact.id),
+            name: contact.name,
+            role: contact.role,
+            email: contact.email,
+            phone: contact.phone,
+            isPrimary: index === 0,
+          })),
+          projectCount: mockCompany.projectsCount,
+        }
+      : null;
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isContactAddModalOpen, setIsContactAddModalOpen] = useState(false);
   const [isAttachProjectModalOpen, setIsAttachProjectModalOpen] = useState(false);
   const [selectedAttachProjectId, setSelectedAttachProjectId] = useState<number | null>(null);
   const [projectClientOverrides, setProjectClientOverrides] = useState<Record<number, string>>({});
   const [draft, setDraft] = useState<CompanyEditDraft>({
-    name: company?.name ?? '',
-    nip: company?.nip ?? '',
-    krs: company?.companyNumber ?? '',
-    regon: company?.regon ?? '',
-    address: company?.address ?? '',
+    name: '',
+    nip: '',
+    krs: '',
+    regon: '',
+    address: '',
   });
   const [contactDraft, setContactDraft] = useState<CompanyContactDraft>({
     name: '',
@@ -109,7 +200,6 @@ const CompanyDetailsPage: React.FC = () => {
     phone: '',
     isMainContact: false,
   });
-  const mainContact = displayedCompany?.contacts[0];
 
   const getProjectClientName = (project: ProjectData) =>
     projectClientOverrides[project.id] ?? project.clientName;
@@ -121,19 +211,42 @@ const CompanyDetailsPage: React.FC = () => {
   const availableAttachProjects = displayedCompany
     ? projects.filter((project) => getProjectClientName(project) !== displayedCompany.name)
     : [];
+
   const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
 
   const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
   const [newNoteText, setNewNoteText] = useState('');
+  const { mutate: updateCompany, isPending: isSavingCompany, isError: isUpdateCompanyError, error: updateCompanyError, reset: resetUpdateCompany } = useUpdateCompany();
+  const {
+    mutate: addContact,
+    isPending: isAddingContact,
+    isError: isAddContactError,
+    error: addContactError,
+    reset: resetAddContact,
+  } = useAddCompanyContact();
+  const {
+    data: notesData,
+    isLoading: isNotesLoading,
+    isError: isNotesError,
+  } = useCompanyNotes(isApiRoute ? companyId : '');
+  const {
+    mutate: createNote,
+    isPending: isAddingNote,
+    isError: isAddNoteError,
+    error: addNoteError,
+  } = useAddCompanyNote();
+
+  const totalNotesCount = isApiRoute ? (notesData?.totalCount ?? 0) : notes.length;
 
   useEffect(() => {
-    setDisplayedCompany(company ?? null);
+    if (!displayedCompany) return;
+
     setDraft({
-      name: company?.name ?? '',
-      nip: company?.nip ?? '',
-      krs: company?.companyNumber ?? '',
-      regon: company?.regon ?? '',
-      address: company?.address ?? '',
+      name: displayedCompany.name,
+      nip: displayedCompany.nip === '—' ? '' : displayedCompany.nip,
+      krs: displayedCompany.companyNumber === '—' ? '' : displayedCompany.companyNumber,
+      regon: displayedCompany.regon === '—' ? '' : displayedCompany.regon,
+      address: displayedCompany.address === '—' ? '' : displayedCompany.address,
     });
     setContactDraft({
       name: '',
@@ -147,7 +260,47 @@ const CompanyDetailsPage: React.FC = () => {
     setIsAttachProjectModalOpen(false);
     setSelectedAttachProjectId(null);
     setProjectClientOverrides({});
-  }, [company]);
+    setNotes(isApiRoute ? [] : initialNotes);
+  }, [displayedCompany?.id, isApiRoute]);
+
+  useEffect(() => {
+    if (!isApiRoute || !notesData) return;
+
+    const fetchedNotes = Array.isArray(notesData.items) ? notesData.items : [];
+
+    setNotes((prev) => {
+      const optimistic = prev.filter((note) => isOptimisticNoteId(note.id));
+      return [...optimistic, ...fetchedNotes.map(toNoteItem)];
+    });
+  }, [notesData, isApiRoute]);
+
+  if (isApiRoute && isLoading) {
+    return (
+      <div className="min-h-screen w-full bg-[#F9FAFB]">
+        <SideBar />
+        <TopBar />
+        <main className="ml-64 pt-(--app-header-h)">
+          <section className="mx-8 mt-6 rounded-[14px] border border-gray-200 bg-white p-6 text-sm text-slate-500">
+            Ładowanie...
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (isApiRoute && isError) {
+    return (
+      <div className="min-h-screen w-full bg-[#F9FAFB]">
+        <SideBar />
+        <TopBar />
+        <main className="ml-64 pt-(--app-header-h)">
+          <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
+            Błąd: {error.message}
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (!displayedCompany) {
     return (
@@ -164,22 +317,29 @@ const CompanyDetailsPage: React.FC = () => {
     );
   }
 
+  const contactsToShow = displayedCompany.contacts;
+  const mainContactId =
+    contactsToShow.find((contact) => contact.isPrimary)?.id ?? contactsToShow[0]?.id;
+
   const openEditModal = () => {
+    resetUpdateCompany();
     setDraft({
       name: displayedCompany.name,
-      nip: displayedCompany.nip,
-      krs: displayedCompany.companyNumber,
-      regon: displayedCompany.regon,
-      address: displayedCompany.address,
+      nip: displayedCompany.nip === '—' ? '' : displayedCompany.nip,
+      krs: displayedCompany.companyNumber === '—' ? '' : displayedCompany.companyNumber,
+      regon: displayedCompany.regon === '—' ? '' : displayedCompany.regon,
+      address: displayedCompany.address === '—' ? '' : displayedCompany.address,
     });
     setIsEditModalOpen(true);
   };
 
   const closeEditModal = () => {
+    resetUpdateCompany();
     setIsEditModalOpen(false);
   };
 
   const openContactAddModal = () => {
+    resetAddContact();
     setContactDraft({
       name: '',
       role: '',
@@ -191,27 +351,46 @@ const CompanyDetailsPage: React.FC = () => {
   };
 
   const closeContactAddModal = () => {
+    resetAddContact();
     setIsContactAddModalOpen(false);
   };
 
   const saveCompanyChanges = () => {
-    setDisplayedCompany((prev) =>
-      prev
-        ? {
-            ...prev,
-            name: draft.name,
-            nip: draft.nip,
-            companyNumber: draft.krs,
-            regon: draft.regon,
-            address: draft.address,
-          }
-        : prev,
+    updateCompany(
+      {
+        id: displayedCompany.id,
+        data: {
+          name: draft.name,
+          nip: draft.nip || null,
+          krs: draft.krs || null,
+          regon: draft.regon || null,
+          address: draft.address || null,
+        },
+      },
+      {
+        onSuccess: () => {
+          closeEditModal();
+        },
+      },
     );
-    setIsEditModalOpen(false);
   };
 
   const saveContactChanges = () => {
-    setIsContactAddModalOpen(false);
+    addContact(
+      {
+        companyId: displayedCompany.id,
+        data: {
+          name: contactDraft.name || null,
+          role: contactDraft.role || null,
+          email: contactDraft.email || null,
+          phone: contactDraft.phone || null,
+          isPrimary: contactDraft.isMainContact,
+        },
+      },
+      {
+        onSuccess: () => closeContactAddModal(),
+      },
+    );
   };
 
   const openAttachProjectModal = () => {
@@ -238,22 +417,74 @@ const CompanyDetailsPage: React.FC = () => {
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNoteText.trim()) return;
+    if (!newNoteText.trim() || isAddingNote) return;
+
+    const contentToSend = newNoteText.trim();
 
     const now = new Date();
     const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
     const formattedDate = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const newNote: NoteItem = {
+    const optimisticNote: NoteItem = {
       id: `note-${Date.now()}`,
       author: 'Artur Nowak',
       avatarInitials: 'AN',
       dateLabel: formattedDate,
-      content: newNoteText.trim(),
+      content: contentToSend,
     };
 
-    setNotes([newNote, ...notes]);
+    setNotes((prev) => [optimisticNote, ...prev]);
     setNewNoteText('');
+
+    if (isApiRoute && companyId) {
+      createNote(
+        {
+          companyId,
+          data: {
+            content: contentToSend,
+          },
+        },
+        {
+          onSuccess: (createdNote: any) => {
+            let backendAuthorName = 'Artur Nowak';
+            let backendInitials = 'AN';
+
+            if (createdNote?.author) {
+              const name = createdNote.author.name || 'Artur Nowak';
+              backendAuthorName = name;
+
+              const nameParts = name.split(' ');
+              backendInitials = nameParts.map((n: string) => n.charAt(0)).join('').toUpperCase().substring(0, 2) || 'AN';
+            }
+
+            setNotes((prev) =>
+              prev.map((n) =>
+                n.id === optimisticNote.id
+                  ? {
+                      ...n,
+                      id: String(createdNote?.id ?? n.id),
+                      author: backendAuthorName,
+                      avatarInitials: backendInitials,
+                      dateLabel: createdNote?.createdAt
+                        ? new Date(createdNote.createdAt).toLocaleString('pl-PL', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : n.dateLabel,
+                    }
+                  : n,
+              ),
+            );
+          },
+          onError: () => {
+            setNotes((prev) => prev.filter((n) => n.id !== optimisticNote.id));
+          },
+        },
+      );
+    }
   };
 
   return (
@@ -331,11 +562,15 @@ const CompanyDetailsPage: React.FC = () => {
                     <h3 className="font-regular text-sm leading-5  text-gray-700">Adresy email</h3>
                   </div>
                   <div className="space-y-1">
-                    {displayedCompany.emails.map((email, index) => (
-                      <p key={index} className="text-sm text-gray-800">
-                        {email}
-                      </p>
-                    ))}
+                    {displayedCompany.emails.length > 0 ? (
+                      displayedCompany.emails.map((email, index) => (
+                        <p key={index} className="text-sm text-gray-800">
+                          {email}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-800">—</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -343,40 +578,39 @@ const CompanyDetailsPage: React.FC = () => {
               <div>
                 <h3 className="mb-6 text-lg font-semibold text-gray-900">Osoby kontaktowe</h3>
                 <div className="space-y-3">
-                  {displayedCompany.contacts.map((contact) => (
+                  {contactsToShow.map((contact) => (
                     <div
                       key={contact.id}
                       className="flex items-center justify-between bg-[#F9FAFB] border border-gray-200 rounded-[10px] p-4"
                     >
                       <div className="flex flex-col">
                         <div className="flex items-center gap-3">
-                          <h4 className="font-medium text-gray-900">{contact.name}</h4>
-                          {mainContact && contact.id === mainContact.id && (
+                          <h4 className="font-medium text-gray-900">{contact.name ?? '—'}</h4>
+                          {mainContactId != null && contact.id === mainContactId && (
                             <span className="rounded-full bg-scrumdone-blue-main px-2 py-1 text-xs font-medium text-white">
                               Główny kontakt
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">{contact.role}</p>
+                        <p className="text-sm text-gray-500 mt-1">{contact.role ?? '—'}</p>
                         <div className="mt-3 mx-auto flex max-w-180 items-center justify-center gap-6 text-sm text-gray-600">
                           <div className="flex items-center gap-3">
                             <Mail className="w-4 h-4 text-gray-400" />
-                            <span>{contact.email}</span>
+                            <span>{contact.email ?? '—'}</span>
                           </div>
 
                           <div className="flex items-center gap-3 text-sm text-gray-600">
                             <Phone className="w-4 h-4 text-gray-400" />
-                            <span>{contact.phone}</span>
+                            <span>{contact.phone ?? '—'}</span>
                           </div>
                         </div>
                       </div>
-
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-between p-6 items-center">
               <div className="relative inline-grid h-9 w-fit grid-cols-3 rounded-[14px] bg-[#E5E7EB] p-0.75 ml-3">
                 <span
@@ -396,7 +630,7 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('projects')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'projects' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Aktywne projekty ({activeProjects.length})
+                  Aktywne projekty ({isApiRoute ? displayedCompany.projectCount : activeProjects.length})
                 </button>
                 <button
                   type="button"
@@ -410,10 +644,10 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('notes')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'notes' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Notatki ({notes.length})
+                  Notatki ({isApiRoute && isNotesLoading ? '...' : totalNotesCount})
                 </button>
               </div>
-              
+
               <button
                 type="button"
                 onClick={openAttachProjectModal}
@@ -434,7 +668,6 @@ const CompanyDetailsPage: React.FC = () => {
                         to={`/projects/${project.slug}`}
                         className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-2 hover:shadow-lg transition-shadow duration-300"
                       >
-                        {/* NAZWA I STATUS */}
                         <div className="flex justify-between items-start">
                           <div className="flex flex-col gap-1">
                             <h3 className="text-xl text-gray-900 font-medium">{project.name}</h3>
@@ -444,29 +677,26 @@ const CompanyDetailsPage: React.FC = () => {
                           </span>
                         </div>
 
-                        {/* OPIS */}
                         <p className="text-sm text-gray-700 leading-relaxed min-h-0">
                           {project.description}
                         </p>
 
-                        {/* SZCZEGÓŁY W JEDNEJ LINII Z KROPKĄ */}
                         <div className="flex items-center gap-2 text-gray-700 text-sm mt-1">
                           <span>{project.startDate} - {project.endDate}</span>
                           <span className="text-gray-400">•</span>
                           <span>{project.membersCount} członków</span>
                         </div>
 
-                        {/* PROGRESS BAR */}
                         <div className="mt-2">
                           <div className="flex justify-between text-sm mb-1">
                             <span className="text-gray-700">Postęp</span>
                             <span className="text-gray-700">{project.progress}%</span>
                           </div>
                           <div className="w-full bg-gray-300 rounded-full h-2">
-                            <div 
-                              className="bg-black h-2 rounded-full transition-all duration-500" 
+                            <div
+                              className="bg-black h-2 rounded-full transition-all duration-500"
                               style={{ width: `${project.progress}%` }}
-                            ></div>
+                            />
                           </div>
                         </div>
                       </Link>
@@ -494,7 +724,7 @@ const CompanyDetailsPage: React.FC = () => {
                       {index < cooperationHistory.length - 1 && (
                         <span
                           aria-hidden="true"
-                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon shadow-md)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
+                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon-size)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
                         />
                       )}
 
@@ -532,26 +762,46 @@ const CompanyDetailsPage: React.FC = () => {
               <section className="mx-8 mb-8 rounded-[14px] border border-gray-200 bg-white p-6 flex flex-col gap-6">
                 <div>
                   <h3 className="text-sm text-gray-900 mb-3">Dodaj nową notatkę</h3>
+                  {isAddNoteError && (
+                    <div className="mb-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                      {addNoteError?.message || 'Błąd podczas dodawania notatki'}
+                    </div>
+                  )}
                   <form onSubmit={handleAddNote} className="flex flex-col gap-3">
                     <textarea
                       value={newNoteText}
                       onChange={(e) => setNewNoteText(e.target.value)}
                       placeholder="Wpisz treść notatki..."
-                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all"
+                      disabled={isAddingNote}
+                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all disabled:opacity-60"
                     />
                     <button
                       type="submit"
-                      disabled={!newNoteText.trim()}
+                      disabled={!newNoteText.trim() || isAddingNote}
                       className="self-start h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] disabled:opacity-50 disabled:hover:bg-scrumdone-blue-main text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
                     >
                       <PlusIcon className="w-4 h-4 stroke-2" />
-                      <span>Dodaj notatkę</span>
+                      <span>{isAddingNote ? 'Dodawanie...' : 'Dodaj notatkę'}</span>
                     </button>
                   </form>
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  {notes.map((note) => (
+                  {isApiRoute && isNotesLoading && (
+                    <p className="text-sm text-gray-500 py-4 animate-pulse">Ładowanie notatek z serwera...</p>
+                  )}
+
+                  {isApiRoute && isNotesError && (
+                    <p className="text-sm text-red-500 py-4">Wystąpił błąd podczas pobierania notatek z backendu.</p>
+                  )}
+
+                  {isApiRoute && !isNotesLoading && !isNotesError && notes.length === 0 && (
+                    <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                      Brak notatek dla tej firmy. Dodaj pierwszą notatkę powyżej.
+                    </div>
+                  )}
+
+                  {(!isApiRoute || (!isNotesLoading && !isNotesError)) && notes.map((note) => (
                     <article key={note.id} className="rounded-xl bg-[#F9FAFB] border border-gray-200 p-4 flex flex-col gap-3 relative group">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -567,7 +817,7 @@ const CompanyDetailsPage: React.FC = () => {
                           <MoreVertical className="w-5 h-5 stroke-[1.5]" />
                         </button>
                       </div>
-                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased">
+                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased whitespace-pre-wrap">
                         {note.content}
                       </p>
                     </article>
@@ -585,6 +835,8 @@ const CompanyDetailsPage: React.FC = () => {
         onClose={closeEditModal}
         onSave={saveCompanyChanges}
         onDraftChange={setDraft}
+        isSaving={isSavingCompany}
+        errorMessage={isUpdateCompanyError ? updateCompanyError?.message : null}
       />
 
       <CompanyContactAddModal
@@ -593,6 +845,8 @@ const CompanyDetailsPage: React.FC = () => {
         onClose={closeContactAddModal}
         onSave={saveContactChanges}
         onDraftChange={setContactDraft}
+        isSaving={isAddingContact}
+        errorMessage={isAddContactError ? addContactError?.message : null}
       />
 
       <CompanyAttachProjectModal
