@@ -664,10 +664,10 @@ const SprintsPage: React.FC = () => {
       <SideBar />
       <TopBar />
 
-      <main className="ml-64 pt-(--app-header-h)">
+      <main className="ml-64 flex h-screen flex-col overflow-hidden pt-(--app-header-h)">
         <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
-        <section className="mx-6 mt-6 mb-8">
+        <section className="mx-6 mt-6 mb-6 flex min-h-0 flex-1 flex-col overflow-y-auto xl:overflow-hidden">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
@@ -676,8 +676,9 @@ const SprintsPage: React.FC = () => {
             onDragCancel={() => setDragOverSprintId(null)}
             onDragEnd={handleDragEnd}
           >
-            <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-            <div className="min-w-0 space-y-6 pr-1">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="grid min-h-0 flex-1 gap-6 overflow-hidden xl:grid-cols-[minmax(0,1fr)_18rem]">
+            <div className="min-w-0 space-y-6 overscroll-contain pr-1 xl:min-h-0 xl:overflow-y-auto">
               {/* Aktywne sprinty */}
               {groupedSprints.active.length > 0 && (
                 <div>
@@ -901,7 +902,7 @@ const SprintsPage: React.FC = () => {
             </div>
 
             {/* Filtry po prawej */}
-            <aside className="sticky top-(--app-header-h) flex max-h-[calc(100vh-var(--app-header-h))] flex-col gap-4 overflow-y-auto pl-1">
+            <aside className="flex min-h-0 flex-col gap-4 overscroll-contain pl-1 xl:min-h-0 xl:overflow-y-auto">
               {/* Sprinty */}
               <section className="rounded-[10px] border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Sprinty</h3>
@@ -1029,6 +1030,7 @@ const SprintsPage: React.FC = () => {
                 </BacklogDropZone>
               </section>
             </aside>
+            </div>
             </div>
 
             <DragOverlay>
