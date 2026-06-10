@@ -96,29 +96,25 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpPost("{id}/members/{userId}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpPut("{id}/members")]
+        [ProducesResponseType(typeof(IEnumerable<Guid>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> AddMember([FromRoute] Guid id, [FromRoute] Guid userId)
+        public async Task<IActionResult> UpdateMembers(
+            [FromRoute] Guid id,
+            [FromBody] ProjectMembersUpdateDto dto,
+            [FromServices] IValidator<ProjectMembersUpdateDto> validator) // add limit on allowed team members
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
+            await validator.ValidateAndThrowAsync(dto);
 
-        [HttpDelete("{id}/members/{userId}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> RemoveMember([FromRoute] Guid id, [FromRoute] Guid userId)
-        {
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
         // /projects/{id}/sprints
 
         [HttpGet("{id}/sprints")]
-        [ProducesResponseType(typeof(IEnumerable<SprintSummaryDto>), StatusCodes.Status200OK)]  // ← Summary
+        [ProducesResponseType(typeof(PagedResultDto<SprintSummaryDto>), StatusCodes.Status200OK)]  // ← Summary
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetSprints(
@@ -165,8 +161,8 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateAssignmentLabel(
             [FromRoute] Guid id,
-            [FromBody] AssignmentLabelCreateDto dto,
-            [FromServices] IValidator<AssignmentLabelCreateDto> validator)
+            [FromBody] LabelCreateDto dto,
+            [FromServices] IValidator<LabelCreateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
             return StatusCode(StatusCodes.Status501NotImplemented);
@@ -180,30 +176,20 @@ namespace ScrumDone.Api.Controllers
         public async Task<IActionResult> UpdateAssignmentLabel(
             [FromRoute] Guid id,
             [FromRoute] Guid labelId,
-            [FromBody] AssignmentLabelUpdateDto dto,
-            [FromServices] IValidator<AssignmentLabelUpdateDto> validator)
+            [FromBody] LabelUpdateDto dto,
+            [FromServices] IValidator<LabelUpdateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpDelete("{id:guid}/assignment-labels/{labelId:guid}")]
+        [HttpDelete("{id}/assignment-labels/{labelId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteAssignmentLabel(
             [FromRoute] Guid id,
             [FromRoute] Guid labelId)
-        {
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
-
-        // /projects/{id}/statuses
-
-        [HttpGet]
-        [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetUsers()
         {
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
