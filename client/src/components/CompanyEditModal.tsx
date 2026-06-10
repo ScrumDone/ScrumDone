@@ -96,15 +96,15 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
             <div className="flex items-start justify-between px-6 pb-4 pt-8">
               <div>
                 <h2 className="mb-1 text-[18px] font-semibold text-slate-900">Dodaj wydarzenie do historii</h2>
-                <p className="text-sm text-slate-500">Dodaj nowe wydarzenie do historii współpracy z firmą</p>
+                <p className="text-sm text-slate-700">Dodaj nowe wydarzenie do historii współpracy z firmą</p>
               </div>
               <button onClick={() => setIsEventModalOpen(false)} className="rounded-md p-1 text-slate-500 hover:bg-slate-100"><XMarkIcon className="h-4 w-4" /></button>
             </div>
 
             <div className="space-y-5 px-6 py-5">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Typ wydarzenia</label>
-                <select className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-scrumdone-blue-main">
+                <label className="mb-2 block text-sm font-medium text-slate-900">Typ wydarzenia</label>
+                <select className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm bg-slate-100 outline-none focus:border-scrumdone-blue-main">
                   <option>Inne</option>
                   <option>Podpis umowy</option>
                   <option>Spotkanie</option>
@@ -117,21 +117,21 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
                 </select>
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Tytuł</label>
-                <input type="text" placeholder="np. Podpisanie umowy na projekt X" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm placeholder:text-slate-400 outline-none focus:border-scrumdone-blue-main" />
+                <label className="mb-2 block text-sm font-medium text-slate-900">Tytuł</label>
+                <input type="text" placeholder="np. Podpisanie umowy na projekt X" className="w-full rounded-lg bg-slate-100 border border-slate-200 px-3 py-2.5 text-sm placeholder:text-slate-600 outline-none focus:border-scrumdone-blue-main" />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Opis <span className="text-slate-700">(opcjonalnie)</span></label>
-                <textarea rows={3} placeholder="Dodatkowe szczegóły..." className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm placeholder:text-slate-400 outline-none focus:border-scrumdone-blue-main" />
+                <label className="mb-2 block text-sm font-medium text-slate-900">Opis <span className="text-slate-700">(opcjonalnie)</span></label>
+                <textarea rows={3} placeholder="Dodatkowe szczegóły..." className="w-full resize-none bg-slate-100 rounded-lg border border-slate-200 px-3 py-2.5 text-sm placeholder:text-slate-600 outline-none focus:border-scrumdone-blue-main" />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Data</label>
-                <input type="date" className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-scrumdone-blue-main" />
+                <label className="mb-2 block text-sm font-medium text-slate-900">Data</label>
+                <input type="date" className="w-full rounded-lg bg-slate-100 border border-slate-200 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-scrumdone-blue-main" />
               </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100">
-              <button onClick={() => setIsEventModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-700">Anuluj</button>
+              <button onClick={() => setIsEventModalOpen(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-900">Anuluj</button>
               <button className="rounded-lg bg-scrumdone-blue-main px-4 py-2 text-sm font-medium text-white hover:bg-[#00A0DD]">Dodaj wydarzenie</button>
             </div>
           </div>
