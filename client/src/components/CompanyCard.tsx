@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Building2, Mail, Phone } from 'lucide-react';
 
 interface CompanyCardProps {
-  slug: string;
+  id: string;
   name: string;
   nip: string;
   email: string;
@@ -15,7 +15,7 @@ interface CompanyCardProps {
 }
 
 const CompanyCard: React.FC<CompanyCardProps> = ({ 
-  slug,
+  id,
   name, 
   nip, 
   email, 
@@ -28,7 +28,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    navigate(`/companies/${slug}`);
+    navigate(`/companies/${id}`);
   };
   return (
     <div 

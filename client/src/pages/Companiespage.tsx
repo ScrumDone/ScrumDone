@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import CompanyCard from '../components/CompanyCard';
 import CompanyCreateModal from '../components/CompanyCreateModal';
-import { companies as companiesSeed, type Company } from '../data/companies';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import type { CompanyEditDraft } from '../components/CompanyEditModal';
+import { useCompanies } from '../hooks/useCompanies';
 import { useCreateCompany } from '../hooks/useCreateCompany';
 import type { CompanyCreateDto } from '../types/company';
+import { mapCompanyListItemToCard } from '../utils/companyDisplay';
 
 const emptyToNull = (value: string): string | null => {
     const trimmed = value.trim();
@@ -23,7 +24,7 @@ const toCompanyCreateDto = (draft: CompanyEditDraft): CompanyCreateDto => ({
 });
 
 const CompaniesPage: React.FC = () => {
-    const [companiesList] = useState<Company[]>(companiesSeed);
+    const { data, isLoading, isError, error } = useCompanies(1, 100);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const {
@@ -41,6 +42,11 @@ const CompaniesPage: React.FC = () => {
         regon: '',
         address: '',
     });
+
+    const companyCards = useMemo(
+        () => (data?.items ?? []).map(mapCompanyListItemToCard),
+        [data?.items],
+    );
 
     const openCreateModal = () => {
         setIsCreateModalOpen(true);
@@ -104,22 +110,40 @@ const CompaniesPage: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-8">
-                        {companiesList.map((company) => (
-                            <CompanyCard
-                                key={company.id}
-                                slug={company.slug}
-                                name={company.name}
-                                nip={company.nip}
-                                email={company.emails?.[0] ?? ''}
-                                phone={company.phone}
-                                projectsCount={company.projectsCount}
-                                mainContactName={company.mainContactName}
-                                mainContactRole={company.mainContactRole}
-                                contactsCount={company.contactsCount}
-                            />
-                        ))}
-                    </div>
+                    {isLoading && (
+                        <p className="text-sm text-slate-500">Ładowanie firm...</p>
+                    )}
+
+                    {isError && (
+                        <section className="rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
+                            Błąd: {error.message}
+                        </section>
+                    )}
+
+                    {!isLoading && !isError && companyCards.length === 0 && (
+                        <section className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                            Brak firm. Dodaj pierwszą firmę przyciskiem powyżej.
+                        </section>
+                    )}
+
+                    {!isLoading && !isError && companyCards.length > 0 && (
+                        <div className="grid grid-cols-3 gap-8">
+                            {companyCards.map((company) => (
+                                <CompanyCard
+                                    key={company.id}
+                                    id={company.id}
+                                    name={company.name}
+                                    nip={company.nip}
+                                    email={company.email}
+                                    phone={company.phone}
+                                    projectsCount={company.projectsCount}
+                                    mainContactName={company.mainContactName}
+                                    mainContactRole={company.mainContactRole}
+                                    contactsCount={company.contactsCount}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </main>
         </div>

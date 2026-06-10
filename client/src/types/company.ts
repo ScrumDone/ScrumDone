@@ -57,3 +57,14 @@ export type CompanyDetail = {
   projectCount: number;
   contacts: ContactPerson[];
 };
+
+export type CooperationLog = {
+  id: string;
+  title: string;
+  description: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  author: UserSummary;
+  createdAt: string;
+  updatedAt: string;
+};
