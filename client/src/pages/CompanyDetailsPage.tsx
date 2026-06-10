@@ -665,7 +665,7 @@ const CompanyDetailsPage: React.FC = () => {
                     activeProjects.map((project) => (
                       <Link
                         key={project.id}
-                        to={`/projects/${project.slug}`}
+                        to={`/projects/${project.id}`}
                         className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-2 hover:shadow-lg transition-shadow duration-300"
                       >
                         <div className="flex justify-between items-start">

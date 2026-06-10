@@ -11,10 +11,10 @@ interface ProjectTopBarProps {
 }
 
 const projectTabs = [
-  { label: 'Tablica Kanban', path: (slug: string) => `/projects/${slug}/tablica-kanban` },
-  { label: 'Kalendarz', path: (slug: string) => `/projects/${slug}/kalendarz` },
-  { label: 'Sprinty', path: (slug: string) => `/projects/${slug}/sprinty` },
-  { label: 'Repozytorium plików', path: (slug: string) => `/projects/${slug}/repozytorium-plikow` },
+  { label: 'Tablica Kanban', path: (projectId: string) => `/projects/${projectId}/tablica-kanban` },
+  { label: 'Kalendarz', path: (projectId: string) => `/projects/${projectId}/kalendarz` },
+  { label: 'Sprinty', path: (projectId: string) => `/projects/${projectId}/sprinty` },
+  { label: 'Repozytorium plików', path: (projectId: string) => `/projects/${projectId}/repozytorium-plikow` },
 ];
 
 const editableTeamMembers: TeamMemberOption[] = [
@@ -169,7 +169,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
           tab.path ? (
             <NavLink
               key={tab.label}
-              to={tab.path(displayedProject.slug)}
+              to={tab.path(String(displayedProject.id))}
               className={({ isActive }) =>
                 `text-sm leading-5 tracking-[-0.15px] transition-colors ${
                   isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'
