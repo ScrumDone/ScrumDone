@@ -183,7 +183,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpDelete("{id:guid}/assignment-labels/{labelId:guid}")]
+        [HttpDelete("{id}/assignment-labels/{labelId:guid}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]

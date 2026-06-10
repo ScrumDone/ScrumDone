@@ -42,7 +42,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpGet("{id:guid}")]
+        [HttpGet("{id}")]
         [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -64,7 +64,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpPatch("{id:guid}")]
+        [HttpPatch("{id}")]
         [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -78,7 +78,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
-        [HttpDelete("{id:guid}")]
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -104,7 +104,7 @@ namespace ScrumDone.Api.Controllers
         // attach/detach users — TaskUserMTMTable
         // no GET: current assignees are embedded in AssignmentListItemDto and AssignmentDetailDto
 
-        [HttpPut("{id:guid}/assignees")]
+        [HttpPut("{id}/assignees")]
         [ProducesResponseType(typeof(IEnumerable<UserSummaryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -123,7 +123,7 @@ namespace ScrumDone.Api.Controllers
         // attach/detach project-scoped labels — TaskTaskLabelMTMTable
         // no GET: current labels embedded in AssignmentListItemDto and AssignmentDetailDto
 
-        [HttpPut("{id:guid}/labels")]
+        [HttpPut("{id}/labels")]
         [ProducesResponseType(typeof(IEnumerable<AssignmentLabelDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
