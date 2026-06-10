@@ -11,7 +11,6 @@ export type CompanyListItem = {
   projectsCount: number;
 };
 
-
 export type CompanyUpdateDto = {
   name: string | null;
   nip: string | null;
@@ -20,6 +19,24 @@ export type CompanyUpdateDto = {
   address: string | null;
 };
 
+export type UserSummary = {
+  id: string;
+  name: string;
+  profilePictureUrl: string | null;
+}
+
+export type CompanyNote = {
+  id: string;
+  content: string;
+  isEdited: boolean;
+  author: UserSummary;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CompanyNoteCreateDto = {
+  content: string;
+}
 
 export type CompanyCreateDto = {
   name: string;                     

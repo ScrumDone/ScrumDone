@@ -5,6 +5,7 @@ import type { PagedResult } from '../types/api';
 import type { CompanyListItem } from '../types/company';
 import type { CompanyUpdateDto } from '../types/company';
 import type { ContactPerson, ContactPersonCreateDto } from '../types/contact';
+import type { CompanyNote, CompanyNoteCreateDto } from '../types/company';
 import type { CompanyCreateDto, CompanyDetail } from '../types/company';
 
 
@@ -26,6 +27,10 @@ export function getCompanyContacts(id: string) {
 
 export function addCompanyContact(id: string, data: ContactPersonCreateDto) {
     return apiPost<ContactPerson>(`/api/companies/${id}/contacts`, data);
+}
+
+export function createCompanyNote(companyId: string, data: CompanyNoteCreateDto) {
+  return apiPost<CompanyNote>(`/api/companies/${companyId}/notes`, data);
 }
 
 export function createCompany(data: CompanyCreateDto) {

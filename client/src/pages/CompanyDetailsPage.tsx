@@ -10,6 +10,7 @@ import CompanyContactAddModal, { type CompanyContactDraft } from '../components/
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
 import { useCompany } from '../hooks/useCompany';
 import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
+import { useAddCompanyNote } from '../hooks/useAddCompanyNote';
 import type { ContactPerson } from '../types/contact';
 
 const isGuid = (value: string) =>
@@ -181,6 +182,13 @@ const CompanyDetailsPage: React.FC = () => {
     error: addContactError,
     reset: resetAddContact,
   } = useAddCompanyContact();
+  
+  const {
+    mutate: createNote,
+    isPending: isAddingNote,
+    isError: isAddNoteError,
+    error: addNoteError,
+  } = useAddCompanyNote();
 
   useEffect(() => {
     if (!displayedCompany) return;
@@ -324,22 +332,74 @@ const CompanyDetailsPage: React.FC = () => {
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNoteText.trim()) return;
+    if (!newNoteText.trim() || isAddingNote) return;
+
+    const contentToSend = newNoteText.trim();
 
     const now = new Date();
     const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
     const formattedDate = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const newNote: NoteItem = {
+    const optimisticNote: NoteItem = {
       id: `note-${Date.now()}`,
       author: 'Artur Nowak',
       avatarInitials: 'AN',
       dateLabel: formattedDate,
-      content: newNoteText.trim(),
+      content: contentToSend,
     };
 
-    setNotes([newNote, ...notes]);
+    setNotes((prev) => [optimisticNote, ...prev]);
     setNewNoteText('');
+
+    if (companyId) {
+      createNote(
+        {
+          companyId,
+          data: {
+            content: contentToSend, 
+          },
+        },
+        {
+          onSuccess: (createdNote: any) => {
+            let backendAuthorName = 'Artur Nowak';
+            let backendInitials = 'AN';
+
+            if (createdNote?.author) {
+              const name = createdNote.author.name || 'Artur Nowak';
+              backendAuthorName = name;
+
+              const nameParts = name.split(' ');
+              backendInitials = nameParts.map((n: string) => n.charAt(0)).join('').toUpperCase().substring(0, 2) || 'AN';
+            }
+
+            setNotes((prev) =>
+              prev.map((n) =>
+                n.id === optimisticNote.id
+                  ? {
+                      ...n,
+                      id: String(createdNote?.id ?? n.id),
+                      author: backendAuthorName,
+                      avatarInitials: backendInitials,
+                      dateLabel: createdNote?.createdAt
+                        ? new Date(createdNote.createdAt).toLocaleString('pl-PL', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })
+                        : n.dateLabel,
+                    }
+                  : n
+              )
+            );
+          },
+          onError: () => {
+            setNotes((prev) => prev.filter((n) => n.id !== optimisticNote.id));
+          },
+        }
+      );
+    }
   };
 
   return (
@@ -520,7 +580,6 @@ const CompanyDetailsPage: React.FC = () => {
                         to={`/projects/${project.slug}`}
                         className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-2 hover:shadow-lg transition-shadow duration-300"
                       >
-                        {/* NAZWA I STATUS */}
                         <div className="flex justify-between items-start">
                           <div className="flex flex-col gap-1">
                             <h3 className="text-xl text-gray-900 font-medium">{project.name}</h3>
@@ -530,19 +589,16 @@ const CompanyDetailsPage: React.FC = () => {
                           </span>
                         </div>
 
-                        {/* OPIS */}
                         <p className="text-sm text-gray-700 leading-relaxed min-h-0">
                           {project.description}
                         </p>
 
-                        {/* SZCZEGÓŁY W JEDNEJ LINII Z KROPKĄ */}
                         <div className="flex items-center gap-2 text-gray-700 text-sm mt-1">
                           <span>{project.startDate} - {project.endDate}</span>
                           <span className="text-gray-400">•</span>
                           <span>{project.membersCount} członków</span>
                         </div>
 
-                        {/* PROGRESS BAR */}
                         <div className="mt-2">
                           <div className="flex justify-between text-sm mb-1">
                             <span className="text-gray-700">Postęp</span>
@@ -580,7 +636,7 @@ const CompanyDetailsPage: React.FC = () => {
                       {index < cooperationHistory.length - 1 && (
                         <span
                           aria-hidden="true"
-                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon shadow-md)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
+                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon-size)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
                         />
                       )}
 
@@ -618,20 +674,26 @@ const CompanyDetailsPage: React.FC = () => {
               <section className="mx-8 mb-8 rounded-[14px] border border-gray-200 bg-white p-6 flex flex-col gap-6">
                 <div>
                   <h3 className="text-sm text-gray-900 mb-3">Dodaj nową notatkę</h3>
+                  {isAddNoteError && (
+                    <div className="mb-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                      {addNoteError?.message || 'Błąd podczas dodawania notatki'}
+                    </div>
+                  )}
                   <form onSubmit={handleAddNote} className="flex flex-col gap-3">
                     <textarea
                       value={newNoteText}
                       onChange={(e) => setNewNoteText(e.target.value)}
                       placeholder="Wpisz treść notatki..."
-                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all"
+                      disabled={isAddingNote}
+                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all disabled:opacity-60"
                     />
                     <button
                       type="submit"
-                      disabled={!newNoteText.trim()}
+                      disabled={!newNoteText.trim() || isAddingNote}
                       className="self-start h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] disabled:opacity-50 disabled:hover:bg-scrumdone-blue-main text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
                     >
                       <PlusIcon className="w-4 h-4 stroke-2" />
-                      <span>Dodaj notatkę</span>
+                      <span>{isAddingNote ? 'Dodawanie...' : 'Dodaj notatkę'}</span>
                     </button>
                   </form>
                 </div>
@@ -653,7 +715,7 @@ const CompanyDetailsPage: React.FC = () => {
                           <MoreVertical className="w-5 h-5 stroke-[1.5]" />
                         </button>
                       </div>
-                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased">
+                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased whitespace-pre-wrap">
                         {note.content}
                       </p>
                     </article>
