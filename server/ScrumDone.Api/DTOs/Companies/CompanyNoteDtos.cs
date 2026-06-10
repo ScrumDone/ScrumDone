@@ -5,22 +5,25 @@ namespace ScrumDone.Api.DTOs.Companies
     public record CompanyNoteDto(
         Guid Id,
         string Content,
-        bool IsEdited,
+        //bool IsEdited,
         UserSummaryDto Author,
         DateTimeOffset CreatedAt,
         DateTimeOffset UpdatedAt
     );
 
-    public record CompanyNoteCreateDto(
-        string Content
-    );
+    public class CompanyNoteCreateDto
+    {
+        public required string Content { get; set; }
+    }
 
-    public record CompanyNoteUpdateDto(
-        string Content
-    );
+    public class CompanyNoteUpdateDto
+    {
+        public required string Content { get; set; }
+    }
 
-    public record CompanyNoteQueryDto(
-        int Page = 1,
-        int Limit = 10
-    );
+    public class CompanyNoteQueryDto
+    {
+        public int Page { get; set; } = 1;
+        public int Limit { get; set; } = 10;
+    }
 }

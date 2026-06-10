@@ -3,14 +3,32 @@ import { useParams, Link } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, FileSignature, MoreVertical } from 'lucide-react';
-import { companies, type Company } from '../data/companies';
+import { companies } from '../data/companies';
 import { projects } from '../data/projects';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
-import { useCompanyContacts } from '../hooks/useCompanyContacts';
+import { useCompany } from '../hooks/useCompany';
 import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
 import { useAddCompanyNote } from '../hooks/useAddCompanyNote';
+import type { ContactPerson } from '../types/contact';
+
+const isGuid = (value: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+
+const emptyDisplay = (value: string | null | undefined) => value?.trim() || '—';
+
+type CompanyDisplay = {
+  id: string;
+  name: string;
+  nip: string;
+  regon: string;
+  companyNumber: string;
+  address: string;
+  emails: string[];
+  contacts: ContactPerson[];
+  projectCount: number;
+};
 
 type CooperationHistoryItem = {
   id: string;
@@ -90,16 +108,59 @@ const initialNotes: NoteItem[] = [
 
 const CompanyDetailsPage: React.FC = () => {
   const { companySlug } = useParams();
-  const company = companies.find((item) => item.slug === companySlug);
-  const [displayedCompany, setDisplayedCompany] = useState<Company | null>(company ?? null);
+  const companyId = companySlug ?? '';
+  const isApiRoute = isGuid(companyId);
+
+  const { data: apiCompany, isLoading, isError, error } = useCompany(isApiRoute ? companyId : '');
+  const mockCompany = !isApiRoute ? companies.find((item) => item.slug === companySlug) : undefined;
+
+  const displayedCompany: CompanyDisplay | null = apiCompany
+    ? {
+        id: apiCompany.id,
+        name: apiCompany.name,
+        nip: emptyDisplay(apiCompany.nip),
+        regon: emptyDisplay(apiCompany.regon),
+        companyNumber: emptyDisplay(apiCompany.krs),
+        address: emptyDisplay(apiCompany.address),
+        emails: [
+          ...new Set(
+            apiCompany.contacts
+              .map((contact) => contact.email)
+              .filter((email): email is string => Boolean(email?.trim())),
+          ),
+        ],
+        contacts: apiCompany.contacts,
+        projectCount: apiCompany.projectCount,
+      }
+    : mockCompany
+      ? {
+          id: String(mockCompany.id),
+          name: mockCompany.name,
+          nip: mockCompany.nip,
+          regon: mockCompany.regon,
+          companyNumber: mockCompany.companyNumber,
+          address: mockCompany.address,
+          emails: mockCompany.emails.filter(Boolean),
+          contacts: mockCompany.contacts.map((contact, index) => ({
+            id: String(contact.id),
+            name: contact.name,
+            role: contact.role,
+            email: contact.email,
+            phone: contact.phone,
+            isPrimary: index === 0,
+          })),
+          projectCount: mockCompany.projectsCount,
+        }
+      : null;
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isContactAddModalOpen, setIsContactAddModalOpen] = useState(false);
   const [draft, setDraft] = useState<CompanyEditDraft>({
-    name: company?.name ?? '',
-    nip: company?.nip ?? '',
-    krs: company?.companyNumber ?? '',
-    regon: company?.regon ?? '',
-    address: company?.address ?? '',
+    name: '',
+    nip: '',
+    krs: '',
+    regon: '',
+    address: '',
   });
   const [contactDraft, setContactDraft] = useState<CompanyContactDraft>({
     name: '',
@@ -114,8 +175,6 @@ const CompanyDetailsPage: React.FC = () => {
   const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
   const [newNoteText, setNewNoteText] = useState('');
   const { mutate: updateCompany, isPending: isSavingCompany, isError: isUpdateCompanyError, error: updateCompanyError, reset: resetUpdateCompany } = useUpdateCompany();
-  const companyId = company ? String(company.id) : '';
-  const { data: contactsData, isLoading: isContactsLoading } = useCompanyContacts(companyId);
   const {
     mutate: addContact,
     isPending: isAddingContact,
@@ -132,13 +191,14 @@ const CompanyDetailsPage: React.FC = () => {
   } = useAddCompanyNote();
 
   useEffect(() => {
-    setDisplayedCompany(company ?? null);
+    if (!displayedCompany) return;
+
     setDraft({
-      name: company?.name ?? '',
-      nip: company?.nip ?? '',
-      krs: company?.companyNumber ?? '',
-      regon: company?.regon ?? '',
-      address: company?.address ?? '',
+      name: displayedCompany.name,
+      nip: displayedCompany.nip === '—' ? '' : displayedCompany.nip,
+      krs: displayedCompany.companyNumber === '—' ? '' : displayedCompany.companyNumber,
+      regon: displayedCompany.regon === '—' ? '' : displayedCompany.regon,
+      address: displayedCompany.address === '—' ? '' : displayedCompany.address,
     });
     setContactDraft({
       name: '',
@@ -149,7 +209,35 @@ const CompanyDetailsPage: React.FC = () => {
     });
     setIsEditModalOpen(false);
     setIsContactAddModalOpen(false);
-  }, [company]);
+  }, [displayedCompany?.id]);
+
+  if (isApiRoute && isLoading) {
+    return (
+      <div className="min-h-screen w-full bg-[#F9FAFB]">
+        <SideBar />
+        <TopBar />
+        <main className="ml-64 pt-(--app-header-h)">
+          <section className="mx-8 mt-6 rounded-[14px] border border-gray-200 bg-white p-6 text-sm text-slate-500">
+            Ładowanie...
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (isApiRoute && isError) {
+    return (
+      <div className="min-h-screen w-full bg-[#F9FAFB]">
+        <SideBar />
+        <TopBar />
+        <main className="ml-64 pt-(--app-header-h)">
+          <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
+            Błąd: {error.message}
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   if (!displayedCompany) {
     return (
@@ -166,20 +254,18 @@ const CompanyDetailsPage: React.FC = () => {
     );
   }
 
-  const apiContacts = contactsData?.items;
-  const contactsToShow = apiContacts ?? displayedCompany.contacts;
-  const mainContactId = apiContacts
-    ? (apiContacts.find((contact) => contact.isPrimary)?.id ?? apiContacts[0]?.id)
-    : displayedCompany.contacts[0]?.id;
+  const contactsToShow = displayedCompany.contacts;
+  const mainContactId =
+    contactsToShow.find((contact) => contact.isPrimary)?.id ?? contactsToShow[0]?.id;
 
   const openEditModal = () => {
     resetUpdateCompany();
     setDraft({
       name: displayedCompany.name,
-      nip: displayedCompany.nip,
-      krs: displayedCompany.companyNumber,
-      regon: displayedCompany.regon,
-      address: displayedCompany.address,
+      nip: displayedCompany.nip === '—' ? '' : displayedCompany.nip,
+      krs: displayedCompany.companyNumber === '—' ? '' : displayedCompany.companyNumber,
+      regon: displayedCompany.regon === '—' ? '' : displayedCompany.regon,
+      address: displayedCompany.address === '—' ? '' : displayedCompany.address,
     });
     setIsEditModalOpen(true);
   };
@@ -209,7 +295,7 @@ const CompanyDetailsPage: React.FC = () => {
   const saveCompanyChanges = () => {
     updateCompany(
       {
-        id: String(displayedCompany.id),
+        id: displayedCompany.id,
         data: {
           name: draft.name,
           nip: draft.nip || null,
@@ -220,18 +306,6 @@ const CompanyDetailsPage: React.FC = () => {
       },
       {
         onSuccess: () => {
-          setDisplayedCompany((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  name: draft.name,
-                  nip: draft.nip,
-                  companyNumber: draft.krs,
-                  regon: draft.regon,
-                  address: draft.address,
-                }
-              : prev,
-          );
           closeEditModal();
         },
       },
@@ -241,7 +315,7 @@ const CompanyDetailsPage: React.FC = () => {
   const saveContactChanges = () => {
     addContact(
       {
-        companyId: String(displayedCompany.id),
+        companyId: displayedCompany.id,
         data: {
           name: contactDraft.name || null,
           role: contactDraft.role || null,
@@ -403,20 +477,21 @@ const CompanyDetailsPage: React.FC = () => {
                     <h3 className="font-regular text-sm leading-5  text-gray-700">Adresy email</h3>
                   </div>
                   <div className="space-y-1">
-                    {displayedCompany.emails.map((email, index) => (
-                      <p key={index} className="text-sm text-gray-800">
-                        {email}
-                      </p>
-                    ))}
+                    {displayedCompany.emails.length > 0 ? (
+                      displayedCompany.emails.map((email, index) => (
+                        <p key={index} className="text-sm text-gray-800">
+                          {email}
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-800">—</p>
+                    )}
                   </div>
                 </div>
               </div>
 
               <div>
                 <h3 className="mb-6 text-lg font-semibold text-gray-900">Osoby kontaktowe</h3>
-                {isContactsLoading && !apiContacts && (
-                  <p className="text-sm text-gray-500">Ładowanie kontaktów...</p>
-                )}
                 <div className="space-y-3">
                   {contactsToShow.map((contact) => (
                     <div
@@ -471,7 +546,7 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('projects')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'projects' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Aktywne projekty (1)
+                  Aktywne projekty ({isApiRoute ? displayedCompany.projectCount : activeProjects.length})
                 </button>
                 <button
                   type="button"

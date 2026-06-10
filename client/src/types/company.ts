@@ -6,7 +6,7 @@ export type CompanyListItem = {
   nip: string | null;
   createdAt: string;
   updatedAt: string;
-  mainContact: ContactPerson;
+  mainContact: ContactPerson | null;
   contactPeopleCount: number;
   projectsCount: number;
 };
@@ -35,5 +35,28 @@ export type CompanyNote = {
 };
 
 export type CompanyNoteCreateDto = {
-  content: string;   
+  content: string;
+}
+
+export type CompanyCreateDto = {
+  name: string;                     
+  nip: string | null;
+  krs: string | null;
+  regon: string | null;
+  address: string | null;
+};
+
+// odpowiedz z backendu do getCompanyDetails rozniu sie od CompanyListItem
+export type CompanyDetail = {
+  id: string;
+  name: string;
+  nip: string | null;
+  krs: string | null;
+  regon: string | null;
+  address: string | null;
+  createdAt: string;
+  updatedAt: string;
+  contactPeopleCount: number;
+  projectCount: number;
+  contacts: ContactPerson[];
 };
