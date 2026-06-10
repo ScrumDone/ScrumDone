@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ScrumDone.Api.DTOs.Assignments;
+using ScrumDone.Api.DTOs.Common;
+using ScrumDone.Api.DTOs.Users;
 using ScrumDone.Api.Services;
 
 namespace ScrumDone.Api.Controllers
@@ -29,7 +31,7 @@ namespace ScrumDone.Api.Controllers
         // requires at least one scope filter — returns 400 if neither onlyMine nor date range provided
 
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<AssignmentListItemDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResultDto<AssignmentListItemDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetAssignments(
@@ -102,22 +104,18 @@ namespace ScrumDone.Api.Controllers
         // attach/detach users — TaskUserMTMTable
         // no GET: current assignees are embedded in AssignmentListItemDto and AssignmentDetailDto
 
-        [HttpPost("{id:guid}/assignees/{userId:guid}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpPut("{id:guid}/assignees")]
+        [ProducesResponseType(typeof(IEnumerable<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> AssignUser([FromRoute] Guid id, [FromRoute] Guid userId)
+        public async Task<IActionResult> UpdateAssignees(
+            [FromRoute] Guid id,
+            [FromBody] AssignmentAssigneesUpdateDto dto,
+            [FromServices] IValidator<AssignmentAssigneesUpdateDto> validator) // add limit on allowed team members
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
+            await validator.ValidateAndThrowAsync(dto);
 
-        [HttpDelete("{id:guid}/assignees/{userId:guid}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> UnassignUser([FromRoute] Guid id, [FromRoute] Guid userId)
-        {
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 
@@ -125,22 +123,18 @@ namespace ScrumDone.Api.Controllers
         // attach/detach project-scoped labels — TaskTaskLabelMTMTable
         // no GET: current labels embedded in AssignmentListItemDto and AssignmentDetailDto
 
-        [HttpPost("{id:guid}/labels/{labelId:guid}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpPut("{id:guid}/labels")]
+        [ProducesResponseType(typeof(IEnumerable<AssignmentLabelDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status409Conflict)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> AttachLabel([FromRoute] Guid id, [FromRoute] Guid labelId)
+        public async Task<IActionResult> UpdateLabels(
+            [FromRoute] Guid id,
+            [FromBody] AssignmentLabelsUpdateDto dto,
+            [FromServices] IValidator<AssignmentLabelsUpdateDto> validator) // add limit on allowed team members
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
+            await validator.ValidateAndThrowAsync(dto);
 
-        [HttpDelete("{id:guid}/labels/{labelId:guid}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> DetachLabel([FromRoute] Guid id, [FromRoute] Guid labelId)
-        {
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
 

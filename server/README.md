@@ -35,6 +35,7 @@
     - omission in body -> no update
     - null -> set to empty
     - value -> set to value
+    - **in PATCH no field is considered required** even if the docs say otherwise (openapi issue), 
 - for better llm prompts use raw api docs from `http://localhost:8080/openapi/v1.json`
 - because we don't have user sessions yet frontend should pick a random user for testing
 - there is one big GET /assigment endpoint, USE QUERIES MINDFULLY TO AVOID PAGINATION LIMIT AND MANY REQUESTS. For instance:
