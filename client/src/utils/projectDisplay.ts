@@ -1,4 +1,10 @@
-import type { ProjectListItem } from '../types/project';
+import type { EditProjectDraft } from '../components/ProjectCreateModal';
+import type { ProjectCreateDto, ProjectListItem } from '../types/project';
+
+const emptyToNull = (value: string): string | null => {
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+};
 
 export type ProjectCardViewModel = {
   id: string;
@@ -38,6 +44,41 @@ export const computeProjectProgress = (project: ProjectListItem): number => {
     project.assignmentStatusCounts.find((status) => status.statusName.toLowerCase() === 'done')?.count ?? 0;
 
   return Math.round((doneCount / project.assignmentCount) * 100);
+};
+
+export const toProjectCreateDto = (draft: EditProjectDraft): ProjectCreateDto | null => {
+  const name = draft.name.trim();
+  if (!name) {
+    return null;
+  }
+
+  const dto: ProjectCreateDto = {
+    name,
+    teamMemberIds: draft.memberIds,
+    isSetToScrum: draft.workMode === 'scrum',
+  };
+
+  const description = draft.description.trim();
+  if (description) {
+    dto.description = description;
+  }
+
+  const companyId = emptyToNull(draft.clientId ?? '');
+  if (companyId) {
+    dto.companyId = companyId;
+  }
+
+  const startDate = emptyToNull(draft.startDate);
+  if (startDate) {
+    dto.startDate = startDate;
+  }
+
+  const expectedFinishDate = emptyToNull(draft.endDate);
+  if (expectedFinishDate) {
+    dto.expectedFinishDate = expectedFinishDate;
+  }
+
+  return dto;
 };
 
 export const mapProjectListItemToCard = (project: ProjectListItem): ProjectCardViewModel => ({
