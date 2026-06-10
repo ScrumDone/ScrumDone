@@ -11,12 +11,23 @@ import { useUpdateCompany } from '../hooks/useUpdateCompany';
 import { useCompany } from '../hooks/useCompany';
 import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
 import { useAddCompanyNote } from '../hooks/useAddCompanyNote';
+import { useCompanyNotes } from '../hooks/useCompanyNotes';
 import type { ContactPerson } from '../types/contact';
+import type { CompanyNote } from '../types/company';
 
 const isGuid = (value: string) =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 
 const emptyDisplay = (value: string | null | undefined) => value?.trim() || '—';
+
+const formatBackendDate = (date: string) =>
+  new Date(date).toLocaleString('pl-PL', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
 type CompanyDisplay = {
   id: string;
@@ -49,6 +60,21 @@ type NoteItem = {
   dateLabel: string;
   content: string;
 };
+
+const toNoteItem = (note: CompanyNote): NoteItem => {
+  const authorName = note.author?.name?.trim() || 'Nieznany autor';
+  const nameParts = authorName.split(' ').filter(Boolean);
+
+  return {
+    id: note.id,
+    author: authorName,
+    avatarInitials: nameParts.map((part) => part.charAt(0)).join('').toUpperCase().slice(0, 2) || '??',
+    dateLabel: formatBackendDate(note.createdAt),
+    content: note.content,
+  };
+};
+
+const isOptimisticNoteId = (id: string) => id.startsWith('note-');
 
 const cooperationHistory: CooperationHistoryItem[] = [
   {
@@ -182,13 +208,19 @@ const CompanyDetailsPage: React.FC = () => {
     error: addContactError,
     reset: resetAddContact,
   } = useAddCompanyContact();
-  
+  const {
+    data: notesData,
+    isLoading: isNotesLoading,
+    isError: isNotesError,
+  } = useCompanyNotes(isApiRoute ? companyId : '');
   const {
     mutate: createNote,
     isPending: isAddingNote,
     isError: isAddNoteError,
     error: addNoteError,
   } = useAddCompanyNote();
+
+  const totalNotesCount = isApiRoute ? (notesData?.totalCount ?? 0) : notes.length;
 
   useEffect(() => {
     if (!displayedCompany) return;
@@ -209,7 +241,19 @@ const CompanyDetailsPage: React.FC = () => {
     });
     setIsEditModalOpen(false);
     setIsContactAddModalOpen(false);
-  }, [displayedCompany?.id]);
+    setNotes(isApiRoute ? [] : initialNotes);
+  }, [displayedCompany?.id, isApiRoute]);
+
+  useEffect(() => {
+    if (!isApiRoute || !notesData) return;
+
+    const fetchedNotes = Array.isArray(notesData.items) ? notesData.items : [];
+
+    setNotes((prev) => {
+      const optimistic = prev.filter((note) => isOptimisticNoteId(note.id));
+      return [...optimistic, ...fetchedNotes.map(toNoteItem)];
+    });
+  }, [notesData, isApiRoute]);
 
   if (isApiRoute && isLoading) {
     return (
@@ -351,7 +395,7 @@ const CompanyDetailsPage: React.FC = () => {
     setNotes((prev) => [optimisticNote, ...prev]);
     setNewNoteText('');
 
-    if (companyId) {
+    if (isApiRoute && companyId) {
       createNote(
         {
           companyId,
@@ -560,7 +604,7 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('notes')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'notes' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Notatki ({notes.length})
+                  Notatki ({isApiRoute && isNotesLoading ? '...' : totalNotesCount})
                 </button>
               </div>
               
@@ -699,7 +743,21 @@ const CompanyDetailsPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  {notes.map((note) => (
+                  {isApiRoute && isNotesLoading && (
+                    <p className="text-sm text-gray-500 py-4 animate-pulse">Ładowanie notatek z serwera...</p>
+                  )}
+
+                  {isApiRoute && isNotesError && (
+                    <p className="text-sm text-red-500 py-4">Wystąpił błąd podczas pobierania notatek z backendu.</p>
+                  )}
+
+                  {isApiRoute && !isNotesLoading && !isNotesError && notes.length === 0 && (
+                    <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                      Brak notatek dla tej firmy. Dodaj pierwszą notatkę powyżej.
+                    </div>
+                  )}
+
+                  {(!isApiRoute || (!isNotesLoading && !isNotesError)) && notes.map((note) => (
                     <article key={note.id} className="rounded-xl bg-[#F9FAFB] border border-gray-200 p-4 flex flex-col gap-3 relative group">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
