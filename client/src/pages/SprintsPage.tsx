@@ -11,6 +11,7 @@ import {
   useSensors,
   useDroppable,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
 import {
@@ -209,15 +210,22 @@ type SprintDropZoneProps = {
   sprintId: string;
   children: React.ReactNode;
   className?: string;
+  isHighlighted?: boolean;
 };
 
-const SprintDropZone: React.FC<SprintDropZoneProps> = ({ sprintId, children, className = '' }) => {
+const SprintDropZone: React.FC<SprintDropZoneProps> = ({
+  sprintId,
+  children,
+  className = '',
+  isHighlighted = false,
+}) => {
   const { setNodeRef, isOver } = useDroppable({ id: sprintId });
+  const showHighlight = isOver || isHighlighted;
 
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-28 bg-slate-50 transition-colors ${isOver ? 'bg-sky-50 ring-2 ring-inset ring-sky-400' : ''} ${className}`}
+      className={`min-h-28 bg-slate-50 transition-colors ${showHighlight ? 'bg-sky-50 ring-2 ring-inset ring-sky-400' : ''} ${className}`}
     >
       {children}
     </div>
@@ -363,6 +371,7 @@ const SprintsPage: React.FC = () => {
   const [sprints, setSprints] = useState<SprintData[]>(allSprintsData);
   const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
+  const [dragOverSprintId, setDragOverSprintId] = useState<string | null>(null);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-4', 'sprint-5', 'sprint-3']));
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
   const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
@@ -539,8 +548,29 @@ const SprintsPage: React.FC = () => {
   const isBacklogDropTarget = (overId: string) =>
     overId === BACKLOG_ID || backlogTasks.some((task) => task.id === overId);
 
+  const isSprintDropHighlighted = (sprintId: string) =>
+    dragOverSprintId === sprintId && expandedSprints.has(sprintId);
+
+  const handleDragOver = ({ over }: DragOverEvent) => {
+    if (!over) {
+      setDragOverSprintId(null);
+      return;
+    }
+
+    const overId = String(over.id);
+
+    if (isBacklogDropTarget(overId)) {
+      setDragOverSprintId(null);
+      return;
+    }
+
+    const targetSprint = findSprintByDropTarget(overId);
+    setDragOverSprintId(targetSprint?.id ?? null);
+  };
+
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setActiveDragItem(null);
+    setDragOverSprintId(null);
     if (!over) {
       return;
     }
@@ -642,6 +672,8 @@ const SprintsPage: React.FC = () => {
             sensors={sensors}
             collisionDetection={closestCorners}
             onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragCancel={() => setDragOverSprintId(null)}
             onDragEnd={handleDragEnd}
           >
             <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
@@ -654,7 +686,7 @@ const SprintsPage: React.FC = () => {
                     {groupedSprints.active.map((sprint) => (
                       <div
                         key={sprint.id}
-                        className="overflow-hidden rounded-xl border-2 border-sky-400"
+                        className={`overflow-hidden rounded-xl border-2 border-sky-400 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
                       >
                         <div className="border-b border-slate-200 bg-white px-5 py-4">
                           <div className="flex items-center justify-between gap-4">
@@ -692,7 +724,11 @@ const SprintsPage: React.FC = () => {
                         </div>
 
                         {expandedSprints.has(sprint.id) && (
-                          <SprintDropZone sprintId={sprint.id} className="px-4 py-3">
+                          <SprintDropZone
+                            sprintId={sprint.id}
+                            className="px-4 py-3"
+                            isHighlighted={isSprintDropHighlighted(sprint.id)}
+                          >
                             {sprint.tasks.length === 0 ? (
                               <div className="py-7 text-center">
                                 <p className="font-segoe-ui text-sm font-medium text-slate-500">
@@ -724,7 +760,7 @@ const SprintsPage: React.FC = () => {
                     {groupedSprints.planned.map((sprint) => (
                       <div
                         key={sprint.id}
-                        className="overflow-hidden rounded-xl border border-slate-200"
+                        className={`overflow-hidden rounded-xl border border-slate-200 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
                       >
                         <div className="border-b border-slate-200 bg-white px-5 py-4">
                           <div className="flex items-center justify-between gap-4">
@@ -762,7 +798,11 @@ const SprintsPage: React.FC = () => {
                         </div>
 
                         {expandedSprints.has(sprint.id) && (
-                          <SprintDropZone sprintId={sprint.id} className="px-5 py-4">
+                          <SprintDropZone
+                            sprintId={sprint.id}
+                            className="px-5 py-4"
+                            isHighlighted={isSprintDropHighlighted(sprint.id)}
+                          >
                             {sprint.tasks.length === 0 ? (
                               <div className="py-7 text-center">
                                 <p className="font-segoe-ui text-sm font-medium text-slate-500">
@@ -794,9 +834,8 @@ const SprintsPage: React.FC = () => {
                     {groupedSprints.completed.map((sprint) => (
                       <div
                         key={sprint.id}
-                        className="rounded-xl border border-slate-200 overflow-hidden"
+                        className={`overflow-hidden rounded-xl border border-slate-200 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
                       >
-                        {/* Header */}
                         <div className="border-b border-slate-200 bg-white px-5 py-4">
                           <div className="flex items-center justify-between gap-4">
                             <button
@@ -831,7 +870,11 @@ const SprintsPage: React.FC = () => {
                         </div>
 
                         {expandedSprints.has(sprint.id) && (
-                          <SprintDropZone sprintId={sprint.id} className="px-5 py-3">
+                          <SprintDropZone
+                            sprintId={sprint.id}
+                            className="px-5 py-3"
+                            isHighlighted={isSprintDropHighlighted(sprint.id)}
+                          >
                             {sprint.tasks.length === 0 ? (
                               <div className="py-7 text-center">
                                 <p className="font-segoe-ui text-sm font-medium text-slate-500">
