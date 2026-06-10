@@ -7,6 +7,8 @@ import { companies } from '../data/companies';
 import { projects } from '../data/projects';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
+import CompanyAttachProjectModal from '../components/CompanyAttachProjectModal';
+import type { ProjectData } from '../data/projects';
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
 import { useCompany } from '../hooks/useCompany';
 import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
@@ -181,6 +183,9 @@ const CompanyDetailsPage: React.FC = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isContactAddModalOpen, setIsContactAddModalOpen] = useState(false);
+  const [isAttachProjectModalOpen, setIsAttachProjectModalOpen] = useState(false);
+  const [selectedAttachProjectId, setSelectedAttachProjectId] = useState<number | null>(null);
+  const [projectClientOverrides, setProjectClientOverrides] = useState<Record<number, string>>({});
   const [draft, setDraft] = useState<CompanyEditDraft>({
     name: '',
     nip: '',
@@ -195,7 +200,18 @@ const CompanyDetailsPage: React.FC = () => {
     phone: '',
     isMainContact: false,
   });
-  const activeProjects = displayedCompany ? projects.filter((project) => project.clientName === displayedCompany.name) : [];
+
+  const getProjectClientName = (project: ProjectData) =>
+    projectClientOverrides[project.id] ?? project.clientName;
+
+  const activeProjects = displayedCompany
+    ? projects.filter((project) => getProjectClientName(project) === displayedCompany.name)
+    : [];
+
+  const availableAttachProjects = displayedCompany
+    ? projects.filter((project) => getProjectClientName(project) !== displayedCompany.name)
+    : [];
+
   const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
 
   const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
@@ -241,6 +257,9 @@ const CompanyDetailsPage: React.FC = () => {
     });
     setIsEditModalOpen(false);
     setIsContactAddModalOpen(false);
+    setIsAttachProjectModalOpen(false);
+    setSelectedAttachProjectId(null);
+    setProjectClientOverrides({});
     setNotes(isApiRoute ? [] : initialNotes);
   }, [displayedCompany?.id, isApiRoute]);
 
@@ -374,6 +393,28 @@ const CompanyDetailsPage: React.FC = () => {
     );
   };
 
+  const openAttachProjectModal = () => {
+    setSelectedAttachProjectId(null);
+    setIsAttachProjectModalOpen(true);
+  };
+
+  const closeAttachProjectModal = () => {
+    setIsAttachProjectModalOpen(false);
+    setSelectedAttachProjectId(null);
+  };
+
+  const saveAttachProject = () => {
+    if (!displayedCompany || selectedAttachProjectId === null) {
+      return;
+    }
+
+    setProjectClientOverrides((prev) => ({
+      ...prev,
+      [selectedAttachProjectId]: displayedCompany.name,
+    }));
+    closeAttachProjectModal();
+  };
+
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNoteText.trim() || isAddingNote) return;
@@ -400,7 +441,7 @@ const CompanyDetailsPage: React.FC = () => {
         {
           companyId,
           data: {
-            content: contentToSend, 
+            content: contentToSend,
           },
         },
         {
@@ -430,18 +471,18 @@ const CompanyDetailsPage: React.FC = () => {
                             month: 'long',
                             year: 'numeric',
                             hour: '2-digit',
-                            minute: '2-digit'
+                            minute: '2-digit',
                           })
                         : n.dateLabel,
                     }
-                  : n
-              )
+                  : n,
+              ),
             );
           },
           onError: () => {
             setNotes((prev) => prev.filter((n) => n.id !== optimisticNote.id));
           },
-        }
+        },
       );
     }
   };
@@ -564,13 +605,12 @@ const CompanyDetailsPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-between p-6 items-center">
               <div className="relative inline-grid h-9 w-fit grid-cols-3 rounded-[14px] bg-[#E5E7EB] p-0.75 ml-3">
                 <span
@@ -607,10 +647,14 @@ const CompanyDetailsPage: React.FC = () => {
                   Notatki ({isApiRoute && isNotesLoading ? '...' : totalNotesCount})
                 </button>
               </div>
-              
-              <button className="h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] text-white rounded-lg inline-flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap mr-3">
-                  <PlusIcon className="w-4 h-4 stroke-2" />
-                  Podepnij projekt
+
+              <button
+                type="button"
+                onClick={openAttachProjectModal}
+                className="mr-3 inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium leading-2.5 text-white transition-all hover:bg-[#00A0DD] active:scale-95"
+              >
+                <PlusIcon className="h-4 w-4 stroke-2" />
+                Podepnij projekt
               </button>
             </div>
 
@@ -649,10 +693,10 @@ const CompanyDetailsPage: React.FC = () => {
                             <span className="text-gray-700">{project.progress}%</span>
                           </div>
                           <div className="w-full bg-gray-300 rounded-full h-2">
-                            <div 
-                              className="bg-black h-2 rounded-full transition-all duration-500" 
+                            <div
+                              className="bg-black h-2 rounded-full transition-all duration-500"
                               style={{ width: `${project.progress}%` }}
-                            ></div>
+                            />
                           </div>
                         </div>
                       </Link>
@@ -803,6 +847,16 @@ const CompanyDetailsPage: React.FC = () => {
         onDraftChange={setContactDraft}
         isSaving={isAddingContact}
         errorMessage={isAddContactError ? addContactError?.message : null}
+      />
+
+      <CompanyAttachProjectModal
+        isOpen={isAttachProjectModalOpen}
+        companyName={displayedCompany.name}
+        availableProjects={availableAttachProjects}
+        selectedProjectId={selectedAttachProjectId}
+        onClose={closeAttachProjectModal}
+        onSave={saveAttachProject}
+        onProjectSelect={setSelectedAttachProjectId}
       />
     </div>
   );
