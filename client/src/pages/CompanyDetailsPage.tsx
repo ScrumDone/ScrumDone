@@ -291,13 +291,11 @@ const CompanyDetailsPage: React.FC = () => {
             let backendInitials = 'AN';
 
             if (createdNote?.author) {
-              if (typeof createdNote.author === 'object') {
-                backendAuthorName = `${createdNote.author.firstName || ''} ${createdNote.author.lastName || ''}`.trim() || 'Artur Nowak';
-                backendInitials = `${createdNote.author.firstName?.charAt(0) || ''}${createdNote.author.lastName?.charAt(0) || ''}`.toUpperCase() || 'AN';
-              } else if (typeof createdNote.author === 'string') {
-                backendAuthorName = createdNote.author;
-                backendInitials = createdNote.author.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || 'AN';
-              }
+              const name = createdNote.author.name || 'Artur Nowak';
+              backendAuthorName = name;
+
+              const nameParts = name.split(' ');
+              backendInitials = nameParts.map((n: string) => n.charAt(0)).join('').toUpperCase().substring(0, 2) || 'AN';
             }
 
             setNotes((prev) =>
@@ -357,7 +355,7 @@ const CompanyDetailsPage: React.FC = () => {
                     <div className="mt-3 grid grid-cols-3 gap-6">
                       <div>
                         <p className="text-xs font-regular leading-4 text-gray-500 uppercase">NIP</p>
-                        <p className="text-sm font-medium leader-5 text-gray-900">{displayedCompany.nip}</p>
+                        <p className="text-sm font-medium leading-5 text-gray-900">{displayedCompany.nip}</p>
                       </div>
                       <div>
                         <p className="text-xs font-regular leading-4 text-gray-500 uppercase">REGON</p>

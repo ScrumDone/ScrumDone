@@ -19,16 +19,19 @@ export type CompanyUpdateDto = {
   address: string | null;
 };
 
+export type UserSummary = {
+  id: string;
+  name: string;
+  profilePictureUrl: string | null;
+}
+
 export type CompanyNote = {
-  id: string;        
-  companyId: string; 
-  content: string;   
-  createdAt: string; 
+  id: string;
+  content: string;
+  isEdited: boolean;
+  author: UserSummary;
+  createdAt: string;
   updatedAt: string;
-  author?: {
-    firstName: string;
-    lastName: string;
-  };
 };
 
 export type CompanyNoteCreateDto = {
