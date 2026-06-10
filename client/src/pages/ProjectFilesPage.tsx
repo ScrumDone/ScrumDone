@@ -15,9 +15,9 @@ const FILES: FileItem[] = [
 ];
 
 const ProjectFilesPage: React.FC = () => {
-  const { projectSlug } = useParams();
-  const project = projects.find((p) => p.slug === projectSlug);
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
+  const { projectId } = useParams();
+  const project = projects.find((p) => String(p.id) === projectId);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
 
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB]">

@@ -179,9 +179,9 @@ const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
 // --- Komponent Główny ---
 
 const ProjectKanbanPage: React.FC = () => {
-  const { projectSlug } = useParams();
-  const project = projects.find((item) => item.slug === projectSlug);
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
+  const { projectId } = useParams();
+  const project = projects.find((item) => String(item.id) === projectId);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
   const [currentSprintId, setCurrentSprintId] = useState('sprint-0');
   const [columns, setColumns] = useState<KanbanColumn[]>(initialKanbanColumns);
   const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);

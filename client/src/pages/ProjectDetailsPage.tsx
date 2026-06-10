@@ -7,9 +7,9 @@ import { projects } from '../data/projects';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
 
 const ProjectDetailsPage: React.FC = () => {
-  const { projectSlug } = useParams();
-  const project = projects.find((item) => item.slug === projectSlug);
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
+  const { projectId } = useParams();
+  const project = projects.find((item) => String(item.id) === projectId);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
 
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB]">

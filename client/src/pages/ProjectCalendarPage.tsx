@@ -41,9 +41,9 @@ const initialCalendarTasks: CalendarTask[] = [
 ]
 
 const ProjectCalendarPage: React.FC = () => {
-  const { projectSlug } = useParams()
-  const project = projects.find((item) => item.slug === projectSlug)
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug)
+  const { projectId } = useParams()
+  const project = projects.find((item) => String(item.id) === projectId)
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId)
 
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 6))

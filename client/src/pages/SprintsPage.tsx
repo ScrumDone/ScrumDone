@@ -365,9 +365,9 @@ const allSprintsData: SprintData[] = [
 ];
 
 const SprintsPage: React.FC = () => {
-  const { projectSlug } = useParams();
-  const project = projects.find((item) => item.slug === projectSlug);
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
+  const { projectId } = useParams();
+  const project = projects.find((item) => String(item.id) === projectId);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
   const [sprints, setSprints] = useState<SprintData[]>(allSprintsData);
   const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
