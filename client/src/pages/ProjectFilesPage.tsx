@@ -45,7 +45,7 @@ const ProjectFilesPage: React.FC = () => {
 
                 <ul className="divide-y divide-slate-200">
                   {FILES.map((file) => (
-                    <ProjectFileRow key={file.id} file={file} />
+                    <ProjectFileRow key={file.id} file={file} currentUser="Artur Nowak" />
                   ))}
                 </ul>
               </section>
