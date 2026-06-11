@@ -21,7 +21,7 @@ namespace ScrumDone.Api.Data
         public List<Assignment> Assignments { get; set; } = new();
         public List<File> Files { get; set; } = new();
         public List<ProjectUserMTMRelation> TeamMembers { get; set; } = new();
-        public Company Company { get; set; }
+        public Company? Company { get; set; }
         public List<Sprint> Sprints { get; set; } = new();
     }
 }

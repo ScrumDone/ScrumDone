@@ -67,7 +67,7 @@ namespace ScrumDone.Api.Data
 
             modelBuilder.Entity<Assignment>()
                 .HasOne(t => t.ParentAssignment)
-                .WithMany(u => u.SubTAssignments)
+                .WithMany(u => u.SubAssignments)
                 .HasForeignKey(t => t.ParentAssignmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 

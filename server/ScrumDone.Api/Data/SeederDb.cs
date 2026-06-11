@@ -36,14 +36,6 @@ public class DatabaseSeeder
         };
         context.AssignmentStatuses.AddRange(statuses);
 
-        var labels = new List<AssignmentLabel>
-        {
-            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Frontend", HexColor = "#20b828", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Backend", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentLabel { Id = Guid.NewGuid(), Name = "Documentation", HexColor = "#a82993", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
-        };
-        context.AssignmentLabels.AddRange(labels);
-
         var priorities = new List<AssignmentPriority>
         {
             new AssignmentPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#34D399", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
@@ -157,6 +149,19 @@ public class DatabaseSeeder
         var projects = projectFaker.Generate(5);
         context.Projects.AddRange(projects);
 
+        var labels = new List<AssignmentLabel>();
+        foreach (var project in projects)
+        {
+            labels.AddRange(new List<AssignmentLabel>
+            {
+                new AssignmentLabel { Id = Guid.NewGuid(), ProjectId = project.Id, Name = "Frontend", HexColor = "#20b828", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+                new AssignmentLabel { Id = Guid.NewGuid(), ProjectId = project.Id, Name = "Backend", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+                new AssignmentLabel { Id = Guid.NewGuid(), ProjectId = project.Id, Name = "Documentation", HexColor = "#a82993", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
+            });
+        }     
+            context.AssignmentLabels.AddRange(labels);
+
+
         var assignmentFaker = new Faker<Assignment>("pl")
             .RuleFor(a => a.Id, f => f.Random.Guid())
             .RuleFor(a => a.ParentAssignmentId, f => null)
@@ -176,7 +181,7 @@ public class DatabaseSeeder
             })
             .RuleFor(a => a.Labels, (f, currentAssignment) =>
             {
-               var SelectedLabels = f.PickRandom(labels, f.Random.Int(0,Math.Min(3, labels.Count())));
+               var SelectedLabels = f.PickRandom(labels.Where(l => l.ProjectId == currentAssignment.ProjectId), f.Random.Int(0,Math.Min(3, labels.Count())));
 
                return SelectedLabels.Select(label => new AssignmentAssignmentLabelMTMRelation
                {
