@@ -13,6 +13,17 @@ export type SprintCardViewModel = {
   status: SprintStatus;
 };
 
+export type SprintSelectorStatus = 'Aktywny' | 'Ukończony' | 'Planowany';
+
+export type SprintSelectorViewModel = {
+  id: string;
+  title: string;
+  dateRange: string;
+  totalTasks: number;
+  completedTasks: number;
+  status: SprintSelectorStatus;
+};
+
 const startOfDay = (date: Date): Date => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
 export const formatSprintDateForDisplay = (dateValue: string | null): string => {
@@ -85,6 +96,49 @@ export const deriveSprintStatus = (
   }
 
   return 'Zaplanowany';
+};
+
+export const mapSprintStatusToSelectorStatus = (status: SprintStatus): SprintSelectorStatus =>
+  status === 'Zaplanowany' ? 'Planowany' : status;
+
+export const formatSprintDateRangeForDisplay = (
+  startDate: string | null,
+  endDate: string | null,
+): string => {
+  const start = formatSprintDateForDisplay(startDate);
+  const end = formatSprintDateForDisplay(endDate);
+
+  return `${start} - ${end}`;
+};
+
+export const mapSprintSummaryToSelectorSprint = (summary: SprintSummary): SprintSelectorViewModel => {
+  const status = deriveSprintStatus(summary.startDate, summary.endDate);
+
+  return {
+    id: summary.id,
+    title: summary.name?.trim() || '—',
+    dateRange: formatSprintDateRangeForDisplay(summary.startDate, summary.endDate),
+    totalTasks: summary.assignmentCount,
+    completedTasks: summary.completedCount,
+    status: mapSprintStatusToSelectorStatus(status),
+  };
+};
+
+export const mapSprintSummariesToSelectorSprints = (
+  summaries: SprintSummary[],
+): SprintSelectorViewModel[] => summaries.map(mapSprintSummaryToSelectorSprint);
+
+export const getDefaultSelectedSprintId = (sprints: SprintSelectorViewModel[]): string | null => {
+  if (sprints.length === 0) {
+    return null;
+  }
+
+  const activeSprint = sprints.find((sprint) => sprint.status === 'Aktywny');
+  if (activeSprint) {
+    return activeSprint.id;
+  }
+
+  return sprints[0]?.id ?? null;
 };
 
 export const mapSprintSummaryToSprintCard = (summary: SprintSummary): SprintCardViewModel => ({

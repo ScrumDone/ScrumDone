@@ -14,9 +14,18 @@ interface SprintSelectorProps {
   sprints: Sprint[];
   currentSprintId: string;
   onSprintChange: (sprintId: string) => void;
+  isDisabled?: boolean;
 }
 
-const SprintSelector: React.FC<SprintSelectorProps> = ({ sprints, currentSprintId, onSprintChange }) => {
+const getCompletionPercentage = (completedTasks: number, totalTasks: number) =>
+  totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+const SprintSelector: React.FC<SprintSelectorProps> = ({
+  sprints,
+  currentSprintId,
+  onSprintChange,
+  isDisabled = false,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const currentSprint = sprints.find((s) => s.id === currentSprintId);
@@ -43,7 +52,7 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({ sprints, currentSprintI
   };
 
   const completionPercentage = currentSprint
-    ? Math.round((currentSprint.completedTasks / currentSprint.totalTasks) * 100)
+    ? getCompletionPercentage(currentSprint.completedTasks, currentSprint.totalTasks)
     : 0;
 
   return (
@@ -51,7 +60,8 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({ sprints, currentSprintI
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="group inline-flex max-w-full items-center gap-4 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-scrumdone-blue-main/30"
+        disabled={isDisabled}
+        className="group inline-flex max-w-full items-center gap-4 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-scrumdone-blue-main/30 disabled:cursor-not-allowed disabled:opacity-60"
         aria-label={currentSprint?.title}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
@@ -94,7 +104,10 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({ sprints, currentSprintI
 
           <div className="max-h-96 overflow-y-auto">
             {sprints.map((sprint) => {
-              const sprintCompletionPercentage = Math.round((sprint.completedTasks / sprint.totalTasks) * 100);
+              const sprintCompletionPercentage = getCompletionPercentage(
+                sprint.completedTasks,
+                sprint.totalTasks,
+              );
               const isSelected = sprint.id === currentSprintId;
 
               return (
