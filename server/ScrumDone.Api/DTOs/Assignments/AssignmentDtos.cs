@@ -102,11 +102,11 @@ namespace ScrumDone.Api.DTOs.Assignments
             get => field;
             set { field = value; _setProperties.Add(nameof(Description)); }
         }
-        public Guid? ProjectId
-        {
-            get => field;
-            set { field = value; _setProperties.Add(nameof(ProjectId)); }
-        }
+        //public Guid? ProjectId
+        //{
+        //    get => field;
+        //    set { field = value; _setProperties.Add(nameof(ProjectId)); }
+        //}
         public Guid? StatusId
         {
             get => field;

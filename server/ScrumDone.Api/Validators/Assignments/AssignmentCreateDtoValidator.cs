@@ -18,9 +18,9 @@ public sealed class AssignmentCreateDtoValidator : AbstractValidator<AssignmentC
             .LessThanOrEqualTo(100)
             .When(x => x.TimeEstimate.HasValue);
 
-        RuleFor(x => x.DueDate)
-            .Must(d => d!.Value > DateTimeOffset.UtcNow)
-            .When(x => x.DueDate.HasValue);
+        //RuleFor(x => x.DueDate)
+        //    .Must(d => d!.Value > DateTimeOffset.UtcNow)
+        //    .When(x => x.DueDate.HasValue);
 
         RuleFor(x => new AssignmentAssigneesUpdateDto
         {

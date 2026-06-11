@@ -227,7 +227,7 @@ namespace ScrumDone.Api.Services
             if (dto.SetProperties.Contains(nameof(dto.StatusId))) assignment.StatusId = dto.StatusId!.Value;
             if (dto.SetProperties.Contains(nameof(dto.PriorityId))) assignment.PriorityId = dto.PriorityId;
             if (dto.SetProperties.Contains(nameof(dto.SprintId))) assignment.SprintId = dto.SprintId;
-            if (dto.SetProperties.Contains(nameof(dto.ProjectId))) assignment.ProjectId = dto.ProjectId!.Value;
+            //if (dto.SetProperties.Contains(nameof(dto.ProjectId))) assignment.ProjectId = dto.ProjectId!.Value;
 
             await _context.SaveChangesAsync();
 

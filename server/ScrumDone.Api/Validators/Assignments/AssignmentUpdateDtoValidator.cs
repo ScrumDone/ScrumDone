@@ -24,13 +24,9 @@ public sealed class AssignmentUpdateDtoValidator : AbstractValidator<AssignmentU
             .When(x =>
                 x.SetProperties.Contains(nameof(AssignmentUpdateDto.TimeEstimate)));
 
-        RuleFor(x => x.DueDate)
-            .Must(d => d == null || d > DateTimeOffset.UtcNow.AddDays(-1))
-            .When(x => x.SetProperties.Contains(nameof(AssignmentUpdateDto.DueDate)));
-
-        RuleFor(x => x.ProjectId)
-            .NotEmpty()
-            .When(x => x.SetProperties.Contains(nameof(AssignmentUpdateDto.ProjectId)));
+        //RuleFor(x => x.DueDate)
+        //    .Must(d => d == null || d > DateTimeOffset.UtcNow.AddDays(-1))
+        //    .When(x => x.SetProperties.Contains(nameof(AssignmentUpdateDto.DueDate)));
 
         RuleFor(x => x.StatusId)
             .NotEmpty()
