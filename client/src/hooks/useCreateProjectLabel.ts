@@ -7,6 +7,7 @@ type CreateProjectLabelInput = {
   data: ProjectLabelCreateDto;
 };
 
+/** Tworzy etykietę projektu — invaliduje listę z useProjectLabels (B6/B7). */
 export function useCreateProjectLabel() {
   const queryClient = useQueryClient();
 

@@ -8,6 +8,7 @@ type UpdateProjectLabelInput = {
   data: ProjectLabelUpdateDto;
 };
 
+/** Aktualizuje etykietę projektu — invaliduje listę z useProjectLabels (B6/B7). */
 export function useUpdateProjectLabel() {
   const queryClient = useQueryClient();
 
