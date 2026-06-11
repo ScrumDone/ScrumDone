@@ -30,9 +30,11 @@ public class DatabaseSeeder
 
         var statuses = new List<AssignmentStatus>
         {
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#E2E8F0", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#D1D5DB", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, IsDefault = true },
             new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Review", HexColor = "#EAB308", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Blocked", HexColor = "#EF4444", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
         };
         context.AssignmentStatuses.AddRange(statuses);
 

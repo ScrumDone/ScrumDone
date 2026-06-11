@@ -51,6 +51,7 @@ builder.Services.AddRouting(options =>
 });
 
 builder.Services.AddTransient<ICompaniesService, CompaniesService>();
+builder.Services.AddTransient<IAssignmentsService, AssignmentsService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

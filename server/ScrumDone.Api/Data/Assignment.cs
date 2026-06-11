@@ -6,7 +6,7 @@ namespace ScrumDone.Api.Data
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public DateTimeOffset? DueDate { get; set; }
         public decimal? TimeEstimate { get; set; }
 
@@ -18,7 +18,7 @@ namespace ScrumDone.Api.Data
         public Guid ProjectId { get; set; } 
         public Guid? SprintId { get; set; }
         public Guid StatusId { get; set; }
-        public Guid PriorityId { get; set; }
+        public Guid? PriorityId { get; set; }
         public Guid? ParentAssignmentId { get; set; }
         public List<File> Attachments { get; set; } = new();
         public Project Project { get; set; }

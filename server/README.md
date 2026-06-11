@@ -31,6 +31,7 @@
 
 ## API docs:
 - BODY parameter is required only when docs specify
+- Some GET endpoints may allow lists in query but scalar won't display that properly
 - PATCH behaviour:
     - omission in body -> no update
     - null -> set to empty
