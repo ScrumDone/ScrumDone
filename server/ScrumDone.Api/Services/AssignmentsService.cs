@@ -36,22 +36,16 @@ namespace ScrumDone.Api.Services
                     dto.ProjectIds.Contains(t.ProjectId));
             }
 
-            if (dto.SprintIds?.Any() == true)
-            {
-                q = q.Where(t =>
-                    t.SprintId.HasValue &&
-                    dto.SprintIds.Contains(t.SprintId.Value));
-            }
-
             if (dto.Backlog == true)
             {
                 q = q.Where(t =>
                     t.SprintId == null);
             }
-            else
+            else if (dto.SprintIds?.Any() == true)
             {
                 q = q.Where(t =>
-                    t.SprintId != null);
+                    t.SprintId.HasValue &&
+                    dto.SprintIds.Contains(t.SprintId.Value));
             }
 
             if (dto.AssigneeIds?.Any() == true)

@@ -16,5 +16,9 @@ public sealed class AssignmentQueryDtoValidator : AbstractValidator<AssignmentQu
         RuleFor(x => x.DueOnOrAfter)
             .LessThanOrEqualTo(x => x.DueOnOrBefore!.Value)
             .When(x => x.DueOnOrAfter.HasValue && x.DueOnOrBefore.HasValue);
+
+        // Reject contradictory backlog + sprint filter
+        RuleFor(x => x)
+            .Must(x => x.Backlog != true || x.SprintIds?.Any() != true);
     }
 }
