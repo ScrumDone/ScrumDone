@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ScrumDone.Api.Data;
 using ScrumDone.Api.DTOs.Assignments;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Projects;
@@ -101,7 +102,7 @@ namespace ScrumDone.Api.Controllers
             return Ok(result);
         }
 
-        [HttpPut("{id}/members")]
+        [HttpPut("{id}/members/{userId}")]
         [ProducesResponseType(typeof(IEnumerable<Guid>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -177,8 +178,8 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateAssignmentLabel(
             [FromRoute] Guid id,
-            [FromBody] LabelCreateDto dto,
-            [FromServices] IValidator<LabelCreateDto> validator)
+            [FromBody] AssignmentLabelCreateDto dto,
+            [FromServices] IValidator<AssignmentLabelCreateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
             var result = await _projectsService.CreateAssignmentLabelAsync(id, dto);
@@ -193,8 +194,8 @@ namespace ScrumDone.Api.Controllers
         public async Task<IActionResult> UpdateAssignmentLabel(
             [FromRoute] Guid id,
             [FromRoute] Guid labelId,
-            [FromBody] LabelUpdateDto dto,
-            [FromServices] IValidator<LabelUpdateDto> validator)
+            [FromBody] AssignmentLabelUpdateDto dto,
+            [FromServices] IValidator<AssignmentLabelUpdateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
             var result = await _projectsService.UpdateAssignmentLabelAsync(id, labelId, dto);

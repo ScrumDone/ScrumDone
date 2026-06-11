@@ -513,7 +513,7 @@ public class ProjectsEndpointTests
 
         using var client = app.CreateClient();
 
-        var response = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
+        var response = await client.PutAsync($"/api/projects/{projectId}/members/{userId}", null);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
@@ -532,7 +532,7 @@ public class ProjectsEndpointTests
 
         using var client = app.CreateClient();
 
-        var response = await client.PostAsync($"/api/projects/{Guid.NewGuid()}/members/{userId}", null);
+        var response = await client.PutAsync($"/api/projects/{Guid.NewGuid()}/members/{userId}", null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -551,7 +551,7 @@ public class ProjectsEndpointTests
 
         using var client = app.CreateClient();
 
-        var response = await client.PostAsync($"/api/projects/{projectId}/members/{Guid.NewGuid()}", null);
+        var response = await client.PutAsync($"/api/projects/{projectId}/members/{Guid.NewGuid()}", null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -581,7 +581,7 @@ public class ProjectsEndpointTests
 
         using var client = app.CreateClient();
 
-        var response = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
+        var response = await client.PutAsync($"/api/projects/{projectId}/members/{userId}", null);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
@@ -868,7 +868,7 @@ public class ProjectsEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/assignment-labels",
-            new AssignmentLabelCreateDto { Name = "Bug", HexColor = "#FF0000" });
+            new AssignmentLabelCreateDto{ Name = "Bug", HexColor = "#FF0000" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
