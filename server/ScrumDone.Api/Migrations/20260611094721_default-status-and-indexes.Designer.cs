@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ScrumDone.Api.Data;
@@ -11,9 +12,11 @@ using ScrumDone.Api.Data;
 namespace ScrumDone.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260611094721_default-status-and-indexes")]
+    partial class defaultstatusandindexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -142,15 +145,10 @@ namespace ScrumDone.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ProjectId");
 
                     b.ToTable("AssignmentLabels");
                 });
@@ -712,7 +710,7 @@ namespace ScrumDone.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("CompanyId")
+                    b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -722,6 +720,7 @@ namespace ScrumDone.Api.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("ExpectedFinishDate")
@@ -742,9 +741,6 @@ namespace ScrumDone.Api.Migrations
 
                     b.Property<string>("ProfilePictureUrl")
                         .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("StartDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -955,7 +951,7 @@ namespace ScrumDone.Api.Migrations
             modelBuilder.Entity("ScrumDone.Api.Data.Assignment", b =>
                 {
                     b.HasOne("ScrumDone.Api.Data.Assignment", "ParentAssignment")
-                        .WithMany("SubAssignments")
+                        .WithMany("SubTAssignments")
                         .HasForeignKey("ParentAssignmentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -1007,17 +1003,6 @@ namespace ScrumDone.Api.Migrations
                     b.Navigation("Assignment");
 
                     b.Navigation("AssignmentLabel");
-                });
-
-            modelBuilder.Entity("ScrumDone.Api.Data.AssignmentLabel", b =>
-                {
-                    b.HasOne("ScrumDone.Api.Data.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("ScrumDone.Api.Data.AssignmentUserMTMRelation", b =>
@@ -1209,7 +1194,9 @@ namespace ScrumDone.Api.Migrations
                 {
                     b.HasOne("ScrumDone.Api.Data.Company", "Company")
                         .WithMany("Projects")
-                        .HasForeignKey("CompanyId");
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Company");
                 });
@@ -1283,7 +1270,7 @@ namespace ScrumDone.Api.Migrations
 
                     b.Navigation("Labels");
 
-                    b.Navigation("SubAssignments");
+                    b.Navigation("SubTAssignments");
                 });
 
             modelBuilder.Entity("ScrumDone.Api.Data.AssignmentLabel", b =>

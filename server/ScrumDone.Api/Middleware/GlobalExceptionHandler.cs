@@ -1,9 +1,13 @@
 ﻿
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using ScrumDone.Api.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Text.RegularExpressions;
 
 namespace ScrumDone.Api.Middleware;
 
@@ -27,6 +31,13 @@ public class GlobalExceptionHandler : IExceptionHandler
         {
             ValidationException => (400, "Bad Request"),
             BadRequestException => (400, "Bad Request"),
+            DbUpdateException
+            {
+                InnerException: PostgresException
+                {
+                    SqlState: PostgresErrorCodes.ForeignKeyViolation
+                }
+            } => (400, "Bad Request"),
             NotFoundException => (404, "Not Found"),
             ConflictException => (409, "Conflict"),
             _ => (500, "Internal Server Error")
@@ -77,6 +88,8 @@ public class GlobalExceptionHandler : IExceptionHandler
         }
 
         return true;
+    }
+}
 
     // use the block below instead to match ProblemDetails in model binding
     /*
@@ -97,5 +110,3 @@ public class GlobalExceptionHandler : IExceptionHandler
 
     return result;
     */
-    }
-}
