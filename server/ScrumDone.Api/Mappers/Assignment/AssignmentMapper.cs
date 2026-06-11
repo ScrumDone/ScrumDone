@@ -10,7 +10,7 @@ namespace ScrumDone.Api.Mappers
     [Mapper]
     public static partial class AssignmentMapper
     {
-        [MapProperty(nameof(Assignment.SubAssignments), nameof(AssignmentListItemDto.SubtaskIds), Use=nameof(GetSubtasksIds))]
+        // [MapProperty(nameof(Assignment.SubAssignments), nameof(AssignmentListItemDto.SubtaskIds), Use=nameof(GetSubtasksIds))]
         [MapProperty(nameof(Assignment.Assignees), nameof(AssignmentListItemDto.Assignees), Use=nameof(MapUsers))]
         [MapProperty(nameof(Assignment.Labels), nameof(AssignmentListItemDto.Labels), Use=nameof(MapLabels))]
         public static partial AssignmentListItemDto ToListItemDto(this Assignment assignment);
