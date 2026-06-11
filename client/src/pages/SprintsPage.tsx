@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import {
@@ -27,7 +27,18 @@ import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
+import { useDeleteSprint } from '../hooks/useDeleteSprint';
+import { useProjectSprints } from '../hooks/useProjectSprints';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
+import { useUpdateSprint } from '../hooks/useUpdateSprint';
+import {
+  addDaysToDisplayDate,
+  deriveSprintStatusFromDisplayDates,
+  mapSprintSummaryToEditDraft,
+  mapSprintSummaryToSprintCard,
+  toSprintEndDateUpdateDto,
+  toSprintUpdateDto,
+} from '../utils/sprintDisplay';
 
 type TaskItem = {
   id: string;
@@ -160,12 +171,6 @@ const sprintTaskToBacklog = (task: TaskItem): BacklogTask => ({
   color: task.color,
 });
 
-const syncSprintCounts = (sprint: SprintData): SprintData => ({
-  ...sprint,
-  totalTasks: sprint.tasks.length,
-  completedTasks: sprint.tasks.filter((task) => task.status === 'Ukończone').length,
-});
-
 type SprintTaskRowProps = {
   task: TaskItem;
   isDragOverlay?: boolean;
@@ -252,51 +257,9 @@ type ActiveDragItem =
   | { source: 'backlog'; task: BacklogTask }
   | { source: 'sprint'; task: TaskItem; sprintId: string };
 
-const polishMonths = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
-
 const getSprintDateRange = (sprint: SprintData) => `${sprint.startDate} - ${sprint.endDate}`;
 
-const normalizeMonthName = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-
-const parsePolishDate = (value: string) => {
-  const match = value.trim().match(/^(\d{1,2})\s+([A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]+)\s+(\d{4})$/u);
-
-  if (!match) {
-    return null;
-  }
-
-  const day = Number(match[1]);
-  const monthName = match[2] ?? '';
-  const year = Number(match[3]);
-  const monthIndex = polishMonths.findIndex((month) => normalizeMonthName(month) === normalizeMonthName(monthName));
-
-  if (Number.isNaN(day) || Number.isNaN(year) || monthIndex < 0) {
-    return null;
-  }
-
-  const parsedDate = new Date(year, monthIndex, day);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return null;
-  }
-
-  return parsedDate;
-};
-
-const formatPolishDate = (date: Date) => `${String(date.getDate()).padStart(2, '0')} ${polishMonths[date.getMonth()]} ${date.getFullYear()}`;
-
-const extendDateByDays = (value: string, days: number) => {
-  const parsedDate = parsePolishDate(value);
-
-  if (!parsedDate) {
-    return value;
-  }
-
-  parsedDate.setDate(parsedDate.getDate() + days);
-  return formatPolishDate(parsedDate);
-};
-
-const allSprintsData: SprintData[] = [
+const mockSprintsSeed: SprintData[] = [
   {
     id: 'sprint-0',
     title: 'Sprint 0 - Setup',
@@ -363,27 +326,50 @@ const allSprintsData: SprintData[] = [
   },
 ];
 
+const mockTasksByLegacyId = Object.fromEntries(mockSprintsSeed.map((sprint) => [sprint.id, sprint.tasks]));
+const mockTasksByTitle = Object.fromEntries(mockSprintsSeed.map((sprint) => [sprint.title, sprint.tasks]));
+
+const getSeedTasksForSprint = (id: string, title: string): TaskItem[] =>
+  mockTasksByLegacyId[id] ?? mockTasksByTitle[title] ?? [];
+
+const getSprintCompletionPercent = (sprint: SprintData) =>
+  sprint.totalTasks > 0 ? Math.round((sprint.completedTasks / sprint.totalTasks) * 100) : 0;
+
 const SprintsPage: React.FC = () => {
   const { projectId = '' } = useParams();
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
-  const [sprints, setSprints] = useState<SprintData[]>(allSprintsData);
+  const {
+    data: sprintsQueryData,
+    isLoading: isSprintsLoading,
+    isError: isSprintsError,
+    error: sprintsError,
+  } = useProjectSprints(projectId, 1, 50);
+  const {
+    mutate: updateSprint,
+    isPending: isUpdatingSprint,
+    isError: isUpdateSprintError,
+    error: updateSprintError,
+    reset: resetUpdateSprint,
+  } = useUpdateSprint();
+  const {
+    mutate: deleteSprint,
+    isPending: isDeletingSprint,
+    isError: isDeleteSprintError,
+    error: deleteSprintError,
+    reset: resetDeleteSprint,
+  } = useDeleteSprint();
+  const [sprintTasksById, setSprintTasksById] = useState<Record<string, TaskItem[]>>({});
+  const [sprintModalMessage, setSprintModalMessage] = useState<string | null>(null);
   const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
   const [dragOverSprintId, setDragOverSprintId] = useState<string | null>(null);
-  const [expandedSprints, setExpandedSprints] = useState<Set<string>>(new Set(['sprint-4', 'sprint-5', 'sprint-3']));
+  const [expandedSprints, setExpandedSprints] = useState<Set<string>>(() => new Set());
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
   const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
   const [sprintDraft, setSprintDraft] = useState<SprintEditDraft | null>(null);
 
   // Filter states
-  const [selectedSprints, setSelectedSprints] = useState<Record<string, boolean>>({
-    'sprint-0': true,
-    'sprint-1': true,
-    'sprint-2': true,
-    'sprint-3': true,
-    'sprint-4': true,
-    'sprint-5': true,
-  });
+  const [selectedSprints, setSelectedSprints] = useState<Record<string, boolean>>({});
 
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, boolean>>({
     wysoki: true,
@@ -396,25 +382,122 @@ const SprintsPage: React.FC = () => {
     nieukonczne: true,
   });
 
+  useEffect(() => {
+    if (!sprintsQueryData?.items) {
+      return;
+    }
+
+    setSprintTasksById((currentTasks) => {
+      const nextTasks = { ...currentTasks };
+      let changed = false;
+
+      for (const summary of sprintsQueryData.items) {
+        if (nextTasks[summary.id]) {
+          continue;
+        }
+
+        const title = summary.name?.trim() || '—';
+        const seedTasks = getSeedTasksForSprint(summary.id, title);
+
+        if (seedTasks.length > 0) {
+          nextTasks[summary.id] = seedTasks;
+          changed = true;
+        }
+      }
+
+      return changed ? nextTasks : currentTasks;
+    });
+  }, [sprintsQueryData?.items]);
+
+  const sprints = useMemo((): SprintData[] => {
+    if (!sprintsQueryData?.items) {
+      return [];
+    }
+
+    return sprintsQueryData.items.map((summary) => {
+      const card = mapSprintSummaryToSprintCard(summary);
+
+      return {
+        ...card,
+        tasks: sprintTasksById[summary.id] ?? [],
+      };
+    });
+  }, [sprintsQueryData?.items, sprintTasksById]);
+
+  const isSavingSprint = isUpdatingSprint || isDeletingSprint;
+  const sprintModalErrorMessage = isUpdateSprintError
+    ? updateSprintError?.message
+    : isDeleteSprintError
+      ? deleteSprintError?.message
+      : sprintModalMessage;
+
+  const resetSprintModalMutations = () => {
+    resetUpdateSprint();
+    resetDeleteSprint();
+    setSprintModalMessage(null);
+  };
+
+  useEffect(() => {
+    if (sprints.length === 0) {
+      return;
+    }
+
+    setExpandedSprints((currentExpanded) => {
+      const nextExpanded = new Set(currentExpanded);
+
+      for (const sprint of sprints) {
+        if (sprint.status === 'Aktywny' || sprint.status === 'Zaplanowany') {
+          nextExpanded.add(sprint.id);
+        }
+      }
+
+      return nextExpanded;
+    });
+  }, [sprints]);
+
+  useEffect(() => {
+    if (sprints.length === 0) {
+      return;
+    }
+
+    setSelectedSprints((currentSelected) => {
+      const nextSelected = { ...currentSelected };
+      let changed = false;
+
+      for (const sprint of sprints) {
+        if (!(sprint.id in nextSelected)) {
+          nextSelected[sprint.id] = true;
+          changed = true;
+        }
+      }
+
+      return changed ? nextSelected : currentSelected;
+    });
+  }, [sprints]);
+
   const closeSprintEditModal = () => {
+    resetSprintModalMutations();
     setIsSprintEditOpen(false);
     setEditingSprintId(null);
     setSprintDraft(null);
   };
 
   const openSprintEditModal = (sprint: SprintData) => {
-    setEditingSprintId(sprint.id);
-    setSprintDraft({
-      title: sprint.title,
-      startDate: sprint.startDate,
-      endDate: sprint.endDate,
-      status: sprint.status,
-    });
-    setIsSprintEditOpen(true);
-  };
+    resetSprintModalMutations();
 
-  const updateSprintById = (sprintId: string, updater: (sprint: SprintData) => SprintData) => {
-    setSprints((currentSprints) => currentSprints.map((sprint) => (sprint.id === sprintId ? updater(sprint) : sprint)));
+    const summary = sprintsQueryData?.items.find((item) => item.id === sprint.id);
+    setEditingSprintId(sprint.id);
+    setSprintDraft(
+      summary
+        ? mapSprintSummaryToEditDraft(summary)
+        : {
+            title: sprint.title === '—' ? '' : sprint.title,
+            startDate: sprint.startDate === '—' ? '' : sprint.startDate,
+            endDate: sprint.endDate === '—' ? '' : sprint.endDate,
+            status: sprint.status,
+          },
+    );
+    setIsSprintEditOpen(true);
   };
 
   const handleSprintDraftSave = () => {
@@ -422,68 +505,51 @@ const SprintsPage: React.FC = () => {
       return;
     }
 
-    updateSprintById(editingSprintId, (sprint) => ({
-      ...sprint,
-      title: sprintDraft.title,
-      startDate: sprintDraft.startDate,
-      endDate: sprintDraft.endDate,
-      status: sprintDraft.status,
-    }));
-    closeSprintEditModal();
+    const dto = toSprintUpdateDto(sprintDraft);
+    if (!dto) {
+      setSprintModalMessage('Nazwa sprintu jest wymagana.');
+      return;
+    }
+
+    setSprintModalMessage(null);
+    updateSprint(
+      { id: editingSprintId, projectId, data: dto },
+      {
+        onSuccess: () => {
+          closeSprintEditModal();
+        },
+      },
+    );
   };
 
   const handleStartNextSprint = () => {
-    if (!editingSprintId) {
-      return;
-    }
-
-    setSprints((currentSprints) => {
-      const currentIndex = currentSprints.findIndex((sprint) => sprint.id === editingSprintId);
-
-      if (currentIndex === -1) {
-        return currentSprints;
-      }
-
-      const nextPlannedIndex = currentSprints.findIndex((sprint, index) => index > currentIndex && sprint.status === 'Zaplanowany');
-
-      return currentSprints.map((sprint, index) => {
-        if (index === currentIndex) {
-          return { ...sprint, status: 'Ukończony' };
-        }
-
-        if (index === nextPlannedIndex) {
-          return { ...sprint, status: 'Aktywny' };
-        }
-
-        return sprint;
-      });
-    });
-
-    setSprintDraft((currentDraft) => (currentDraft ? { ...currentDraft, status: 'Ukończony' } : currentDraft));
+    setSprintModalMessage('Ta akcja nie jest jeszcze dostępna przez API.');
   };
 
   const handleExtendSprint = () => {
-    if (!editingSprintId) {
+    if (!editingSprintId || !sprintDraft) {
       return;
     }
 
-    setSprintDraft((currentDraft) => {
-      if (!currentDraft) {
-        return currentDraft;
-      }
+    const updatedEndDate = addDaysToDisplayDate(sprintDraft.endDate, 7);
 
-      const updatedEndDate = extendDateByDays(currentDraft.endDate, 7);
-
-      updateSprintById(editingSprintId, (sprint) => ({
-        ...sprint,
-        endDate: updatedEndDate,
-      }));
-
-      return {
-        ...currentDraft,
-        endDate: updatedEndDate,
-      };
-    });
+    setSprintModalMessage(null);
+    updateSprint(
+      { id: editingSprintId, projectId, data: toSprintEndDateUpdateDto(sprintDraft.endDate, 7) },
+      {
+        onSuccess: () => {
+          setSprintDraft((currentDraft) =>
+            currentDraft
+              ? {
+                  ...currentDraft,
+                  endDate: updatedEndDate,
+                  status: deriveSprintStatusFromDisplayDates(currentDraft.startDate, updatedEndDate),
+                }
+              : currentDraft,
+          );
+        },
+      },
+    );
   };
 
   const handleDeleteSprint = () => {
@@ -491,8 +557,20 @@ const SprintsPage: React.FC = () => {
       return;
     }
 
-    setSprints((currentSprints) => currentSprints.filter((sprint) => sprint.id !== editingSprintId));
-    closeSprintEditModal();
+    setSprintModalMessage(null);
+    deleteSprint(
+      { id: editingSprintId, projectId },
+      {
+        onSuccess: () => {
+          setSprintTasksById((currentTasks) => {
+            const nextTasks = { ...currentTasks };
+            delete nextTasks[editingSprintId];
+            return nextTasks;
+          });
+          closeSprintEditModal();
+        },
+      },
+    );
   };
 
   const toggleSprint = (sprintId: string) => {
@@ -509,6 +587,266 @@ const SprintsPage: React.FC = () => {
     active: sprints.filter((s) => s.status === 'Aktywny'),
     planned: sprints.filter((s) => s.status === 'Zaplanowany'),
     completed: sprints.filter((s) => s.status === 'Ukończony'),
+  };
+
+  const renderSprintList = () => {
+    if (isSprintsLoading) {
+      return (
+        <p className="py-8 font-segoe-ui text-sm text-slate-500 animate-pulse">
+          Ładowanie sprintów...
+        </p>
+      );
+    }
+
+    if (isSprintsError) {
+      return (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-6 font-segoe-ui text-sm text-red-700">
+          Nie udało się załadować sprintów{sprintsError?.message ? `: ${sprintsError.message}` : '.'}
+        </div>
+      );
+    }
+
+    if (sprints.length === 0) {
+      return (
+        <div className="rounded-lg border border-slate-200 bg-white px-6 py-10 text-center">
+          <h2 className="font-segoe-ui text-lg font-medium text-slate-800">Brak sprintów</h2>
+          <p className="mt-2 font-segoe-ui text-sm text-slate-500">W tym projekcie nie ma jeszcze żadnych sprintów.</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {groupedSprints.active.length > 0 && (
+          <div>
+            <h3 className="mb-4 font-segoe-ui text-sm font-medium text-slate-600">Aktywny sprint</h3>
+            <div className="space-y-3">
+              {groupedSprints.active.map((sprint) => (
+                <div
+                  key={sprint.id}
+                  className={`overflow-hidden rounded-xl border-2 border-sky-400 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
+                >
+                  <div className="border-b border-slate-200 bg-white px-5 py-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={() => toggleSprint(sprint.id)}
+                        className="flex flex-1 items-start gap-3"
+                      >
+                        {expandedSprints.has(sprint.id) ? (
+                          <ChevronUpIcon className="mt-1 h-5 w-5 shrink-0" />
+                        ) : (
+                          <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0" />
+                        )}
+                        <div className="text-left">
+                          <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
+                          <p className="font-segoe-ui text-sm text-slate-500">
+                            {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań •{' '}
+                            <span className="font-medium text-green-600">
+                              {sprint.completedTasks} ukończonych ({getSprintCompletionPercent(sprint)}%)
+                            </span>
+                          </p>
+                        </div>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className={`rounded-lg px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
+                          {sprint.status}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => openSprintEditModal(sprint)}
+                          className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900"
+                          aria-label={`Edytuj sprint ${sprint.title}`}
+                        >
+                          <Cog6ToothIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {expandedSprints.has(sprint.id) && (
+                    <SprintDropZone
+                      sprintId={sprint.id}
+                      className="px-4 py-3"
+                      isHighlighted={isSprintDropHighlighted(sprint.id)}
+                    >
+                      {sprint.tasks.length === 0 ? (
+                        <div className="py-7 text-center">
+                          <p className="font-segoe-ui text-sm font-medium text-slate-500">
+                            Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
+                          </p>
+                        </div>
+                      ) : (
+                        <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                          <div className="space-y-3">
+                            {sprint.tasks.map((task) => (
+                              <SprintTaskRow key={task.id} task={task} />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      )}
+                    </SprintDropZone>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {groupedSprints.planned.length > 0 && (
+          <div>
+            <h3 className="mb-4 font-segoe-ui text-sm font-medium text-slate-600">
+              Zaplanowane sprinty ({groupedSprints.planned.length})
+            </h3>
+            <div className="space-y-3">
+              {groupedSprints.planned.map((sprint) => (
+                <div
+                  key={sprint.id}
+                  className={`overflow-hidden rounded-xl border border-slate-200 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
+                >
+                  <div className="border-b border-slate-200 bg-white px-5 py-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={() => toggleSprint(sprint.id)}
+                        className="flex flex-1 items-start gap-3"
+                      >
+                        {expandedSprints.has(sprint.id) ? (
+                          <ChevronUpIcon className="mt-1 h-5 w-5 shrink-0" />
+                        ) : (
+                          <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0" />
+                        )}
+                        <div className="text-left">
+                          <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
+                          <p className="font-segoe-ui text-sm text-slate-500">
+                            {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań
+                          </p>
+                        </div>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className={`rounded-lg px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
+                          {sprint.status}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => openSprintEditModal(sprint)}
+                          className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900"
+                          aria-label={`Edytuj sprint ${sprint.title}`}
+                        >
+                          <Cog6ToothIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {expandedSprints.has(sprint.id) && (
+                    <SprintDropZone
+                      sprintId={sprint.id}
+                      className="px-5 py-4"
+                      isHighlighted={isSprintDropHighlighted(sprint.id)}
+                    >
+                      {sprint.tasks.length === 0 ? (
+                        <div className="py-7 text-center">
+                          <p className="font-segoe-ui text-sm font-medium text-slate-500">
+                            Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
+                          </p>
+                        </div>
+                      ) : (
+                        <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                          <div className="space-y-3">
+                            {sprint.tasks.map((task) => (
+                              <SprintTaskRow key={task.id} task={task} />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      )}
+                    </SprintDropZone>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {groupedSprints.completed.length > 0 && (
+          <div>
+            <h3 className="mb-4 font-segoe-ui text-sm font-medium text-slate-600">
+              Ukończone sprinty ({groupedSprints.completed.length})
+            </h3>
+            <div className="space-y-3">
+              {groupedSprints.completed.map((sprint) => (
+                <div
+                  key={sprint.id}
+                  className={`overflow-hidden rounded-xl border border-slate-200 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
+                >
+                  <div className="border-b border-slate-200 bg-white px-5 py-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={() => toggleSprint(sprint.id)}
+                        className="flex flex-1 items-start gap-3"
+                      >
+                        {expandedSprints.has(sprint.id) ? (
+                          <ChevronUpIcon className="mt-1 h-5 w-5 shrink-0" />
+                        ) : (
+                          <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0" />
+                        )}
+                        <div className="text-left">
+                          <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
+                          <p className="font-segoe-ui text-sm text-slate-500">
+                            {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań •{' '}
+                            <span className="font-medium text-green-600">
+                              {sprint.completedTasks} ukończonych ({getSprintCompletionPercent(sprint)}%)
+                            </span>
+                          </p>
+                        </div>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className={`rounded-full px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
+                          {sprint.status}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => openSprintEditModal(sprint)}
+                          className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900"
+                          aria-label={`Edytuj sprint ${sprint.title}`}
+                        >
+                          <Cog6ToothIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {expandedSprints.has(sprint.id) && (
+                    <SprintDropZone
+                      sprintId={sprint.id}
+                      className="px-5 py-3"
+                      isHighlighted={isSprintDropHighlighted(sprint.id)}
+                    >
+                      {sprint.tasks.length === 0 ? (
+                        <div className="py-7 text-center">
+                          <p className="font-segoe-ui text-sm font-medium text-slate-500">
+                            Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
+                          </p>
+                        </div>
+                      ) : (
+                        <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                          <div className="space-y-2">
+                            {sprint.tasks.map((task) => (
+                              <SprintTaskRow key={task.id} task={task} />
+                            ))}
+                          </div>
+                        </SortableContext>
+                      )}
+                    </SprintDropZone>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </>
+    );
   };
 
   const sensors = useSensors(
@@ -588,13 +926,10 @@ const SprintsPage: React.FC = () => {
         return;
       }
 
-      setSprints((currentSprints) =>
-        currentSprints.map((sprint) =>
-          sprint.id === sourceSprint.id
-            ? syncSprintCounts({ ...sprint, tasks: sprint.tasks.filter((task) => task.id !== activeId) })
-            : sprint,
-        ),
-      );
+      setSprintTasksById((currentTasks) => ({
+        ...currentTasks,
+        [sourceSprint.id]: sourceSprint.tasks.filter((task) => task.id !== activeId),
+      }));
       setBacklogTasks((currentTasks) => [...currentTasks, sprintTaskToBacklog(sprintTask)]);
       return;
     }
@@ -610,16 +945,10 @@ const SprintsPage: React.FC = () => {
 
     if (backlogTask) {
       setBacklogTasks((currentTasks) => currentTasks.filter((task) => task.id !== activeId));
-      setSprints((currentSprints) =>
-        currentSprints.map((sprint) =>
-          sprint.id === targetSprint.id
-            ? syncSprintCounts({
-                ...sprint,
-                tasks: [...sprint.tasks, backlogToSprintTask(backlogTask)],
-              })
-            : sprint,
-        ),
-      );
+      setSprintTasksById((currentTasks) => ({
+        ...currentTasks,
+        [targetSprint.id]: [...targetSprint.tasks, backlogToSprintTask(backlogTask)],
+      }));
       return;
     }
 
@@ -629,17 +958,11 @@ const SprintsPage: React.FC = () => {
         return;
       }
 
-      setSprints((currentSprints) =>
-        currentSprints.map((sprint) => {
-          if (sprint.id === sourceSprint.id) {
-            return syncSprintCounts({ ...sprint, tasks: sprint.tasks.filter((task) => task.id !== activeId) });
-          }
-          if (sprint.id === targetSprint.id) {
-            return syncSprintCounts({ ...sprint, tasks: [...sprint.tasks, sprintTask] });
-          }
-          return sprint;
-        }),
-      );
+      setSprintTasksById((currentTasks) => ({
+        ...currentTasks,
+        [sourceSprint.id]: sourceSprint.tasks.filter((task) => task.id !== activeId),
+        [targetSprint.id]: [...targetSprint.tasks, sprintTask],
+      }));
     }
   };
 
@@ -663,226 +986,7 @@ const SprintsPage: React.FC = () => {
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="grid min-h-0 flex-1 gap-6 overflow-hidden xl:grid-cols-[minmax(0,1fr)_18rem]">
             <div className="min-w-0 space-y-6 overscroll-contain pr-1 xl:min-h-0 xl:overflow-y-auto">
-              {/* Aktywne sprinty */}
-              {groupedSprints.active.length > 0 && (
-                <div>
-                  <h3 className="mb-4 font-segoe-ui text-sm font-medium text-slate-600">Aktywny sprint</h3>
-                  <div className="space-y-3">
-                    {groupedSprints.active.map((sprint) => (
-                      <div
-                        key={sprint.id}
-                        className={`overflow-hidden rounded-xl border-2 border-sky-400 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
-                      >
-                        <div className="border-b border-slate-200 bg-white px-5 py-4">
-                          <div className="flex items-center justify-between gap-4">
-                            <button
-                              type="button"
-                              onClick={() => toggleSprint(sprint.id)}
-                              className="flex flex-1 items-start gap-3"
-                            >
-                              {expandedSprints.has(sprint.id) ? (
-                                <ChevronUpIcon className="mt-1 h-5 w-5 shrink-0" />
-                              ) : (
-                                <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0" />
-                              )}
-                              <div className="text-left">
-                                <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
-                                <p className="font-segoe-ui text-sm text-slate-500">
-                                  {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań • <span className="text-green-600 font-medium">{sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)</span>
-                                </p>
-                              </div>
-                            </button>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className={`rounded-lg px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
-                                {sprint.status}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => openSprintEditModal(sprint)}
-                                className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900"
-                                aria-label={`Edytuj sprint ${sprint.title}`}
-                              >
-                                <Cog6ToothIcon className="h-5 w-5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {expandedSprints.has(sprint.id) && (
-                          <SprintDropZone
-                            sprintId={sprint.id}
-                            className="px-4 py-3"
-                            isHighlighted={isSprintDropHighlighted(sprint.id)}
-                          >
-                            {sprint.tasks.length === 0 ? (
-                              <div className="py-7 text-center">
-                                <p className="font-segoe-ui text-sm font-medium text-slate-500">
-                                  Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
-                                </p>
-                              </div>
-                            ) : (
-                              <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-3">
-                                  {sprint.tasks.map((task) => (
-                                    <SprintTaskRow key={task.id} task={task} />
-                                  ))}
-                                </div>
-                              </SortableContext>
-                            )}
-                          </SprintDropZone>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Zaplanowane sprinty */}
-              {groupedSprints.planned.length > 0 && (
-                <div>
-                  <h3 className="mb-4 font-segoe-ui text-sm font-medium text-slate-600">Zaplanowane sprinty ({groupedSprints.planned.length})</h3>
-                  <div className="space-y-3">
-                    {groupedSprints.planned.map((sprint) => (
-                      <div
-                        key={sprint.id}
-                        className={`overflow-hidden rounded-xl border border-slate-200 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
-                      >
-                        <div className="border-b border-slate-200 bg-white px-5 py-4">
-                          <div className="flex items-center justify-between gap-4">
-                            <button
-                              type="button"
-                              onClick={() => toggleSprint(sprint.id)}
-                              className="flex flex-1 items-start gap-3"
-                            >
-                              {expandedSprints.has(sprint.id) ? (
-                                <ChevronUpIcon className="mt-1 h-5 w-5 shrink-0" />
-                              ) : (
-                                <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0" />
-                              )}
-                              <div className="text-left">
-                                <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
-                                <p className="font-segoe-ui text-sm text-slate-500">
-                                  {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań
-                                </p>
-                              </div>
-                            </button>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className={`rounded-lg px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
-                                {sprint.status}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => openSprintEditModal(sprint)}
-                                className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900"
-                                aria-label={`Edytuj sprint ${sprint.title}`}
-                              >
-                                <Cog6ToothIcon className="h-5 w-5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {expandedSprints.has(sprint.id) && (
-                          <SprintDropZone
-                            sprintId={sprint.id}
-                            className="px-5 py-4"
-                            isHighlighted={isSprintDropHighlighted(sprint.id)}
-                          >
-                            {sprint.tasks.length === 0 ? (
-                              <div className="py-7 text-center">
-                                <p className="font-segoe-ui text-sm font-medium text-slate-500">
-                                  Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
-                                </p>
-                              </div>
-                            ) : (
-                              <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-3">
-                                  {sprint.tasks.map((task) => (
-                                    <SprintTaskRow key={task.id} task={task} />
-                                  ))}
-                                </div>
-                              </SortableContext>
-                            )}
-                          </SprintDropZone>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Ukończone sprinty */}
-              {groupedSprints.completed.length > 0 && (
-                <div>
-                  <h3 className="mb-4 font-segoe-ui text-sm font-medium text-slate-600">Ukończone sprinty ({groupedSprints.completed.length})</h3>
-                  <div className="space-y-3">
-                    {groupedSprints.completed.map((sprint) => (
-                      <div
-                        key={sprint.id}
-                        className={`overflow-hidden rounded-xl border border-slate-200 transition-colors ${isSprintDropHighlighted(sprint.id) ? 'ring-2 ring-inset ring-sky-400' : ''}`}
-                      >
-                        <div className="border-b border-slate-200 bg-white px-5 py-4">
-                          <div className="flex items-center justify-between gap-4">
-                            <button
-                              type="button"
-                              onClick={() => toggleSprint(sprint.id)}
-                              className="flex flex-1 items-start gap-3"
-                            >
-                              {expandedSprints.has(sprint.id) ? (
-                                <ChevronUpIcon className="mt-1 h-5 w-5 shrink-0" />
-                              ) : (
-                                <ChevronDownIcon className="mt-1 h-5 w-5 shrink-0" />
-                              )}
-                              <div className="text-left">
-                                <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
-                                <p className="font-segoe-ui text-sm text-slate-500">
-                                  {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań • <span className="text-green-600 font-medium">{sprint.completedTasks} ukończonych ({Math.round((sprint.completedTasks / sprint.totalTasks) * 100)}%)</span>
-                                </p>
-                              </div>
-                            </button>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className={`rounded-full px-3 py-1 font-segoe-ui text-xs font-medium ${sprintStatusBadgeMap[sprint.status]}`}>
-                                {sprint.status}
-                              </span>
-                              <button type="button" className="flex h-6 w-6 items-center justify-center text-slate-600 hover:text-slate-900">
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {expandedSprints.has(sprint.id) && (
-                          <SprintDropZone
-                            sprintId={sprint.id}
-                            className="px-5 py-3"
-                            isHighlighted={isSprintDropHighlighted(sprint.id)}
-                          >
-                            {sprint.tasks.length === 0 ? (
-                              <div className="py-7 text-center">
-                                <p className="font-segoe-ui text-sm font-medium text-slate-500">
-                                  Brak zadań w tym sprincie — przeciągnij zadanie z backlogu
-                                </p>
-                              </div>
-                            ) : (
-                              <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-2">
-                                  {sprint.tasks.map((task) => (
-                                    <SprintTaskRow key={task.id} task={task} />
-                                  ))}
-                                </div>
-                              </SortableContext>
-                            )}
-                          </SprintDropZone>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+              {renderSprintList()}
             </div>
 
             {/* Filtry po prawej */}
@@ -1038,6 +1142,8 @@ const SprintsPage: React.FC = () => {
         onStartNextSprint={handleStartNextSprint}
         onExtendSprint={handleExtendSprint}
         onDeleteSprint={handleDeleteSprint}
+        isSaving={isSavingSprint}
+        errorMessage={sprintModalErrorMessage}
       />
     </div>
   );
