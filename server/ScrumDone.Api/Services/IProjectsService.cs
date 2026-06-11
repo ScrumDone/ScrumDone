@@ -14,7 +14,7 @@ namespace ScrumDone.Api.Services
     
         Task<ProjectDetailDto> CreateProjectAsync(ProjectCreateDto dto);
 
-        Task<ProjectDetailDto> UpdateProjectAsync(ProjectUpdateDto dto);
+        Task<ProjectDetailDto> UpdateProjectAsync(Guid id, ProjectUpdateDto dto);
 
         Task DeleteProjectAsync(Guid id);
 
@@ -23,14 +23,14 @@ namespace ScrumDone.Api.Services
     
         Task AddUserToProjectAsync(Guid id, Guid userId);
 
-        Task RemoveUserToProjectAsync(Guid id, Guid userId);
+        Task RemoveUserFromProjectAsync(Guid id, Guid userId);
 
         // sprints
         Task<PagedResultDto<SprintSummaryDto>> GetSprintsAsync(Guid id, SprintQueryDto query);
         Task<SprintDetailDto> CreateSprintAsync(Guid id, SprintCreateDto dto);
 
         // assignments-labels
-        Task<IEnumerator<AssignmentLabelDto>> GetAssignmentLabelsAsync(Guid id);
+        Task<IEnumerable<AssignmentLabelDto>> GetAssignmentLabelsAsync(Guid id);
         Task<AssignmentLabelDto> CreateAssignmentLabelAsync(Guid id, AssignmentLabelCreateDto dto);
         Task<AssignmentLabelDto> UpdateAssignmentLabelAsync(Guid id, Guid labelId, AssignmentLabelUpdateDto dto);
         Task DeleteAssignmentLabelAsync(Guid id, Guid labelId);

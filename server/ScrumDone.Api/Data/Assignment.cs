@@ -29,6 +29,6 @@ namespace ScrumDone.Api.Data
         public List<AssignmentAssignmentLabelMTMRelation> Labels { get; set; } = new();
         public List<Message> Comments { get; set; } = new();
         public Assignment? ParentAssignment { get; set; }
-        public List<Assignment> SubTAssignments { get; set; } = new();
+        public List<Assignment> SubAssignments { get; set; } = new();
     }
 }

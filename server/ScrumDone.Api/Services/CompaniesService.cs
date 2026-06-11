@@ -228,10 +228,10 @@ namespace ScrumDone.Api.Services
                 .FirstOrDefaultAsync(c => c.CompanyId == id && c.Id == contactId)
                 ?? throw new NotFoundException(nameof(ContactPerson), contactId);
 
-            if (dto.SetProperties.Contains(nameof(dto.Name))) contact.Name = dto.Name!;
-            if (dto.SetProperties.Contains(nameof(dto.Role))) contact.Role = dto.Role!;
-            if (dto.SetProperties.Contains(nameof(dto.Email))) contact.Email = dto.Email!;
-            if (dto.SetProperties.Contains(nameof(dto.Phone))) contact.Phone = dto.Phone!;
+            if (dto.SetProperties.Contains(nameof(dto.Name))) contact.Name = dto.Name;
+            if (dto.SetProperties.Contains(nameof(dto.Role))) contact.Role = dto.Role;
+            if (dto.SetProperties.Contains(nameof(dto.Email))) contact.Email = dto.Email;
+            if (dto.SetProperties.Contains(nameof(dto.Phone))) contact.Phone = dto.Phone;
             if (dto.SetProperties.Contains(nameof(dto.IsPrimary))) if (dto.IsPrimary != null) contact.IsPrimary = dto.IsPrimary.Value;
 
             await _context.SaveChangesAsync();

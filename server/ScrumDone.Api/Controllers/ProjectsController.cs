@@ -38,7 +38,7 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<ProjectQueryDto> validator)
         {
             await validator.ValidateAndThrowAsync(query);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            return Ok(await _projectsService.GetProjectsAsync(query));
         }
 
         [HttpGet("{id}")]
@@ -47,7 +47,7 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetProject([FromRoute] Guid id)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            return Ok(await _projectsService.GetProjectByIdAsync(id));
         }
 
         [HttpPost]

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using ScrumDone.Api.Exceptions;
 using FluentValidation;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ScrumDone.Api.Middleware;
 
@@ -27,6 +28,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             ValidationException => (400, "Bad Request"),
             BadRequestException => (400, "Bad Request"),
             NotFoundException => (404, "Not Found"),
+            ConflictException => (409, "Conflict"),
             _ => (500, "Internal Server Error")
         };
 

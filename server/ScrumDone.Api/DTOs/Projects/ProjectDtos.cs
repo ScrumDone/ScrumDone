@@ -130,8 +130,8 @@ namespace ScrumDone.Api.DTOs.Projects
     // Team member management
 
     public class TeamMembersQueryDto{
-        int Page { get; set; } = 1;
-        int Limit { get; set; } = 20;
+        public int Page { get; set; } = 1;
+        public int Limit { get; set; } = 20;
     }
 
     //public record TeamMembersDto(
