@@ -135,3 +135,14 @@ export const addDaysToDisplayDate = (displayDate: string, days: number): string 
 
   return formatSprintDateForDisplay(date.toISOString());
 };
+
+export const deriveSprintStatusFromDisplayDates = (startDate: string, endDate: string): SprintStatus =>
+  deriveSprintStatus(parseDisplayDateToIso(startDate), parseDisplayDateToIso(endDate));
+
+export const toSprintEndDateUpdateDto = (displayEndDate: string, extraDays = 0): SprintUpdateDto => {
+  const targetDate = extraDays > 0 ? addDaysToDisplayDate(displayEndDate, extraDays) : displayEndDate;
+
+  return {
+    endDate: parseDisplayDateToIso(targetDate),
+  };
+};

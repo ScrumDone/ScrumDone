@@ -1,5 +1,6 @@
 import React from 'react';
 import { CalendarDaysIcon, PlusIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { deriveSprintStatusFromDisplayDates } from '../utils/sprintDisplay';
 
 export type SprintEditDraft = {
   title: string;
@@ -17,9 +18,9 @@ type SprintEditModalProps = {
   onStartNextSprint: () => void;
   onExtendSprint: () => void;
   onDeleteSprint: () => void;
+  isSaving?: boolean;
+  errorMessage?: string | null;
 };
-
-const sprintStatusOptions: SprintEditDraft['status'][] = ['Aktywny', 'Zaplanowany', 'Ukończony'];
 
 const SprintEditModal: React.FC<SprintEditModalProps> = ({
   isOpen,
@@ -30,15 +31,24 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
   onStartNextSprint,
   onExtendSprint,
   onDeleteSprint,
+  isSaving = false,
+  errorMessage = null,
 }) => {
   if (!isOpen || !draft) {
     return null;
   }
 
+  const displayedStatus = deriveSprintStatusFromDisplayDates(draft.startDate, draft.endDate);
+
   const updateDraft = (partialDraft: Partial<SprintEditDraft>) => {
-    onDraftChange({
+    const nextDraft = {
       ...draft,
       ...partialDraft,
+    };
+
+    onDraftChange({
+      ...nextDraft,
+      status: deriveSprintStatusFromDisplayDates(nextDraft.startDate, nextDraft.endDate),
     });
   };
 
@@ -64,6 +74,12 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
         </div>
 
         <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+          {errorMessage ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 font-segoe-ui text-sm text-red-700">
+              {errorMessage}
+            </div>
+          ) : null}
+
           <div>
             <label className="mb-2 block font-segoe-ui text-sm font-medium leading-3.5 tracking-[-0.15px] text-slate-700" htmlFor="sprint-name-input">
               Nazwa sprintu
@@ -73,7 +89,8 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
               type="text"
               value={draft.title}
               onChange={(event) => updateDraft({ title: event.target.value })}
-              className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+              disabled={isSaving}
+              className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main disabled:opacity-60"
             />
           </div>
 
@@ -87,7 +104,8 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
                 type="text"
                 value={draft.startDate}
                 onChange={(event) => updateDraft({ startDate: event.target.value })}
-                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+                disabled={isSaving}
+                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main disabled:opacity-60"
               />
             </div>
 
@@ -100,34 +118,20 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
                 type="text"
                 value={draft.endDate}
                 onChange={(event) => updateDraft({ endDate: event.target.value })}
-                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main"
+                disabled={isSaving}
+                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main disabled:opacity-60"
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-2 block font-segoe-ui text-sm font-medium leading-3.5 tracking-[-0.15px] text-slate-700" htmlFor="sprint-status-select">
+            <p className="mb-2 block font-segoe-ui text-sm font-medium leading-3.5 tracking-[-0.15px] text-slate-700">
               Status sprintu
-            </label>
-            <div className="relative">
-              <select
-                id="sprint-status-select"
-                value={draft.status}
-                onChange={(event) => updateDraft({ status: event.target.value as SprintEditDraft['status'] })}
-                className="w-full appearance-none rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700 outline-none transition-colors focus:border-scrumdone-blue-main"
-              >
-                {sprintStatusOptions.map((statusOption) => (
-                  <option key={statusOption} value={statusOption}>
-                    {statusOption}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
-                <svg aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m19 9-7 7-7-7" />
-                </svg>
-              </span>
-            </div>
+            </p>
+            <p className="rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700">
+              {displayedStatus}
+            </p>
+            <p className="mt-1 font-segoe-ui text-xs text-slate-500">Wyliczany automatycznie na podstawie dat sprintu.</p>
           </div>
 
           <div className="border-t border-slate-200 pt-5">
@@ -137,7 +141,8 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
               <button
                 type="button"
                 onClick={onStartNextSprint}
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#2563EB] transition-colors hover:bg-slate-50"
+                disabled={isSaving}
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#2563EB] transition-colors hover:bg-slate-50 disabled:opacity-60"
               >
                 <PlusIcon className="h-4 w-4" />
                 <span className="text-sm leading-5 tracking-[-0.15px]">Zamknij i rozpocznij nowy sprint</span>
@@ -146,7 +151,8 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
               <button
                 type="button"
                 onClick={onExtendSprint}
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50"
+                disabled={isSaving}
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50 disabled:opacity-60"
               >
                 <CalendarDaysIcon className="h-4 w-4" />
                 <span className="text-sm leading-5 tracking-[-0.15px]">Przedłuż sprint o tydzień</span>
@@ -155,7 +161,8 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
               <button
                 type="button"
                 onClick={onDeleteSprint}
-                className="flex w-full items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#DC2626] transition-colors hover:bg-red-100"
+                disabled={isSaving}
+                className="flex w-full items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#DC2626] transition-colors hover:bg-red-100 disabled:opacity-60"
               >
                 <TrashIcon className="h-4 w-4" />
                 <span className="text-sm leading-5 tracking-[-0.15px]">Usuń sprint</span>
@@ -168,16 +175,18 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50"
+            disabled={isSaving}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
           >
             Anuluj
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD]"
+            disabled={isSaving || !draft.title.trim()}
+            className="rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD] disabled:opacity-50"
           >
-            Zapisz zmiany
+            {isSaving ? 'Zapisywanie…' : 'Zapisz zmiany'}
           </button>
         </div>
       </div>

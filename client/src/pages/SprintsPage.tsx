@@ -27,9 +27,18 @@ import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
+import { useDeleteSprint } from '../hooks/useDeleteSprint';
 import { useProjectSprints } from '../hooks/useProjectSprints';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
-import { addDaysToDisplayDate, mapSprintSummaryToSprintCard } from '../utils/sprintDisplay';
+import { useUpdateSprint } from '../hooks/useUpdateSprint';
+import {
+  addDaysToDisplayDate,
+  deriveSprintStatusFromDisplayDates,
+  mapSprintSummaryToEditDraft,
+  mapSprintSummaryToSprintCard,
+  toSprintEndDateUpdateDto,
+  toSprintUpdateDto,
+} from '../utils/sprintDisplay';
 
 type TaskItem = {
   id: string;
@@ -323,8 +332,6 @@ const mockTasksByTitle = Object.fromEntries(mockSprintsSeed.map((sprint) => [spr
 const getSeedTasksForSprint = (id: string, title: string): TaskItem[] =>
   mockTasksByLegacyId[id] ?? mockTasksByTitle[title] ?? [];
 
-type SprintMetadataOverride = Partial<Pick<SprintData, 'title' | 'startDate' | 'endDate' | 'status'>>;
-
 const getSprintCompletionPercent = (sprint: SprintData) =>
   sprint.totalTasks > 0 ? Math.round((sprint.completedTasks / sprint.totalTasks) * 100) : 0;
 
@@ -337,9 +344,22 @@ const SprintsPage: React.FC = () => {
     isError: isSprintsError,
     error: sprintsError,
   } = useProjectSprints(projectId, 1, 50);
+  const {
+    mutate: updateSprint,
+    isPending: isUpdatingSprint,
+    isError: isUpdateSprintError,
+    error: updateSprintError,
+    reset: resetUpdateSprint,
+  } = useUpdateSprint();
+  const {
+    mutate: deleteSprint,
+    isPending: isDeletingSprint,
+    isError: isDeleteSprintError,
+    error: deleteSprintError,
+    reset: resetDeleteSprint,
+  } = useDeleteSprint();
   const [sprintTasksById, setSprintTasksById] = useState<Record<string, TaskItem[]>>({});
-  const [sprintOverrides, setSprintOverrides] = useState<Record<string, SprintMetadataOverride>>({});
-  const [deletedSprintIds, setDeletedSprintIds] = useState<Set<string>>(() => new Set());
+  const [sprintModalMessage, setSprintModalMessage] = useState<string | null>(null);
   const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
   const [dragOverSprintId, setDragOverSprintId] = useState<string | null>(null);
@@ -394,24 +414,28 @@ const SprintsPage: React.FC = () => {
       return [];
     }
 
-    return sprintsQueryData.items
-      .filter((summary) => !deletedSprintIds.has(summary.id))
-      .map((summary) => {
-        const card = mapSprintSummaryToSprintCard(summary);
-        const override = sprintOverrides[summary.id];
+    return sprintsQueryData.items.map((summary) => {
+      const card = mapSprintSummaryToSprintCard(summary);
 
-        return {
-          id: card.id,
-          title: override?.title ?? card.title,
-          startDate: override?.startDate ?? card.startDate,
-          endDate: override?.endDate ?? card.endDate,
-          totalTasks: card.totalTasks,
-          completedTasks: card.completedTasks,
-          status: override?.status ?? card.status,
-          tasks: sprintTasksById[summary.id] ?? [],
-        };
-      });
-  }, [sprintsQueryData?.items, sprintTasksById, sprintOverrides, deletedSprintIds]);
+      return {
+        ...card,
+        tasks: sprintTasksById[summary.id] ?? [],
+      };
+    });
+  }, [sprintsQueryData?.items, sprintTasksById]);
+
+  const isSavingSprint = isUpdatingSprint || isDeletingSprint;
+  const sprintModalErrorMessage = isUpdateSprintError
+    ? updateSprintError?.message
+    : isDeleteSprintError
+      ? deleteSprintError?.message
+      : sprintModalMessage;
+
+  const resetSprintModalMutations = () => {
+    resetUpdateSprint();
+    resetDeleteSprint();
+    setSprintModalMessage(null);
+  };
 
   useEffect(() => {
     if (sprints.length === 0) {
@@ -452,19 +476,27 @@ const SprintsPage: React.FC = () => {
   }, [sprints]);
 
   const closeSprintEditModal = () => {
+    resetSprintModalMutations();
     setIsSprintEditOpen(false);
     setEditingSprintId(null);
     setSprintDraft(null);
   };
 
   const openSprintEditModal = (sprint: SprintData) => {
+    resetSprintModalMutations();
+
+    const summary = sprintsQueryData?.items.find((item) => item.id === sprint.id);
     setEditingSprintId(sprint.id);
-    setSprintDraft({
-      title: sprint.title,
-      startDate: sprint.startDate,
-      endDate: sprint.endDate,
-      status: sprint.status,
-    });
+    setSprintDraft(
+      summary
+        ? mapSprintSummaryToEditDraft(summary)
+        : {
+            title: sprint.title === '—' ? '' : sprint.title,
+            startDate: sprint.startDate === '—' ? '' : sprint.startDate,
+            endDate: sprint.endDate === '—' ? '' : sprint.endDate,
+            status: sprint.status,
+          },
+    );
     setIsSprintEditOpen(true);
   };
 
@@ -473,79 +505,51 @@ const SprintsPage: React.FC = () => {
       return;
     }
 
-    setSprintOverrides((currentOverrides) => ({
-      ...currentOverrides,
-      [editingSprintId]: {
-        title: sprintDraft.title,
-        startDate: sprintDraft.startDate,
-        endDate: sprintDraft.endDate,
-        status: sprintDraft.status,
+    const dto = toSprintUpdateDto(sprintDraft);
+    if (!dto) {
+      setSprintModalMessage('Nazwa sprintu jest wymagana.');
+      return;
+    }
+
+    setSprintModalMessage(null);
+    updateSprint(
+      { id: editingSprintId, projectId, data: dto },
+      {
+        onSuccess: () => {
+          closeSprintEditModal();
+        },
       },
-    }));
-    closeSprintEditModal();
+    );
   };
 
   const handleStartNextSprint = () => {
-    if (!editingSprintId) {
-      return;
-    }
-
-    const currentIndex = sprints.findIndex((sprint) => sprint.id === editingSprintId);
-
-    if (currentIndex === -1) {
-      return;
-    }
-
-    const nextPlannedSprint = sprints.find(
-      (sprint, index) => index > currentIndex && sprint.status === 'Zaplanowany',
-    );
-
-    setSprintOverrides((currentOverrides) => {
-      const nextOverrides = { ...currentOverrides };
-
-      nextOverrides[editingSprintId] = {
-        ...nextOverrides[editingSprintId],
-        status: 'Ukończony',
-      };
-
-      if (nextPlannedSprint) {
-        nextOverrides[nextPlannedSprint.id] = {
-          ...nextOverrides[nextPlannedSprint.id],
-          status: 'Aktywny',
-        };
-      }
-
-      return nextOverrides;
-    });
-
-    setSprintDraft((currentDraft) => (currentDraft ? { ...currentDraft, status: 'Ukończony' } : currentDraft));
+    setSprintModalMessage('Ta akcja nie jest jeszcze dostępna przez API.');
   };
 
   const handleExtendSprint = () => {
-    if (!editingSprintId) {
+    if (!editingSprintId || !sprintDraft) {
       return;
     }
 
-    setSprintDraft((currentDraft) => {
-      if (!currentDraft) {
-        return currentDraft;
-      }
+    const updatedEndDate = addDaysToDisplayDate(sprintDraft.endDate, 7);
 
-      const updatedEndDate = addDaysToDisplayDate(currentDraft.endDate, 7);
-
-      setSprintOverrides((currentOverrides) => ({
-        ...currentOverrides,
-        [editingSprintId]: {
-          ...currentOverrides[editingSprintId],
-          endDate: updatedEndDate,
+    setSprintModalMessage(null);
+    updateSprint(
+      { id: editingSprintId, projectId, data: toSprintEndDateUpdateDto(sprintDraft.endDate, 7) },
+      {
+        onSuccess: () => {
+          setSprintDraft((currentDraft) =>
+            currentDraft
+              ? {
+                  ...currentDraft,
+                  endDate: updatedEndDate,
+                  status: deriveSprintStatusFromDisplayDates(currentDraft.startDate, updatedEndDate),
+                }
+              : currentDraft,
+          );
         },
-      }));
-
-      return {
-        ...currentDraft,
-        endDate: updatedEndDate,
-      };
-    });
+      },
+    );
   };
 
   const handleDeleteSprint = () => {
@@ -553,13 +557,20 @@ const SprintsPage: React.FC = () => {
       return;
     }
 
-    setDeletedSprintIds((currentDeleted) => new Set([...currentDeleted, editingSprintId]));
-    setSprintTasksById((currentTasks) => {
-      const nextTasks = { ...currentTasks };
-      delete nextTasks[editingSprintId];
-      return nextTasks;
-    });
-    closeSprintEditModal();
+    setSprintModalMessage(null);
+    deleteSprint(
+      { id: editingSprintId, projectId },
+      {
+        onSuccess: () => {
+          setSprintTasksById((currentTasks) => {
+            const nextTasks = { ...currentTasks };
+            delete nextTasks[editingSprintId];
+            return nextTasks;
+          });
+          closeSprintEditModal();
+        },
+      },
+    );
   };
 
   const toggleSprint = (sprintId: string) => {
@@ -1131,6 +1142,8 @@ const SprintsPage: React.FC = () => {
         onStartNextSprint={handleStartNextSprint}
         onExtendSprint={handleExtendSprint}
         onDeleteSprint={handleDeleteSprint}
+        isSaving={isSavingSprint}
+        errorMessage={sprintModalErrorMessage}
       />
     </div>
   );
