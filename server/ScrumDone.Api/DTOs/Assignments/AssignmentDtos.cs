@@ -22,6 +22,36 @@ namespace ScrumDone.Api.DTOs.Assignments
         string HexColor
     );
 
+    public class AssignmentLabelCreateDto
+    {
+        public string Name { get; set; }
+        public string HexColor { get; set; }
+    };
+
+    public class AssignmentLabelUpdateDto
+    {
+        private readonly HashSet<string> _setProperties = new();
+        [JsonIgnore]
+        public IReadOnlySet<string> SetProperties => _setProperties;
+
+        // adds property when declared in body
+        // helps support the PATCH partial update logic
+        //    - omission in body -> no update, don't add to set properties
+        //    - null -> set to empty, add to set properties
+        //    - value -> set to value, add to set properties
+
+        public string? Name
+        {
+            get => field;
+            set { field = value; _setProperties.Add(nameof(Name)); }
+        }
+        public string? HexColor
+        {
+            get => field;
+            set { field = value; _setProperties.Add(nameof(HexColor)); }
+        }
+    }
+
     public record AssignmentListItemDto(
         Guid Id,
         string Name,

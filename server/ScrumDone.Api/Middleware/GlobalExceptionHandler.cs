@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using ScrumDone.Api.Exceptions;
+using FluentValidation;
+using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text.RegularExpressions;
 
 namespace ScrumDone.Api.Middleware;
@@ -37,6 +39,7 @@ public class GlobalExceptionHandler : IExceptionHandler
                 }
             } => (400, "Bad Request"),
             NotFoundException => (404, "Not Found"),
+            ConflictException => (409, "Conflict"),
             _ => (500, "Internal Server Error")
         };
 

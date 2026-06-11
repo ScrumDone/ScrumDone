@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ScrumDone.Api.Data;
@@ -11,9 +12,11 @@ using ScrumDone.Api.Data;
 namespace ScrumDone.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260611205010_MarkSomeFieldsAsNullable")]
+    partial class MarkSomeFieldsAsNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,6 +38,7 @@ namespace ScrumDone.Api.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("DueDate")
@@ -69,8 +73,6 @@ namespace ScrumDone.Api.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DueDate");
 
                     b.HasIndex("ParentAssignmentId");
 
@@ -111,10 +113,9 @@ namespace ScrumDone.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AssignmentLabelId");
+                    b.HasIndex("AssignmentId");
 
-                    b.HasIndex("AssignmentId", "AssignmentLabelId")
-                        .IsUnique();
+                    b.HasIndex("AssignmentLabelId");
 
                     b.ToTable("AssignmentAssignmentLabelMTMTable");
                 });
@@ -202,9 +203,6 @@ namespace ScrumDone.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsDefault")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -246,10 +244,9 @@ namespace ScrumDone.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("AssignmentId");
 
-                    b.HasIndex("AssignmentId", "UserId")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("AssignmentUserMTMTable");
                 });

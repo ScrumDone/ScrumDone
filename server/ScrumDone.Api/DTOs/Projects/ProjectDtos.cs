@@ -127,33 +127,41 @@ namespace ScrumDone.Api.DTOs.Projects
         public bool? IsActive { get; set; }
     }
 
-    public class LabelCreateDto
+    // Team member management
+
+    public class TeamMembersQueryDto
     {
-        public required string Name { get; set; }
-        public required string HexColor { get; set; }
+        public int Page { get; set; } = 1;
+        public int Limit { get; set; } = 20;
     }
 
-    public class LabelUpdateDto
-    {
-        private readonly HashSet<string> _setProperties = new();
-        [JsonIgnore] public IReadOnlySet<string> SetProperties => _setProperties;
+    //     public class AssignmentLabelCreateDto
+    // {
+    //     public required string Name { get; set; }
+    //     public required string HexColor { get; set; }        
+    // }
 
-        public string? Name
-        {
-            get => field;
-            set { field = value; _setProperties.Add(nameof(Name)); }
-        }
-        public string? HexColor
-        {
-            get => field;
-            set { field = value; _setProperties.Add(nameof(HexColor)); }
-        }
-    }
+    // public class AssignmentLabelUpdateDto
+    // {
+    //     private readonly HashSet<string> _setProperties = new();
+    //     [JsonIgnore] public IReadOnlySet<string> SetProperties => _setProperties;
 
-    public class ProjectMembersUpdateDto
-    {
-        public IEnumerable<Guid> UserIds { get; set; } = [];
-    }
+    //     public string? Name
+    //     {
+    //         get => field;
+    //         set { field = value; _setProperties.Add(nameof(Name)); }
+    //     }
+    //     public string? HexColor
+    //     {
+    //         get => field;
+    //         set { field = value; _setProperties.Add(nameof(HexColor)); }
+    //     }
+    // }
 
+    //public record TeamMembersDto(
+    //    Guid UserId,
+    //    string Name,
+    //    string ProfilePictureUrl
+    //);
 }
 

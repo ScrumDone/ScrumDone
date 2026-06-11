@@ -71,7 +71,7 @@ namespace ScrumDone.Api.Data
                     entity.HasIndex(x => x.DueDate);
 
                     entity.HasOne(t => t.ParentAssignment)
-                        .WithMany(u => u.SubTAssignments)
+                        .WithMany(u => u.SubAssignments)
                         .HasForeignKey(t => t.ParentAssignmentId)
                         .OnDelete(DeleteBehavior.Restrict);
                 });

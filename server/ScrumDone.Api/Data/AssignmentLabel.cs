@@ -14,6 +14,8 @@ namespace ScrumDone.Api.Data
         public DateTimeOffset? DeletedAt { get; set; }
 
         // add link to project
+        public Guid ProjectId { get; set; }
+        public Project Project { get; set; }
         public List<AssignmentAssignmentLabelMTMRelation> Assignments { get; set; } = new();
     }
 }
