@@ -1,5 +1,8 @@
 import type { EditProjectDraft } from '../components/ProjectCreateModal';
-import type { ProjectCreateDto, ProjectListItem } from '../types/project';
+import type { EditProjectDraft as ProjectEditDraft, TeamMemberOption } from '../components/ProjectEditModal';
+import { getInitialsFromName } from '../hooks/useCurrentUser';
+import type { ProjectCreateDto, ProjectDetail, ProjectListItem, ProjectUpdateDto } from '../types/project';
+import type { UserSummary } from '../types/user';
 
 const emptyToNull = (value: string): string | null => {
   const trimmed = value.trim();
@@ -18,6 +21,16 @@ export type ProjectCardViewModel = {
   status: string;
 };
 
+export type ProjectTopBarViewModel = {
+  id: string;
+  name: string;
+  clientName: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  membersCount: number;
+};
+
 export const formatProjectDateForDisplay = (dateValue: string | null): string => {
   if (!dateValue) {
     return '—';
@@ -33,6 +46,70 @@ export const formatProjectDateForDisplay = (dateValue: string | null): string =>
   const year = date.getFullYear();
 
   return `${day}.${month}.${year}`;
+};
+
+const toEditDateValue = (date: string | null): string => {
+  const formatted = formatProjectDateForDisplay(date);
+  return formatted === '—' ? '' : formatted;
+};
+
+const parseDisplayDateToIso = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const dottedMatch = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(trimmed);
+  if (dottedMatch) {
+    const day = Number(dottedMatch[1]);
+    const month = Number(dottedMatch[2]);
+    const year = Number(dottedMatch[3]);
+    const date = new Date(year, month - 1, day);
+
+    if (!Number.isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+  }
+
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString();
+  }
+
+  return trimmed;
+};
+
+export const mapUsersToTeamMemberOptions = (users: UserSummary[]): TeamMemberOption[] =>
+  users.map((user) => ({
+    id: user.id,
+    fullName: user.name,
+    initials: getInitialsFromName(user.name),
+    email: '',
+  }));
+
+export const haveSameMemberIds = (currentIds: string[], nextIds: string[]): boolean => {
+  if (currentIds.length !== nextIds.length) {
+    return false;
+  }
+
+  const sortedCurrent = [...currentIds].sort();
+  const sortedNext = [...nextIds].sort();
+
+  return sortedCurrent.every((id, index) => id === sortedNext[index]);
+};
+
+export const toProjectUpdateDto = (draft: ProjectEditDraft): ProjectUpdateDto | null => {
+  const name = draft.name.trim();
+  if (!name) {
+    return null;
+  }
+
+  return {
+    name,
+    description: draft.description.trim() || null,
+    startDate: parseDisplayDateToIso(draft.startDate),
+    expectedFinishDate: parseDisplayDateToIso(draft.endDate),
+  };
 };
 
 export const computeProjectProgress = (project: ProjectListItem): number => {
@@ -80,6 +157,24 @@ export const toProjectCreateDto = (draft: EditProjectDraft): ProjectCreateDto | 
 
   return dto;
 };
+
+export const mapProjectDetailToTopBar = (project: ProjectDetail): ProjectTopBarViewModel => ({
+  id: project.id,
+  name: project.name,
+  clientName: project.companyName?.trim() || '—',
+  description: project.description?.trim() || '—',
+  startDate: formatProjectDateForDisplay(project.startDate),
+  endDate: formatProjectDateForDisplay(project.expectedFinishDate),
+  membersCount: project.teamMemberCount,
+});
+
+export const mapProjectDetailToEditDraft = (project: ProjectDetail): ProjectEditDraft => ({
+  name: project.name,
+  description: project.description?.trim() || '',
+  startDate: toEditDateValue(project.startDate),
+  endDate: toEditDateValue(project.expectedFinishDate),
+  memberIds: project.teamMembers.map((member) => member.id),
+});
 
 export const mapProjectListItemToCard = (project: ProjectListItem): ProjectCardViewModel => ({
   id: project.id,

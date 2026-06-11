@@ -3,12 +3,10 @@ import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
-import { projects } from '../data/projects';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
 
 const ProjectDetailsPage: React.FC = () => {
-  const { projectId } = useParams();
-  const project = projects.find((item) => String(item.id) === projectId);
+  const { projectId = '' } = useParams();
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
 
   return (
@@ -18,17 +16,11 @@ const ProjectDetailsPage: React.FC = () => {
 
       <main className="ml-64 pt-(--app-header-h)">
         <div className="flex w-full flex-col">
-          {project ? (
-            <>
-              <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
-
-            </>
-
-          ) : (
-            <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
-              Nie znaleziono projektu o podanym adresie.
-            </section>
-          )}
+          <ProjectTopBar
+            projectId={projectId}
+            viewMode={viewMode}
+            onViewModeChange={setProjectViewMode}
+          />
         </div>
       </main>
     </div>

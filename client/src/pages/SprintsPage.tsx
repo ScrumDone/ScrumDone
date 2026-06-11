@@ -27,7 +27,6 @@ import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
-import { projects } from '../data/projects';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
 
 type TaskItem = {
@@ -365,8 +364,7 @@ const allSprintsData: SprintData[] = [
 ];
 
 const SprintsPage: React.FC = () => {
-  const { projectId } = useParams();
-  const project = projects.find((item) => String(item.id) === projectId);
+  const { projectId = '' } = useParams();
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
   const [sprints, setSprints] = useState<SprintData[]>(allSprintsData);
   const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
@@ -645,27 +643,13 @@ const SprintsPage: React.FC = () => {
     }
   };
 
-  if (!project) {
-    return (
-      <div className="min-h-screen w-full bg-[#F9FAFB]">
-        <SideBar />
-        <TopBar />
-        <main className="ml-64 pt-(--app-header-h)">
-          <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
-            Nie znaleziono projektu o podanym adresie.
-          </section>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB]">
       <SideBar />
       <TopBar />
 
       <main className="ml-64 flex h-screen flex-col overflow-hidden pt-(--app-header-h)">
-        <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
+        <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
         <section className="mx-6 mt-6 mb-6 flex min-h-0 flex-1 flex-col overflow-y-auto xl:overflow-hidden">
           <DndContext

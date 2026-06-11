@@ -8,7 +8,6 @@ import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintSelector, { type Sprint } from '../components/SprintSelector';
 import TaskCreateModal from '../components/TaskCreateModal';
-import { projects } from '../data/projects';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
 import {
   DndContext,
@@ -179,8 +178,7 @@ const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
 // --- Komponent Główny ---
 
 const ProjectKanbanPage: React.FC = () => {
-  const { projectId } = useParams();
-  const project = projects.find((item) => String(item.id) === projectId);
+  const { projectId = '' } = useParams();
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
   const [currentSprintId, setCurrentSprintId] = useState('sprint-0');
   const [columns, setColumns] = useState<KanbanColumn[]>(initialKanbanColumns);
@@ -237,11 +235,9 @@ const ProjectKanbanPage: React.FC = () => {
 
       <main className="ml-64 pt-(--app-header-h)">
         <div className="flex w-full flex-col">
-          {project ? (
-            <>
-              <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
+          <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
-              <section className="mx-6 mt-6 pb-8">
+          <section className="mx-6 mt-6 pb-8">
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                   <div className="min-w-0">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
@@ -290,13 +286,7 @@ const ProjectKanbanPage: React.FC = () => {
                     <CalendarPeopleFilter people={teamMembers} />
                   </aside>
                 </div>
-              </section>
-            </>
-          ) : (
-            <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
-              Nie znaleziono projektu.
-            </section>
-          )}
+          </section>
         </div>
       </main>
     </div>

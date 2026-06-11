@@ -5,6 +5,8 @@ import TopBar from '../components/topBar';
 import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical } from 'lucide-react';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
+import CompanyAttachProjectModal from '../components/CompanyAttachProjectModal';
+import { projects } from '../data/projects';
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
 import { useCompany } from '../hooks/useCompany';
 import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
@@ -115,6 +117,8 @@ const CompanyDetailsPage: React.FC = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isContactAddModalOpen, setIsContactAddModalOpen] = useState(false);
+  const [isAttachProjectModalOpen, setIsAttachProjectModalOpen] = useState(false);
+  const [selectedAttachProjectId, setSelectedAttachProjectId] = useState<number | null>(null);
   const [draft, setDraft] = useState<CompanyEditDraft>({
     name: '',
     nip: '',
@@ -165,6 +169,14 @@ const CompanyDetailsPage: React.FC = () => {
     [logsData?.items],
   );
 
+  const availableAttachProjects = useMemo(
+    () =>
+      displayedCompany
+        ? projects.filter((project) => project.clientName !== displayedCompany.name)
+        : [],
+    [displayedCompany?.name],
+  );
+
   useEffect(() => {
     if (!displayedCompany) return;
 
@@ -184,6 +196,8 @@ const CompanyDetailsPage: React.FC = () => {
     });
     setIsEditModalOpen(false);
     setIsContactAddModalOpen(false);
+    setIsAttachProjectModalOpen(false);
+    setSelectedAttachProjectId(null);
     setNotes([]);
   }, [displayedCompany?.id]);
 
@@ -315,6 +329,20 @@ const CompanyDetailsPage: React.FC = () => {
         onSuccess: () => closeContactAddModal(),
       },
     );
+  };
+
+  const openAttachProjectModal = () => {
+    setSelectedAttachProjectId(null);
+    setIsAttachProjectModalOpen(true);
+  };
+
+  const closeAttachProjectModal = () => {
+    setIsAttachProjectModalOpen(false);
+    setSelectedAttachProjectId(null);
+  };
+
+  const saveAttachProject = () => {
+    closeAttachProjectModal();
   };
 
   const handleAddNote = (e: React.FormEvent) => {
@@ -533,6 +561,15 @@ const CompanyDetailsPage: React.FC = () => {
                   Notatki ({isNotesLoading ? '...' : totalNotesCount})
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={openAttachProjectModal}
+                className="mr-3 inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium leading-2.5 text-white transition-all hover:bg-[#00A0DD] active:scale-95"
+              >
+                <PlusIcon className="h-4 w-4 stroke-2" />
+                Podepnij projekt
+              </button>
             </div>
 
             {activeTab === 'projects' && (
@@ -696,6 +733,16 @@ const CompanyDetailsPage: React.FC = () => {
         onDraftChange={setContactDraft}
         isSaving={isAddingContact}
         errorMessage={isAddContactError ? addContactError?.message : null}
+      />
+
+      <CompanyAttachProjectModal
+        isOpen={isAttachProjectModalOpen}
+        companyName={displayedCompany.name}
+        availableProjects={availableAttachProjects}
+        selectedProjectId={selectedAttachProjectId}
+        onClose={closeAttachProjectModal}
+        onSave={saveAttachProject}
+        onProjectSelect={setSelectedAttachProjectId}
       />
 
     </div>
