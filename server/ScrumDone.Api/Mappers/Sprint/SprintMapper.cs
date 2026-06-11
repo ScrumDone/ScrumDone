@@ -22,6 +22,11 @@ namespace ScrumDone.Api.Mappers
         private static int CountAssignments(ICollection<Assignment> assignments) => assignments.Count();
         private static int CountCompleted(ICollection<Assignment> assignments) => assignments.Count(a => a.Status?.Name == "Completed");
 
-        private static IEnumerable<AssignmentListItemDto> MapAssignments(ICollection<Assignment> assignments) => assignments.Select(a => a.ToListItemDto());
+        private static IEnumerable<AssignmentListItemDto> MapAssignments(ICollection<Assignment>? assignments) 
+        {
+            if (assignments == null) return Array.Empty<AssignmentListItemDto>();
+
+            return assignments.Select(a => a.ToListItemDto()).ToArray(); 
+        }
     }
 }

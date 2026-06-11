@@ -30,4 +30,8 @@
     <InternalsVisibleTo Include="ScrumDone.Api.Tests" />
   </ItemGroup>
 
+  <!-- <PropertyGroup> For Mapper debugging
+  <TargetFramework>net10.0</TargetFramework>
+  <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles> <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath> </PropertyGroup> -->
+
 </Project>

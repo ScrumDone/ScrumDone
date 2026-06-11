@@ -102,8 +102,8 @@ namespace ScrumDone.Api.Controllers
             return Ok(result);
         }
 
-        [HttpPut("{id}/members/{userId}")]
-        [ProducesResponseType(typeof(IEnumerable<Guid>), StatusCodes.Status200OK)]
+        [HttpPost("{id}/members/{userId}")]
+        [ProducesResponseType(typeof(IEnumerable<Guid>), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -111,8 +111,8 @@ namespace ScrumDone.Api.Controllers
             [FromRoute] Guid id,
             [FromRoute] Guid userId)
         {
-            await _projectsService.AddUserToProjectAsync(id, userId);
-            return NoContent();
+            var user = await _projectsService.AddUserToProjectAsync(id, userId);
+            return CreatedAtAction(nameof(AddMember), new {id = user.Id}, user);
         }
 
         [HttpDelete("{id}/members/{userId}")]
@@ -219,10 +219,10 @@ namespace ScrumDone.Api.Controllers
         [HttpGet("{id}/statuses")]
         [ProducesResponseType(typeof(IEnumerable<AssignmentStatusDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetUsers()
+        public async Task<IEnumerable<AssignmentStatusDto>> GetUsers()
         {
-            var result = _projectsService.GetAssignmentStatuses();
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            var result = await _projectsService.GetAssignmentStatuses();
+            return result;
         }
     }
 

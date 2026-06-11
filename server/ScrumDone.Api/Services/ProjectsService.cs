@@ -23,6 +23,7 @@ namespace ScrumDone.Api.Services
         public async Task<PagedResultDto<ProjectListItemDto>> GetProjectsAsync(ProjectQueryDto query)
         {
             var baseQuery = _context.Projects
+                .AsNoTracking()
                 .Include(p => p.TeamMembers)
                 .Include(p => p.Assignments)
                     .ThenInclude(a => a.Status)
@@ -96,6 +97,7 @@ namespace ScrumDone.Api.Services
                 Description = dto.Description,
                 IsActive = true,
                 IsSetToScrum = dto.IsSetToScrum,
+                StartDate = dto.StartDate,
                 ExpectedFinishDate = dto.ExpectedFinishDate,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
@@ -138,10 +140,23 @@ namespace ScrumDone.Api.Services
             if(dto.SetProperties.Contains(nameof(dto.Name))) projectToUpdate.Name = dto.Name!;
             if(dto.SetProperties.Contains(nameof(dto.Description))) projectToUpdate.Description = dto.Description;
             if(dto.SetProperties.Contains(nameof(dto.IsActive))) projectToUpdate.IsActive = dto.IsActive.Value!;
-            if(dto.SetProperties.Contains(nameof(dto.IsSetToScrum))) projectToUpdate.IsSetToScrum = dto.IsSetToScrum.Value!;
-            if(dto.SetProperties.Contains(nameof(dto.StartDate))) projectToUpdate.CreatedAt = dto.StartDate.Value; // there is no start date field
+            if(dto.SetProperties.Contains(nameof(dto.IsSetToScrum))) projectToUpdate.IsSetToScrum = dto.IsSetToScrum.Value;
+            if(dto.SetProperties.Contains(nameof(dto.StartDate))) projectToUpdate.StartDate = dto.StartDate;
             if(dto.SetProperties.Contains(nameof(dto.ExpectedFinishDate))) projectToUpdate.ExpectedFinishDate = dto.ExpectedFinishDate;
-            if(dto.SetProperties.Contains(nameof(dto.CompanyId))) projectToUpdate.CompanyId = dto.CompanyId;
+            
+            if(dto.SetProperties.Contains(nameof(dto.CompanyId)))
+            {
+                if (! await _context.Companies.AnyAsync(c => c.Id == dto.CompanyId) && dto.CompanyId != null )
+                {
+                    throw new NotFoundException(nameof(ScrumDone.Api.Data.Company), dto.CompanyId.Value);
+                }
+                else
+                {
+                    projectToUpdate.CompanyId = dto.CompanyId;
+                }
+            }
+                
+             
             projectToUpdate.UpdatedAt = DateTimeOffset.UtcNow; // or does it update automatically?
 
             await _context.SaveChangesAsync();
@@ -180,7 +195,7 @@ namespace ScrumDone.Api.Services
             return new PagedResultDto<UserSummaryDto>(team, query.Page, query.Limit, total);
 
         }
-        public async Task AddUserToProjectAsync(Guid id, Guid userId)
+        public async Task<UserSummaryDto> AddUserToProjectAsync(Guid id, Guid userId)
         {
             var project = await _context.Projects
                 .Include(p => p.TeamMembers)
@@ -196,7 +211,7 @@ namespace ScrumDone.Api.Services
             project.TeamMembers.Add(new ProjectUserMTMRelation {User = user});
             await _context.SaveChangesAsync();
 
-            return;
+            return user.ToSummaryDto();
         }
 
         public async Task RemoveUserFromProjectAsync(Guid id, Guid userId)
@@ -228,9 +243,23 @@ namespace ScrumDone.Api.Services
                 throw new NotFoundException(nameof(Project), id);
 
             var baseQuery = _context.Sprints
+                .AsNoTracking()
                 .Include(s => s.Assignments)
-                    .ThenInclude(a => a.Status)
-                .Where(s => s.ProjectId == id);
+                    .ThenInclude(a => a.Status) 
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Priority)
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Assignees)
+                        .ThenInclude(r => r.User)
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Labels)
+                        .ThenInclude(l => l.AssignmentLabel)
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.SubAssignments)
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Project)
+                .Where(s => s.ProjectId == id)
+                .AsSplitQuery();
             
             var total = await baseQuery.CountAsync();
 

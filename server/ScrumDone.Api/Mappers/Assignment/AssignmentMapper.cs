@@ -17,7 +17,7 @@ namespace ScrumDone.Api.Mappers
 
         public static IEnumerable<Guid> GetSubtasksIds(ICollection<Assignment> assignment) => assignment.Select(a => a.Id);
         public static IEnumerable<UserSummaryDto> MapUsers(ICollection<AssignmentUserMTMRelation> asignees) => asignees.Select(a => a.User.ToSummaryDto());
-        public static IEnumerable<AssignmentLabelDto> MapLabels(ICollection<AssignmentLabel> labels) => labels.Select(l => l.ToDto());
+        public static IEnumerable<AssignmentLabelDto> MapLabels(ICollection<AssignmentAssignmentLabelMTMRelation> labels) => labels.Select(l => l.AssignmentLabel.ToDto());
 
     }
 }

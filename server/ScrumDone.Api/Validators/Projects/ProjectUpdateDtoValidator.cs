@@ -3,7 +3,7 @@ using ScrumDone.Api.DTOs.Projects;
 
 namespace ScrumDone.Api.Validators.Projects
 {
-    public sealed class ProjectUpdateDtoValidator : AbstractValidator<DTOs.Projects.ProjectUpdateDto>
+    public sealed class ProjectUpdateDtoValidator : AbstractValidator<ProjectUpdateDto>
     {
         public ProjectUpdateDtoValidator()
         {
@@ -23,6 +23,10 @@ namespace ScrumDone.Api.Validators.Projects
             RuleFor(x => x.IsSetToScrum)
                 .NotNull()
                 .When(x => x.SetProperties.Contains(nameof(ProjectUpdateDto.IsSetToScrum)));
+
+            RuleFor(x => x.IsActive)
+                .NotNull()
+                .When(x => x.SetProperties.Contains(nameof(ProjectUpdateDto.IsActive)));
 
             // cannot check if dates make sense in validator
         }

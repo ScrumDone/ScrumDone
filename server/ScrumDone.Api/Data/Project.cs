@@ -11,7 +11,8 @@ namespace ScrumDone.Api.Data
         public string? ProfilePictureUrl { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsSetToScrum { get; set; } = false;
-        public DateTimeOffset? ExpectedFinishDate { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset? ExpectedFinishDate { get; set; } = null;
+        public DateTimeOffset? StartDate { get; set; } = DateTimeOffset.UtcNow;
 
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }

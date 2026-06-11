@@ -21,7 +21,7 @@ namespace ScrumDone.Api.Services
         // team members
         Task<PagedResultDto<UserSummaryDto>> GetProjectMembersAsync(Guid id, TeamMembersQueryDto query);
     
-        Task AddUserToProjectAsync(Guid id, Guid userId);
+        Task<UserSummaryDto> AddUserToProjectAsync(Guid id, Guid userId);
 
         Task RemoveUserFromProjectAsync(Guid id, Guid userId);
 

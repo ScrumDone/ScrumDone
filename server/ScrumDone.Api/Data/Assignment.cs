@@ -18,13 +18,13 @@ namespace ScrumDone.Api.Data
         public Guid ProjectId { get; set; } 
         public Guid? SprintId { get; set; }
         public Guid StatusId { get; set; }
-        public Guid PriorityId { get; set; }
+        public Guid? PriorityId { get; set; }
         public Guid? ParentAssignmentId { get; set; }
         public List<File> Attachments { get; set; } = new();
         public Project Project { get; set; }
         public Sprint? Sprint { get; set; }
         public AssignmentStatus Status { get; set; }
-        public AssignmentPriority Priority { get; set; }
+        public AssignmentPriority? Priority { get; set; }
         public List<AssignmentUserMTMRelation> Assignees { get; set; } = new();
         public List<AssignmentAssignmentLabelMTMRelation> Labels { get; set; } = new();
         public List<Message> Comments { get; set; } = new();

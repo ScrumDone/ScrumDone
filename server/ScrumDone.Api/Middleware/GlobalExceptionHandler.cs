@@ -65,7 +65,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             {
                 Status = status,
                 Title = title,
-                Detail = status < 500 ? exception.Message : "An unexpected error occurred.",
+                Detail = status < 500 ? exception.Message : exception.StackTrace,//"An unexpected error occurred.",
                 Type = "https://tools.ietf.org/html/rfc9110#section-15.5.1"
             };
 
