@@ -5,6 +5,7 @@ using ScrumDone.Api.DTOs.Assignments;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Users;
 using ScrumDone.Api.Services;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ScrumDone.Api.Controllers
 {
@@ -44,47 +45,52 @@ namespace ScrumDone.Api.Controllers
 
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetAssignment([FromRoute] Guid id)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            return Ok(await _assignmentsService.GetAssignmentByIdAsync(id));
         }
 
         [HttpPost]
         [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateAssignment(
             [FromBody] AssignmentCreateDto dto,
             [FromServices] IValidator<AssignmentCreateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+
+            var result = await _assignmentsService.CreateAssignmentAsync(dto);
+
+            return CreatedAtAction(
+                nameof(GetAssignment),
+                new { id = result.Id },
+                result);
+
         }
 
         [HttpPatch("{id}")]
         [ProducesResponseType(typeof(AssignmentDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> UpdateAssignment(
             [FromRoute] Guid id,
             [FromBody] AssignmentUpdateDto dto,
             [FromServices] IValidator<AssignmentUpdateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            return Ok(await _assignmentsService.UpdateAssignmentAsync(id, dto));
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteAssignment([FromRoute] Guid id)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            await _assignmentsService.DeleteAssignmentAsync(id);
+            return NoContent();
         }
 
         // /assignments/{id}/subtasks

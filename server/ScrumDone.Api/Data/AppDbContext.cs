@@ -69,7 +69,6 @@ namespace ScrumDone.Api.Data
                 {
                     entity.HasIndex(x => x.SprintId);
                     entity.HasIndex(x => x.DueDate);
-                    entity.HasIndex(x => x.CreatedAt);
 
                     entity.HasOne(t => t.ParentAssignment)
                         .WithMany(u => u.SubTAssignments)
@@ -77,6 +76,17 @@ namespace ScrumDone.Api.Data
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity<AssignmentUserMTMRelation>(entity =>
+            {
+                entity.HasIndex(x => new { x.AssignmentId, x.UserId })
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<AssignmentAssignmentLabelMTMRelation>(entity =>
+            {
+                entity.HasIndex(x => new { x.AssignmentId, x.AssignmentLabelId })
+                    .IsUnique();
+            });
 
             // Automaticaly disable soft deleted data from queries unless overriden
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())

@@ -6,7 +6,8 @@ namespace ScrumDone.Api.DTOs.Assignments
     public record AssignmentStatusDto(
         Guid Id,
         string Name,
-        string HexColor
+        string HexColor,
+        bool IsDefault
     );
 
     public record AssignmentPriorityDto(
@@ -24,7 +25,7 @@ namespace ScrumDone.Api.DTOs.Assignments
     public record AssignmentListItemDto(
         Guid Id,
         string Name,
-        string Description,
+        string? Description,
         DateTimeOffset CreatedAt,
         DateTimeOffset UpdatedAt,
         DateTimeOffset? DueDate,
@@ -44,7 +45,7 @@ namespace ScrumDone.Api.DTOs.Assignments
     public record AssignmentDetailDto(
         Guid Id,
         string Name,
-        string Description,
+        string? Description,
         DateTimeOffset CreatedAt,
         DateTimeOffset UpdatedAt,
         DateTimeOffset? DueDate,
@@ -67,9 +68,9 @@ namespace ScrumDone.Api.DTOs.Assignments
     public class AssignmentCreateDto
     {
         public required string Name { get; set; }
-        public required string Description { get; set; }
+        public string? Description { get; set; }
         public required Guid ProjectId { get; set; }
-        public required Guid StatusId { get; set; }
+        public Guid? StatusId { get; set; }
         public Guid? PriorityId { get; set; }
         public DateTimeOffset? DueDate { get; set; }
         public decimal? TimeEstimate { get; set; }
@@ -100,6 +101,11 @@ namespace ScrumDone.Api.DTOs.Assignments
         {
             get => field;
             set { field = value; _setProperties.Add(nameof(Description)); }
+        }
+        public Guid? ProjectId
+        {
+            get => field;
+            set { field = value; _setProperties.Add(nameof(ProjectId)); }
         }
         public Guid? StatusId
         {
