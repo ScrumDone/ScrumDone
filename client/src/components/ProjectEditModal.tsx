@@ -142,6 +142,9 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
             <h3 className="mb-2 block font-segoe-ui text-sm leading-3.5 tracking-[-0.15px] font-medium text-slate-800">Członkowie zespołu</h3>
             <div className="rounded-xl border border-slate-200 bg-white p-3">
               <div className="max-h-60 overflow-y-auto pr-1">
+                {members.length === 0 ? (
+                  <p className="px-2 py-3 text-sm text-slate-500">Brak użytkowników do wyboru.</p>
+                ) : null}
                 {members.map((member) => {
                   const isChecked = draft.memberIds.includes(member.id);
 

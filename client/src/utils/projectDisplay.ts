@@ -1,6 +1,8 @@
 import type { EditProjectDraft } from '../components/ProjectCreateModal';
-import type { EditProjectDraft as ProjectEditDraft } from '../components/ProjectEditModal';
+import type { EditProjectDraft as ProjectEditDraft, TeamMemberOption } from '../components/ProjectEditModal';
+import { getInitialsFromName } from '../hooks/useCurrentUser';
 import type { ProjectCreateDto, ProjectDetail, ProjectListItem, ProjectUpdateDto } from '../types/project';
+import type { UserSummary } from '../types/user';
 
 const emptyToNull = (value: string): string | null => {
   const trimmed = value.trim();
@@ -75,6 +77,25 @@ const parseDisplayDateToIso = (value: string): string | null => {
   }
 
   return trimmed;
+};
+
+export const mapUsersToTeamMemberOptions = (users: UserSummary[]): TeamMemberOption[] =>
+  users.map((user) => ({
+    id: user.id,
+    fullName: user.name,
+    initials: getInitialsFromName(user.name),
+    email: '',
+  }));
+
+export const haveSameMemberIds = (currentIds: string[], nextIds: string[]): boolean => {
+  if (currentIds.length !== nextIds.length) {
+    return false;
+  }
+
+  const sortedCurrent = [...currentIds].sort();
+  const sortedNext = [...nextIds].sort();
+
+  return sortedCurrent.every((id, index) => id === sortedNext[index]);
 };
 
 export const toProjectUpdateDto = (draft: ProjectEditDraft): ProjectUpdateDto | null => {

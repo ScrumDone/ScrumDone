@@ -3,12 +3,16 @@ import { ArrowLeftIcon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from
 import { Link, NavLink } from 'react-router-dom';
 import { useProject } from '../hooks/useProject';
 import { useUpdateProject } from '../hooks/useUpdateProject';
+import { useUpdateProjectMembers } from '../hooks/useUpdateProjectMembers';
+import { useUsers } from '../hooks/useUsers';
 import {
+  haveSameMemberIds,
   mapProjectDetailToEditDraft,
   mapProjectDetailToTopBar,
+  mapUsersToTeamMemberOptions,
   toProjectUpdateDto,
 } from '../utils/projectDisplay';
-import ProjectEditModal, { type EditProjectDraft, type TeamMemberOption } from './ProjectEditModal';
+import ProjectEditModal, { type EditProjectDraft } from './ProjectEditModal';
 
 interface ProjectTopBarProps {
   projectId: string;
@@ -21,12 +25,6 @@ const projectTabs = [
   { label: 'Kalendarz', path: (id: string) => `/projects/${id}/kalendarz` },
   { label: 'Sprinty', path: (id: string) => `/projects/${id}/sprinty` },
   { label: 'Repozytorium plików', path: (id: string) => `/projects/${id}/repozytorium-plikow` },
-];
-
-const editableTeamMembers: TeamMemberOption[] = [
-  { id: 'artur-nowak', fullName: 'Artur Nowak', initials: 'AN', email: 'artur.nowak@randlab.pl' },
-  { id: 'eryk-baczynski', fullName: 'Eryk Baczyński', initials: 'EB', email: 'eryk.b@randlab.pl' },
-  { id: 'maria-kowalska', fullName: 'Maria Kowalska', initials: 'MK', email: 'maria.k@randlab.pl' },
 ];
 
 const emptyDraft = (): EditProjectDraft => ({
@@ -43,6 +41,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   onViewModeChange,
 }) => {
   const { data: projectData, isLoading, isError, error } = useProject(projectId);
+  const { data: usersData } = useUsers(1, 100);
   const {
     mutate: updateProject,
     isPending: isSavingProject,
@@ -50,14 +49,33 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     error: updateProjectError,
     reset: resetUpdateProject,
   } = useUpdateProject();
+  const {
+    mutate: updateProjectMembers,
+    isPending: isSavingMembers,
+    isError: isUpdateMembersError,
+    error: updateMembersError,
+    reset: resetUpdateMembers,
+  } = useUpdateProjectMembers();
 
   const displayedProject = useMemo(
     () => (projectData ? mapProjectDetailToTopBar(projectData) : null),
     [projectData],
   );
 
+  const teamMembers = useMemo(
+    () => mapUsersToTeamMemberOptions(usersData?.items ?? []),
+    [usersData?.items],
+  );
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [draft, setDraft] = useState<EditProjectDraft>(emptyDraft);
+
+  const isSaving = isSavingProject || isSavingMembers;
+  const saveErrorMessage = isUpdateProjectError
+    ? updateProjectError?.message
+    : isUpdateMembersError
+      ? updateMembersError?.message
+      : null;
 
   useEffect(() => {
     if (!projectData) {
@@ -68,18 +86,23 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     setDraft(mapProjectDetailToEditDraft(projectData));
   }, [projectData]);
 
+  const resetSaveMutations = () => {
+    resetUpdateProject();
+    resetUpdateMembers();
+  };
+
   const openEditModal = () => {
     if (!projectData) {
       return;
     }
 
-    resetUpdateProject();
+    resetSaveMutations();
     setDraft(mapProjectDetailToEditDraft(projectData));
     setIsEditModalOpen(true);
   };
 
   const closeEditModal = () => {
-    resetUpdateProject();
+    resetSaveMutations();
     setIsEditModalOpen(false);
   };
 
@@ -95,17 +118,35 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     });
   };
 
-  const saveProjectChanges = () => {
-    const dto = toProjectUpdateDto(draft);
-    if (!dto) {
+  const saveMembersIfChanged = (currentMemberIds: string[]) => {
+    if (haveSameMemberIds(currentMemberIds, draft.memberIds)) {
+      closeEditModal();
       return;
     }
+
+    updateProjectMembers(
+      { id: projectId, data: { userIds: draft.memberIds } },
+      {
+        onSuccess: () => {
+          closeEditModal();
+        },
+      },
+    );
+  };
+
+  const saveProjectChanges = () => {
+    const dto = toProjectUpdateDto(draft);
+    if (!dto || !projectData) {
+      return;
+    }
+
+    const currentMemberIds = mapProjectDetailToEditDraft(projectData).memberIds;
 
     updateProject(
       { id: projectId, data: dto },
       {
         onSuccess: () => {
-          closeEditModal();
+          saveMembersIfChanged(currentMemberIds);
         },
       },
     );
@@ -229,13 +270,13 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
       <ProjectEditModal
         isOpen={isEditModalOpen}
         draft={draft}
-        members={editableTeamMembers}
+        members={teamMembers}
         onClose={closeEditModal}
         onSave={saveProjectChanges}
         onDraftChange={setDraft}
         onToggleMember={toggleMember}
-        isSaving={isSavingProject}
-        errorMessage={isUpdateProjectError ? updateProjectError?.message : null}
+        isSaving={isSaving}
+        errorMessage={saveErrorMessage}
       />
     </section>
   );
