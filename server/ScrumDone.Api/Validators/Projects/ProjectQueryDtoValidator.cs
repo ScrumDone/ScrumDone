@@ -1,9 +1,9 @@
 ﻿using FluentValidation;
-using ScrumDone.Api.DTOs.Companies;
+using ScrumDone.Api.DTOs.Projects;
 
-namespace ScrumDone.Api.Validators.Companies
+namespace ScrumDone.Api.Validators.Projects
 {
-    public sealed class ProjectQueryDtoValidator : AbstractValidator<CompanyQueryDto>
+    public sealed class ProjectQueryDtoValidator : AbstractValidator<ProjectQueryDto>
     {
         public ProjectQueryDtoValidator() 
         {
