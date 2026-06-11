@@ -65,11 +65,17 @@ namespace ScrumDone.Api.Data
                 .HasForeignKey(f => f.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Assignment>()
-                .HasOne(t => t.ParentAssignment)
-                .WithMany(u => u.SubTAssignments)
-                .HasForeignKey(t => t.ParentAssignmentId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Assignment>(entity =>
+                {
+                    entity.HasIndex(x => x.SprintId);
+                    entity.HasIndex(x => x.DueDate);
+                    entity.HasIndex(x => x.CreatedAt);
+
+                    entity.HasOne(t => t.ParentAssignment)
+                        .WithMany(u => u.SubTAssignments)
+                        .HasForeignKey(t => t.ParentAssignmentId)
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
 
 
             // Automaticaly disable soft deleted data from queries unless overriden

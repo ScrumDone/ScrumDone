@@ -30,15 +30,15 @@ namespace ScrumDone.Api.DTOs.Assignments
         DateTimeOffset? DueDate,
         decimal? TimeEstimate,
         AssignmentStatusDto Status,
-        AssignmentPriorityDto Priority,
+        AssignmentPriorityDto? Priority,
         IEnumerable<UserSummaryDto> Assignees,
         IEnumerable<AssignmentLabelDto> Labels,
         // flat list, frontend can compute tree with ParentAssignmentId if needed
-        IEnumerable<Guid> SubtaskIds,
+        //IEnumerable<Guid> SubtaskIds,
         Guid ProjectId,
         string ProjectName,
-        Guid? SprintId,
-        Guid? ParentAssignmentId
+        Guid? SprintId
+        //Guid? ParentAssignmentId
     );
 
     public record AssignmentDetailDto(
@@ -50,18 +50,18 @@ namespace ScrumDone.Api.DTOs.Assignments
         DateTimeOffset? DueDate,
         decimal? TimeEstimate,
         AssignmentStatusDto Status,
-        AssignmentPriorityDto Priority,
+        AssignmentPriorityDto? Priority,
         IEnumerable<UserSummaryDto> Assignees,
         IEnumerable<AssignmentLabelDto> Labels,
-        IEnumerable<AssignmentListItemDto> Subtask,
+        //IEnumerable<AssignmentListItemDto> Subtask,
         // All tasks in a tree
-        IEnumerable<AssignmentListItemDto> ConnectedTasks,
+        //IEnumerable<AssignmentListItemDto> ConnectedTasks,
         string ProjectName,
         Guid ProjectId,
         string? SprintName,
-        Guid? SprintId,
-        string? ParentAssignmentName,
-        Guid? ParentAssignmentId
+        Guid? SprintId
+        //string? ParentAssignmentName,
+        //Guid? ParentAssignmentId
     );
 
     public class AssignmentCreateDto
@@ -74,7 +74,7 @@ namespace ScrumDone.Api.DTOs.Assignments
         public DateTimeOffset? DueDate { get; set; }
         public decimal? TimeEstimate { get; set; }
         public Guid? SprintId { get; set; }
-        public Guid? ParentAssignmentId { get; set; }
+        //public Guid? ParentAssignmentId { get; set; }
         public IEnumerable<Guid> AssigneeIds { get; set; } = [];
         public IEnumerable<Guid> LabelIds { get; set; } = [];
     }
@@ -126,11 +126,11 @@ namespace ScrumDone.Api.DTOs.Assignments
             get => field;
             set { field = value; _setProperties.Add(nameof(SprintId)); }
         }
-        public Guid? ParentAssignmentId
-        {
-            get => field;
-            set { field = value; _setProperties.Add(nameof(ParentAssignmentId)); }
-        }
+        //public Guid? ParentAssignmentId
+        //{
+        //    get => field;
+        //    set { field = value; _setProperties.Add(nameof(ParentAssignmentId)); }
+        //}
     }
 
     public class AssignmentQueryDto
@@ -144,8 +144,8 @@ namespace ScrumDone.Api.DTOs.Assignments
         public IEnumerable<Guid>? PriorityIds { get; set; }
         public IEnumerable<Guid>? StatusIds { get; set; }
         public IEnumerable<Guid>? LabelIds { get; set; }
-        public DateTimeOffset? DueFrom { get; set; } // calendar range
-        public DateTimeOffset? DueTo { get; set; }
+        public DateTimeOffset? DueOnOrAfter { get; set; } // calendar range
+        public DateTimeOffset? DueOnOrBefore { get; set; }
         //public bool? OnlyMine { get; set; }          // scoped to X-User-Id
 
         public bool? ExcludeNoDeadline { get; set; } = false; // for calendar view to include backlog items with no deadline

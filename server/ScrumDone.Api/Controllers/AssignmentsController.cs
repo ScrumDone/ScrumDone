@@ -39,7 +39,7 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<AssignmentQueryDto> validator)
         {
             await validator.ValidateAndThrowAsync(query);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            return Ok(await _assignmentsService.GetAssignmentsAsync(query));
         }
 
         [HttpGet("{id}")]
