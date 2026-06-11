@@ -53,66 +53,76 @@ namespace ScrumDone.Api.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateProject(
             [FromBody] ProjectCreateDto dto,
             [FromServices] IValidator<ProjectCreateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            var result = await _projectsService.CreateProjectAsync(dto);
+            return CreatedAtAction(nameof(GetProject), new {id = result.Id}, result);
         }
 
         [HttpPatch("{id}")]
         [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> UpdateProject(
             [FromRoute] Guid id,
             [FromBody] ProjectUpdateDto dto,
             [FromServices] IValidator<ProjectUpdateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            var result = await _projectsService.UpdateProjectAsync(id, dto);
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteProject([FromRoute] Guid id)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            await _projectsService.DeleteProjectAsync(id);
+            return NoContent();
         }
 
         // /projects/{id}/members
 
         [HttpGet("{id}/members")]
         [ProducesResponseType(typeof(IEnumerable<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetMembers([FromRoute] Guid id)
+        public async Task<IActionResult> GetMembers(
+            [FromRoute] Guid id,
+            [FromQuery] TeamMembersQueryDto query,
+            [FromServices] IValidator<TeamMembersQueryDto> validator)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            await validator.ValidateAndThrowAsync(query);
+            var result = await _projectsService.GetProjectMembersAsync(id, query);
+            return Ok(result);
         }
 
         [HttpPost("{id}/members/{userId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> AddMember([FromRoute] Guid id, [FromRoute] Guid userId)
+        public async Task<IActionResult> AddMember(
+            [FromRoute] Guid id,
+            [FromRoute] Guid userId)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            await _projectsService.AddUserToProjectAsync(id, userId);
+            return NoContent();
         }
 
         [HttpDelete("{id}/members/{userId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> RemoveMember([FromRoute] Guid id, [FromRoute] Guid userId)
+        public async Task<IActionResult> RemoveMember(
+            [FromRoute] Guid id,
+            [FromRoute] Guid userId)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            await _projectsService.RemoveUserFromProjectAsync(id, userId);
+            return NoContent();
         }
 
         // /projects/{id}/sprints
@@ -123,9 +133,12 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetSprints(
             [FromRoute] Guid id,
-            [FromQuery] SprintQueryDto query)
+            [FromQuery] SprintQueryDto query,
+            [FromServices] IValidator<SprintQueryDto> validator)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            await validator.ValidateAndThrowAsync(query);
+            var result = await _projectsService.GetSprintsAsync(id, query);
+            return Ok(result);
         }
 
         [HttpPost("{id}/sprints")]
@@ -139,7 +152,8 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<SprintCreateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            var result = await _projectsService.CreateSprintAsync(id, dto);
+            return CreatedAtAction(nameof(GetSprints), new {id = result.Id}, result);
         }
 
         // /projects/{id}/assignment-labels
@@ -151,7 +165,8 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetAssignmentLabels([FromRoute] Guid id)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            var result = await _projectsService.GetAssignmentLabelsAsync(id);
+            return Ok(result);
         }
 
         [HttpPost("{id}/assignment-labels")]
@@ -165,7 +180,8 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<AssignmentLabelCreateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            var result = await _projectsService.CreateAssignmentLabelAsync(id, dto);
+            return CreatedAtAction(nameof(GetAssignmentLabels), new { id = result.Id }, result);
         }
 
         [HttpPatch("{id}/assignment-labels/{labelId}")]
@@ -180,10 +196,11 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<AssignmentLabelUpdateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            var result = await _projectsService.UpdateAssignmentLabelAsync(id, labelId, dto);
+            return Ok(result);
         }
 
-        [HttpDelete("{id:guid}/assignment-labels/{labelId:guid}")]
+        [HttpDelete("{id}/assignment-labels/{labelId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
@@ -191,16 +208,18 @@ namespace ScrumDone.Api.Controllers
             [FromRoute] Guid id,
             [FromRoute] Guid labelId)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            await _projectsService.DeleteAssignmentLabelAsync(id, labelId);
+            return NoContent();
         }
 
         // /projects/{id}/statuses
 
-        [HttpGet]
-        [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
+        [HttpGet("{id}/statuses")]
+        [ProducesResponseType(typeof(IEnumerable<AssignmentStatusDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetUsers()
         {
+            var result = _projectsService.GetAssignmentStatuses();
             return StatusCode(StatusCodes.Status501NotImplemented);
         }
     }

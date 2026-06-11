@@ -24,6 +24,9 @@ namespace ScrumDone.Api.Services
         {
             var baseQuery = _context.Projects
                 .Include(p => p.TeamMembers)
+                .Include(p => p.Assignments)
+                    .ThenInclude(a => a.Status)
+                .Include(p => p.Company)
                 .AsQueryable();
 
             if (query.CompanyId.HasValue)
@@ -64,20 +67,24 @@ namespace ScrumDone.Api.Services
 
         public async Task<ProjectDetailDto> GetProjectByIdAsync(Guid id)
         {
-            var projectFromId = await _context.Projects
+            var project = await _context.Projects
+                .Include(p => p.Sprints)
                 .Include(p => p.Assignments)
+                    .ThenInclude(a => a.Status)
                 .Include(p => p.TeamMembers)
+                    .ThenInclude(tm => tm.User)
+                .Include(p => p.Company)
                 .FirstOrDefaultAsync(p => p.Id == id)
                 ?? throw new NotFoundException(nameof(Project), id);
 
-            return projectFromId.ToDetailDto();
+            return project.ToDetailDto();
         }
     
         public async Task<ProjectDetailDto> CreateProjectAsync(ProjectCreateDto dto)
-        {
+        {       
             foreach(var userId in dto.TeamMemberIds)
             {
-                if (!_context.Users.Any(u => u.Id == userId))
+                if (!await _context.Users.AnyAsync(u => u.Id == userId))
                     throw new NotFoundException(nameof(User), userId);
             }
 
@@ -92,22 +99,40 @@ namespace ScrumDone.Api.Services
                 ExpectedFinishDate = dto.ExpectedFinishDate,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
-                IsDeleted = false,
-                TeamMembers = dto.TeamMemberIds.Select(id => new ProjectUserMTMRelation
-                {
-                    UserId = id
-                }).ToList()
+                IsDeleted = false
             };
+
+            newProject.TeamMembers = dto.TeamMemberIds.Select(id => new ProjectUserMTMRelation
+            {
+                ProjectId = newProject.Id,
+                UserId = id
+            }).ToList();
 
             await _context.Projects.AddAsync(newProject);
             await _context.SaveChangesAsync();
 
-            return newProject.ToDetailDto();
+            var createdProject = await _context.Projects
+                .Include(p => p.Company)
+                .Include(p => p.Sprints)
+                .Include(p => p.Assignments)
+                    .ThenInclude(a => a.Status)
+                .Include(p => p.TeamMembers)
+                    .ThenInclude(tm => tm.User)
+                .FirstAsync(p => p.Id == newProject.Id);
+
+            return createdProject.ToDetailDto();
         }
 
         public async Task<ProjectDetailDto> UpdateProjectAsync(Guid id, ProjectUpdateDto dto)
         {
-            var projectToUpdate = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id)
+            var projectToUpdate = await _context.Projects
+                .Include(p => p.Company)
+                .Include(p => p.Sprints)
+                .Include(p => p.Assignments)
+                    .ThenInclude(a => a.Status)
+                .Include(p => p.TeamMembers)
+                    .ThenInclude(tm => tm.User)
+                .FirstOrDefaultAsync(p => p.Id == id)
                 ?? throw new NotFoundException(nameof(Project), id);
 
             if(dto.SetProperties.Contains(nameof(dto.Name))) projectToUpdate.Name = dto.Name!;
@@ -130,7 +155,8 @@ namespace ScrumDone.Api.Services
                 ?? throw new NotFoundException(nameof(Project), id);
 
             _context.Projects.Remove(projectToDelete);
-        
+            await _context.SaveChangesAsync();
+
             return;
         }
 
@@ -219,7 +245,7 @@ namespace ScrumDone.Api.Services
 
             return new PagedResultDto<SprintSummaryDto>(sprints, query.Page, query.Limit, total);
         }
-        public async Task<SprintDetailDto> CreateSprintAsync(Guid id, SprintCreateDto dto)
+        public async Task<SprintSummaryDto> CreateSprintAsync(Guid id, SprintCreateDto dto)
         {
             if (! await _context.Projects.AnyAsync(p => p.Id == id))
                 throw new NotFoundException(nameof(Project), id);
@@ -227,6 +253,7 @@ namespace ScrumDone.Api.Services
             var sprint = new Sprint
             {
                 Id = Guid.NewGuid(),
+                ProjectId = id,
                 Name = dto.Name,
                 StartDate = dto.StartDate,
                 EndDate = dto.EndDate,
@@ -239,11 +266,11 @@ namespace ScrumDone.Api.Services
             await _context.Sprints.AddAsync(sprint);
             await _context.SaveChangesAsync();
 
-            return sprint.ToDetailDto();
+            return sprint.ToSummaryDto();
         }
 
         // assignments-labels
-        public async Task<IEnumerable<AssignmentLabelDto>> GetAssignmentLabelsAsync(Guid id) // I think that if we add new label it will not be shown, because it won't have any task connected with it so the task will not be connected to the project
+        public async Task<IEnumerable<AssignmentLabelDto>> GetAssignmentLabelsAsync(Guid id)
         {
            if (! await _context.Projects.AnyAsync(p => p.Id == id))
                 throw new NotFoundException(nameof(Project), id); 
@@ -284,7 +311,7 @@ namespace ScrumDone.Api.Services
                 ?? throw new NotFoundException(nameof(AssignmentLabel), labelId);
 
             if(dto.SetProperties.Contains(nameof(dto.Name))) label.Name = dto.Name!;
-            if(dto.SetProperties.Contains(nameof(dto.Name))) label.HexColor = dto.HexColor!;
+            if(dto.SetProperties.Contains(nameof(dto.HexColor))) label.HexColor = dto.HexColor!;
             label.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -303,6 +330,15 @@ namespace ScrumDone.Api.Services
             await _context.SaveChangesAsync();
 
             return;
+        }
+
+        // statuses
+
+        public async Task<IEnumerable<AssignmentStatusDto>> GetAssignmentStatuses()
+        {
+            var statuses = await _context.AssignmentStatuses.ToListAsync();
+            var total = statuses.Count();
+            return statuses.Select(a => a.ToDto());
         }
     }
 }

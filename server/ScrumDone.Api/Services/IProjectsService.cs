@@ -27,12 +27,15 @@ namespace ScrumDone.Api.Services
 
         // sprints
         Task<PagedResultDto<SprintSummaryDto>> GetSprintsAsync(Guid id, SprintQueryDto query);
-        Task<SprintDetailDto> CreateSprintAsync(Guid id, SprintCreateDto dto);
+        Task<SprintSummaryDto> CreateSprintAsync(Guid id, SprintCreateDto dto);
 
         // assignments-labels
         Task<IEnumerable<AssignmentLabelDto>> GetAssignmentLabelsAsync(Guid id);
         Task<AssignmentLabelDto> CreateAssignmentLabelAsync(Guid id, AssignmentLabelCreateDto dto);
         Task<AssignmentLabelDto> UpdateAssignmentLabelAsync(Guid id, Guid labelId, AssignmentLabelUpdateDto dto);
         Task DeleteAssignmentLabelAsync(Guid id, Guid labelId);
+
+        // statuses
+        Task<IEnumerable<AssignmentStatusDto>> GetAssignmentStatuses();
     }
 }
