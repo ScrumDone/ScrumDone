@@ -1,5 +1,6 @@
 import type { EditProjectDraft } from '../components/ProjectCreateModal';
-import type { ProjectCreateDto, ProjectListItem } from '../types/project';
+import type { EditProjectDraft as ProjectEditDraft } from '../components/ProjectEditModal';
+import type { ProjectCreateDto, ProjectDetail, ProjectListItem } from '../types/project';
 
 const emptyToNull = (value: string): string | null => {
   const trimmed = value.trim();
@@ -18,6 +19,16 @@ export type ProjectCardViewModel = {
   status: string;
 };
 
+export type ProjectTopBarViewModel = {
+  id: string;
+  name: string;
+  clientName: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  membersCount: number;
+};
+
 export const formatProjectDateForDisplay = (dateValue: string | null): string => {
   if (!dateValue) {
     return '—';
@@ -33,6 +44,11 @@ export const formatProjectDateForDisplay = (dateValue: string | null): string =>
   const year = date.getFullYear();
 
   return `${day}.${month}.${year}`;
+};
+
+const toEditDateValue = (date: string | null): string => {
+  const formatted = formatProjectDateForDisplay(date);
+  return formatted === '—' ? '' : formatted;
 };
 
 export const computeProjectProgress = (project: ProjectListItem): number => {
@@ -80,6 +96,24 @@ export const toProjectCreateDto = (draft: EditProjectDraft): ProjectCreateDto | 
 
   return dto;
 };
+
+export const mapProjectDetailToTopBar = (project: ProjectDetail): ProjectTopBarViewModel => ({
+  id: project.id,
+  name: project.name,
+  clientName: project.companyName?.trim() || '—',
+  description: project.description?.trim() || '—',
+  startDate: formatProjectDateForDisplay(project.startDate),
+  endDate: formatProjectDateForDisplay(project.expectedFinishDate),
+  membersCount: project.teamMemberCount,
+});
+
+export const mapProjectDetailToEditDraft = (project: ProjectDetail): ProjectEditDraft => ({
+  name: project.name,
+  description: project.description?.trim() || '',
+  startDate: toEditDateValue(project.startDate),
+  endDate: toEditDateValue(project.expectedFinishDate),
+  memberIds: project.teamMembers.map((member) => member.id),
+});
 
 export const mapProjectListItemToCard = (project: ProjectListItem): ProjectCardViewModel => ({
   id: project.id,

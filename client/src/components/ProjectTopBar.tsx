@@ -1,20 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeftIcon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { Link, NavLink } from 'react-router-dom';
-import type { ProjectData } from '../data/projects';
+import { useProject } from '../hooks/useProject';
+import {
+  mapProjectDetailToEditDraft,
+  mapProjectDetailToTopBar,
+  type ProjectTopBarViewModel,
+} from '../utils/projectDisplay';
 import ProjectEditModal, { type EditProjectDraft, type TeamMemberOption } from './ProjectEditModal';
 
 interface ProjectTopBarProps {
-  project: ProjectData;
+  projectId: string;
   viewMode?: 'kanban' | 'scrum';
   onViewModeChange?: (mode: 'kanban' | 'scrum') => void;
 }
 
 const projectTabs = [
-  { label: 'Tablica Kanban', path: (projectId: string) => `/projects/${projectId}/tablica-kanban` },
-  { label: 'Kalendarz', path: (projectId: string) => `/projects/${projectId}/kalendarz` },
-  { label: 'Sprinty', path: (projectId: string) => `/projects/${projectId}/sprinty` },
-  { label: 'Repozytorium plików', path: (projectId: string) => `/projects/${projectId}/repozytorium-plikow` },
+  { label: 'Tablica Kanban', path: (id: string) => `/projects/${id}/tablica-kanban` },
+  { label: 'Kalendarz', path: (id: string) => `/projects/${id}/kalendarz` },
+  { label: 'Sprinty', path: (id: string) => `/projects/${id}/sprinty` },
+  { label: 'Repozytorium plików', path: (id: string) => `/projects/${id}/repozytorium-plikow` },
 ];
 
 const editableTeamMembers: TeamMemberOption[] = [
@@ -23,42 +28,54 @@ const editableTeamMembers: TeamMemberOption[] = [
   { id: 'maria-kowalska', fullName: 'Maria Kowalska', initials: 'MK', email: 'maria.k@randlab.pl' },
 ];
 
-const getDefaultMemberIds = (membersCount: number) =>
-  editableTeamMembers.slice(0, membersCount).map((member) => member.id);
+const emptyDraft = (): EditProjectDraft => ({
+  name: '',
+  description: '',
+  startDate: '',
+  endDate: '',
+  memberIds: [],
+});
 
 const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
-  project,
+  projectId,
   viewMode = 'kanban',
   onViewModeChange,
 }) => {
-  const [displayedProject, setDisplayedProject] = useState<ProjectData>(project);
+  const { data: projectData, isLoading, isError, error } = useProject(projectId);
+
+  const apiProject = useMemo(
+    () => (projectData ? mapProjectDetailToTopBar(projectData) : null),
+    [projectData],
+  );
+
+  const [localOverrides, setLocalOverrides] = useState<ProjectTopBarViewModel | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [draft, setDraft] = useState<EditProjectDraft>({
-    name: project.name,
-    description: project.description,
-    startDate: project.startDate,
-    endDate: project.endDate,
-    memberIds: getDefaultMemberIds(project.membersCount),
-  });
+  const [draft, setDraft] = useState<EditProjectDraft>(emptyDraft);
+
+  const displayedProject = localOverrides ?? apiProject;
 
   useEffect(() => {
-    setDisplayedProject(project);
-    setDraft({
-      name: project.name,
-      description: project.description,
-      startDate: project.startDate,
-      endDate: project.endDate,
-      memberIds: getDefaultMemberIds(project.membersCount),
-    });
-  }, [project]);
+    setLocalOverrides(null);
+
+    if (!projectData) {
+      setDraft(emptyDraft());
+      return;
+    }
+
+    setDraft(mapProjectDetailToEditDraft(projectData));
+  }, [projectData]);
 
   const openEditModal = () => {
+    if (!displayedProject) {
+      return;
+    }
+
     setDraft({
       name: displayedProject.name,
-      description: displayedProject.description,
-      startDate: displayedProject.startDate,
-      endDate: displayedProject.endDate,
-      memberIds: getDefaultMemberIds(displayedProject.membersCount),
+      description: displayedProject.description === '—' ? '' : displayedProject.description,
+      startDate: displayedProject.startDate === '—' ? '' : displayedProject.startDate,
+      endDate: displayedProject.endDate === '—' ? '' : displayedProject.endDate,
+      memberIds: projectData ? mapProjectDetailToEditDraft(projectData).memberIds : draft.memberIds,
     });
     setIsEditModalOpen(true);
   };
@@ -80,16 +97,46 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   };
 
   const saveProjectChanges = () => {
-    setDisplayedProject((prev) => ({
-      ...prev,
+    if (!displayedProject) {
+      return;
+    }
+
+    setLocalOverrides({
+      ...displayedProject,
       name: draft.name,
-      description: draft.description,
-      startDate: draft.startDate,
-      endDate: draft.endDate,
+      description: draft.description.trim() || '—',
+      startDate: draft.startDate.trim() || '—',
+      endDate: draft.endDate.trim() || '—',
       membersCount: draft.memberIds.length,
-    }));
+    });
     setIsEditModalOpen(false);
   };
+
+  if (isLoading) {
+    return (
+      <section className="border-b border-slate-200 bg-white px-6 py-8">
+        <p className="text-sm text-slate-500 animate-pulse">Ładowanie projektu...</p>
+      </section>
+    );
+  }
+
+  if (isError) {
+    return (
+      <section className="border-b border-red-200 bg-white px-6 py-8">
+        <p className="text-sm text-red-700">
+          Nie udało się załadować projektu{error?.message ? `: ${error.message}` : '.'}
+        </p>
+      </section>
+    );
+  }
+
+  if (!displayedProject) {
+    return (
+      <section className="border-b border-red-200 bg-white px-6 py-8">
+        <p className="text-sm text-red-700">Nie znaleziono projektu o podanym adresie.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-white border-b border-slate-200">
@@ -165,30 +212,19 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
       </div>
 
       <div className="flex flex-wrap gap-8 px-6 py-3">
-        {projectTabs.map((tab) =>
-          tab.path ? (
-            <NavLink
-              key={tab.label}
-              to={tab.path(String(displayedProject.id))}
-              className={({ isActive }) =>
-                `text-sm leading-5 tracking-[-0.15px] transition-colors ${
-                  isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'
-                } ${tab.label === 'Sprinty' && viewMode === 'kanban' ? 'hidden' : ''}`
-              }
-            >
-              {tab.label}
-            </NavLink>
-          ) : (
-            <span
-              key={tab.label}
-              className={`text-sm leading-5 tracking-[-0.15px] text-slate-800 ${
-                tab.label === 'Sprinty' && viewMode === 'kanban' ? 'hidden' : ''
-              }`}
-            >
-              {tab.label}
-            </span>
-          )
-        )}
+        {projectTabs.map((tab) => (
+          <NavLink
+            key={tab.label}
+            to={tab.path(displayedProject.id)}
+            className={({ isActive }) =>
+              `text-sm leading-5 tracking-[-0.15px] transition-colors ${
+                isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'
+              } ${tab.label === 'Sprinty' && viewMode === 'kanban' ? 'hidden' : ''}`
+            }
+          >
+            {tab.label}
+          </NavLink>
+        ))}
       </div>
 
       <ProjectEditModal

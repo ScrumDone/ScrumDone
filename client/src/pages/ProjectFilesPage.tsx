@@ -5,7 +5,6 @@ import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
 import ProjectFileRow, { type FileItem } from '../components/ProjectFileCard';
-import { projects } from '../data/projects';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
 
 const FILES: FileItem[] = [
@@ -15,8 +14,7 @@ const FILES: FileItem[] = [
 ];
 
 const ProjectFilesPage: React.FC = () => {
-  const { projectId } = useParams();
-  const project = projects.find((p) => String(p.id) === projectId);
+  const { projectId = '' } = useParams();
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
 
   return (
@@ -25,11 +23,9 @@ const ProjectFilesPage: React.FC = () => {
       <TopBar />
 
       <main className="ml-64 pt-(--app-header-h)">
-        {project ? (
-          <>
-            <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
+        <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
-            <div className="mx-auto w-full px-6 py-6">
+        <div className="mx-auto w-full px-6 py-6">
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="font-segoe-ui text-2xl tracking-[-0.44px] text-black">Pliki projektu</h2>
                 <button type="button" className="inline-flex items-center justify-center gap-2 rounded-lg bg-scrumdone-blue-main px-4 py-2 text-sm font-medium text-white transition hover:bg-[#00A0DD] active:scale-95">
@@ -53,11 +49,7 @@ const ProjectFilesPage: React.FC = () => {
                   ))}
                 </ul>
               </section>
-            </div>
-          </>
-        ) : (
-          <div className="p-8 text-red-600">Nie znaleziono projektu.</div>
-        )}
+        </div>
       </main>
     </div>
   );
