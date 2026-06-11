@@ -208,7 +208,7 @@ namespace ScrumDone.Api.Services
             if (project.TeamMembers.Any(tm => tm.UserId == userId))
                 throw new ConflictException("User is already a member of this project");
 
-            project.TeamMembers.Add(new ProjectUserMTMRelation {User = user});
+            project.TeamMembers.Add(new ProjectUserMTMRelation {ProjectId = id, UserId = userId});
             await _context.SaveChangesAsync();
 
             return user.ToSummaryDto();

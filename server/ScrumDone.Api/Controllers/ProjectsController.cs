@@ -112,7 +112,7 @@ namespace ScrumDone.Api.Controllers
             [FromRoute] Guid userId)
         {
             var user = await _projectsService.AddUserToProjectAsync(id, userId);
-            return CreatedAtAction(nameof(AddMember), new {id = user.Id}, user);
+            return CreatedAtAction(nameof(AddMember), new {id = id, userId = userId}, user);
         }
 
         [HttpDelete("{id}/members/{userId}")]

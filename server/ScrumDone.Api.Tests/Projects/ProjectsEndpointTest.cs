@@ -6,6 +6,7 @@ using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Projects;
 using ScrumDone.Api.DTOs.Assignments;
 using ScrumDone.Api.DTOs.Sprints;
+using ScrumDone.Api.DTOs.Users;
 using ScrumDone.Api.Tests.Common;
 using Xunit;
 
@@ -497,26 +498,33 @@ public class ProjectsEndpointTests
 
     // POST /api/projects/{id}/members/{userId}
 
-    [Fact]
-    public async Task AddMember_ValidUserAndProject_ReturnsNoContent()
+[Fact]
+public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
+{
+    using var app = new ScrumDoneApiFactory();
+    var projectId = Guid.NewGuid();
+    var userId = Guid.NewGuid();
+    var userName = "Test User";
+
+    await app.SeedDatabaseAsync(db =>
     {
-        using var app = new ScrumDoneApiFactory();
-        var projectId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
+        db.Projects.Add(new Project { Id = projectId, Name = "Test Project", Description = "" });
+        db.Users.Add(new User { Id = userId, Name = userName });
+        return Task.CompletedTask;
+    });
 
-        await app.SeedDatabaseAsync(db =>
-        {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
-            db.Users.Add(new User { Id = userId, Name = "User" });
-            return Task.CompletedTask;
-        });
+    using var client = app.CreateClient();
 
-        using var client = app.CreateClient();
+    var response = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
 
-        var response = await client.PutAsync($"/api/projects/{projectId}/members/{userId}", null);
+    Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-    }
+    var returnedUser = await response.Content.ReadFromJsonAsync<UserSummaryDto>();
+
+    Assert.NotNull(returnedUser);
+    Assert.Equal(userId, returnedUser.Id);
+    Assert.Equal(userName, returnedUser.Name);
+}
 
     [Fact]
     public async Task AddMember_NonExistentProject_ReturnsNotFound()
@@ -532,7 +540,7 @@ public class ProjectsEndpointTests
 
         using var client = app.CreateClient();
 
-        var response = await client.PutAsync($"/api/projects/{Guid.NewGuid()}/members/{userId}", null);
+        var response = await client.PostAsync($"/api/projects/{Guid.NewGuid()}/members/{userId}", null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -551,7 +559,7 @@ public class ProjectsEndpointTests
 
         using var client = app.CreateClient();
 
-        var response = await client.PutAsync($"/api/projects/{projectId}/members/{Guid.NewGuid()}", null);
+        var response = await client.PostAsync($"/api/projects/{projectId}/members/{Guid.NewGuid()}", null);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -581,7 +589,7 @@ public class ProjectsEndpointTests
 
         using var client = app.CreateClient();
 
-        var response = await client.PutAsync($"/api/projects/{projectId}/members/{userId}", null);
+        var response = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
