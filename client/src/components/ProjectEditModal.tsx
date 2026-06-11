@@ -30,6 +30,8 @@ type ProjectEditModalProps = {
   onSave: () => void;
   onDraftChange: (updater: (prev: EditProjectDraft) => EditProjectDraft) => void;
   onToggleMember: (memberId: string) => void;
+  isSaving?: boolean;
+  errorMessage?: string | null;
 };
 
 const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
@@ -40,6 +42,8 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
   onSave,
   onDraftChange,
   onToggleMember,
+  isSaving = false,
+  errorMessage = null,
 }) => {
   if (!isOpen) {
     return null;
@@ -70,6 +74,12 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
         </div>
 
         <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+          {errorMessage ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {errorMessage}
+            </div>
+          ) : null}
+
           <div>
             <label className="mb-2 block font-segoe-ui text-sm leading-3.5 tracking-[-0.15px] font-medium text-slate-700" htmlFor="project-name-input">
               Nazwa projektu
@@ -79,7 +89,8 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
               type="text"
               value={draft.name}
               onChange={(event) => onDraftChange((prev) => ({ ...prev, name: event.target.value }))}
-              className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main"
+              disabled={isSaving}
+              className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
             />
           </div>
 
@@ -92,7 +103,8 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
               value={draft.description}
               onChange={(event) => onDraftChange((prev) => ({ ...prev, description: event.target.value }))}
               rows={3}
-              className="w-full resize-none rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main"
+              disabled={isSaving}
+              className="w-full resize-none rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
             />
           </div>
 
@@ -106,7 +118,8 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
                 type="text"
                 value={draft.startDate}
                 onChange={(event) => onDraftChange((prev) => ({ ...prev, startDate: event.target.value }))}
-                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main"
+                disabled={isSaving}
+                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
               />
             </div>
 
@@ -119,7 +132,8 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
                 type="text"
                 value={draft.endDate}
                 onChange={(event) => onDraftChange((prev) => ({ ...prev, endDate: event.target.value }))}
-                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main"
+                disabled={isSaving}
+                className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
               />
             </div>
           </div>
@@ -145,7 +159,8 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => onToggleMember(member.id)}
-                        className="h-4 w-4 rounded border-slate-300 accent-slate-900"
+                        disabled={isSaving}
+                        className="h-4 w-4 rounded border-slate-300 accent-slate-900 disabled:opacity-60"
                         aria-label={`Wybierz ${member.fullName}`}
                       />
                     </label>
@@ -186,20 +201,22 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3  px-6 py-4">
+        <div className="flex items-center justify-end gap-3 px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50"
+            disabled={isSaving}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
           >
             Anuluj
           </button>
           <button
             type="button"
             onClick={onSave}
-            className="rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD]"
+            disabled={isSaving || !draft.name.trim()}
+            className="rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD] disabled:opacity-50"
           >
-            Zapisz zmiany
+            {isSaving ? 'Zapisywanie…' : 'Zapisz zmiany'}
           </button>
         </div>
       </div>

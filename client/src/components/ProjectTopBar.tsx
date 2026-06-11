@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeftIcon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { Link, NavLink } from 'react-router-dom';
 import { useProject } from '../hooks/useProject';
+import { useUpdateProject } from '../hooks/useUpdateProject';
 import {
   mapProjectDetailToEditDraft,
   mapProjectDetailToTopBar,
-  type ProjectTopBarViewModel,
+  toProjectUpdateDto,
 } from '../utils/projectDisplay';
 import ProjectEditModal, { type EditProjectDraft, type TeamMemberOption } from './ProjectEditModal';
 
@@ -42,21 +43,23 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   onViewModeChange,
 }) => {
   const { data: projectData, isLoading, isError, error } = useProject(projectId);
+  const {
+    mutate: updateProject,
+    isPending: isSavingProject,
+    isError: isUpdateProjectError,
+    error: updateProjectError,
+    reset: resetUpdateProject,
+  } = useUpdateProject();
 
-  const apiProject = useMemo(
+  const displayedProject = useMemo(
     () => (projectData ? mapProjectDetailToTopBar(projectData) : null),
     [projectData],
   );
 
-  const [localOverrides, setLocalOverrides] = useState<ProjectTopBarViewModel | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [draft, setDraft] = useState<EditProjectDraft>(emptyDraft);
 
-  const displayedProject = localOverrides ?? apiProject;
-
   useEffect(() => {
-    setLocalOverrides(null);
-
     if (!projectData) {
       setDraft(emptyDraft());
       return;
@@ -66,21 +69,17 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   }, [projectData]);
 
   const openEditModal = () => {
-    if (!displayedProject) {
+    if (!projectData) {
       return;
     }
 
-    setDraft({
-      name: displayedProject.name,
-      description: displayedProject.description === '—' ? '' : displayedProject.description,
-      startDate: displayedProject.startDate === '—' ? '' : displayedProject.startDate,
-      endDate: displayedProject.endDate === '—' ? '' : displayedProject.endDate,
-      memberIds: projectData ? mapProjectDetailToEditDraft(projectData).memberIds : draft.memberIds,
-    });
+    resetUpdateProject();
+    setDraft(mapProjectDetailToEditDraft(projectData));
     setIsEditModalOpen(true);
   };
 
   const closeEditModal = () => {
+    resetUpdateProject();
     setIsEditModalOpen(false);
   };
 
@@ -97,19 +96,19 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   };
 
   const saveProjectChanges = () => {
-    if (!displayedProject) {
+    const dto = toProjectUpdateDto(draft);
+    if (!dto) {
       return;
     }
 
-    setLocalOverrides({
-      ...displayedProject,
-      name: draft.name,
-      description: draft.description.trim() || '—',
-      startDate: draft.startDate.trim() || '—',
-      endDate: draft.endDate.trim() || '—',
-      membersCount: draft.memberIds.length,
-    });
-    setIsEditModalOpen(false);
+    updateProject(
+      { id: projectId, data: dto },
+      {
+        onSuccess: () => {
+          closeEditModal();
+        },
+      },
+    );
   };
 
   if (isLoading) {
@@ -235,6 +234,8 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
         onSave={saveProjectChanges}
         onDraftChange={setDraft}
         onToggleMember={toggleMember}
+        isSaving={isSavingProject}
+        errorMessage={isUpdateProjectError ? updateProjectError?.message : null}
       />
     </section>
   );

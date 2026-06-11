@@ -1,6 +1,6 @@
 import type { EditProjectDraft } from '../components/ProjectCreateModal';
 import type { EditProjectDraft as ProjectEditDraft } from '../components/ProjectEditModal';
-import type { ProjectCreateDto, ProjectDetail, ProjectListItem } from '../types/project';
+import type { ProjectCreateDto, ProjectDetail, ProjectListItem, ProjectUpdateDto } from '../types/project';
 
 const emptyToNull = (value: string): string | null => {
   const trimmed = value.trim();
@@ -49,6 +49,46 @@ export const formatProjectDateForDisplay = (dateValue: string | null): string =>
 const toEditDateValue = (date: string | null): string => {
   const formatted = formatProjectDateForDisplay(date);
   return formatted === '—' ? '' : formatted;
+};
+
+const parseDisplayDateToIso = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const dottedMatch = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(trimmed);
+  if (dottedMatch) {
+    const day = Number(dottedMatch[1]);
+    const month = Number(dottedMatch[2]);
+    const year = Number(dottedMatch[3]);
+    const date = new Date(year, month - 1, day);
+
+    if (!Number.isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+  }
+
+  const parsed = new Date(trimmed);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString();
+  }
+
+  return trimmed;
+};
+
+export const toProjectUpdateDto = (draft: ProjectEditDraft): ProjectUpdateDto | null => {
+  const name = draft.name.trim();
+  if (!name) {
+    return null;
+  }
+
+  return {
+    name,
+    description: draft.description.trim() || null,
+    startDate: parseDisplayDateToIso(draft.startDate),
+    expectedFinishDate: parseDisplayDateToIso(draft.endDate),
+  };
 };
 
 export const computeProjectProgress = (project: ProjectListItem): number => {
