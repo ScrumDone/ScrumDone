@@ -101,8 +101,9 @@ namespace ScrumDone.Api.Controllers
             return Ok(result);
         }
 
-        [HttpPost("{id}/members/{userId}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [HttpPut("{id}/members")]
+        [ProducesResponseType(typeof(IEnumerable<Guid>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> AddMember(
@@ -128,7 +129,7 @@ namespace ScrumDone.Api.Controllers
         // /projects/{id}/sprints
 
         [HttpGet("{id}/sprints")]
-        [ProducesResponseType(typeof(IEnumerable<SprintSummaryDto>), StatusCodes.Status200OK)]  // ← Summary
+        [ProducesResponseType(typeof(PagedResultDto<SprintSummaryDto>), StatusCodes.Status200OK)]  // ← Summary
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetSprints(
@@ -176,8 +177,8 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateAssignmentLabel(
             [FromRoute] Guid id,
-            [FromBody] AssignmentLabelCreateDto dto,
-            [FromServices] IValidator<AssignmentLabelCreateDto> validator)
+            [FromBody] LabelCreateDto dto,
+            [FromServices] IValidator<LabelCreateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
             var result = await _projectsService.CreateAssignmentLabelAsync(id, dto);
@@ -192,8 +193,8 @@ namespace ScrumDone.Api.Controllers
         public async Task<IActionResult> UpdateAssignmentLabel(
             [FromRoute] Guid id,
             [FromRoute] Guid labelId,
-            [FromBody] AssignmentLabelUpdateDto dto,
-            [FromServices] IValidator<AssignmentLabelUpdateDto> validator)
+            [FromBody] LabelUpdateDto dto,
+            [FromServices] IValidator<LabelUpdateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
             var result = await _projectsService.UpdateAssignmentLabelAsync(id, labelId, dto);

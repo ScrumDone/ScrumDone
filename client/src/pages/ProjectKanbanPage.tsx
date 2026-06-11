@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { EllipsisVerticalIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
@@ -6,10 +6,12 @@ import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
-import SprintSelector, { type Sprint } from '../components/SprintSelector';
+import SprintSelector from '../components/SprintSelector';
 import TaskCreateModal from '../components/TaskCreateModal';
-import { projects } from '../data/projects';
+import { useProjectSprints } from '../hooks/useProjectSprints';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
+import { useSelectedProjectSprint } from '../hooks/useSelectedProjectSprint';
+import { mapSprintSummariesToSelectorSprints } from '../utils/sprintDisplay';
 import {
   DndContext,
   DragOverlay,
@@ -74,12 +76,6 @@ const taskDotClassMap: Record<TaskDotColor, string> = {
   green: 'bg-scrumdone-green-500',
   blue: 'bg-scrumdone-blue-main',
 };
-
-const sprintsData: Sprint[] = [
-  { id: 'sprint-0', title: 'Sprint 0 - Setup', dateRange: '15 sty 2026 - 05 lut 2026', totalTasks: 4, completedTasks: 3, status: 'Ukończony' },
-  { id: 'sprint-1', title: 'Sprint 1 - Core Features', dateRange: '06 lut 2026 - 19 lut 2026', totalTasks: 8, completedTasks: 1, status: 'Aktywny' },
-  { id: 'sprint-2', title: 'Sprint 2 - Testing', dateRange: '20 lut 2026 - 05 mar 2026', totalTasks: 6, completedTasks: 0, status: 'Planowany' },
-];
 
 const initialKanbanColumns: KanbanColumn[] = [
   { id: 'todo', title: 'Do zrobienia', accentClass: 'bg-slate-400', count: 0, tasks: [] },
@@ -179,10 +175,22 @@ const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
 // --- Komponent Główny ---
 
 const ProjectKanbanPage: React.FC = () => {
-  const { projectSlug } = useParams();
-  const project = projects.find((item) => item.slug === projectSlug);
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectSlug);
-  const [currentSprintId, setCurrentSprintId] = useState('sprint-0');
+  const { projectId = '' } = useParams();
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
+  const {
+    data: sprintsData,
+    isLoading: isSprintsLoading,
+    isError: isSprintsError,
+    error: sprintsError,
+  } = useProjectSprints(projectId, 1, 50);
+  const selectorSprints = useMemo(
+    () => mapSprintSummariesToSelectorSprints(sprintsData?.items ?? []),
+    [sprintsData?.items],
+  );
+  const { selectedSprintId, setSelectedSprintId } = useSelectedProjectSprint(
+    projectId,
+    selectorSprints,
+  );
   const [columns, setColumns] = useState<KanbanColumn[]>(initialKanbanColumns);
   const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -224,6 +232,40 @@ const ProjectKanbanPage: React.FC = () => {
     );
   };
 
+  const renderSprintSelector = () => {
+    if (isSprintsLoading) {
+      return (
+        <p className="font-segoe-ui text-sm text-slate-500 animate-pulse">
+          Ładowanie sprintów...
+        </p>
+      );
+    }
+
+    if (isSprintsError) {
+      return (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 font-segoe-ui text-sm text-red-700">
+          Nie udało się załadować sprintów{sprintsError?.message ? `: ${sprintsError.message}` : '.'}
+        </div>
+      );
+    }
+
+    if (selectorSprints.length === 0) {
+      return (
+        <p className="font-segoe-ui text-sm text-slate-500">
+          Brak sprintów w tym projekcie.
+        </p>
+      );
+    }
+
+    return (
+      <SprintSelector
+        sprints={selectorSprints}
+        currentSprintId={selectedSprintId ?? ''}
+        onSprintChange={setSelectedSprintId}
+      />
+    );
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB]">
       <SideBar />
@@ -237,20 +279,14 @@ const ProjectKanbanPage: React.FC = () => {
 
       <main className="ml-64 pt-(--app-header-h)">
         <div className="flex w-full flex-col">
-          {project ? (
-            <>
-              <ProjectTopBar project={project} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
+          <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
 
-              <section className="mx-6 mt-6 pb-8">
+          <section className="mx-6 mt-6 pb-8">
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                   <div className="min-w-0">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
                       <div className={viewMode === 'kanban' ? 'hidden' : ''}>
-                        <SprintSelector
-                          sprints={sprintsData}
-                          currentSprintId={currentSprintId}
-                          onSprintChange={setCurrentSprintId}
-                        />
+                        {renderSprintSelector()}
                       </div>
 
                       <h2 className={`font-segoe-ui text-[18px] leading-7 font-medium tracking-[-0.44px] text-slate-900 antialiased ${viewMode === 'kanban' ? '' : 'hidden'}`}>
@@ -290,13 +326,7 @@ const ProjectKanbanPage: React.FC = () => {
                     <CalendarPeopleFilter people={teamMembers} />
                   </aside>
                 </div>
-              </section>
-            </>
-          ) : (
-            <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
-              Nie znaleziono projektu.
-            </section>
-          )}
+          </section>
         </div>
       </main>
     </div>

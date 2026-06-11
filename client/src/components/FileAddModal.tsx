@@ -6,7 +6,7 @@ import {
   GlobeAltIcon,
   LockClosedIcon,
 } from '@heroicons/react/24/outline';
-import { companies } from '../data/companies'; 
+import { useCompanies } from '../hooks/useCompanies';
 import { projects } from '../data/projects';   
 
 export type FileDraft = {
@@ -35,6 +35,8 @@ const AVAILABLE_TAGS = [
 ];
 
 const FileAddModal: React.FC<FileAddModalProps> = ({ isOpen, onClose, onSave }) => {
+  const { data: companiesData } = useCompanies(1, 100);
+  const companies = companiesData?.items ?? [];
   const [draft, setDraft] = useState<FileDraft>({
     name: '',
     description: '',
@@ -182,12 +184,14 @@ const FileAddModal: React.FC<FileAddModalProps> = ({ isOpen, onClose, onSave }) 
 
               {isClientDropdownOpen && (
                 <div className="absolute left-0 top-full z-30 mt-2 w-full rounded-xl border border-slate-200 bg-white p-2 shadow-md max-h-48 overflow-y-auto">
-                  {companies.map((company) => (
+                  {companies.length === 0 ? (
+                    <p className="px-3 py-2 text-sm text-slate-500">Brak firm do wyboru.</p>
+                  ) : companies.map((company) => (
                     <button
                       key={company.id}
                       type="button"
                       onClick={() => {
-                        setDraft(prev => ({ ...prev, clientId: String(company.id), clientName: company.name }));
+                        setDraft(prev => ({ ...prev, clientId: company.id, clientName: company.name }));
                         setIsClientDropdownOpen(false);
                       }}
                       className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-900 hover:bg-slate-100 transition-colors"

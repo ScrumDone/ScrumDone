@@ -2,26 +2,26 @@ import { useCallback, useEffect, useState } from 'react';
 
 export type ProjectViewMode = 'kanban' | 'scrum';
 
-const storageKeyFor = (projectSlug: string) => `project-view-mode:${projectSlug}`;
+const storageKeyFor = (projectId: string) => `project-view-mode:${projectId}`;
 
-const readStoredMode = (projectSlug: string | undefined): ProjectViewMode => {
-  if (!projectSlug) return 'kanban';
-  const stored = sessionStorage.getItem(storageKeyFor(projectSlug));
+const readStoredMode = (projectId: string | undefined): ProjectViewMode => {
+  if (!projectId) return 'kanban';
+  const stored = sessionStorage.getItem(storageKeyFor(projectId));
   return stored === 'scrum' ? 'scrum' : 'kanban';
 };
 
-export function useProjectViewMode(projectSlug: string | undefined) {
-  const [viewMode, setViewMode] = useState<ProjectViewMode>(() => readStoredMode(projectSlug));
+export function useProjectViewMode(projectId: string | undefined) {
+  const [viewMode, setViewMode] = useState<ProjectViewMode>(() => readStoredMode(projectId));
 
   useEffect(() => {
-    if (!projectSlug) return;
-    setViewMode(readStoredMode(projectSlug));
-  }, [projectSlug]);
+    if (!projectId) return;
+    setViewMode(readStoredMode(projectId));
+  }, [projectId]);
 
   useEffect(() => {
-    if (!projectSlug) return;
-    sessionStorage.setItem(storageKeyFor(projectSlug), viewMode);
-  }, [projectSlug, viewMode]);
+    if (!projectId) return;
+    sessionStorage.setItem(storageKeyFor(projectId), viewMode);
+  }, [projectId, viewMode]);
 
   const setProjectViewMode = useCallback((mode: ProjectViewMode) => {
     setViewMode(mode);

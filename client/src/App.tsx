@@ -23,13 +23,13 @@ const App: React.FC = () => {
       <Route path="/" element={<Homepage />} />
       <Route path="/homepage-manager" element={<HomepageManager />} />
       <Route path="/projects" element={<ProjectsPage />} />
-      <Route path="/projects/:projectSlug" element={<ProjectDetailsPage />} />
-      <Route path="/projects/:projectSlug/tablica-kanban" element={<ProjectKanbanPage />} />
-      <Route path="/projects/:projectSlug/kalendarz" element={<ProjectCalendarPage />} />
-      <Route path="/projects/:projectSlug/sprinty" element={<SprintsPage />} />
-      <Route path="/projects/:projectSlug/repozytorium-plikow" element={<ProjectFilesPage />} />
+      <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
+      <Route path="/projects/:projectId/tablica-kanban" element={<ProjectKanbanPage />} />
+      <Route path="/projects/:projectId/kalendarz" element={<ProjectCalendarPage />} />
+      <Route path="/projects/:projectId/sprinty" element={<SprintsPage />} />
+      <Route path="/projects/:projectId/repozytorium-plikow" element={<ProjectFilesPage />} />
       <Route path="/companies" element={<Companiespage />} />
-      <Route path="/companies/:companySlug" element={<CompanyDetailsPage />} />
+      <Route path="/companies/:companyId" element={<CompanyDetailsPage />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/reports" element={<ReportsPage />} />
       <Route path="/task" element={<TaskPage />} />

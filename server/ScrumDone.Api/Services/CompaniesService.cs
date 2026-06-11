@@ -6,6 +6,8 @@ using ScrumDone.Api.DTOs.Companies;
 using ScrumDone.Api.Exceptions;
 using ScrumDone.Api.Mappers;
 using System.Text.Json;
+using Microsoft.AspNetCore.Components.Web;
+using System.ComponentModel;
 
 namespace ScrumDone.Api.Services
 {
@@ -144,7 +146,7 @@ namespace ScrumDone.Api.Services
                 CompanyId = id,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
-                IsDeleted = false,
+                IsDeleted = false
             };
 
             _context.CompanyNotes.Add(note);
@@ -248,6 +250,85 @@ namespace ScrumDone.Api.Services
             _context.ContactPeople.Remove(contact);
             await _context.SaveChangesAsync();
         
+            return;
+        }
+
+        // Logs
+
+        public async Task<PagedResultDto<CooperationLogDto>> GetCompanyLogsAsync(Guid id, CooperationLogQueryDto query)
+        {
+            var baseQuery = _context.CooperationLogs
+                .Where(l => l.CompanyId == id);
+
+            var total = await baseQuery.CountAsync();
+
+            var logsFromDb = await baseQuery
+                .Include(l => l.Author)
+                .OrderByDescending(n => n.CreatedAt)
+                .Skip((query.Page-1) * query.Limit)
+                .Take(query.Limit)
+                .ToListAsync();
+
+            var logs = logsFromDb.Select(l => l.ToListItemDto());
+
+            var contactsPaginated = new PagedResultDto<CooperationLogDto> (logs, query.Page, query.Limit, total);
+            return contactsPaginated;
+        }
+
+        public async Task<CooperationLogDto> CreateCompanyLogAsync(Guid id, CooperationLogCreateDto dto)
+        {
+            var companyExist = await _context.Companies.AnyAsync(c => c.Id == id);
+            
+            if (!companyExist) 
+            {
+                throw new NotFoundException(nameof(Company), id);
+            }
+
+            var currentUser = await _context.Users.FirstAsync();
+
+            var log = new CooperationLog{
+                Id = Guid.NewGuid(),
+                CompanyId = id,
+                AuthorId = currentUser.Id,
+                Author = currentUser,
+                Title = dto.Title,
+                OldValue = dto.OldValue,
+                NewValue = dto.NewValue,
+                Description = dto.Description,
+                IsDeleted = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow
+            };
+
+            _context.CooperationLogs.Add(log);
+            await _context.SaveChangesAsync();
+        
+            return log.ToListItemDto();
+        }
+
+        public async Task<CooperationLogDto> UpdateCompanyLogAsync(Guid id, Guid logId, CooperationLogUpdateDto dto)
+        {
+            var log = await _context.CooperationLogs
+                .Include(l => l.Author)
+                .FirstOrDefaultAsync(l => l.Id == logId && l.CompanyId == id)
+            ?? throw new NotFoundException(nameof(CooperationLog), logId);
+
+            if (dto.SetProperties.Contains(nameof(dto.Title))) log.Title = dto.Title!;
+            if (dto.SetProperties.Contains(nameof(dto.Description))) log.Description = dto.Description;
+            if (dto.SetProperties.Contains(nameof(dto.OldValue))) log.OldValue = dto.OldValue;
+            if (dto.SetProperties.Contains(nameof(dto.NewValue))) log.NewValue = dto.NewValue;
+            await _context.SaveChangesAsync();
+
+            return log.ToListItemDto();
+        }
+
+        public async Task DeleteCompanyLogAsync(Guid id, Guid logId)
+        {
+            var log = await _context.CooperationLogs.FirstOrDefaultAsync(l => l.Id == logId && l.CompanyId == id)
+            ?? throw new NotFoundException(nameof(CooperationLog), logId);
+
+            _context.CooperationLogs.Remove(log);
+            await _context.SaveChangesAsync();
             return;
         }
     }

@@ -157,26 +157,13 @@ namespace ScrumDone.Api.DTOs.Assignments
         public int Limit { get; set; } = 10; 
     }
 
-    public class AssignmentLabelCreateDto
+    public class AssignmentLabelsUpdateDto
     {
-        public required string Name { get; set; }
-        public required string HexColor { get; set; }
+        public List<Guid> LabelIds { get; set; } = [];
     }
 
-    public class AssignmentLabelUpdateDto
+    public class AssignmentAssigneesUpdateDto
     {
-        private readonly HashSet<string> _setProperties = new();
-        [JsonIgnore] public IReadOnlySet<string> SetProperties => _setProperties;
-
-        public string? Name
-        {
-            get => field;
-            set { field = value; _setProperties.Add(nameof(Name)); }
-        }
-        public string? HexColor
-        {
-            get => field;
-            set { field = value; _setProperties.Add(nameof(HexColor)); }
-        }
+        public List<Guid> UserIds { get; set; } = [];
     }
 }

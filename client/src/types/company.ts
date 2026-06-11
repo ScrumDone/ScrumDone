@@ -1,4 +1,7 @@
 import type { ContactPerson } from './contact';
+import type { UserSummary } from './user';
+
+export type { UserSummary };
 
 export type CompanyListItem = {
   id: string;
@@ -11,7 +14,6 @@ export type CompanyListItem = {
   projectsCount: number;
 };
 
-
 export type CompanyUpdateDto = {
   name: string | null;
   nip: string | null;
@@ -20,6 +22,18 @@ export type CompanyUpdateDto = {
   address: string | null;
 };
 
+export type CompanyNote = {
+  id: string;
+  content: string;
+  isEdited: boolean;
+  author: UserSummary;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CompanyNoteCreateDto = {
+  content: string;
+};
 
 export type CompanyCreateDto = {
   name: string;                     
@@ -42,4 +56,15 @@ export type CompanyDetail = {
   contactPeopleCount: number;
   projectCount: number;
   contacts: ContactPerson[];
+};
+
+export type CooperationLog = {
+  id: string;
+  title: string;
+  description: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  author: UserSummary;
+  createdAt: string;
+  updatedAt: string;
 };

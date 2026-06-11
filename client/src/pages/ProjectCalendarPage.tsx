@@ -11,7 +11,7 @@ import ProjectMonthCalendar from '../components/ProjectMonthCalendar'
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter'
 import CalendarNoDeadlineTasks, { type CalendarNoDeadlineTask } from '../components/calendarNoDeadlineTasks'
 import CalendarTaskItem from '../components/calendarTaskItem'
-import { projects } from '../data/projects'
+import { useProjectViewMode } from '../hooks/useProjectViewMode'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 
 type CalendarTask = {
@@ -40,9 +40,9 @@ const initialCalendarTasks: CalendarTask[] = [
 ]
 
 const ProjectCalendarPage: React.FC = () => {
-  const { projectSlug } = useParams()
-  const project = projects.find((item) => item.slug === projectSlug)
-  
+  const { projectId = '' } = useParams()
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId)
+
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 6))
   const [calendarTasks, setCalendarTasks] = useState<CalendarTask[]>(initialCalendarTasks)
@@ -83,10 +83,8 @@ const ProjectCalendarPage: React.FC = () => {
       <main className="ml-64 pt-(--app-header-h)">
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex w-full flex-col">
-            {project ? (
-              <>
-                <ProjectTopBar project={project} viewMode="scrum" />
-                <section className="mx-6 mt-6 pb-8">
+            <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
+            <section className="mx-6 mt-6 pb-8">
                   <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                     <div className="min-w-0 space-y-4">
                       <div className="flex flex-col gap-4 p-0">
@@ -123,11 +121,7 @@ const ProjectCalendarPage: React.FC = () => {
                       </section>
                     </aside>
                   </div>
-                </section>
-              </>
-            ) : (
-              <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">Nie znaleziono projektu o podanym adresie.</section>
-            )}
+            </section>
           </div>
           <DragOverlay>
             {activeTask ? (

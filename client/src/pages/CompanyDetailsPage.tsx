@@ -1,21 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
-import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, FileSignature, MoreVertical } from 'lucide-react';
-import { companies } from '../data/companies';
-import { projects } from '../data/projects';
+import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical } from 'lucide-react';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
+import CompanyAttachProjectModal from '../components/CompanyAttachProjectModal';
+import { projects } from '../data/projects';
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
 import { useCompany } from '../hooks/useCompany';
 import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
+import { useAddCompanyNote } from '../hooks/useAddCompanyNote';
+import { useCompanyNotes } from '../hooks/useCompanyNotes';
+import { useCompanyLogs } from '../hooks/useCompanyLogs';
 import type { ContactPerson } from '../types/contact';
-
-const isGuid = (value: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+import type { CompanyNote, CooperationLog } from '../types/company';
 
 const emptyDisplay = (value: string | null | undefined) => value?.trim() || '—';
+
+const formatBackendDate = (date: string) =>
+  new Date(date).toLocaleString('pl-PL', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
 type CompanyDisplay = {
   id: string;
@@ -49,69 +59,41 @@ type NoteItem = {
   content: string;
 };
 
-const cooperationHistory: CooperationHistoryItem[] = [
-  {
-    id: 'history-1',
-    title: 'Email sent',
-    tag: 'Wysłano email',
-    description: 'Wysłano email do Anny Wiśniewskiej z aktualizacją projektu.',
-    dateLabel: '20 marca 2026',
-    author: 'Artur Nowak',
-    Icon: MessageSquareText,
-  },
-  {
-    id: 'history-2',
-    title: 'Contact person changed',
-    tag: 'Zmiana osoby kontaktowej',
-    description: 'Zmieniono osobę kontaktową na Annę Wiśniewską.',
-    dateLabel: '15 stycznia 2026',
-    author: 'Artur Nowak',
-    changeFrom: 'Piotr Kowalski',
-    changeTo: 'Anna Wiśniewska',
-    Icon: UserRoundPen,
-  },
-  {
-    id: 'history-3',
-    title: 'Contract signed',
-    tag: 'Podpis umowy',
-    description: 'Podpisano umowę z Adoddle na rozwój aplikacji do zarządzania projektami.',
-    dateLabel: '10 stycznia 2026',
-    author: 'Artur Nowak',
-    Icon: FileSignature,
-  },
-];
+const toNoteItem = (note: CompanyNote): NoteItem => {
+  const authorName = note.author?.name?.trim() || 'Nieznany autor';
+  const nameParts = authorName.split(' ').filter(Boolean);
 
-const initialNotes: NoteItem[] = [
-  {
-    id: 'note-1',
-    author: 'Artur Nowak',
-    avatarInitials: 'AN',
-    dateLabel: '10 kwietnia 2026 16:45',
-    content: 'Anna Wiśniewska wspomniała o możliwości polecenia naszych usług innym firmom z branży.',
-  },
-  {
-    id: 'note-2',
-    author: 'Eryk Baczyński',
-    avatarInitials: 'EB',
-    dateLabel: '02 kwietnia 2026 09:15',
-    content: 'Spotkanie w przyszły wtorek o 10:00 - omówienie dalszych planów rozwoju aplikacji.',
-  },
-  {
-    id: 'note-3',
-    author: 'Artur Nowak',
-    avatarInitials: 'AN',
-    dateLabel: '15 marca 2026 14:30',
-    content: 'Klient bardzo zadowolony z postępów projektu. Planuje rozszerzenie współpracy o kolejne moduły.',
-  },
-];
+  return {
+    id: note.id,
+    author: authorName,
+    avatarInitials: nameParts.map((part) => part.charAt(0)).join('').toUpperCase().slice(0, 2) || '??',
+    dateLabel: formatBackendDate(note.createdAt),
+    content: note.content,
+  };
+};
+
+const isOptimisticNoteId = (id: string) => id.startsWith('note-');
+
+const mapCooperationLogToHistoryItem = (log: CooperationLog): CooperationHistoryItem => {
+  const changeFrom = log.oldValue?.trim();
+  const changeTo = log.newValue?.trim();
+
+  return {
+    id: log.id,
+    title: log.title,
+    tag: log.title,
+    description: log.description?.trim() || '—',
+    dateLabel: formatBackendDate(log.createdAt),
+    author: log.author?.name?.trim() || 'Nieznany autor',
+    ...(changeFrom && changeTo ? { changeFrom, changeTo } : {}),
+    Icon: changeFrom && changeTo ? UserRoundPen : MessageSquareText,
+  };
+};
 
 const CompanyDetailsPage: React.FC = () => {
-  const { companySlug } = useParams();
-  const companyId = companySlug ?? '';
-  const isApiRoute = isGuid(companyId);
+  const { companyId = '' } = useParams();
 
-  const { data: apiCompany, isLoading, isError, error } = useCompany(isApiRoute ? companyId : '');
-  const mockCompany = !isApiRoute ? companies.find((item) => item.slug === companySlug) : undefined;
+  const { data: apiCompany, isLoading, isError, error } = useCompany(companyId);
 
   const displayedCompany: CompanyDisplay | null = apiCompany
     ? {
@@ -131,29 +113,12 @@ const CompanyDetailsPage: React.FC = () => {
         contacts: apiCompany.contacts,
         projectCount: apiCompany.projectCount,
       }
-    : mockCompany
-      ? {
-          id: String(mockCompany.id),
-          name: mockCompany.name,
-          nip: mockCompany.nip,
-          regon: mockCompany.regon,
-          companyNumber: mockCompany.companyNumber,
-          address: mockCompany.address,
-          emails: mockCompany.emails.filter(Boolean),
-          contacts: mockCompany.contacts.map((contact, index) => ({
-            id: String(contact.id),
-            name: contact.name,
-            role: contact.role,
-            email: contact.email,
-            phone: contact.phone,
-            isPrimary: index === 0,
-          })),
-          projectCount: mockCompany.projectsCount,
-        }
-      : null;
+    : null;
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isContactAddModalOpen, setIsContactAddModalOpen] = useState(false);
+  const [isAttachProjectModalOpen, setIsAttachProjectModalOpen] = useState(false);
+  const [selectedAttachProjectId, setSelectedAttachProjectId] = useState<number | null>(null);
   const [draft, setDraft] = useState<CompanyEditDraft>({
     name: '',
     nip: '',
@@ -168,10 +133,10 @@ const CompanyDetailsPage: React.FC = () => {
     phone: '',
     isMainContact: false,
   });
-  const activeProjects = displayedCompany ? projects.filter((project) => project.clientName === displayedCompany.name) : [];
+
   const [activeTab, setActiveTab] = useState<'projects' | 'history' | 'notes'>('projects');
 
-  const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
+  const [notes, setNotes] = useState<NoteItem[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
   const { mutate: updateCompany, isPending: isSavingCompany, isError: isUpdateCompanyError, error: updateCompanyError, reset: resetUpdateCompany } = useUpdateCompany();
   const {
@@ -181,6 +146,36 @@ const CompanyDetailsPage: React.FC = () => {
     error: addContactError,
     reset: resetAddContact,
   } = useAddCompanyContact();
+  const {
+    data: notesData,
+    isLoading: isNotesLoading,
+    isError: isNotesError,
+  } = useCompanyNotes(companyId);
+  const {
+    data: logsData,
+    isLoading: isLogsLoading,
+    isError: isLogsError,
+  } = useCompanyLogs(companyId);
+  const {
+    mutate: createNote,
+    isPending: isAddingNote,
+    isError: isAddNoteError,
+    error: addNoteError,
+  } = useAddCompanyNote();
+
+  const totalNotesCount = notesData?.totalCount ?? 0;
+  const cooperationHistory = useMemo(
+    () => (logsData?.items ?? []).map(mapCooperationLogToHistoryItem),
+    [logsData?.items],
+  );
+
+  const availableAttachProjects = useMemo(
+    () =>
+      displayedCompany
+        ? projects.filter((project) => project.clientName !== displayedCompany.name)
+        : [],
+    [displayedCompany?.name],
+  );
 
   useEffect(() => {
     if (!displayedCompany) return;
@@ -201,9 +196,23 @@ const CompanyDetailsPage: React.FC = () => {
     });
     setIsEditModalOpen(false);
     setIsContactAddModalOpen(false);
+    setIsAttachProjectModalOpen(false);
+    setSelectedAttachProjectId(null);
+    setNotes([]);
   }, [displayedCompany?.id]);
 
-  if (isApiRoute && isLoading) {
+  useEffect(() => {
+    if (!notesData) return;
+
+    const fetchedNotes = Array.isArray(notesData.items) ? notesData.items : [];
+
+    setNotes((prev) => {
+      const optimistic = prev.filter((note) => isOptimisticNoteId(note.id));
+      return [...optimistic, ...fetchedNotes.map(toNoteItem)];
+    });
+  }, [notesData]);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen w-full bg-[#F9FAFB]">
         <SideBar />
@@ -217,7 +226,7 @@ const CompanyDetailsPage: React.FC = () => {
     );
   }
 
-  if (isApiRoute && isError) {
+  if (isError) {
     return (
       <div className="min-h-screen w-full bg-[#F9FAFB]">
         <SideBar />
@@ -322,24 +331,74 @@ const CompanyDetailsPage: React.FC = () => {
     );
   };
 
+  const openAttachProjectModal = () => {
+    setSelectedAttachProjectId(null);
+    setIsAttachProjectModalOpen(true);
+  };
+
+  const closeAttachProjectModal = () => {
+    setIsAttachProjectModalOpen(false);
+    setSelectedAttachProjectId(null);
+  };
+
+  const saveAttachProject = () => {
+    closeAttachProjectModal();
+  };
+
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newNoteText.trim()) return;
+    if (!newNoteText.trim() || isAddingNote) return;
+
+    const contentToSend = newNoteText.trim();
 
     const now = new Date();
     const months = ['stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca', 'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
     const formattedDate = `${now.getDate().toString().padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const newNote: NoteItem = {
+    const optimisticNote: NoteItem = {
       id: `note-${Date.now()}`,
       author: 'Artur Nowak',
       avatarInitials: 'AN',
       dateLabel: formattedDate,
-      content: newNoteText.trim(),
+      content: contentToSend,
     };
 
-    setNotes([newNote, ...notes]);
+    setNotes((prev) => [optimisticNote, ...prev]);
     setNewNoteText('');
+
+    createNote(
+      {
+        companyId,
+        data: {
+          content: contentToSend,
+        },
+      },
+      {
+        onSuccess: (createdNote: CompanyNote) => {
+          const backendAuthorName = createdNote.author?.name?.trim() || 'Nieznany autor';
+          const nameParts = backendAuthorName.split(' ').filter(Boolean);
+          const backendInitials =
+            nameParts.map((part) => part.charAt(0)).join('').toUpperCase().slice(0, 2) || '??';
+
+          setNotes((prev) =>
+            prev.map((n) =>
+              n.id === optimisticNote.id
+                ? {
+                    ...n,
+                    id: createdNote.id,
+                    author: backendAuthorName,
+                    avatarInitials: backendInitials,
+                    dateLabel: formatBackendDate(createdNote.createdAt),
+                  }
+                : n,
+            ),
+          );
+        },
+        onError: () => {
+          setNotes((prev) => prev.filter((n) => n.id !== optimisticNote.id));
+        },
+      },
+    );
   };
 
   return (
@@ -460,13 +519,12 @@ const CompanyDetailsPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-
                     </div>
                   ))}
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-between p-6 items-center">
               <div className="relative inline-grid h-9 w-fit grid-cols-3 rounded-[14px] bg-[#E5E7EB] p-0.75 ml-3">
                 <span
@@ -486,82 +544,40 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('projects')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'projects' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Aktywne projekty ({isApiRoute ? displayedCompany.projectCount : activeProjects.length})
+                  Aktywne projekty ({displayedCompany.projectCount})
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('history')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'history' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Historia współpracy (3)
+                  Historia współpracy ({isLogsLoading ? '...' : logsData?.totalCount ?? 0})
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('notes')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'notes' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Notatki ({notes.length})
+                  Notatki ({isNotesLoading ? '...' : totalNotesCount})
                 </button>
               </div>
-              
-              <button className="h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] text-white rounded-lg inline-flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap mr-3">
-                  <PlusIcon className="w-4 h-4 stroke-2" />
-                  Podepnij projekt
+
+              <button
+                type="button"
+                onClick={openAttachProjectModal}
+                className="mr-3 inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium leading-2.5 text-white transition-all hover:bg-[#00A0DD] active:scale-95"
+              >
+                <PlusIcon className="h-4 w-4 stroke-2" />
+                Podepnij projekt
               </button>
             </div>
 
             {activeTab === 'projects' && (
               <section className="mx-8 mb-8 border border-gray-200 rounded-[14px] overflow-hidden transition-shadow duration-200 hover:shadow-md">
-                <div className="space-y-6">
-                  {activeProjects.length > 0 ? (
-                    activeProjects.map((project) => (
-                      <Link
-                        key={project.id}
-                        to={`/projects/${project.slug}`}
-                        className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-2 hover:shadow-lg transition-shadow duration-300"
-                      >
-                        {/* NAZWA I STATUS */}
-                        <div className="flex justify-between items-start">
-                          <div className="flex flex-col gap-1">
-                            <h3 className="text-xl text-gray-900 font-medium">{project.name}</h3>
-                          </div>
-                          <span className="inline-flex items-center justify-center bg-scrumdone-blue-main text-white text-[12px] leading-4 font-medium px-2 py-0.5 rounded-lg whitespace-nowrap w-fit">
-                            {project.status}
-                          </span>
-                        </div>
-
-                        {/* OPIS */}
-                        <p className="text-sm text-gray-700 leading-relaxed min-h-0">
-                          {project.description}
-                        </p>
-
-                        {/* SZCZEGÓŁY W JEDNEJ LINII Z KROPKĄ */}
-                        <div className="flex items-center gap-2 text-gray-700 text-sm mt-1">
-                          <span>{project.startDate} - {project.endDate}</span>
-                          <span className="text-gray-400">•</span>
-                          <span>{project.membersCount} członków</span>
-                        </div>
-
-                        {/* PROGRESS BAR */}
-                        <div className="mt-2">
-                          <div className="flex justify-between text-sm mb-1">
-                            <span className="text-gray-700">Postęp</span>
-                            <span className="text-gray-700">{project.progress}%</span>
-                          </div>
-                          <div className="w-full bg-gray-300 rounded-full h-2">
-                            <div 
-                              className="bg-black h-2 rounded-full transition-all duration-500" 
-                              style={{ width: `${project.progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))
-                  ) : (
-                    <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
-                      Brak aktywnych projektów powiązanych z tą firmą.
-                    </div>
-                  )}
+                <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                  {displayedCompany.projectCount > 0
+                    ? `Firma ma ${displayedCompany.projectCount} powiązanych projektów. Lista pojawi się po podłączeniu API projektów.`
+                    : 'Brak aktywnych projektów powiązanych z tą firmą.'}
                 </div>
               </section>
             )}
@@ -574,13 +590,27 @@ const CompanyDetailsPage: React.FC = () => {
                   ['--history-icon-size' as string]: '40px',
                 } as React.CSSProperties}
               >
+                {isLogsLoading && (
+                  <p className="text-sm text-gray-500 py-4 animate-pulse">Ładowanie historii współpracy...</p>
+                )}
+
+                {isLogsError && (
+                  <p className="text-sm text-red-500 py-4">Wystąpił błąd podczas pobierania historii współpracy.</p>
+                )}
+
+                {!isLogsLoading && !isLogsError && cooperationHistory.length === 0 && (
+                  <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                    Brak wpisów w historii współpracy dla tej firmy.
+                  </div>
+                )}
+
                 <div className="space-y-8">
-                  {cooperationHistory.map((item, index) => (
+                  {!isLogsLoading && !isLogsError && cooperationHistory.map((item, index) => (
                     <article key={item.id} className="relative grid grid-cols-[var(--history-col-width)_minmax(0,1fr)] gap-4 lg:grid-cols-[var(--history-col-width)_minmax(0,1fr)_auto] lg:items-start">
                       {index < cooperationHistory.length - 1 && (
                         <span
                           aria-hidden="true"
-                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon shadow-md)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
+                          className="absolute left-[calc(var(--history-col-width)/2)] top-[calc(var(--history-icon-size)/2)] h-[calc(100%+1.5rem)] w-px -translate-x-1/2 bg-slate-200"
                         />
                       )}
 
@@ -618,26 +648,46 @@ const CompanyDetailsPage: React.FC = () => {
               <section className="mx-8 mb-8 rounded-[14px] border border-gray-200 bg-white p-6 flex flex-col gap-6">
                 <div>
                   <h3 className="text-sm text-gray-900 mb-3">Dodaj nową notatkę</h3>
+                  {isAddNoteError && (
+                    <div className="mb-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+                      {addNoteError?.message || 'Błąd podczas dodawania notatki'}
+                    </div>
+                  )}
                   <form onSubmit={handleAddNote} className="flex flex-col gap-3">
                     <textarea
                       value={newNoteText}
                       onChange={(e) => setNewNoteText(e.target.value)}
                       placeholder="Wpisz treść notatki..."
-                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all"
+                      disabled={isAddingNote}
+                      className="w-full min-h-[88px] rounded-xl bg-[#F9FAFB] p-3 text-sm text-gray-900 placeholder-gray-500 border-none resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all disabled:opacity-60"
                     />
                     <button
                       type="submit"
-                      disabled={!newNoteText.trim()}
+                      disabled={!newNoteText.trim() || isAddingNote}
                       className="self-start h-9 px-4 bg-scrumdone-blue-main hover:bg-[#00A0DD] disabled:opacity-50 disabled:hover:bg-scrumdone-blue-main text-white rounded-lg flex items-center justify-center gap-2 text-sm font-medium leading-2.5 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
                     >
                       <PlusIcon className="w-4 h-4 stroke-2" />
-                      <span>Dodaj notatkę</span>
+                      <span>{isAddingNote ? 'Dodawanie...' : 'Dodaj notatkę'}</span>
                     </button>
                   </form>
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  {notes.map((note) => (
+                  {isNotesLoading && (
+                    <p className="text-sm text-gray-500 py-4 animate-pulse">Ładowanie notatek z serwera...</p>
+                  )}
+
+                  {isNotesError && (
+                    <p className="text-sm text-red-500 py-4">Wystąpił błąd podczas pobierania notatek z backendu.</p>
+                  )}
+
+                  {!isNotesLoading && !isNotesError && notes.length === 0 && (
+                    <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                      Brak notatek dla tej firmy. Dodaj pierwszą notatkę powyżej.
+                    </div>
+                  )}
+
+                  {!isNotesLoading && !isNotesError && notes.map((note) => (
                     <article key={note.id} className="rounded-xl bg-[#F9FAFB] border border-gray-200 p-4 flex flex-col gap-3 relative group">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -653,7 +703,7 @@ const CompanyDetailsPage: React.FC = () => {
                           <MoreVertical className="w-5 h-5 stroke-[1.5]" />
                         </button>
                       </div>
-                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased">
+                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased whitespace-pre-wrap">
                         {note.content}
                       </p>
                     </article>
@@ -684,6 +734,17 @@ const CompanyDetailsPage: React.FC = () => {
         isSaving={isAddingContact}
         errorMessage={isAddContactError ? addContactError?.message : null}
       />
+
+      <CompanyAttachProjectModal
+        isOpen={isAttachProjectModalOpen}
+        companyName={displayedCompany.name}
+        availableProjects={availableAttachProjects}
+        selectedProjectId={selectedAttachProjectId}
+        onClose={closeAttachProjectModal}
+        onSave={saveAttachProject}
+        onProjectSelect={setSelectedAttachProjectId}
+      />
+
     </div>
   );
 };
