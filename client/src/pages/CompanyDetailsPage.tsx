@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
-import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical } from 'lucide-react';
+import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
 import CompanyAttachProjectModal from '../components/CompanyAttachProjectModal';
@@ -12,6 +12,8 @@ import { useCompany } from '../hooks/useCompany';
 import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
 import { useAddCompanyNote } from '../hooks/useAddCompanyNote';
 import { useCompanyNotes } from '../hooks/useCompanyNotes';
+import { useUpdateCompanyNote } from '../hooks/useUpdateCompanyNote';
+import { useDeleteCompanyNote } from '../hooks/useDeleteCompanyNote';
 import { useCompanyLogs } from '../hooks/useCompanyLogs';
 import type { ContactPerson } from '../types/contact';
 import type { CompanyNote, CooperationLog } from '../types/company';
@@ -138,6 +140,10 @@ const CompanyDetailsPage: React.FC = () => {
 
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
+  const [openNoteMenuId, setOpenNoteMenuId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteText, setEditingNoteText] = useState('');
+  const noteMenuRef = useRef<HTMLDivElement>(null);
   const { mutate: updateCompany, isPending: isSavingCompany, isError: isUpdateCompanyError, error: updateCompanyError, reset: resetUpdateCompany } = useUpdateCompany();
   const {
     mutate: addContact,
@@ -162,6 +168,8 @@ const CompanyDetailsPage: React.FC = () => {
     isError: isAddNoteError,
     error: addNoteError,
   } = useAddCompanyNote();
+  const { mutate: updateNote, isPending: isUpdatingNote } = useUpdateCompanyNote();
+  const { mutate: deleteNote, isPending: isDeletingNote } = useDeleteCompanyNote();
 
   const totalNotesCount = notesData?.totalCount ?? 0;
   const cooperationHistory = useMemo(
@@ -211,6 +219,22 @@ const CompanyDetailsPage: React.FC = () => {
       return [...optimistic, ...fetchedNotes.map(toNoteItem)];
     });
   }, [notesData]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (noteMenuRef.current && !noteMenuRef.current.contains(event.target as Node)) {
+        setOpenNoteMenuId(null);
+      }
+    };
+
+    if (openNoteMenuId) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openNoteMenuId]);
 
   if (isLoading) {
     return (
@@ -343,6 +367,75 @@ const CompanyDetailsPage: React.FC = () => {
 
   const saveAttachProject = () => {
     closeAttachProjectModal();
+  };
+
+  const toggleNoteMenu = (noteId: string) => {
+    setOpenNoteMenuId((current) => (current === noteId ? null : noteId));
+  };
+
+  const startEditNote = (note: NoteItem) => {
+    setOpenNoteMenuId(null);
+    setEditingNoteId(note.id);
+    setEditingNoteText(note.content);
+  };
+
+  const cancelEditNote = () => {
+    setEditingNoteId(null);
+    setEditingNoteText('');
+  };
+
+  const handleSaveNoteEdit = (e: React.FormEvent, noteId: string) => {
+    e.preventDefault();
+    const trimmed = editingNoteText.trim();
+    if (!trimmed || isUpdatingNote || isOptimisticNoteId(noteId)) return;
+
+    const previousContent = notes.find((note) => note.id === noteId)?.content;
+
+    setNotes((prev) => prev.map((note) => (note.id === noteId ? { ...note, content: trimmed } : note)));
+    setEditingNoteId(null);
+    setEditingNoteText('');
+
+    updateNote(
+      {
+        companyId,
+        noteId,
+        data: { content: trimmed },
+      },
+      {
+        onError: () => {
+          if (previousContent !== undefined) {
+            setNotes((prev) =>
+              prev.map((note) => (note.id === noteId ? { ...note, content: previousContent } : note)),
+            );
+          }
+        },
+      },
+    );
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    setOpenNoteMenuId(null);
+    if (isDeletingNote) return;
+
+    const deletedNote = notes.find((note) => note.id === noteId);
+    setNotes((prev) => prev.filter((note) => note.id !== noteId));
+
+    if (editingNoteId === noteId) {
+      cancelEditNote();
+    }
+
+    if (isOptimisticNoteId(noteId)) return;
+
+    deleteNote(
+      { companyId, noteId },
+      {
+        onError: () => {
+          if (deletedNote) {
+            setNotes((prev) => [deletedNote, ...prev]);
+          }
+        },
+      },
+    );
   };
 
   const handleAddNote = (e: React.FormEvent) => {
@@ -699,13 +792,81 @@ const CompanyDetailsPage: React.FC = () => {
                             <span className="text-xs font-normal text-gray-500 mt-1.5 leading-none">{note.dateLabel}</span>
                           </div>
                         </div>
-                        <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md">
-                          <MoreVertical className="w-5 h-5 stroke-[1.5]" />
-                        </button>
+                        <div
+                          className="relative"
+                          ref={openNoteMenuId === note.id ? noteMenuRef : undefined}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => toggleNoteMenu(note.id)}
+                            aria-label="Opcje notatki"
+                            aria-expanded={openNoteMenuId === note.id}
+                            aria-haspopup="menu"
+                            className={`text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md ${
+                              openNoteMenuId === note.id ? 'border border-gray-300 bg-white text-gray-600' : ''
+                            }`}
+                          >
+                            <MoreVertical className="w-5 h-5 stroke-[1.5]" />
+                          </button>
+
+                          {openNoteMenuId === note.id && (
+                            <div
+                              role="menu"
+                              className="absolute right-0 top-full z-10 mt-1 min-w-[9.5rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                            >
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => startEditNote(note)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                              >
+                                <Pencil className="h-4 w-4 stroke-[1.5]" />
+                                Edytuj
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => handleDeleteNote(note.id)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4 stroke-[1.5]" />
+                                Usuń
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased whitespace-pre-wrap">
-                        {note.content}
-                      </p>
+                      {editingNoteId === note.id ? (
+                        <form onSubmit={(e) => handleSaveNoteEdit(e, note.id)} className="flex flex-col gap-3">
+                          <textarea
+                            value={editingNoteText}
+                            onChange={(e) => setEditingNoteText(e.target.value)}
+                            disabled={isUpdatingNote}
+                            className="w-full min-h-[88px] rounded-xl bg-white p-3 text-sm text-gray-900 border border-gray-200 resize-none focus:outline-none focus:ring-1 focus:ring-scrumdone-blue-main transition-all disabled:opacity-60"
+                          />
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="submit"
+                              disabled={!editingNoteText.trim() || isUpdatingNote}
+                              className="h-8 px-3 bg-scrumdone-blue-main hover:bg-[#00A0DD] disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-all"
+                            >
+                              {isUpdatingNote ? 'Zapisywanie...' : 'Zapisz'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEditNote}
+                              disabled={isUpdatingNote}
+                              className="h-8 px-3 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                            >
+                              Anuluj
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <p className="text-sm font-normal leading-6 text-[#1F2937] antialiased whitespace-pre-wrap">
+                          {note.content}
+                        </p>
+                      )}
                     </article>
                   ))}
                 </div>
