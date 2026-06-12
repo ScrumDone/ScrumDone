@@ -1,9 +1,14 @@
 import { ChevronDownIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import type { Assignment } from '../types/assignment';
 
-export const TaskMainContent = () => (
+interface TaskMainContentProps {
+  assignment: Assignment;
+}
+
+export const TaskMainContent: React.FC<TaskMainContentProps> = ({ assignment }) => (
   <div className="flex flex-col gap-8">
     {/* Główny tytuł zadania poza kafelkiem */}
-    <h1 className="text-[34px] text-black font-semibold">Quotes Generation module</h1>
+    <h1 className="text-[34px] text-black font-semibold">{assignment.name}</h1>
 
     {/* Kafelek Opis */}
     <section className="rounded-xl border border-slate-200 bg-white p-5">
@@ -26,7 +31,7 @@ export const TaskMainContent = () => (
 
       <div>
         <div className="text-[15px] text-slate-600 mb-6">
-          Implement quotes generation for clients
+          {assignment.description}
         </div>
 
         {/* Galeria zdjęć */}

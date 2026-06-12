@@ -1,7 +1,14 @@
 import { ChevronDownIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import type { Assignment } from '../types/assignment';
 
-export const TaskSubtasks = () => (
-  <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+interface TaskSubtasksProps {
+  assignment: Assignment; 
+}
+
+//Assignment jest, ale nieużyte, bo nie wiem gdzie w ui to jest
+
+export const TaskSubtasks: React.FC<TaskSubtasksProps> = ({ assignment: _assignment }) => (
+    <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     
     {/* Nagłówek kafelka */}
     <div className="mb-6 flex items-center justify-between">
