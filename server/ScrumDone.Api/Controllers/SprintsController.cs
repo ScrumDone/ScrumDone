@@ -30,10 +30,10 @@ namespace ScrumDone.Api.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(SprintDetailDto), StatusCodes.Status200OK)]  // ← Detail
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetSprint([FromRoute] Guid id)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            return Ok(await _sprintsService.GetSprintByIdAsync(id));
         }
 
         [HttpPatch("{id}")]
@@ -47,16 +47,17 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<SprintUpdateDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            var result = await _sprintsService.UpdateSprintAsync(id, dto);
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteSprint([FromRoute] Guid id)
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            await _sprintsService.DeleteSprintAsync(id);
+            return NoContent();
         }
 
         // /sprints/{id}/assignments
