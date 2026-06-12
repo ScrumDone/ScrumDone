@@ -103,7 +103,7 @@ namespace ScrumDone.Api.Services
                 .OrderByDescending(t => t.CreatedAt)
                 .Skip((dto.Page - 1) * dto.Limit)
                 .Take(dto.Limit)
-                .Select(t => new AssignmentListItemDto(  
+                .Select(t => new AssignmentListItemDto(
                     t.Id,
                     t.Name,
                     t.Description,
@@ -117,7 +117,7 @@ namespace ScrumDone.Api.Services
                         : null,
                     t.Assignees.Select(a => new UserSummaryDto(a.User.Id, a.User.Name)),
                     t.Labels.Select(l => new AssignmentLabelDto(
-                        l.AssignmentLabel.Id, 
+                        l.AssignmentLabel.Id,
                         l.AssignmentLabel.Name,
                         l.AssignmentLabel.HexColor)),
                     //t.Subtasks.Select(s => s.Id).ToList(),
@@ -126,6 +126,7 @@ namespace ScrumDone.Api.Services
                     t.SprintId
                 //t.ParentAssignmentId
                 ))
+                .AsSplitQuery()
                 .ToListAsync();
 
             var results = new PagedResultDto<AssignmentListItemDto>
@@ -243,6 +244,50 @@ namespace ScrumDone.Api.Services
             await _context.SaveChangesAsync();
 
             return;
+        }
+
+        public async Task<IEnumerable<UserSummaryDto>> UpdateAssigneesAsync(Guid id, AssignmentAssigneesUpdateDto dto)
+        {
+            var assignment = await _context.Assignment
+                .Include(t => t.Assignees)
+                .FirstOrDefaultAsync(t => t.Id == id)
+                ?? throw new NotFoundException(nameof(Assignment), id);
+
+            var toRemove = assignment.Assignees
+                .Where(a => !dto.UserIds.Contains(a.UserId))
+                .ToList();
+            _context.RemoveRange(toRemove);
+
+
+            var toAdd = dto.UserIds
+                .Where(uid => !assignment.Assignees
+                .Any(a => a.UserId == uid))
+                .ToList();
+
+            foreach (var uid in toAdd)
+                assignment.Assignees.Add(new AssignmentUserMTMRelation { UserId = uid });
+
+            await _context.SaveChangesAsync();
+
+
+            // load users for return
+            var users = await _context.Users
+                .Where(u => dto.UserIds.Contains(u.Id))
+                .ToListAsync();
+
+            return users.Select(u => new UserSummaryDto(
+                u.Id, 
+                u.Name));
+        }
+
+        public async Task<IEnumerable<AssignmentLabelDto>> UpdateLabelsAsync(Guid id, AssignmentLabelsUpdateDto dto)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<IEnumerable<AssignmentPriorityDto>> GetPrioritiesAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }
