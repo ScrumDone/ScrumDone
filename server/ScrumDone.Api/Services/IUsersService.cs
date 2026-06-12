@@ -9,16 +9,16 @@ namespace ScrumDone.Api.Services
 {
     public interface IUsersService
     {
-        Task<PagedResultDto<UserSummaryDto>> GetUsersAsync();
+        Task<PagedResultDto<UserSummaryDto>> GetUsersAsync(UserQueryDto query);
 
-        Task<UserSummaryDto> GetUserByIdAsync(Guid id); 
+        // Task<UserSummaryDto> GetUserByIdAsync(Guid id); 
         
-        Task<UserSummaryDto> CreateUserAsync(UserCreateDto dto);
+        // Task<UserSummaryDto> CreateUserAsync(UserCreateDto dto);
         
-        Task<UserSummaryDto> UpdateUserAsync(Guid id, UserUpdateDto dto);
+        // Task<UserSummaryDto> UpdateUserAsync(Guid id, UserUpdateDto dto);
         
-        Task DeleteUserAsync(Guid id);
+        // Task DeleteUserAsync(Guid id);
         
-        Task<IEnumerable<UserPermissionDto>> GetUserRolesAsync();
+        // Task<IEnumerable<UserPermissionDto>> GetUserRolesAsync();
     }
 }
