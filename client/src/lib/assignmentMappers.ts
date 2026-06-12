@@ -40,13 +40,23 @@ export const assignmentToKanbanCard = (a: Assignment) => {
 };
 
 export const assignmentToCalendarTask = (a: Assignment) => {
-  const vm = mapAssignmentToVM(a);
+  const normalizedDate = a.dueDate ?? new Date().toISOString()
+  const [date = ''] = normalizedDate.split('T')
   return {
-    ...vm,
-    // Tu format daty dla kalendarza może wymagać innej logiki, 
-    // np. godziny (HH:mm)
-    calendarDate: a.dueDate ? format(new Date(a.dueDate), 'HH:mm') : null,
-  };
+    id: a.id,
+    title: a.name,
+    date,
+    colorVariant: 'blue' as const,
+  }
 };
+
+export const assignmentToNoDeadlineTask = (a: Assignment) => ({
+  id: a.id,
+  title: a.name,
+  assigneeInitials: a.assignees[0]?.name ? getInitialsFromName(a.assignees[0].name) : '??',
+  assigneeName: a.assignees[0]?.name ?? 'Unassigned',
+  accentColor: 'blue' as const,
+  dotColor: 'green' as const,
+});
 
 
