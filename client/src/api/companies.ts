@@ -1,11 +1,9 @@
-import { apiGet } from './client';
-import { apiPatch } from './client'; 
-import { apiPost } from './client';
+import { apiDelete, apiGet, apiPatch, apiPost } from './client';
 import type { PagedResult } from '../types/api';
 import type { CompanyListItem } from '../types/company';
 import type { CompanyUpdateDto } from '../types/company';
 import type { ContactPerson, ContactPersonCreateDto } from '../types/contact';
-import type { CompanyNote, CompanyNoteCreateDto } from '../types/company';
+import type { CompanyNote, CompanyNoteCreateDto, CompanyNoteUpdateDto } from '../types/company';
 import type { CompanyCreateDto, CompanyDetail, CooperationLog } from '../types/company';
 
 
@@ -35,7 +33,15 @@ export function createCompanyNote(companyId: string, data: CompanyNoteCreateDto)
 
 export function getCompanyNotes(companyId: string, page = 1, limit = 10) {
   return apiGet<PagedResult<CompanyNote>>(`/api/companies/${companyId}/notes`, { page, limit });
-}  
+}
+
+export function updateCompanyNote(companyId: string, noteId: string, data: CompanyNoteUpdateDto) {
+  return apiPatch<CompanyNote>(`/api/companies/${companyId}/notes/${noteId}`, data);
+}
+
+export function deleteCompanyNote(companyId: string, noteId: string) {
+  return apiDelete(`/api/companies/${companyId}/notes/${noteId}`);
+}
   
 export function createCompany(data: CompanyCreateDto) {
   return apiPost<CompanyDetail>('/api/companies', data);

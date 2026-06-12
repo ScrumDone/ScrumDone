@@ -35,6 +35,10 @@ export type CompanyNoteCreateDto = {
   content: string;
 };
 
+export type CompanyNoteUpdateDto = {
+  content: string;
+};
+
 export type CompanyCreateDto = {
   name: string;                     
   nip: string | null;
