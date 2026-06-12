@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { getAssignments } from '../api/assignments';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getAssignments, updateAssignment } from '../api/assignments';
 import { ApiError } from '../api/client';
-import type { AssignmentQueryParams, PaginatedAssignmentsResponse } from '../types/assignment';
+import type { Assignment, AssignmentQueryParams, PaginatedAssignmentsResponse } from '../types/assignment'; // ZMIANA!!!!! - dodałem Assignment
 
 export function useAssignments(params: AssignmentQueryParams = {}) {
   // Domyślne wartości, jeśli nie zostały przekazane
@@ -31,3 +31,41 @@ export function useBacklogAssignments() {
 }
 
 //STALETIME: 30 sekund, ponieważ dane mogą się często zmieniać, ale nie chcemy nadmiernie obciążać serwera zapytaniami.
+
+export function useUpdateAssignmentDueDate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, dueDate }: { id: string; dueDate: string | null }) => 
+      updateAssignment(id, { dueDate }),
+
+    onMutate: async ({ id, dueDate }) => {
+      // 1. Anuluj nadchodzące refetch'e, aby nie nadpisały optymistycznego stanu
+      await queryClient.cancelQueries({ queryKey: ['assignments'] });
+
+      // 2. Zapamiętaj stan sprzed zmiany
+      const previousAssignments = queryClient.getQueryData(['assignments']);
+
+      // 3. Optymistyczna aktualizacja w cache
+      queryClient.setQueryData(['assignments'], (old: PaginatedAssignmentsResponse | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          items: old.items.map((a: Assignment) => 
+            a.id === id ? { ...a, dueDate } : a
+          )
+        };
+      });
+
+      return { previousAssignments };
+    },
+    onError: (_err, _newTodo, context) => {
+      // Przywróć poprzedni stan w razie błędu
+      queryClient.setQueryData(['assignments'], context?.previousAssignments);
+    },
+    onSettled: () => {
+      // Odśwież dane z serwera po zakończeniu
+      queryClient.invalidateQueries({ queryKey: ['assignments'] });
+    },
+  });
+}

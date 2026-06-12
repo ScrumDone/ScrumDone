@@ -9,7 +9,7 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, addMonths, subMonths 
 import { pl } from 'date-fns/locale' 
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
-import WeekCalendar from '../components/weekCalendar'
+import WeekCalendar from '../components/ProjectWeekCalendar'
 import MonthCalendar from '../components/monthCalendar'
 import CalendarFilters from '../components/calendarFilters'
 import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
