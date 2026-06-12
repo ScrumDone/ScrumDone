@@ -40,7 +40,6 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(typeof(SprintDetailDto), StatusCodes.Status200OK)]  // ← Detail
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> UpdateSprint(
             [FromRoute] Guid id,
             [FromBody] SprintUpdateDto dto,

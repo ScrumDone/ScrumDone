@@ -46,7 +46,8 @@ namespace ScrumDone.Api.Mappers
 
             return assignments
                 .Where(a => a.Status != null)
-                .GroupBy(a => a.Status)
+                // ZMIANA TUTAJ: Grupujemy po anonimowym obiekcie z konkretnymi właściwościami
+                .GroupBy(a => new { a.Status.Id, a.Status.Name, a.Status.HexColor })
                 .Select(g => new AssignmentStatusCountDto(
                     StatusId: g.Key.Id,
                     StatusName: g.Key.Name,
