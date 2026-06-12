@@ -30,8 +30,23 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useDroppable } from '@dnd-kit/core';
+import { useAssignmentStatuses } from '../hooks/useAssignmentStatuses';
+import { useAssignments } from '../hooks/useAssignments';
+import { useUpdateAssignmentStatus } from '../hooks/useUpdateAssignmentStatus';
+import {assignmentToKanbanCard} from '../lib/assignmentMappers';
 
 // --- Typy i Dane pomocnicze ---
+
+type KanbanCardVM = ReturnType<typeof assignmentToKanbanCard>;
+
+type KanbanColumnVm = {
+  id: string;
+  title: string;
+  accentClass: string;
+  count: number;
+  tasks: KanbanCardVM[];
+}
 
 type PriorityOption = {
   id: string;
@@ -39,24 +54,26 @@ type PriorityOption = {
   colorClass: string;
 };
 
-type TaskDotColor = 'red' | 'yellow' | 'green' | 'blue';
+//Task: Connect project kanban board to assignments API #233
 
-type KanbanTask = {
-  id: string;
-  title: string;
-  assigneeInitials: string;
-  assigneeName: string;
-  dateLabel: string;
-  dotColor: TaskDotColor;
-};
+//type TaskDotColor = 'red' | 'yellow' | 'green' | 'blue';
 
-type KanbanColumn = {
-  id: string;
-  title: string;
-  accentClass: string;
-  count: number;
-  tasks: KanbanTask[];
-};
+// type KanbanTask = {
+//   id: string;
+//   title: string;
+//   assigneeInitials: string;
+//   assigneeName: string;
+//   dateLabel: string;
+//   dotColor: TaskDotColor;
+// };
+
+// type KanbanColumn = {
+//   id: string;
+//   title: string;
+//   accentClass: string;
+//   count: number;
+//   tasks: KanbanTask[];
+// };
 
 const teamMembers: PersonFilter[] = [
   { id: 'artur-nowak', initials: 'AN', fullName: 'Artur Nowak' },
@@ -70,38 +87,40 @@ const priorityOptions: PriorityOption[] = [
   { id: 'niski', label: 'Niski', colorClass: 'bg-scrumdone-green-500' },
 ];
 
-const taskDotClassMap: Record<TaskDotColor, string> = {
-  red: 'bg-scrumdone-red-500',
-  yellow: 'bg-scrumdone-yellow-500',
-  green: 'bg-scrumdone-green-500',
-  blue: 'bg-scrumdone-blue-main',
-};
+//Task: Connect project kanban board to assignments API #233
 
-const initialKanbanColumns: KanbanColumn[] = [
-  { id: 'todo', title: 'Do zrobienia', accentClass: 'bg-slate-400', count: 0, tasks: [] },
-  {
-    id: 'in-progress',
-    title: 'W toku',
-    accentClass: 'bg-scrumdone-blue-main',
-    count: 1,
-    tasks: [
-      { id: 'cicd-pipeline', title: 'CI/CD pipeline', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', dateLabel: '05 lut', dotColor: 'green' },
-    ],
-  },
-  { id: 'review', title: 'Sprawdzanie', accentClass: 'bg-scrumdone-yellow-500', count: 0, tasks: [] },
-  {
-    id: 'done',
-    title: 'Gotowe',
-    accentClass: 'bg-scrumdone-green-500',
-    count: 3,
-    tasks: [
-      { id: 'project-init', title: 'Project initialization', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', dateLabel: '22 sty', dotColor: 'red' },
-      { id: 'git-setup', title: 'Git repository setup', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', dateLabel: '25 sty', dotColor: 'yellow' },
-      { id: 'dev-env', title: 'Development environment', assigneeInitials: 'MK', assigneeName: 'Maria Kowalska', dateLabel: '01 lut', dotColor: 'red' },
-    ],
-  },
-  { id: "blocked", title: 'Zablokowane', accentClass: 'bg-scrumdone-red-500', count: 0, tasks: [] },
-];
+// const taskDotClassMap: Record<TaskDotColor, string> = {
+//   red: 'bg-scrumdone-red-500',
+//   yellow: 'bg-scrumdone-yellow-500',
+//   green: 'bg-scrumdone-green-500',
+//   blue: 'bg-scrumdone-blue-main',
+// };
+
+// const initialKanbanColumns: KanbanColumn[] = [
+//   { id: 'todo', title: 'Do zrobienia', accentClass: 'bg-slate-400', count: 0, tasks: [] },
+//   {
+//     id: 'in-progress',
+//     title: 'W toku',
+//     accentClass: 'bg-scrumdone-blue-main',
+//     count: 1,
+//     tasks: [
+//       { id: 'cicd-pipeline', title: 'CI/CD pipeline', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', dateLabel: '05 lut', dotColor: 'green' },
+//     ],
+//   },
+//   { id: 'review', title: 'Sprawdzanie', accentClass: 'bg-scrumdone-yellow-500', count: 0, tasks: [] },
+//   {
+//     id: 'done',
+//     title: 'Gotowe',
+//     accentClass: 'bg-scrumdone-green-500',
+//     count: 3,
+//     tasks: [
+//       { id: 'project-init', title: 'Project initialization', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', dateLabel: '22 sty', dotColor: 'red' },
+//       { id: 'git-setup', title: 'Git repository setup', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', dateLabel: '25 sty', dotColor: 'yellow' },
+//       { id: 'dev-env', title: 'Development environment', assigneeInitials: 'MK', assigneeName: 'Maria Kowalska', dateLabel: '01 lut', dotColor: 'red' },
+//     ],
+//   },
+//   { id: "blocked", title: 'Zablokowane', accentClass: 'bg-scrumdone-red-500', count: 0, tasks: [] },
+// ];
 
 // --- Komponenty Wewnętrzne ---
 
@@ -120,7 +139,7 @@ const PriorityFilterCard: React.FC = () => (
   </section>
 );
 
-const KanbanTaskCard: React.FC<{ task: KanbanTask; isDragOverlay?: boolean }> = ({ task, isDragOverlay = false }) => {
+const KanbanTaskCard: React.FC<{ task: KanbanCardVM; isDragOverlay?: boolean }> = ({ task, isDragOverlay = false }) => {
   const sortable = useSortable({ id: task.id, disabled: isDragOverlay });
   const style = isDragOverlay ? undefined : { transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition };
 
@@ -133,23 +152,23 @@ const KanbanTaskCard: React.FC<{ task: KanbanTask; isDragOverlay?: boolean }> = 
       className={`rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 flex-1 truncate font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">{task.title}</h3>
+        <h3 className="min-w-0 flex-1 truncate font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">{task.name}</h3>
         <button type="button" className="rounded-full p-1 text-slate-700 hover:bg-slate-50">
           <EllipsisVerticalIcon className="h-4 w-4" />
         </button>
       </div>
       <div className="mt-3 flex items-center justify-between">
-        <span className={`h-2 w-2 rounded-full ${taskDotClassMap[task.dotColor]}`} aria-hidden="true" />
+        <span className={`h-2 w-2 rounded-full ${task.statusColorClass}`} aria-hidden="true" />
         <div className="flex gap-2 items-center">
-          <span className="font-segoe-ui text-[12px] leading-4 text-slate-500 antialiased">{task.dateLabel}</span>
-          <Avatar initials={task.assigneeInitials} size="xs" bgClassName="bg-scrumdone-blue-main" textClassName="text-white" />
+          <span className="font-segoe-ui text-[12px] leading-4 text-slate-500 antialiased">{task.formattedDueDate}</span>
+          <Avatar initials={task.assigneesInitials[0] ?? '??'} size="xs" bgClassName="bg-scrumdone-blue-main" textClassName="text-white" />
         </div>
       </div>
     </article>
   );
 };
 
-const KanbanColumnView: React.FC<{ column: KanbanColumn }> = ({ column }) => {
+const KanbanColumnView: React.FC<{ column: KanbanColumnVm }> = ({ column }) => {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
@@ -191,8 +210,30 @@ const ProjectKanbanPage: React.FC = () => {
     projectId,
     selectorSprints,
   );
-  const [columns, setColumns] = useState<KanbanColumn[]>(initialKanbanColumns);
-  const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);
+
+  const { data: statuses} = useAssignmentStatuses(); 
+  const { data: assignmentsData} = useAssignments({ ProjectIds: [projectId]})
+  const { mutate: updateStatus } = useUpdateAssignmentStatus();
+
+  const columns = useMemo(() => {
+    if (!statuses || !assignmentsData) return [];
+    
+    return statuses.map((status) => {
+      // Filtrujemy zadania dla danego statusu
+      const tasksForStatus = assignmentsData.items.filter((a) => a.status.id === status.id);
+      
+      return {
+        id: status.id, // ID statusu z API
+        title: status.name, // Nazwa statusu z API
+        accentClass: 'bg-slate-400', // Tutaj możesz dodać logikę używającą status.hexColor
+        count: tasksForStatus.length,
+        // Używamy Twojego mappera zamiast ręcznego mapowania:
+        tasks: tasksForStatus.map(assignmentToKanbanCard) 
+      };
+    });
+  }, [statuses, assignmentsData]);
+
+  const [activeTask, setActiveTask] = useState<KanbanCardVM | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   const sensors = useSensors(
@@ -208,6 +249,31 @@ const ProjectKanbanPage: React.FC = () => {
     setActiveTask(sourceColumn?.tasks.find((t) => t.id === activeId) ?? null);
   };
 
+  //Task: Connect project kanban board to assignments API #233
+  // const handleDragEnd = ({ active, over }: DragEndEvent) => {
+  //   setActiveTask(null);
+  //   if (!over) return;
+
+  //   const activeId = String(active.id);
+  //   const overId = String(over.id);
+
+  //   const sourceColumn = findColumnByTaskId(activeId);
+  //   const targetColumn = columns.find((col) => col.id === overId) ?? findColumnByTaskId(overId);
+
+  //   if (!sourceColumn || !targetColumn || sourceColumn.id === targetColumn.id) return;
+
+  //   const taskToMove = sourceColumn.tasks.find((t) => t.id === activeId);
+  //   if (!taskToMove) return;
+
+  //   setColumns((prev) =>
+  //     prev.map((col) => {
+  //       if (col.id === sourceColumn.id) return { ...col, tasks: col.tasks.filter((t) => t.id !== activeId) };
+  //       if (col.id === targetColumn.id) return { ...col, tasks: [...col.tasks, taskToMove] };
+  //       return col;
+  //     })
+  //   );
+  // };
+
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setActiveTask(null);
     if (!over) return;
@@ -215,21 +281,10 @@ const ProjectKanbanPage: React.FC = () => {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    const sourceColumn = findColumnByTaskId(activeId);
-    const targetColumn = columns.find((col) => col.id === overId) ?? findColumnByTaskId(overId);
-
-    if (!sourceColumn || !targetColumn || sourceColumn.id === targetColumn.id) return;
-
-    const taskToMove = sourceColumn.tasks.find((t) => t.id === activeId);
-    if (!taskToMove) return;
-
-    setColumns((prev) =>
-      prev.map((col) => {
-        if (col.id === sourceColumn.id) return { ...col, tasks: col.tasks.filter((t) => t.id !== activeId) };
-        if (col.id === targetColumn.id) return { ...col, tasks: [...col.tasks, taskToMove] };
-        return col;
-      })
-    );
+    // Jeśli upuszczono na kolumnę (overId jest ID kolumny)
+    if (activeId !== overId) {
+      updateStatus({ id: activeId, statusId: overId });
+    }
   };
 
   const renderSprintSelector = () => {
@@ -334,6 +389,3 @@ const ProjectKanbanPage: React.FC = () => {
 };
 
 export default ProjectKanbanPage;
-
-// Pamiętaj o dodaniu importu useDroppable, jeśli go brakowało (dodałem wewnątrz logicznym ciągu)
-import { useDroppable } from '@dnd-kit/core';
