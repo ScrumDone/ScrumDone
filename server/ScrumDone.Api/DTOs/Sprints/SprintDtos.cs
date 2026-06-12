@@ -11,8 +11,7 @@ namespace ScrumDone.Api.DTOs.Sprints
         DateTimeOffset? EndDate,
         bool IsKanban,
         int AssignmentCount,
-        int CompletedCount,       // frontend calculates percentage and planned/active/finished
-        IEnumerable<AssignmentListItemDto>? Assignments 
+        int CompletedCount      // frontend calculates percentage and planned/active/finished
     );
 
 
@@ -24,8 +23,7 @@ namespace ScrumDone.Api.DTOs.Sprints
         DateTimeOffset? EndDate,
         bool IsKanban,
         int AssignmentCount,
-        int CompletedCount,
-        IEnumerable<AssignmentListItemDto> Assignments
+        int CompletedCount
     );
 
     public class SprintCreateDto

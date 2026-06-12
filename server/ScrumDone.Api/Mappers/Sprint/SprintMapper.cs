@@ -11,12 +11,12 @@ namespace ScrumDone.Api.Mappers
     {
         [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.AssignmentCount), Use = nameof(CountAssignments))]
         [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.CompletedCount), Use = nameof(CountCompleted))]
-        [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.Assignments), Use = nameof(MapAssignments))]
+        // [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.Assignments), Use = nameof(MapAssignments))]
         public static partial SprintSummaryDto ToSummaryDto(this Sprint sprint);
 
         [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.AssignmentCount), Use = nameof(CountAssignments))]
         [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.CompletedCount), Use = nameof(CountCompleted))]
-        [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.Assignments), Use = nameof(MapAssignments))]
+        // [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.Assignments), Use = nameof(MapAssignments))]
         public static partial SprintDetailDto ToDetailDto(this Sprint sprint);
 
         private static int CountAssignments(ICollection<Assignment> assignments) => assignments.Count();
