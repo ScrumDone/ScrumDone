@@ -260,7 +260,9 @@ namespace ScrumDone.Api.Services
 
 
             var toAdd = dto.UserIds
-                .Where(uid => !assignment.Assignees.Any(a => a.UserId == uid));
+                .Where(uid => !assignment.Assignees
+                .Any(a => a.UserId == uid))
+                .ToList();
 
             foreach (var uid in toAdd)
                 assignment.Assignees.Add(new AssignmentUserMTMRelation { UserId = uid });
