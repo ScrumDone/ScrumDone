@@ -7,7 +7,7 @@ namespace ScrumDone.Api.Data
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string HexColor { get; set; }
-        public bool IsDefault { get; set; } = false;
+        public int Order { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }

@@ -158,10 +158,9 @@ namespace ScrumDone.Api.Controllers
 
         [HttpGet("priorities")]
         [ProducesResponseType(typeof(IEnumerable<AssignmentPriorityDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetPriorities()
         {
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            return Ok(await _assignmentsService.GetPrioritiesAsync());
         }
     }
 }

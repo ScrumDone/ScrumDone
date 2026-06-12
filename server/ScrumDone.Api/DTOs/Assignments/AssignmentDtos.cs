@@ -7,13 +7,14 @@ namespace ScrumDone.Api.DTOs.Assignments
         Guid Id,
         string Name,
         string HexColor,
-        bool IsDefault
+        int Order
     );
 
     public record AssignmentPriorityDto(
         Guid Id,
         string Name,
-        string HexColor
+        string HexColor,
+        int Order
     );
 
     public record AssignmentLabelDto(
