@@ -48,3 +48,5 @@ export const assignmentToCalendarTask = (a: Assignment) => {
     calendarDate: a.dueDate ? format(new Date(a.dueDate), 'HH:mm') : null,
   };
 };
+
+
