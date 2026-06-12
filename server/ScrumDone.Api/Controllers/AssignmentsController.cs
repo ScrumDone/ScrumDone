@@ -122,7 +122,7 @@ namespace ScrumDone.Api.Controllers
         {
             await validator.ValidateAndThrowAsync(dto);
 
-            return StatusCode(StatusCodes.Status501NotImplemented);
+            return Ok(await _assignmentsService.UpdateAssigneesAsync(id, dto));
         }
 
         // /assignments/{id}/labels
@@ -146,13 +146,13 @@ namespace ScrumDone.Api.Controllers
 
         // /assignment-statuses
 
-        [HttpGet("statuses")]
-        [ProducesResponseType(typeof(IEnumerable<AssignmentStatusDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IActionResult> GetStatuses()
-        {
-            return StatusCode(StatusCodes.Status501NotImplemented);
-        }
+        //[HttpGet("statuses")]
+        //[ProducesResponseType(typeof(IEnumerable<AssignmentStatusDto>), StatusCodes.Status200OK)]
+        //[ProducesResponseType(StatusCodes.Status501NotImplemented)]
+        //public async Task<IActionResult> GetStatuses()
+        //{
+        //    return StatusCode(StatusCodes.Status501NotImplemented);
+        //}
 
         // /assignment-priorities
 

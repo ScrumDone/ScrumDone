@@ -24,11 +24,11 @@ namespace ScrumDone.Api.Data
         public Project Project { get; set; }
         public Sprint? Sprint { get; set; }
         public AssignmentStatus Status { get; set; }
-        public AssignmentPriority Priority { get; set; }
+        public AssignmentPriority? Priority { get; set; }
         public List<AssignmentUserMTMRelation> Assignees { get; set; } = new();
         public List<AssignmentAssignmentLabelMTMRelation> Labels { get; set; } = new();
         public List<Message> Comments { get; set; } = new();
         public Assignment? ParentAssignment { get; set; }
-        public List<Assignment> SubTAssignments { get; set; } = new();
+        public List<Assignment> SubAssignments { get; set; } = new();
     }
 }

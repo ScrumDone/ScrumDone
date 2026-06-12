@@ -1,6 +1,9 @@
-﻿using ScrumDone.Api.DTOs.Assignments;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
+using ScrumDone.Api.DTOs.Assignments;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Companies;
+using ScrumDone.Api.DTOs.Users;
 
 namespace ScrumDone.Api.Services
 {
@@ -17,5 +20,10 @@ namespace ScrumDone.Api.Services
         Task<AssignmentDetailDto> UpdateAssignmentAsync(Guid id, AssignmentUpdateDto dto);
 
         Task DeleteAssignmentAsync(Guid id);
+
+        Task<IEnumerable<UserSummaryDto>> UpdateAssigneesAsync(Guid id, AssignmentAssigneesUpdateDto dto);
+        Task<IEnumerable<AssignmentLabelDto>> UpdateLabelsAsync(Guid id, AssignmentLabelsUpdateDto dto);
+        // Task<IEnumerable<AssignmentStatusDto>> GetStatusesAsync();
+        Task<IEnumerable<AssignmentPriorityDto>> GetPrioritiesAsync();
     }
 }
