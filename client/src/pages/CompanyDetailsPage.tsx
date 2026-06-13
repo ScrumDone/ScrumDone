@@ -16,9 +16,10 @@ import { useUpdateCompanyNote } from '../hooks/useUpdateCompanyNote';
 import { useDeleteCompanyNote } from '../hooks/useDeleteCompanyNote';
 import { useCompanyLogs } from '../hooks/useCompanyLogs';
 import type { ContactPerson } from '../types/contact';
-import type { CompanyNote, CooperationLog } from '../types/company';
+import type { CompanyNote, CooperationLog, CooperationLogCreateDto } from '../types/company';
 import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
 import { useDeleteCompany } from '../hooks/useDeleteCompany';
+import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
 
 //TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
@@ -102,6 +103,11 @@ const CompanyDetailsPage: React.FC = () => {
 
   const { mutate: deleteCompany } = useDeleteCompany();
   const { mutate: deleteLog } = useDeleteCompanyLog(companyId);
+  const { mutate: addLog } = useAddCompanyLog();
+
+  const handleAddLog = (data: CooperationLogCreateDto) => {
+    addLog({ companyId, data });
+  };
 
   const handleDeleteLog = (logId: string) => {
     const logItem = cooperationHistory.find((item) => item.id === logId);
@@ -921,6 +927,7 @@ const CompanyDetailsPage: React.FC = () => {
         onSave={saveCompanyChanges}
         onDelete={handleDeleteCompany}
         onDraftChange={setDraft}
+        onAddLog={handleAddLog}
         isSaving={isSavingCompany}
         errorMessage={isUpdateCompanyError ? updateCompanyError?.message : null}
       />
