@@ -72,3 +72,10 @@ export type CooperationLog = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type CooperationLogCreateDto = {
+  title: string;
+  description: string | null;
+  newValue: string | null;
+  oldValue: string | null;
+};
