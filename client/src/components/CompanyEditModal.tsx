@@ -14,6 +14,7 @@ type CompanyEditModalProps = {
   draft: CompanyEditDraft;
   onClose: () => void;
   onSave: () => void;
+  onDelete: () => void;
   onDraftChange: (updater: (prev: CompanyEditDraft) => CompanyEditDraft) => void;
   isSaving?: boolean;
   errorMessage?: string | null;
@@ -24,6 +25,7 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
   draft,
   onClose,
   onSave,
+  onDelete,
   onDraftChange,
   isSaving = false,
   errorMessage = null,
@@ -80,6 +82,17 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
           </div>
 
           <div className="flex items-center justify-end gap-3 px-6 py-4">
+            <button 
+              onClick={() => {
+                if (window.confirm('Czy na pewno chcesz usunąć tę firmę? Ta akcja jest nieodwracalna.')) {
+                  onDelete();
+                }
+              }} 
+              disabled={isSaving}
+              className="mr-auto rounded-lg px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"            >
+              Usuń firmę
+            </button>
+            
             {errorMessage && <p className="mr-auto text-sm text-red-600">{errorMessage}</p>}
             <button onClick={onClose} disabled={isSaving} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Anuluj</button>
             <button onClick={onSave} disabled={isSaving} className="rounded-lg bg-scrumdone-blue-main px-4 py-2 text-sm font-medium text-white hover:bg-[#00A0DD] disabled:opacity-50">

@@ -54,3 +54,7 @@ export function getCompanyLogs(companyId: string, page = 1, limit = 50) {
 export function deleteCompanyLog(companyId: string, logId: string) {
   return apiDelete(`/api/companies/${companyId}/logs/${logId}`);
 }
+
+export function deleteCompany(id: string) {
+  return apiDelete(`/api/companies/${id}`);
+}
