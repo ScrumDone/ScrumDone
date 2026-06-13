@@ -6,6 +6,7 @@ namespace ScrumDone.Api.DTOs.Sprints
     public record SprintSummaryDto(
         Guid Id,
         string? Name,
+        string? State,
         DateTimeOffset CreatedAt,
         DateTimeOffset? StartDate,
         DateTimeOffset? EndDate,
@@ -18,6 +19,7 @@ namespace ScrumDone.Api.DTOs.Sprints
     public record SprintDetailDto(
         Guid Id,
         string? Name,
+        string State,
         DateTimeOffset CreatedAt,
         DateTimeOffset? StartDate,
         DateTimeOffset? EndDate,
