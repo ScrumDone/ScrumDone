@@ -62,3 +62,7 @@ export function deleteCompany(id: string) {
 export function createCompanyLog(companyId: string, data: CooperationLogCreateDto) {
   return apiPost<CooperationLog>(`/api/companies/${companyId}/logs`, data);
 }
+
+export function deleteCompanyContact(companyId: string, contactId: string) {
+  return apiDelete(`/api/companies/${companyId}/contacts/${contactId}`);
+}
