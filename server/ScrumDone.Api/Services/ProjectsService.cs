@@ -230,6 +230,17 @@ namespace ScrumDone.Api.Services
             var member = project.TeamMembers.FirstOrDefault(m => m.UserId == userId)
                 ?? throw new NotFoundException(nameof(User), userId);
 
+            var assignments = await _context.Assignment
+                .Include(a => a.Assignees)
+                .Where(a => a.ProjectId == id && a.Assignees.Any(au => au.UserId == userId))
+                .ToListAsync();
+            
+            foreach (var assignment in assignments)
+            {
+                var assigneeLink = assignment.Assignees.First(au => au.UserId == userId);
+                assignment.Assignees.Remove(assigneeLink);
+            }
+
             project.TeamMembers.Remove(member);
             await _context.SaveChangesAsync();
 
@@ -365,7 +376,7 @@ namespace ScrumDone.Api.Services
 
         public async Task<IEnumerable<AssignmentStatusDto>> GetAssignmentStatuses()
         {
-            var statuses = await _context.AssignmentStatuses.ToListAsync();
+            var statuses = await _context.AssignmentStatuses.OrderBy(s => s.Order).ToListAsync();
             var total = statuses.Count();
             return statuses.Select(a => a.ToDto());
         }

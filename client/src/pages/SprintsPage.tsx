@@ -39,6 +39,7 @@ import {
   toSprintEndDateUpdateDto,
   toSprintUpdateDto,
 } from '../utils/sprintDisplay';
+import {useUpdateAssignmentSprint} from "../hooks/useUpdateAssignmentSprint";
 
 type TaskItem = {
   id: string;
@@ -338,6 +339,9 @@ const getSprintCompletionPercent = (sprint: SprintData) =>
 const SprintsPage: React.FC = () => {
   const { projectId = '' } = useParams();
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
+
+  const { mutate: updateAssignmentSprint } = useUpdateAssignmentSprint();
+
   const {
     data: sprintsQueryData,
     isLoading: isSprintsLoading,
@@ -358,6 +362,7 @@ const SprintsPage: React.FC = () => {
     error: deleteSprintError,
     reset: resetDeleteSprint,
   } = useDeleteSprint();
+  
   const [sprintTasksById, setSprintTasksById] = useState<Record<string, TaskItem[]>>({});
   const [sprintModalMessage, setSprintModalMessage] = useState<string | null>(null);
   const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
@@ -381,7 +386,7 @@ const SprintsPage: React.FC = () => {
     ukonczne: true,
     nieukonczne: true,
   });
-
+  
   useEffect(() => {
     if (!sprintsQueryData?.items) {
       return;
@@ -911,6 +916,15 @@ const SprintsPage: React.FC = () => {
       return;
     }
 
+    const previousSprintTasks = sprintTasksById;
+    const previousBacklogTasks = backlogTasks;
+
+    const rollback = () => {
+      setSprintTasksById(previousSprintTasks);
+      setBacklogTasks(previousBacklogTasks);
+      alert("Nie udało się przenieść zadania. Spróbuj ponownie.");
+    }
+
     const activeId = String(active.id);
     const overId = String(over.id);
     const sourceSprint = findSprintWithTask(activeId);
@@ -931,10 +945,13 @@ const SprintsPage: React.FC = () => {
         [sourceSprint.id]: sourceSprint.tasks.filter((task) => task.id !== activeId),
       }));
       setBacklogTasks((currentTasks) => [...currentTasks, sprintTaskToBacklog(sprintTask)]);
+
+      updateAssignmentSprint({ id: activeId, sprintId: null }, { onError: rollback });
       return;
     }
 
     const targetSprint = findSprintByDropTarget(overId);
+
     if (!targetSprint || !expandedSprints.has(targetSprint.id)) {
       return;
     }
@@ -949,6 +966,8 @@ const SprintsPage: React.FC = () => {
         ...currentTasks,
         [targetSprint.id]: [...targetSprint.tasks, backlogToSprintTask(backlogTask)],
       }));
+      
+      updateAssignmentSprint({ id: activeId, sprintId: targetSprint.id }, { onError: rollback });
       return;
     }
 
@@ -963,6 +982,7 @@ const SprintsPage: React.FC = () => {
         [sourceSprint.id]: sourceSprint.tasks.filter((task) => task.id !== activeId),
         [targetSprint.id]: [...targetSprint.tasks, sprintTask],
       }));
+      updateAssignmentSprint({ id: activeId, sprintId: targetSprint.id }, { onError: rollback });
     }
   };
 
