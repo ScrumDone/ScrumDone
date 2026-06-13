@@ -971,6 +971,37 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
+    [Fact]
+    public async Task CreateAssignmentLabel_MaxLabelsReached_ReturnsConflict()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            // Seed exactly 50 labels – the max allowed
+            for (int i = 0; i < 50; i++)
+            {
+                db.AssignmentLabels.Add(new AssignmentLabel
+                {
+                    Id = Guid.NewGuid(),
+                    ProjectId = projectId,
+                    Name = $"Label {i}",
+                    HexColor = "#FF0000"
+                });
+            }
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/assignment-labels",
+            new AssignmentLabelCreateDto { Name = "Extra Label", HexColor = "#00FF00" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
     // PATCH /api/projects/{id}/assignment-labels/{labelId}
 
     [Fact]

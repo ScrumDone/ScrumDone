@@ -316,6 +316,9 @@ namespace ScrumDone.Api.Services
             if (! await _context.Projects.AnyAsync(p => p.Id == id))
                 throw new NotFoundException(nameof(Project), id);
 
+            if (await _context.AssignmentLabels.Where(l => l.ProjectId == id).CountAsync() >= 50)
+                throw new ConflictException("Maximum number of labels reached");
+
             if (await _context.AssignmentLabels.AnyAsync(l => l.ProjectId == id && l.Name == dto.Name))
                 throw new ConflictException("There is already a label with this name");
 
