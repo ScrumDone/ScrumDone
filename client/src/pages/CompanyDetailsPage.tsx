@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical, Pencil, Trash2 } from 'lucide-react';
@@ -18,6 +18,7 @@ import { useCompanyLogs } from '../hooks/useCompanyLogs';
 import type { ContactPerson } from '../types/contact';
 import type { CompanyNote, CooperationLog } from '../types/company';
 import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
+import { useDeleteCompany } from '../hooks/useDeleteCompany';
 
 //TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
@@ -96,8 +97,10 @@ const mapCooperationLogToHistoryItem = (log: CooperationLog): CooperationHistory
 };
 
 const CompanyDetailsPage: React.FC = () => {
-  const { companyId = '' } = useParams();
-  
+  const { companyId = '' } = useParams<{ companyId: string }>();
+  const navigate = useNavigate();
+
+  const { mutate: deleteCompany } = useDeleteCompany();
   const { mutate: deleteLog } = useDeleteCompanyLog(companyId);
 
   const handleDeleteLog = (logId: string) => {
@@ -106,6 +109,16 @@ const CompanyDetailsPage: React.FC = () => {
 
     if (window.confirm('Czy na pewno chcesz usunąć ten wpis z historii?')) {
       deleteLog(logId);
+    }
+  };
+
+  const handleDeleteCompany = () => {
+    if (companyId) {
+      deleteCompany(companyId, {
+        onSuccess: () => {
+          navigate('/companies'); // Przekierowanie po sukcesie
+        }
+      });
     }
   };
 
@@ -906,6 +919,7 @@ const CompanyDetailsPage: React.FC = () => {
         draft={draft}
         onClose={closeEditModal}
         onSave={saveCompanyChanges}
+        onDelete={handleDeleteCompany}
         onDraftChange={setDraft}
         isSaving={isSavingCompany}
         errorMessage={isUpdateCompanyError ? updateCompanyError?.message : null}
