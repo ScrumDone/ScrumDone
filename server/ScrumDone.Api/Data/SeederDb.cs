@@ -30,19 +30,19 @@ public class DatabaseSeeder
 
         var statuses = new List<AssignmentStatus>
         {
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#D1D5DB", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, IsDefault = true },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Review", HexColor = "#EAB308", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Blocked", HexColor = "#EF4444", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#D1D5DB", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 0 },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 1 },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Review", HexColor = "#EAB308", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 2 },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 3 },
+            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Blocked", HexColor = "#EF4444", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 4 }
         };
         context.AssignmentStatuses.AddRange(statuses);
 
         var priorities = new List<AssignmentPriority>
         {
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#34D399", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#ff7d13", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#EF4444", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#00C950", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 0 },
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#F0B100", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 1 },
+            new AssignmentPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#FB2C36", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 2 }
         };
         context.AssignmentPriorities.AddRange(priorities);
 

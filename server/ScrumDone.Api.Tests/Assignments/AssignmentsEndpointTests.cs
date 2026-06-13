@@ -30,7 +30,7 @@ public class AssignmentsEndpointTests
             Id = statusId,
             Name = "To Do",
             HexColor = "#808080",
-            IsDefault = true
+            Order = 0
         });
 
         db.AssignmentPriorities.Add(new AssignmentPriority
@@ -259,7 +259,7 @@ public class AssignmentsEndpointTests
                 Id = doneStatusId,
                 Name = "Done",
                 HexColor = "#00FF00",
-                IsDefault = false
+                Order = 0,
             });
 
             db.Assignment.AddRange(
@@ -291,8 +291,8 @@ public class AssignmentsEndpointTests
             doneId = Guid.NewGuid();
 
             db.AssignmentStatuses.AddRange(
-                new AssignmentStatus { Id = inProgressId, Name = "In Progress", HexColor = "#FFFF00", IsDefault = false },
-                new AssignmentStatus { Id = doneId, Name = "Done", HexColor = "#00FF00", IsDefault = false }
+                new AssignmentStatus { Id = inProgressId, Name = "In Progress", HexColor = "#FFFF00", Order = 1 },
+                new AssignmentStatus { Id = doneId, Name = "Done", HexColor = "#00FF00", Order = 3 }
             );
 
             db.Assignment.AddRange(

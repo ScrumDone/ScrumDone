@@ -1,5 +1,6 @@
 ﻿using Bogus.DataSets;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using ScrumDone.Api.Data;
@@ -111,9 +112,9 @@ namespace ScrumDone.Api.Services
                     t.UpdatedAt,
                     t.DueDate,
                     t.TimeEstimate,
-                    new AssignmentStatusDto(t.Status.Id, t.Status.Name, t.Status.HexColor, t.Status.IsDefault),
+                    new AssignmentStatusDto(t.Status.Id, t.Status.Name, t.Status.HexColor, t.Status.Order),
                     t.Priority != null
-                        ? new AssignmentPriorityDto(t.Priority.Id, t.Priority.Name, t.Priority.HexColor)
+                        ? new AssignmentPriorityDto(t.Priority.Id, t.Priority.Name, t.Priority.HexColor, t.Priority.Order)
                         : null,
                     t.Assignees.Select(a => new UserSummaryDto(a.User.Id, a.User.Name)),
                     t.Labels.Select(l => new AssignmentLabelDto(
@@ -153,9 +154,9 @@ namespace ScrumDone.Api.Services
                     t.UpdatedAt,
                     t.DueDate,
                     t.TimeEstimate,
-                    new AssignmentStatusDto(t.Status.Id, t.Status.Name, t.Status.HexColor, t.Status.IsDefault),
+                    new AssignmentStatusDto(t.Status.Id, t.Status.Name, t.Status.HexColor, t.Status.Order),
                     t.Priority != null
-                        ? new AssignmentPriorityDto(t.Priority.Id, t.Priority.Name, t.Priority.HexColor)
+                        ? new AssignmentPriorityDto(t.Priority.Id, t.Priority.Name, t.Priority.HexColor, t.Priority.Order)
                         : null,
                     t.Assignees.Select(a => new UserSummaryDto(a.User.Id, a.User.Name)),
                     t.Labels.Select(l => new AssignmentLabelDto(
@@ -176,7 +177,7 @@ namespace ScrumDone.Api.Services
         public async Task<AssignmentDetailDto> CreateAssignmentAsync(AssignmentCreateDto dto)
         {
             var defaultStatusId = await _context.AssignmentStatuses
-                .Where(s => s.IsDefault)
+                .Where(s => s.Order == 0)
                 .Select(s => s.Id)
                 .FirstOrDefaultAsync();
 
@@ -318,7 +319,16 @@ namespace ScrumDone.Api.Services
 
         public async Task<IEnumerable<AssignmentPriorityDto>> GetPrioritiesAsync()
         {
-            throw new NotImplementedException();
+            var priorities = await _context.AssignmentPriorities
+                .OrderBy(p => p.Order)
+                .ToListAsync();
+
+            return priorities.Select(p => new AssignmentPriorityDto(
+                p.Id,
+                p.Name,
+                p.HexColor,
+                p.Order
+            )); 
         }
     }
 }
