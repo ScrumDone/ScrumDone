@@ -319,14 +319,16 @@ namespace ScrumDone.Api.Services
             if (await _context.AssignmentLabels.Where(l => l.ProjectId == id).CountAsync() >= 50)
                 throw new ConflictException("Maximum number of labels reached");
 
-            if (await _context.AssignmentLabels.AnyAsync(l => l.ProjectId == id && l.Name == dto.Name))
+            var normalizedLabelName = dto.Name.Trim();
+
+            if (await _context.AssignmentLabels.AnyAsync(l => l.ProjectId == id && l.Name == normalizedLabelName))
                 throw new ConflictException("There is already a label with this name");
 
             var label = new AssignmentLabel
             {
                 Id = Guid.NewGuid(),
                 ProjectId = id,
-                Name = dto.Name,
+                Name = normalizedLabelName,
                 HexColor = dto.HexColor,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
