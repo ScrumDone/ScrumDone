@@ -299,6 +299,7 @@ namespace ScrumDone.Api.Services
         }
 
         // assignments-labels
+        // consider adding label counts in the future
         public async Task<IEnumerable<AssignmentLabelDto>> GetAssignmentLabelsAsync(Guid id)
         {
            if (! await _context.Projects.AnyAsync(p => p.Id == id))
@@ -313,7 +314,10 @@ namespace ScrumDone.Api.Services
         public async Task<AssignmentLabelDto> CreateAssignmentLabelAsync(Guid id, AssignmentLabelCreateDto dto)
         {
             if (! await _context.Projects.AnyAsync(p => p.Id == id))
-                throw new NotFoundException(nameof(Project), id); 
+                throw new NotFoundException(nameof(Project), id);
+
+            if (await _context.AssignmentLabels.AnyAsync(l => l.ProjectId == id && l.Name == dto.Name))
+                throw new ConflictException("There is already a label with this name");
 
             var label = new AssignmentLabel
             {
@@ -339,7 +343,10 @@ namespace ScrumDone.Api.Services
             var label = await _context.AssignmentLabels.FirstOrDefaultAsync(l => l.Id == labelId && l.ProjectId == id)
                 ?? throw new NotFoundException(nameof(AssignmentLabel), labelId);
 
-            if(dto.SetProperties.Contains(nameof(dto.Name))) label.Name = dto.Name!;
+            if (await _context.AssignmentLabels.AnyAsync(l => l.ProjectId == id && l.Name == dto.Name))
+                throw new ConflictException("There is already a label with this name");
+
+            if (dto.SetProperties.Contains(nameof(dto.Name))) label.Name = dto.Name!;
             if(dto.SetProperties.Contains(nameof(dto.HexColor))) label.HexColor = dto.HexColor!;
             label.UpdatedAt = DateTimeOffset.UtcNow;
 

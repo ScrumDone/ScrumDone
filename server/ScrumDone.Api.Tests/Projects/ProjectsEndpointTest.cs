@@ -941,7 +941,83 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
+    // POST /api/projects/{id}/assignment-labels
+
+    [Fact]
+    public async Task CreateAssignmentLabel_DuplicateName_ReturnsConflict()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var existingLabelName = "Bug";
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.AssignmentLabels.Add(new AssignmentLabel
+            {
+                Id = Guid.NewGuid(),
+                ProjectId = projectId,
+                Name = existingLabelName,
+                HexColor = "#FF0000"
+            });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/assignment-labels",
+            new AssignmentLabelCreateDto { Name = existingLabelName, HexColor = "#00FF00" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
     // PATCH /api/projects/{id}/assignment-labels/{labelId}
+
+    [Fact]
+    public async Task UpdateAssignmentLabel_DuplicateName_ReturnsConflict()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var labelId = Guid.NewGuid();
+        var otherLabelId = Guid.NewGuid();
+        var duplicateName = "Duplicate";
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.AssignmentLabels.AddRange(
+                new AssignmentLabel
+                {
+                    Id = labelId,
+                    ProjectId = projectId,
+                    Name = "Original",
+                    HexColor = "#FF0000"
+                },
+                new AssignmentLabel
+                {
+                    Id = otherLabelId,
+                    ProjectId = projectId,
+                    Name = duplicateName,
+                    HexColor = "#00FF00"
+                }
+            );
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        // Send only the conflicting name as raw JSON
+        var payload = new StringContent(
+            $"{{\"name\":\"{duplicateName}\"}}",
+            System.Text.Encoding.UTF8,
+            "application/json");
+
+        var response = await client.PatchAsync(
+            $"/api/projects/{projectId}/assignment-labels/{labelId}",
+            payload);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
 
     [Fact]
     public async Task UpdateAssignmentLabel_WithValidData_UpdatesOnlyProvidedFields()
