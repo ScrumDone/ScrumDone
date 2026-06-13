@@ -50,3 +50,7 @@ export function createCompany(data: CompanyCreateDto) {
 export function getCompanyLogs(companyId: string, page = 1, limit = 50) {
   return apiGet<PagedResult<CooperationLog>>(`/api/companies/${companyId}/logs`, { page, limit });
 }
+
+export function deleteCompanyLog(companyId: string, logId: string) {
+  return apiDelete(`/api/companies/${companyId}/logs/${logId}`);
+}

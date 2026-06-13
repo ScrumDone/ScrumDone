@@ -17,6 +17,7 @@ import { useDeleteCompanyNote } from '../hooks/useDeleteCompanyNote';
 import { useCompanyLogs } from '../hooks/useCompanyLogs';
 import type { ContactPerson } from '../types/contact';
 import type { CompanyNote, CooperationLog } from '../types/company';
+import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
 
 const emptyDisplay = (value: string | null | undefined) => value?.trim() || '—';
 
@@ -94,6 +95,14 @@ const mapCooperationLogToHistoryItem = (log: CooperationLog): CooperationHistory
 
 const CompanyDetailsPage: React.FC = () => {
   const { companyId = '' } = useParams();
+  
+  const { mutate: deleteLog } = useDeleteCompanyLog(companyId);
+
+  const handleDeleteLog = (logId: string) => {
+  if (window.confirm('Czy na pewno chcesz usunąć ten wpis z historii?')) {
+    deleteLog(logId);
+  }
+};
 
   const { data: apiCompany, isLoading, isError, error } = useCompany(companyId);
 
@@ -730,7 +739,18 @@ const CompanyDetailsPage: React.FC = () => {
                         <p className="mt-2 font-segoe-ui text-[12px] leading-5 text-slate-500 antialiased">Dodane przez: {item.author}</p>
                       </div>
 
-                      <p className="font-segoe-ui text-[14px] leading-6 text-slate-500 antialiased lg:text-right">{item.dateLabel}</p>
+                      <div className="flex items-start justify-between lg:flex-col lg:items-end gap-2">
+                        <p className="font-segoe-ui text-[14px] leading-6 text-slate-500 antialiased lg:text-right">
+                          {item.dateLabel}
+                        </p>
+                        <button
+                          onClick={() => handleDeleteLog(item.id)}
+                          className="text-slate-400 hover:text-red-600 p-1 transition-colors rounded hover:bg-red-50"
+                          title="Usuń wpis"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </article>
                   ))}
                 </div>
