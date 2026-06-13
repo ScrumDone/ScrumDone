@@ -31,17 +31,14 @@ namespace ScrumDone.Api.Mappers
                 return "Active";
             }
 
-            if (sprint.StartDate.HasValue && sprint.EndDate.HasValue)
-            {
-                if (sprint.StartDate.Value < DateTimeOffset.UtcNow && DateTimeOffset.UtcNow < sprint.EndDate.Value)
-                    return "Active";
+            if (sprint.StartDate < DateTimeOffset.UtcNow && DateTimeOffset.UtcNow < sprint.EndDate)
+                return "Active";
 
-                if (sprint.StartDate.Value > DateTimeOffset.UtcNow)
-                    return "Planned";
+            if (sprint.StartDate > DateTimeOffset.UtcNow)
+                return "Planned";
 
-                if (sprint.EndDate.Value < DateTimeOffset.UtcNow)
-                    return "Finished";
-            }
+            if (sprint.EndDate < DateTimeOffset.UtcNow)
+                return "Finished";
             
             return "Being planned";
         }
