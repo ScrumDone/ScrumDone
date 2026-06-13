@@ -19,6 +19,8 @@ import type { ContactPerson } from '../types/contact';
 import type { CompanyNote, CooperationLog } from '../types/company';
 import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
 
+//TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
+
 const emptyDisplay = (value: string | null | undefined) => value?.trim() || '—';
 
 const formatBackendDate = (date: string) =>
@@ -99,10 +101,13 @@ const CompanyDetailsPage: React.FC = () => {
   const { mutate: deleteLog } = useDeleteCompanyLog(companyId);
 
   const handleDeleteLog = (logId: string) => {
-  if (window.confirm('Czy na pewno chcesz usunąć ten wpis z historii?')) {
-    deleteLog(logId);
-  }
-};
+    const logItem = cooperationHistory.find((item) => item.id === logId);
+    console.log(`[DEBUG] handleDeleteLog: ID=${logId}, Title="${logItem?.title || 'N/A'}"`);
+
+    if (window.confirm('Czy na pewno chcesz usunąć ten wpis z historii?')) {
+      deleteLog(logId);
+    }
+  };
 
   const { data: apiCompany, isLoading, isError, error } = useCompany(companyId);
 
