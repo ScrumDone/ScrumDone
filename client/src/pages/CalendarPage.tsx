@@ -14,6 +14,7 @@ import MonthCalendar from '../components/monthCalendar'
 import CalendarFilters from '../components/calendarFilters'
 import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
 
+
 type CalendarMode = 'Personal' | 'Team'
 type ViewMode = 'week' | 'month'
 const modeOptions: CalendarMode[] = ['Personal', 'Team']
