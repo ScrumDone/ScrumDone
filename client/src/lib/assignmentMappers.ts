@@ -12,6 +12,7 @@ export type AssignmentVM = {
   priorityColorClass: string;
   assigneesInitials: string[];
   formattedDueDate: string;
+  sprintId: string | null;
 };
 
 export const mapAssignmentToVM = (a: Assignment): AssignmentVM => {
@@ -26,6 +27,7 @@ export const mapAssignmentToVM = (a: Assignment): AssignmentVM => {
     priorityColorClass: `text-[${a.priority.hexColor}]`,
     assigneesInitials: a.assignees.map(u => getInitialsFromName(u.name)),
     formattedDueDate: a.dueDate ? format(new Date(a.dueDate), 'dd-MM-yyyy') : 'No date',
+    sprintId: a.sprintId,
   };
 };
 
