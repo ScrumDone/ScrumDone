@@ -1,7 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAssignments, updateAssignment } from '../api/assignments';
 import { ApiError } from '../api/client';
-import type { Assignment, AssignmentQueryParams, PaginatedAssignmentsResponse } from '../types/assignment'; // ZMIANA!!!!! - dodałem Assignment
+import type { Assignment, AssignmentQueryParams, PaginatedAssignmentsResponse } from '../types/assignment'; 
+import { getStatuses, getPriorities, createAssignment } from '../api/assignments';
+
+export const useStatuses = () => useQuery({ queryKey: ['statuses'], queryFn: getStatuses });
+export const usePriorities = () => useQuery({ queryKey: ['priorities'], queryFn: getPriorities });
+
+export const useCreateAssignment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createAssignment,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['assignments'] }),
+  });
+};
 
 export function useAssignments(params: AssignmentQueryParams = {}) {
   // Domyślne wartości, jeśli nie zostały przekazane

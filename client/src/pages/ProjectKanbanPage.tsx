@@ -329,7 +329,8 @@ const ProjectKanbanPage: React.FC = () => {
       <TaskCreateModal 
         isOpen={isTaskModalOpen} 
         onClose={() => setIsTaskModalOpen(false)} 
-        teamMembers={teamMembers} 
+        teamMembers={teamMembers}
+        projectId={projectId} 
       />
 
       <main className="ml-64 pt-(--app-header-h)">

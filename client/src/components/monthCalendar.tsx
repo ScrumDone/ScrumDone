@@ -1,6 +1,8 @@
 import React from 'react'
 import { format, startOfMonth, startOfWeek, addDays, isSameDay, isSameMonth, parseISO } from 'date-fns'
 import CalendarTaskItem from './calendarTaskItem'
+import {useAssignments} from '../hooks/useAssignments'
+import type {Assignment} from '../types/assignment'
 
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
 
@@ -13,14 +15,27 @@ interface CalendarTask {
 
 interface MonthCalendarProps {
     currentDate: Date
+    dueFrom: string
+    dueTo: string
 }
 
-const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate }) => {
-    const allTasks: CalendarTask[] = [
-        { id: 'task-1', title: 'Quotes Generation', colorVariant: 'red', date: '2026-04-08' },
-        { id: 'task-2', title: 'Database schema', colorVariant: 'yellow', date: '2026-04-08' },
-        { id: 'task-3', title: 'Real-time notification', colorVariant: 'green', date: '2026-04-12' },
-    ]
+const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, dueFrom, dueTo }) => {
+    // const allTasks: CalendarTask[] = [
+    //     { id: 'task-1', title: 'Quotes Generation', colorVariant: 'red', date: '2026-04-08' },
+    //     { id: 'task-2', title: 'Database schema', colorVariant: 'yellow', date: '2026-04-08' },
+    //     { id: 'task-3', title: 'Real-time notification', colorVariant: 'green', date: '2026-04-12' },
+    // ]
+
+    const { data: assignments } = useAssignments({ DueFrom: dueFrom, DueTo: dueTo })
+
+    const allTasks: CalendarTask[] = (assignments?.items || [])
+        .filter((task): task is Assignment & { dueDate: string } => task.dueDate !== null)
+        .map((task) => ({
+            id: task.id,
+            title: task.name,
+            date: task.dueDate,
+            colorVariant: task.priority?.name === 'High' ? 'red' : 'blue' // Dostosuj logikę kolorów wedle potrzeb TODO
+        }))
 
     const monthStart = startOfMonth(currentDate)
     const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })

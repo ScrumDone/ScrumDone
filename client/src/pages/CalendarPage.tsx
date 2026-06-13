@@ -5,7 +5,7 @@ import {
     ChevronDownIcon,
     CheckIcon,
 } from '@heroicons/react/24/outline'
-import { format, startOfWeek, addDays, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns'
+import { format, startOfWeek, endOfWeek, startOfMonth, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns'
 import { pl } from 'date-fns/locale' 
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
@@ -13,6 +13,7 @@ import WeekCalendar from '../components/ProjectWeekCalendar'
 import MonthCalendar from '../components/monthCalendar'
 import CalendarFilters from '../components/calendarFilters'
 import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
+
 
 type CalendarMode = 'Personal' | 'Team'
 type ViewMode = 'week' | 'month'
@@ -24,7 +25,17 @@ const CalendarPage: React.FC = () => {
     const [viewMode, setViewMode] = useState<ViewMode>('week')
     
     const startDate = startOfWeek(currentDate, { weekStartsOn: 1 })
-    const endDate = addDays(startDate, 6)
+    const endDate = endOfWeek(currentDate, { weekStartsOn: 1 })
+
+    const monthStart = startOfMonth(currentDate)
+    const calendarGridStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+    const calendarGridEnd = addWeeks(calendarGridStart, 5) 
+
+    const rangeFrom = viewMode === 'week' ? startDate : calendarGridStart
+    const rangeTo = viewMode === 'week' ? endDate : calendarGridEnd
+
+    const dueFrom = rangeFrom.toISOString()
+    const dueTo = rangeTo.toISOString()
 
     const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1))
     const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1))
@@ -141,9 +152,9 @@ const CalendarPage: React.FC = () => {
                             <div className="flex flex-1 flex-col gap-6">
                                 <div className={viewMode === 'week' ? "h-[calc(100vh-22rem)] min-h-96" : "w-full"}>
                                     {viewMode === 'week' ? (
-                                        <WeekCalendar startDate={startDate} />
+                                        <WeekCalendar startDate={startDate} dueFrom={dueFrom} dueTo={dueTo} />
                                     ) : (
-                                        <MonthCalendar currentDate={currentDate} />
+                                        <MonthCalendar currentDate={currentDate} dueFrom={dueFrom} dueTo={dueTo} />
                                     )}
                                 </div>
                                 <CalendarNoDeadlineTasks />
