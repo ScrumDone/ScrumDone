@@ -28,7 +28,7 @@ public class LabelsEndpointTests
             Id = statusId,
             Name = "To Do",
             HexColor = "#808080",
-            IsDefault = true
+            Order = 0
         });
 
         db.AssignmentPriorities.Add(new AssignmentPriority
