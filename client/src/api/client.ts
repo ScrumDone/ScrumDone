@@ -113,7 +113,13 @@ function formatValidationMessage(errors: ApiValidationErrors): string {
     path: string,
     params?: Record<string, string | number | boolean | undefined>,
   ): Promise<T> {
-    const response = await fetch(buildUrl(path, params));
+    const response = await fetch(buildUrl(path, params), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
     return parseResponse<T>(response);
   }
   

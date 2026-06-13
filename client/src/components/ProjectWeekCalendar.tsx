@@ -3,6 +3,8 @@ import { format, addDays, isSameDay, parseISO } from 'date-fns'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import CalendarTaskItem from './calendarTaskItem'
+import {useAssignments} from '../hooks/useAssignments'
+import type {Assignment} from '../types/assignment'
 
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
 
@@ -15,6 +17,8 @@ interface CalendarTask {
 
 interface WeekCalendarProps {
     startDate: Date
+    dueFrom: string
+    dueTo: string
     tasks?: CalendarTask[]
 }
 
@@ -40,13 +44,25 @@ const DraggableTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
     )
 }
 
-const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks = [] }) => {
-    const allTasks: CalendarTask[] = [
-        ...tasks,
-        { id: 'task-1', title: 'Quotes Generation Module', colorVariant: 'red', date: '2026-04-21' },
-        { id: 'task-2', title: 'Database schema design', colorVariant: 'yellow', date: '2026-04-21' },
-        { id: 'task-3', title: 'Real-time notifications', colorVariant: 'green', date: '2026-04-25' },
-    ]
+const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, dueFrom, dueTo }) => {
+    // const allTasks: CalendarTask[] = [
+    //     ...tasks,
+    //     { id: 'task-1', title: 'Quotes Generation Module', colorVariant: 'red', date: '2026-04-21' },
+    //     { id: 'task-2', title: 'Database schema design', colorVariant: 'yellow', date: '2026-04-21' },
+    //     { id: 'task-3', title: 'Real-time notifications', colorVariant: 'green', date: '2026-04-25' },
+    // ]
+
+    const { data: assignments } = useAssignments({ DueFrom: dueFrom, DueTo: dueTo })
+
+    const allTasks: CalendarTask[] = (assignments?.items || [])
+        .filter((task): task is Assignment & { dueDate: string } => task.dueDate !== null)
+        .map((task) => ({
+            id: task.id,
+            title: task.name,
+            date: task.dueDate,
+            // Możesz tutaj zmapować priorytet na kolor, np.:
+            colorVariant: task.priority?.name === 'High' ? 'red' : 'blue'
+        }))
 
     const dayNames = ['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.']
 

@@ -6,13 +6,15 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
 import ProjectTopBar from '../components/ProjectTopBar'
-import WeekCalendar from '../components/weekCalendar'
+import WeekCalendar from '../components/ProjectWeekCalendar'
 import ProjectMonthCalendar from '../components/ProjectMonthCalendar'
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter'
-import CalendarNoDeadlineTasks, { type CalendarNoDeadlineTask } from '../components/calendarNoDeadlineTasks'
+import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
 import CalendarTaskItem from '../components/calendarTaskItem'
 import { useProjectViewMode } from '../hooks/useProjectViewMode'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
+import { useAssignments, useBacklogAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments';
+import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
 
 type CalendarTask = {
   id: string
@@ -27,17 +29,18 @@ const teamMembers: PersonFilter[] = [
   { id: 'maria-kowalska', initials: 'MK', fullName: 'Maria Kowalska' },
 ]
 
-const noDeadlineTasks: CalendarNoDeadlineTask[] = [
-  { id: 'code-refactoring-user-module', title: 'Code refactoring - user module', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', accentColor: 'blue', dotColor: 'green' },
-  { id: 'documentation-update', title: 'Documentation update', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', accentColor: 'blue', dotColor: 'orange' },
-  { id: 'e2e-testing-setup', title: 'E2E testing setup', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', accentColor: 'blue', dotColor: 'red' },
-  { id: 'mobile-responsiveness', title: 'Mobile responsiveness', assigneeInitials: 'MK', assigneeName: 'Maria Kowalska', accentColor: 'blue', dotColor: 'orange' },
-]
+//Task: connect project calendar to assignments API #234
+// const noDeadlineTasks: CalendarNoDeadlineTask[] = [
+//   { id: 'code-refactoring-user-module', title: 'Code refactoring - user module', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', accentColor: 'blue', dotColor: 'green' },
+//   { id: 'documentation-update', title: 'Documentation update', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', accentColor: 'blue', dotColor: 'orange' },
+//   { id: 'e2e-testing-setup', title: 'E2E testing setup', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', accentColor: 'blue', dotColor: 'red' },
+//   { id: 'mobile-responsiveness', title: 'Mobile responsiveness', assigneeInitials: 'MK', assigneeName: 'Maria Kowalska', accentColor: 'blue', dotColor: 'orange' },
+// ]
 
-const initialCalendarTasks: CalendarTask[] = [
-  { id: 'quotes-generation', title: 'Quotes Generation', colorVariant: 'red', date: '2026-04-07' },
-  { id: 'giveaway-campaign', title: 'Giveaway Campaign', colorVariant: 'green', date: '2026-04-09' },
-]
+// const initialCalendarTasks: CalendarTask[] = [
+//   { id: 'quotes-generation', title: 'Quotes Generation', colorVariant: 'red', date: '2026-04-07' },
+//   { id: 'giveaway-campaign', title: 'Giveaway Campaign', colorVariant: 'green', date: '2026-04-09' },
+// ]
 
 const ProjectCalendarPage: React.FC = () => {
   const { projectId = '' } = useParams()
@@ -45,19 +48,30 @@ const ProjectCalendarPage: React.FC = () => {
 
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 6))
-  const [calendarTasks, setCalendarTasks] = useState<CalendarTask[]>(initialCalendarTasks)
+  //Task: connect project calendar to assignments API #234
+  //const [calendarTasks, setCalendarTasks] = useState<CalendarTask[]>(initialCalendarTasks)
+
+  const { data: assignmentsResponse } = useAssignments({ ProjectIds: [projectId] });
+  const { data: backlogResponse } = useBacklogAssignments();
+
+  const calendarTasks: CalendarTask[] = assignmentsResponse?.items.map(assignmentToCalendarTask) ?? [];
+  const noDeadlineTasks = backlogResponse?.items.map(assignmentToNoDeadlineTask) ?? [];
+
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const handleDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id))
+  
+  const { mutate: updateDueDate } = useUpdateAssignmentDueDate();
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveId(null)
-    if (!over) return
-    setCalendarTasks((prev) => prev.map((t) => t.id === String(active.id) ? { ...t, date: String(over.id) } : t))
-  }
+    const { active, over } = event;
+    setActiveId(null);
+    if (over && active.id !== over.id) {
+      updateDueDate({ id: String(active.id), dueDate: String(over.id) });
+    }
+  };
 
   const activeTask = useMemo(() => calendarTasks.find(t => t.id === activeId), [activeId, calendarTasks])
 

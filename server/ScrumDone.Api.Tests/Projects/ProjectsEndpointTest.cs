@@ -595,6 +595,98 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
+    [Fact]
+    public async Task RemoveMember_ExistingMember_AlsoRemovesFromAllProjectAssignments()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var assignment1Id = Guid.NewGuid();
+        var assignment2Id = Guid.NewGuid();
+
+        // Seed project, users, and assignments with the user as assignee
+        await app.SeedDatabaseAsync(async db =>
+        {
+            db.Projects.Add(new Project
+            {
+                Id = projectId,
+                Name = "Test Project",
+                Description = "",
+                TeamMembers = new List<ProjectUserMTMRelation>
+            {
+                new() { UserId = userId }
+            }
+            });
+            db.Users.AddRange(
+                new User { Id = userId, Name = "Alice" },
+                new User { Id = otherUserId, Name = "Bob" }
+            );
+
+            // Need a valid status and priority for Assignment seeding
+            var statusId = Guid.NewGuid();
+            db.AssignmentStatuses.Add(new AssignmentStatus
+            {
+                Id = statusId,
+                Name = "To Do",
+                HexColor = "#808080",
+                Order = 0
+            });
+
+            // Two assignments: one with only the target user, one with both users
+            db.Assignment.AddRange(
+                new Assignment
+                {
+                    Id = assignment1Id,
+                    Name = "Task 1",
+                    ProjectId = projectId,
+                    StatusId = statusId,
+                    Assignees = new List<AssignmentUserMTMRelation>
+                    {
+                    new() { UserId = userId }
+                    }
+                },
+                new Assignment
+                {
+                    Id = assignment2Id,
+                    Name = "Task 2",
+                    ProjectId = projectId,
+                    StatusId = statusId,
+                    Assignees = new List<AssignmentUserMTMRelation>
+                    {
+                    new() { UserId = userId },
+                    new() { UserId = otherUserId }
+                    }
+                }
+            );
+
+            await db.SaveChangesAsync();
+        });
+
+        using var client = app.CreateClient();
+
+        // Act: remove the member
+        var deleteResponse = await client.DeleteAsync($"/api/projects/{projectId}/members/{userId}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        // Assert: user is no longer a project member
+        var projectResponse = await client.GetAsync($"/api/projects/{projectId}");
+        var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(projectResponse);
+        Assert.DoesNotContain(project.TeamMembers, m => m.Id == userId);
+
+        // Assert: user is no longer assigned to any assignment in that project
+        var assignmentsResponse = await client.GetAsync(
+            $"/api/assignments?projectIds={projectId}&assigneeIds={userId}");
+        var page = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(assignmentsResponse);
+        Assert.Equal(0, page.TotalCount);
+
+        // Optional sanity: the other user's assignment still exists
+        var otherAssignmentsResponse = await client.GetAsync(
+            $"/api/assignments?projectIds={projectId}&assigneeIds={otherUserId}");
+        var otherPage = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(otherAssignmentsResponse);
+        Assert.Equal(1, otherPage.TotalCount);
+    }
+
     // DELETE /api/projects/{id}/members/{userId}
 
     [Fact]

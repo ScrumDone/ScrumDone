@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical, Pencil, Trash2 } from 'lucide-react';
@@ -16,7 +16,13 @@ import { useUpdateCompanyNote } from '../hooks/useUpdateCompanyNote';
 import { useDeleteCompanyNote } from '../hooks/useDeleteCompanyNote';
 import { useCompanyLogs } from '../hooks/useCompanyLogs';
 import type { ContactPerson } from '../types/contact';
-import type { CompanyNote, CooperationLog } from '../types/company';
+import type { CompanyNote, CooperationLog, CooperationLogCreateDto } from '../types/company';
+import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
+import { useDeleteCompany } from '../hooks/useDeleteCompany';
+import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
+import {useDeleteCompanyContact} from '../hooks/useDeleteCompanyContact';
+
+//TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
 const emptyDisplay = (value: string | null | undefined) => value?.trim() || '—';
 
@@ -93,7 +99,42 @@ const mapCooperationLogToHistoryItem = (log: CooperationLog): CooperationHistory
 };
 
 const CompanyDetailsPage: React.FC = () => {
-  const { companyId = '' } = useParams();
+  const { companyId = '' } = useParams<{ companyId: string }>();
+  const navigate = useNavigate();
+
+  const { mutate: deleteCompany } = useDeleteCompany();
+  const { mutate: deleteLog } = useDeleteCompanyLog(companyId);
+  const { mutate: addLog } = useAddCompanyLog();
+  const { mutate: deleteContact } = useDeleteCompanyContact(companyId);
+
+  const handleDeleteContact = (contactId: string) => {
+    if (window.confirm('Czy na pewno chcesz usunąć tę osobę kontaktową?')) {
+      deleteContact(contactId);
+    }
+  };
+
+  const handleAddLog = (data: CooperationLogCreateDto) => {
+    addLog({ companyId, data });
+  };
+
+  const handleDeleteLog = (logId: string) => {
+    const logItem = cooperationHistory.find((item) => item.id === logId);
+    console.log(`[DEBUG] handleDeleteLog: ID=${logId}, Title="${logItem?.title || 'N/A'}"`);
+
+    if (window.confirm('Czy na pewno chcesz usunąć ten wpis z historii?')) {
+      deleteLog(logId);
+    }
+  };
+
+  const handleDeleteCompany = () => {
+    if (companyId) {
+      deleteCompany(companyId, {
+        onSuccess: () => {
+          navigate('/companies'); // Przekierowanie po sukcesie
+        }
+      });
+    }
+  };
 
   const { data: apiCompany, isLoading, isError, error } = useCompany(companyId);
 
@@ -588,7 +629,7 @@ const CompanyDetailsPage: React.FC = () => {
                   {contactsToShow.map((contact) => (
                     <div
                       key={contact.id}
-                      className="flex items-center justify-between bg-[#F9FAFB] border border-gray-200 rounded-[10px] p-4"
+                      className="flex items-start justify-between bg-[#F9FAFB] border border-gray-200 rounded-[10px] p-4"
                     >
                       <div className="flex flex-col">
                         <div className="flex items-center gap-3">
@@ -612,6 +653,13 @@ const CompanyDetailsPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
+                      <button
+                        onClick={() => handleDeleteContact(contact.id)}
+                        className="text-slate-400 hover:text-red-600 p-1 transition-colors rounded hover:bg-red-50"
+                        title="Usuń kontakt"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -730,7 +778,18 @@ const CompanyDetailsPage: React.FC = () => {
                         <p className="mt-2 font-segoe-ui text-[12px] leading-5 text-slate-500 antialiased">Dodane przez: {item.author}</p>
                       </div>
 
-                      <p className="font-segoe-ui text-[14px] leading-6 text-slate-500 antialiased lg:text-right">{item.dateLabel}</p>
+                      <div className="flex items-start justify-between lg:flex-col lg:items-end gap-2">
+                        <p className="font-segoe-ui text-[14px] leading-6 text-slate-500 antialiased lg:text-right">
+                          {item.dateLabel}
+                        </p>
+                        <button
+                          onClick={() => handleDeleteLog(item.id)}
+                          className="text-slate-400 hover:text-red-600 p-1 transition-colors rounded hover:bg-red-50"
+                          title="Usuń wpis"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </article>
                   ))}
                 </div>
@@ -881,7 +940,9 @@ const CompanyDetailsPage: React.FC = () => {
         draft={draft}
         onClose={closeEditModal}
         onSave={saveCompanyChanges}
+        onDelete={handleDeleteCompany}
         onDraftChange={setDraft}
+        onAddLog={handleAddLog}
         isSaving={isSavingCompany}
         errorMessage={isUpdateCompanyError ? updateCompanyError?.message : null}
       />

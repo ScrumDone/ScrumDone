@@ -1,6 +1,6 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
 import type { PagedResult } from '../types/api';
-import type { CompanyListItem } from '../types/company';
+import type { CompanyListItem, CooperationLogCreateDto } from '../types/company';
 import type { CompanyUpdateDto } from '../types/company';
 import type { ContactPerson, ContactPersonCreateDto } from '../types/contact';
 import type { CompanyNote, CompanyNoteCreateDto, CompanyNoteUpdateDto } from '../types/company';
@@ -49,4 +49,20 @@ export function createCompany(data: CompanyCreateDto) {
 
 export function getCompanyLogs(companyId: string, page = 1, limit = 50) {
   return apiGet<PagedResult<CooperationLog>>(`/api/companies/${companyId}/logs`, { page, limit });
+}
+
+export function deleteCompanyLog(companyId: string, logId: string) {
+  return apiDelete(`/api/companies/${companyId}/logs/${logId}`);
+}
+
+export function deleteCompany(id: string) {
+  return apiDelete(`/api/companies/${id}`);
+}
+
+export function createCompanyLog(companyId: string, data: CooperationLogCreateDto) {
+  return apiPost<CooperationLog>(`/api/companies/${companyId}/logs`, data);
+}
+
+export function deleteCompanyContact(companyId: string, contactId: string) {
+  return apiDelete(`/api/companies/${companyId}/contacts/${contactId}`);
 }

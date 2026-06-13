@@ -32,7 +32,7 @@ const App: React.FC = () => {
       <Route path="/companies/:companyId" element={<CompanyDetailsPage />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/reports" element={<ReportsPage />} />
-      <Route path="/task" element={<TaskPage />} />
+      <Route path="/task/:assignmentId" element={<TaskPage />} />
       <Route path="/files" element={<FilesPage />} />
     </Routes>
     <ReactQueryDevtools initialIsOpen={false} />
