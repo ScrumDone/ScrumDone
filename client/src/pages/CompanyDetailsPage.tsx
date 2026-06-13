@@ -20,6 +20,7 @@ import type { CompanyNote, CooperationLog, CooperationLogCreateDto } from '../ty
 import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
 import { useDeleteCompany } from '../hooks/useDeleteCompany';
 import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
+import {useDeleteCompanyContact} from '../hooks/useDeleteCompanyContact';
 
 //TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
@@ -104,6 +105,13 @@ const CompanyDetailsPage: React.FC = () => {
   const { mutate: deleteCompany } = useDeleteCompany();
   const { mutate: deleteLog } = useDeleteCompanyLog(companyId);
   const { mutate: addLog } = useAddCompanyLog();
+  const { mutate: deleteContact } = useDeleteCompanyContact(companyId);
+
+  const handleDeleteContact = (contactId: string) => {
+    if (window.confirm('Czy na pewno chcesz usunąć tę osobę kontaktową?')) {
+      deleteContact(contactId);
+    }
+  };
 
   const handleAddLog = (data: CooperationLogCreateDto) => {
     addLog({ companyId, data });
@@ -621,7 +629,7 @@ const CompanyDetailsPage: React.FC = () => {
                   {contactsToShow.map((contact) => (
                     <div
                       key={contact.id}
-                      className="flex items-center justify-between bg-[#F9FAFB] border border-gray-200 rounded-[10px] p-4"
+                      className="flex items-start justify-between bg-[#F9FAFB] border border-gray-200 rounded-[10px] p-4"
                     >
                       <div className="flex flex-col">
                         <div className="flex items-center gap-3">
@@ -645,6 +653,13 @@ const CompanyDetailsPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
+                      <button
+                        onClick={() => handleDeleteContact(contact.id)}
+                        className="text-slate-400 hover:text-red-600 p-1 transition-colors rounded hover:bg-red-50"
+                        title="Usuń kontakt"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
