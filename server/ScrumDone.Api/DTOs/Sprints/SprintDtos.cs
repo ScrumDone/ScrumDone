@@ -29,9 +29,8 @@ namespace ScrumDone.Api.DTOs.Sprints
     public class SprintCreateDto
     {
         public string? Name { get; set; }
-        public DateTimeOffset? StartDate { get; set; }
-        public DateTimeOffset? EndDate { get; set; }
-        public bool IsKanban { get; set; } = false;
+        public DateTimeOffset StartDate { get; set; }
+        public DateTimeOffset EndDate { get; set; }
     }
 
     // Update — PATCH partial update pattern

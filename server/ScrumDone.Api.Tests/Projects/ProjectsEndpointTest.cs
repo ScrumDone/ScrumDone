@@ -8,6 +8,7 @@ using ScrumDone.Api.DTOs.Assignments;
 using ScrumDone.Api.DTOs.Sprints;
 using ScrumDone.Api.DTOs.Users;
 using ScrumDone.Api.Tests.Common;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace ScrumDone.Api.Tests.Projects;
@@ -666,10 +667,10 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true});
             db.Sprints.AddRange(
                 new Sprint { ProjectId = projectId, IsKanban = false },
-                new Sprint { ProjectId = projectId, IsKanban = true }
+                new Sprint { ProjectId = projectId, IsKanban = false }
             );
             return Task.CompletedTask;
         });
@@ -694,8 +695,8 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.AddRange(
-                new Project { Id = projectId, Name = "Project", Description = "" },
-                new Project { Id = otherProjectId, Name = "Other", Description = "" }
+                new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true },
+                new Project { Id = otherProjectId, Name = "Other", Description = "", IsSetToScrum = true }
             );
             db.Sprints.AddRange(
                 new Sprint { ProjectId = projectId, IsKanban = false },
@@ -740,7 +741,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
-            new SprintCreateDto { Name = "Sprint 1", IsKanban = false });
+            new SprintCreateDto { Name = "Sprint 1", StartDate = DateTimeOffset.UtcNow, EndDate = DateTimeOffset.UtcNow.AddDays(14) });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
@@ -757,7 +758,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync($"/api/projects/{Guid.NewGuid()}/sprints",
-            new SprintCreateDto { Name = "Sprint 1" });
+            new SprintCreateDto { Name = "Sprint 1", StartDate = DateTimeOffset.UtcNow, EndDate = DateTimeOffset.UtcNow.AddDays(14) });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -1093,5 +1094,218 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             $"/api/projects/{Guid.NewGuid()}/assignment-labels/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+        [Fact]
+    public async Task UpdateProject_ChangeToKanbanWithNoSprints_CreatesNewKanbanSprint()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project 
+            { 
+                Id = projectId, 
+                Name = "Scrum Project", 
+                Description = "", 
+                IsSetToScrum = true 
+            });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        // Przejście na Kanban
+        var patchResponse = await client.PatchAsJsonAsync($"/api/projects/{projectId}", 
+            new { isSetToScrum = false });
+            
+        Assert.Equal(HttpStatusCode.OK, patchResponse.StatusCode);
+
+        // Sprawdzamy czy API automatycznie wygenerowało nowy sprint dla Kanbana
+        var sprintsResponse = await client.GetAsync($"/api/projects/{projectId}/sprints");
+        var sprintsPage = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(sprintsResponse);
+        
+        Assert.Equal(1, sprintsPage.TotalCount);
+        Assert.True(sprintsPage.Items.First().IsKanban);
+    }
+
+    [Fact]
+    public async Task UpdateProject_ChangeToKanbanWithExistingSprints_SetsOnlyOneToKanban()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var oldSprintId = Guid.NewGuid();
+        var currentSprintId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            
+            // DODANE: Uzupełniłem pole Name. Jeśli encja Sprint wymaga Name,
+            // EF Core mógł rzucać cichy błąd walidacji podczas zapisu!
+            db.Sprints.AddRange(
+                new Sprint { Id = oldSprintId, ProjectId = projectId, Name = "Stary", StartDate = DateTimeOffset.UtcNow.AddDays(-30), EndDate = DateTimeOffset.UtcNow.AddDays(-16), IsKanban = true }, 
+                new Sprint { Id = currentSprintId, ProjectId = projectId, Name = "Obecny", StartDate = DateTimeOffset.UtcNow.AddDays(-2), EndDate = DateTimeOffset.UtcNow.AddDays(12), IsKanban = false }
+            );
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        // DODANE: Zmiana z isSetToScrum (mała litera) na IsSetToScrum (wielka litera). 
+        // Jeśli Twój mechanizm SetProperties zależy od dokładnej nazwy (nameof), 
+        // mała litera sprawiała, że logika zmiany całkowicie się pomijała!
+        var patchResponse = await client.PatchAsJsonAsync($"/api/projects/{projectId}", 
+            new { IsSetToScrum = false });
+        
+        // DODANE: Zrzut błędu do konsoli. Jeśli API wybuchnie, test Ci to pokaże!
+        if (!patchResponse.IsSuccessStatusCode)
+        {
+            var errorBody = await patchResponse.Content.ReadAsStringAsync();
+            throw new Exception($"API zwróciło kod {patchResponse.StatusCode}. Treść: {errorBody}");
+        }
+
+        Assert.Equal(HttpStatusCode.OK, patchResponse.StatusCode);
+
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>(); // Upewnij się, że tu jest właściwa nazwa kontekstu
+        
+        var oldSprint = await dbContext.Sprints.FindAsync(oldSprintId);
+        var currentSprint = await dbContext.Sprints.FindAsync(currentSprintId);
+
+        Assert.False(oldSprint!.IsKanban);
+        Assert.True(currentSprint!.IsKanban);
+    }
+
+    [Fact]
+    public async Task UpdateProject_ChangeToScrum_RemovesAllKanbanFlags()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var sprintId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Kanban Project", Description = "", IsSetToScrum = false });
+            db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, IsKanban = true });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        // Powrót na Scrum
+        var patchResponse = await client.PatchAsJsonAsync($"/api/projects/{projectId}", 
+            new { isSetToScrum = true });
+            
+        Assert.Equal(HttpStatusCode.OK, patchResponse.StatusCode);
+
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var sprint = await dbContext.Sprints.FindAsync(sprintId);
+
+        Assert.False(sprint!.IsKanban);
+    }
+
+    [Fact]
+    public async Task GetSprints_ProjectIsScrum_ReturnsOnlyScrumSprints()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            // Projekt w trybie SCRUM
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            
+            db.Sprints.AddRange(
+                new Sprint { ProjectId = projectId, Name = "Scrum Sprint 1", IsKanban = false },
+                new Sprint { ProjectId = projectId, Name = "Ghost Kanban", IsKanban = true } // Teoretycznie zepsuty rekord, nie powinien zostać zwrócony
+            );
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.GetAsync($"/api/projects/{projectId}/sprints");
+        var page = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(response);
+
+        Assert.Equal(1, page.TotalCount);
+        Assert.False(page.Items.First().IsKanban);
+        Assert.Equal("Scrum Sprint 1", page.Items.First().Name);
+    }
+
+    [Fact]
+    public async Task GetSprints_ProjectIsKanban_ReturnsOnlyKanbanSprint()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            // Projekt w trybie KANBAN
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = false });
+            
+            db.Sprints.AddRange(
+                new Sprint { ProjectId = projectId, Name = "Old Scrum Sprint", IsKanban = false },
+                new Sprint { ProjectId = projectId, Name = "Current Board", IsKanban = true }
+            );
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.GetAsync($"/api/projects/{projectId}/sprints");
+        var page = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(response);
+
+        Assert.Equal(1, page.TotalCount);
+        Assert.True(page.Items.First().IsKanban);
+        Assert.Equal("Current Board", page.Items.First().Name);
+    }
+
+    [Fact]
+    public async Task GetCurrentSprint_WhenActiveSprintExists_ReturnsActiveSprint()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var activeSprintId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = false });
+            db.Sprints.AddRange(
+                new Sprint { ProjectId = projectId, StartDate = DateTimeOffset.UtcNow.AddDays(-20), EndDate = DateTimeOffset.UtcNow.AddDays(-6) }, // Zakończony
+                new Sprint { Id = activeSprintId, ProjectId = projectId, StartDate = DateTimeOffset.UtcNow.AddDays(-2), EndDate = DateTimeOffset.UtcNow.AddDays(12), IsKanban = true }, // Aktywny
+                new Sprint { ProjectId = projectId, StartDate = DateTimeOffset.UtcNow.AddDays(15), EndDate = DateTimeOffset.UtcNow.AddDays(29) } // Przyszły
+            );
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.GetAsync($"/api/projects/{projectId}/sprints/current");
+        
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        
+        var sprint = await TestResponse.ReadJsonAsync<SprintDetailDto>(response);
+        Assert.Equal(activeSprintId, sprint.Id);
+    }
+
+    [Fact]
+    public async Task GetCurrentSprint_NoSprintsExist_ReturnsNoContent()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Empty Project", Description = "" });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.GetAsync($"/api/projects/{projectId}/sprints/current");
+        
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode); 
     }
 }

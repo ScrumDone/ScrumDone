@@ -140,7 +140,7 @@ public class SprintsEndpointTests
     }
 
     [Fact]
-    public async Task UpdateSprint_NullField_ClearsValue()
+    public async Task UpdateSprint_NullForRequiredField_ReturnsBadRequest()
     {
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
@@ -154,22 +154,24 @@ public class SprintsEndpointTests
                 Id = sprintId,
                 ProjectId = projectId,
                 Name = "Sprint",
-                StartDate = DateTimeOffset.UtcNow
+                StartDate = DateTimeOffset.UtcNow,
+                EndDate = DateTimeOffset.UtcNow.AddDays(14)
             });
             return Task.CompletedTask;
         });
 
         using var client = app.CreateClient();
 
-        // Jawnie wysyłamy null dla StartDate
+        // Jawnie wysyłamy null dla wymaganego pola StartDate
         var response = await client.PatchAsJsonAsync($"/api/sprints/{sprintId}",
             new { startDate = (DateTimeOffset?)null });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        // Oczekujemy błędu walidacji, a nie sukcesu!
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        var sprint = await TestResponse.ReadJsonAsync<SprintDetailDto>(response);
-        Assert.Null(sprint.StartDate);
-        Assert.Equal("Sprint", sprint.Name); // Pozostaje bez zmian
+        // Weryfikujemy, czy błąd dotyczy konkretnie pola StartDate
+        var problem = await TestResponse.ReadJsonAsync<ValidationProblemDetails>(response);
+        Assert.True(TestResponse.HasValidationError(problem, "StartDate"));
     }
 
     [Fact]

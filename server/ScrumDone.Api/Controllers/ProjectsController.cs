@@ -128,6 +128,16 @@ namespace ScrumDone.Api.Controllers
         }
 
         // /projects/{id}/sprints
+        [HttpGet("{id}/sprints/current")]
+        [ProducesResponseType(typeof(SprintDetailDto), StatusCodes.Status200OK)]  // ← Summary
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCurrentSprint(
+            [FromRoute] Guid id)
+        {
+            var result = await _projectsService.GetCurrentSprintAsync(id);
+            return Ok(result);
+        }
+
 
         [HttpGet("{id}/sprints")]
         [ProducesResponseType(typeof(PagedResultDto<SprintSummaryDto>), StatusCodes.Status200OK)]  // ← Summary

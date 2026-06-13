@@ -104,6 +104,18 @@ namespace ScrumDone.Api.Services
                 IsDeleted = false
             };
 
+            var currentSprint = new Sprint
+                {
+                    Id = Guid.NewGuid(),
+                    ProjectId = newProject.Id,
+                    StartDate = DateTimeOffset.UtcNow,
+                    EndDate = DateTimeOffset.UtcNow.AddDays(14),
+                    IsKanban = !dto.IsSetToScrum,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow,
+                    IsDeleted = false
+                };
+
             newProject.TeamMembers = dto.TeamMemberIds.Select(id => new ProjectUserMTMRelation
             {
                 ProjectId = newProject.Id,
@@ -111,6 +123,7 @@ namespace ScrumDone.Api.Services
             }).ToList();
 
             await _context.Projects.AddAsync(newProject);
+            await _context.Sprints.AddAsync(currentSprint);
             await _context.SaveChangesAsync();
 
             var createdProject = await _context.Projects
@@ -140,7 +153,58 @@ namespace ScrumDone.Api.Services
             if(dto.SetProperties.Contains(nameof(dto.Name))) projectToUpdate.Name = dto.Name!;
             if(dto.SetProperties.Contains(nameof(dto.Description))) projectToUpdate.Description = dto.Description;
             if(dto.SetProperties.Contains(nameof(dto.IsActive))) projectToUpdate.IsActive = dto.IsActive.Value!;
-            if(dto.SetProperties.Contains(nameof(dto.IsSetToScrum))) projectToUpdate.IsSetToScrum = dto.IsSetToScrum.Value;
+            if (dto.SetProperties.Contains(nameof(dto.IsSetToScrum)))
+            {
+                projectToUpdate.IsSetToScrum = dto.IsSetToScrum.Value;
+
+                foreach (var sprint in projectToUpdate.Sprints)
+                {
+                    sprint.IsKanban = false;
+                }
+
+                if (dto.IsSetToScrum.Value == false)
+                {  
+                    var now = DateTimeOffset.UtcNow;
+                    var sprints = projectToUpdate.Sprints;
+                    
+                    var currentSprint = sprints
+                        .FirstOrDefault(s => s.StartDate <= now && s.EndDate >= now);
+
+                    if (currentSprint == null)
+                    {
+                        currentSprint = sprints
+                            .Where(s => s.StartDate <= now)
+                            .OrderByDescending(s => s.StartDate)
+                            .FirstOrDefault();
+                    }
+
+                    if (currentSprint == null)
+                    {
+                        currentSprint = new Sprint
+                        {
+                            Id = Guid.NewGuid(),
+                            ProjectId = id,
+                            StartDate = DateTimeOffset.UtcNow,
+                            EndDate = DateTimeOffset.UtcNow.AddDays(14),
+                            IsKanban = true,
+                            CreatedAt = now,
+                            UpdatedAt = now,
+                            IsDeleted = false
+                        };
+
+                        _context.Sprints.Add(currentSprint);
+                    }
+                    currentSprint.IsKanban = true;
+                }
+                else
+                {
+                    foreach (var sprint in projectToUpdate.Sprints)
+                    {
+                        sprint.IsKanban = false;
+                    }
+                }
+            }
+
             if(dto.SetProperties.Contains(nameof(dto.StartDate))) projectToUpdate.StartDate = dto.StartDate;
             if(dto.SetProperties.Contains(nameof(dto.ExpectedFinishDate))) projectToUpdate.ExpectedFinishDate = dto.ExpectedFinishDate;
             
@@ -155,9 +219,6 @@ namespace ScrumDone.Api.Services
                     projectToUpdate.CompanyId = dto.CompanyId;
                 }
             }
-                
-             
-            projectToUpdate.UpdatedAt = DateTimeOffset.UtcNow; // or does it update automatically?
 
             await _context.SaveChangesAsync();
 
@@ -237,28 +298,59 @@ namespace ScrumDone.Api.Services
         }
 
         // sprints
+
+        public async Task<SprintDetailDto?> GetCurrentSprintAsync(Guid id)
+        {
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id)
+                ?? throw new NotFoundException(nameof(Project), id);
+
+            var now = DateTimeOffset.UtcNow;
+                    
+            var currentSprint = await _context.Sprints
+                .AsNoTracking()
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Status)
+                .FirstOrDefaultAsync(s => s.ProjectId == id && s.IsKanban == !project.IsSetToScrum && s.StartDate <= now && s.EndDate >= now);
+
+            if (currentSprint == null)
+            {
+                currentSprint = await _context.Sprints
+                    .AsNoTracking()
+                    .Include(s => s.Assignments)
+                        .ThenInclude(a => a.Status)
+                    .Where(s => s.ProjectId == id && s.IsKanban == !project.IsSetToScrum && s.StartDate <= now)
+                    .OrderBy(s => s.StartDate)
+                    .FirstOrDefaultAsync();
+            }
+
+            if (currentSprint == null)
+            {
+                currentSprint = await _context.Sprints
+                    .AsNoTracking()
+                    .Include(s => s.Assignments)
+                        .ThenInclude(a => a.Status)
+                    .Where(s => s.ProjectId == id && s.IsKanban == !project.IsSetToScrum)
+                    .OrderByDescending(s => s.StartDate)
+                    .FirstOrDefaultAsync();
+            }
+
+            return currentSprint?.ToDetailDto();
+        }
         public async Task<PagedResultDto<SprintSummaryDto>> GetSprintsAsync(Guid id, SprintQueryDto query)
         {
-            if (! await _context.Projects.AnyAsync(p => p.Id == id))
-                throw new NotFoundException(nameof(Project), id);
+            var project = await _context.Projects
+                .Where(p => p.Id == id)
+                .Select(p => new { p.Id, p.IsSetToScrum })
+                .FirstOrDefaultAsync() 
+                ?? throw new NotFoundException(nameof(Project), id);
+
+            var targetKanban = !project.IsSetToScrum;
 
             var baseQuery = _context.Sprints
                 .AsNoTracking()
                 .Include(s => s.Assignments)
-                    .ThenInclude(a => a.Status) 
-                .Include(s => s.Assignments)
-                    .ThenInclude(a => a.Priority)
-                .Include(s => s.Assignments)
-                    .ThenInclude(a => a.Assignees)
-                        .ThenInclude(r => r.User)
-                .Include(s => s.Assignments)
-                    .ThenInclude(a => a.Labels)
-                        .ThenInclude(l => l.AssignmentLabel)
-                .Include(s => s.Assignments)
-                    .ThenInclude(a => a.SubAssignments)
-                .Include(s => s.Assignments)
-                    .ThenInclude(a => a.Project)
-                .Where(s => s.ProjectId == id)
+                    .ThenInclude(a => a.Status)
+                .Where(s => s.ProjectId == id && s.IsKanban == targetKanban)
                 .AsSplitQuery();
             
             var total = await baseQuery.CountAsync();
@@ -276,8 +368,14 @@ namespace ScrumDone.Api.Services
         }
         public async Task<SprintSummaryDto> CreateSprintAsync(Guid id, SprintCreateDto dto)
         {
-            if (! await _context.Projects.AnyAsync(p => p.Id == id))
+            if (!await _context.Projects.AnyAsync(p => p.Id == id))
                 throw new NotFoundException(nameof(Project), id);
+
+            // date check
+            if (await _context.Sprints.AnyAsync(s => s.ProjectId == id && s.EndDate > dto.StartDate && s.StartDate < dto.EndDate))
+            {
+                throw new ConflictException("Those dates are already taken by another sprint");
+            }
 
             var sprint = new Sprint
             {
@@ -286,13 +384,13 @@ namespace ScrumDone.Api.Services
                 Name = dto.Name,
                 StartDate = dto.StartDate,
                 EndDate = dto.EndDate,
-                IsKanban = dto.IsKanban,
+                IsKanban = false,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false
             };
 
-            await _context.Sprints.AddAsync(sprint);
+            _context.Sprints.Add(sprint);
             await _context.SaveChangesAsync();
 
             return sprint.ToSummaryDto();

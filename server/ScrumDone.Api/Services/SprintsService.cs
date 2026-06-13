@@ -47,9 +47,26 @@ namespace Scrumdone.Api.Services
                 .FirstOrDefaultAsync(s => s.Id == id)
                 ?? throw new NotFoundException(nameof(Sprint), id);
 
+            if (dto.StartDate.HasValue || dto.EndDate.HasValue)
+            {
+                var targetStartDate = dto.StartDate ?? sprint.StartDate;
+                var targetEndDate = dto.EndDate ?? sprint.EndDate;
+
+                bool isDateTaken = await _context.Sprints
+                    .AnyAsync(sp => sp.ProjectId == sprint.ProjectId 
+                                    && sp.Id != id 
+                                    && targetStartDate < sp.EndDate 
+                                    && targetEndDate > sp.StartDate);
+
+                if (isDateTaken)
+                {
+                    throw new ConflictException("Those dates are already taken by another sprint");
+                }
+            }
+
             if (dto.SetProperties.Contains(nameof(dto.Name))) sprint.Name = dto.Name;
-            if (dto.SetProperties.Contains(nameof(dto.StartDate))) sprint.StartDate = dto.StartDate;
-            if (dto.SetProperties.Contains(nameof(dto.EndDate))) sprint.EndDate = dto.EndDate;
+            if (dto.SetProperties.Contains(nameof(dto.StartDate))) sprint.StartDate = dto.StartDate.Value;
+            if (dto.SetProperties.Contains(nameof(dto.EndDate))) sprint.EndDate = dto.EndDate.Value;
 
             await _context.SaveChangesAsync();
 
@@ -58,17 +75,9 @@ namespace Scrumdone.Api.Services
                 .Include(s => s.Assignments)
                     .ThenInclude(a => a.Status) 
                 .Include(s => s.Assignments)
-                    .ThenInclude(a => a.Priority)
-                .Include(s => s.Assignments)
-                    .ThenInclude(a => a.Assignees)
-                        .ThenInclude(r => r.User)
-                .Include(s => s.Assignments)
                     .ThenInclude(a => a.Labels)
                         .ThenInclude(l => l.AssignmentLabel)
-                .Include(s => s.Assignments)
-                    .ThenInclude(a => a.SubAssignments)
-                .Include(s => s.Assignments)
-                    .ThenInclude(a => a.Project)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(s => s.Id == id)
                 ?? throw new NotFoundException(nameof(Sprint), id);
 
