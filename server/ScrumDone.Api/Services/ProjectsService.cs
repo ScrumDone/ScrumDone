@@ -348,10 +348,16 @@ namespace ScrumDone.Api.Services
             var label = await _context.AssignmentLabels.FirstOrDefaultAsync(l => l.Id == labelId && l.ProjectId == id)
                 ?? throw new NotFoundException(nameof(AssignmentLabel), labelId);
 
-            if (await _context.AssignmentLabels.AnyAsync(l => l.ProjectId == id && l.Name == dto.Name))
-                throw new ConflictException("There is already a label with this name");
+            if (dto.SetProperties.Contains(nameof(dto.Name)))
+            {
+                var normalizedName = dto.Name!.Trim();
 
-            if (dto.SetProperties.Contains(nameof(dto.Name))) label.Name = dto.Name!;
+                if (await _context.AssignmentLabels.AnyAsync(l => l.ProjectId == id && l.Name == normalizedName && l.Id != labelId))
+                    throw new ConflictException("There is already a label with this name");
+
+                label.Name = normalizedName;
+
+            }
             if(dto.SetProperties.Contains(nameof(dto.HexColor))) label.HexColor = dto.HexColor!;
             label.UpdatedAt = DateTimeOffset.UtcNow;
 

@@ -9,6 +9,7 @@ using ScrumDone.Api.DTOs.Sprints;
 using ScrumDone.Api.DTOs.Users;
 using ScrumDone.Api.Tests.Common;
 using Xunit;
+using System.Text;
 
 namespace ScrumDone.Api.Tests.Projects;
 
@@ -1002,7 +1003,117 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
+    [Fact]
+    public async Task CreateAssignmentLabel_NameWithWhitespace_TrimsAndDetectsDuplicate()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            // A label with the trimmed name "Bug" already exists
+            db.AssignmentLabels.Add(new AssignmentLabel
+            {
+                Id = Guid.NewGuid(),
+                ProjectId = projectId,
+                Name = "Bug",
+                HexColor = "#FF0000"
+            });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        // Attempt to create a label whose name, after trimming, is "Bug"
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/assignment-labels",
+            new AssignmentLabelCreateDto { Name = "  Bug  ", HexColor = "#00FF00" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateAssignmentLabel_WhitespaceName_IsTrimmedAndStored()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/assignment-labels",
+            new AssignmentLabelCreateDto { Name = "   Clean   ", HexColor = "#0000FF" });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        var label = await TestResponse.ReadJsonAsync<AssignmentLabelDto>(response);
+        Assert.Equal("Clean", label.Name); // Trimmed
+    }
+
     // PATCH /api/projects/{id}/assignment-labels/{labelId}
+
+    [Fact]
+    public async Task UpdateAssignmentLabel_TrimsNameAndDetectsDuplicate()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var labelId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.AssignmentLabels.AddRange(
+                new AssignmentLabel { Id = labelId, ProjectId = projectId, Name = "Frontend", HexColor = "#FF0000" },
+                new AssignmentLabel { Id = Guid.NewGuid(), ProjectId = projectId, Name = "Backend", HexColor = "#00FF00" }
+            );
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        // Try to rename "Frontend" to "  Backend " → should conflict because "Backend" exists
+        var payload = new StringContent("{\"name\":\"  Backend  \"}", Encoding.UTF8, "application/json");
+        var response = await client.PatchAsync($"/api/projects/{projectId}/assignment-labels/{labelId}", payload);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateAssignmentLabel_SameNameTrimmed_ShouldSucceed()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var labelId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.AssignmentLabels.Add(new AssignmentLabel
+            {
+                Id = labelId,
+                ProjectId = projectId,
+                Name = "Bug",
+                HexColor = "#FF0000"
+            });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        // Update the label to the same name but with leading/trailing whitespace
+        var payload = new StringContent("{\"name\":\"  Bug  \"}", Encoding.UTF8, "application/json");
+        var response = await client.PatchAsync($"/api/projects/{projectId}/assignment-labels/{labelId}", payload);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var label = await TestResponse.ReadJsonAsync<AssignmentLabelDto>(response);
+        Assert.Equal("Bug", label.Name); // Trimmed
+    }
 
     [Fact]
     public async Task UpdateAssignmentLabel_DuplicateName_ReturnsConflict()
