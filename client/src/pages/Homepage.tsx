@@ -8,13 +8,25 @@ import { useAssignments } from '../hooks/useAssignments'
 import type { Assignment } from '../types/assignment'; 
 
 const Homepage: React.FC = () => {
-    // Pobieramy zadania
-    const { data: assignments, isLoading } = useAssignments();
+    // // Pobieramy zadania
+    // const { data: assignments, isLoading } = useAssignments();
 
-    // Filtrujemy zadania na dzisiaj
+    // // Filtrujemy zadania na dzisiaj
+    // const today = new Date().toISOString().split('T')[0];
+    // const tasksArray = assignments?.items || [];
+    // const todaysTasks = tasksArray.filter((task: Assignment) => task.dueDate === today);
+
+    // 1. Obliczamy datę
     const today = new Date().toISOString().split('T')[0];
-    const tasksArray = assignments?.items || [];
-    const todaysTasks = tasksArray.filter((task: Assignment) => task.dueDate === today);
+
+    // 2. Pobieramy zadania przefiltrowane przez API
+    const { data: assignments, isLoading } = useAssignments({
+        DueFrom: `${today}T00:00:00Z`, 
+        DueTo: `${today}T23:59:59Z`
+    });
+
+    // 3. Przypisujemy wyniki (teraz `assignments.items` zawiera już tylko zadania na dziś)
+    const todaysTasks = assignments?.items || [];
 
 
     return (
