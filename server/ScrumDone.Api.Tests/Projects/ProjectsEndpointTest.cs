@@ -629,7 +629,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 Id = statusId,
                 Name = "To Do",
                 HexColor = "#808080",
-                IsDefault = true
+                Order = 0
             });
 
             // Two assignments: one with only the target user, one with both users
