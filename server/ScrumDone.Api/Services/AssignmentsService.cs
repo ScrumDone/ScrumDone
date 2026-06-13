@@ -282,7 +282,38 @@ namespace ScrumDone.Api.Services
 
         public async Task<IEnumerable<AssignmentLabelDto>> UpdateLabelsAsync(Guid id, AssignmentLabelsUpdateDto dto)
         {
-            throw new NotImplementedException();
+            var assignment = await _context.Assignment
+                .Include(t => t.Labels)
+                .FirstOrDefaultAsync(t => t.Id == id)
+                ?? throw new NotFoundException(nameof(Assignment), id);
+
+            var toRemove = assignment.Labels
+                .Where(a => !dto.LabelIds.Contains(a.AssignmentLabelId))
+                .ToList();
+            _context.RemoveRange(toRemove);
+
+
+            var toAdd = dto.LabelIds
+                .Where(uid => !assignment.Labels
+                .Any(a => a.AssignmentLabelId == uid))
+                .ToList();
+
+            foreach (var uid in toAdd)
+                assignment.Labels.Add(new AssignmentAssignmentLabelMTMRelation { AssignmentLabelId = uid });
+
+            await _context.SaveChangesAsync();
+
+
+            // load labels for return
+            var labels = await _context.AssignmentLabels
+                .Where(l => dto.LabelIds.Contains(l.Id))
+                .ToListAsync();
+
+            return labels.Select(l => new AssignmentLabelDto(
+                l.Id,
+                l.Name,
+                l.HexColor
+            ));
         }
 
         public async Task<IEnumerable<AssignmentPriorityDto>> GetPrioritiesAsync()
