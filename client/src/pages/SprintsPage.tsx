@@ -25,7 +25,7 @@ import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
-import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
+import CalendarPeopleFilter from '../components/calendarPeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
 import { useCreateSprint } from '../hooks/useCreateSprint';
 import { useDeleteSprint } from '../hooks/useDeleteSprint';
@@ -40,57 +40,25 @@ import {
   toSprintEndDateUpdateDto,
   toSprintUpdateDto,
 } from '../utils/sprintDisplay';
-import {useUpdateAssignmentSprint} from "../hooks/useUpdateAssignmentSprint";
-
-type TaskItem = {
-  id: string;
-  name: string;
-  assigneeInitials: string;
-  status: 'Ukończone' | 'Nieukończone';
-  daysLeft: string;
-  color: 'red' | 'yellow' | 'green' | 'blue';
-};
-
-type BacklogTask = {
-  id: string;
-  name: string;
-  assigneeInitials: string;
-  assigneeName: string;
-  color: TaskItem['color'];
-};
+import { useAssignments } from '../hooks/useAssignments';
+import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities';
+import { useProject } from '../hooks/useProject';
+import {
+  buildPeopleFilterOptions,
+  mapTeamMembersToPersonFilters,
+  matchesPeopleFilter,
+} from '../utils/assignmentFilters';
+import {
+  mapAssignmentToSprintBacklogTask,
+  mapAssignmentToSprintTaskItem,
+  matchesSprintCompletionFilter,
+  type SprintBacklogTask,
+  type SprintTaskItem,
+} from '../utils/sprintTaskMappers';
+import { useUpdateAssignmentSprint } from '../hooks/useUpdateAssignmentSprint';
+import type { AssignmentPriority } from '../types/assignment';
 
 const BACKLOG_ID = 'backlog';
-
-const initialBacklogTasks: BacklogTask[] = [
-  {
-    id: 'code-refactor',
-    name: 'Code refactoring - user module',
-    color: 'green',
-    assigneeInitials: 'AN',
-    assigneeName: 'Artur Nowak',
-  },
-  {
-    id: 'doc-update',
-    name: 'Documentation update',
-    color: 'yellow',
-    assigneeInitials: 'EB',
-    assigneeName: 'Eryk Baczyński',
-  },
-  {
-    id: 'e2e-setup',
-    name: 'E2E testing setup',
-    color: 'red',
-    assigneeInitials: 'EB',
-    assigneeName: 'Eryk Baczyński',
-  },
-  {
-    id: 'mobile-responsive',
-    name: 'Mobile responsiveness',
-    color: 'yellow',
-    assigneeInitials: 'MK',
-    assigneeName: 'Maria Kowalska',
-  },
-];
 
 type SprintData = {
   id: string;
@@ -100,14 +68,8 @@ type SprintData = {
   totalTasks: number;
   completedTasks: number;
   status: 'Aktywny' | 'Zaplanowany' | 'Ukończony';
-  tasks: TaskItem[];
+  tasks: SprintTaskItem[];
 };
-
-const personFilterOptions: PersonFilter[] = [
-  { id: 'artur-nowak', initials: 'AN', fullName: 'Artur Nowak' },
-  { id: 'eryk-baczynski', initials: 'EB', fullName: 'Eryk Baczyński' },
-  { id: 'maria-kowalska', initials: 'MK', fullName: 'Maria Kowalska' },
-];
 
 const sprintStatusBadgeMap: Record<string, string> = {
   Aktywny: 'bg-scrumdone-blue-main text-white',
@@ -115,15 +77,8 @@ const sprintStatusBadgeMap: Record<string, string> = {
   Ukończony: 'bg-green-100 text-green-700',
 };
 
-const taskColorMap: Record<string, string> = {
-  red: 'bg-red-500',
-  yellow: 'bg-yellow-500',
-  green: 'bg-green-500',
-  blue: 'bg-blue-500',
-};
-
 type BacklogTaskCardProps = {
-  task: BacklogTask;
+  task: SprintBacklogTask;
   isDragOverlay?: boolean;
 };
 
@@ -142,7 +97,10 @@ const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay =
       className={`rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing shadow-md' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="mb-1 flex items-start gap-2">
-        <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${taskColorMap[task.color]}`} />
+        <span
+          className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-slate-300"
+          style={task.priorityHexColor ? { backgroundColor: task.priorityHexColor } : undefined}
+        />
         <p className="font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
       </div>
       <div className="flex items-center gap-2">
@@ -153,28 +111,8 @@ const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay =
   );
 };
 
-const getAssigneeName = (initials: string) =>
-  personFilterOptions.find((person) => person.initials === initials)?.fullName ?? initials;
-
-const backlogToSprintTask = (task: BacklogTask): TaskItem => ({
-  id: task.id,
-  name: task.name,
-  assigneeInitials: task.assigneeInitials,
-  color: task.color,
-  status: 'Nieukończone',
-  daysLeft: '—',
-});
-
-const sprintTaskToBacklog = (task: TaskItem): BacklogTask => ({
-  id: task.id,
-  name: task.name,
-  assigneeInitials: task.assigneeInitials,
-  assigneeName: getAssigneeName(task.assigneeInitials),
-  color: task.color,
-});
-
 type SprintTaskRowProps = {
-  task: TaskItem;
+  task: SprintTaskItem;
   isDragOverlay?: boolean;
 };
 
@@ -193,14 +131,17 @@ const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = fal
       className={`flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing shadow-md' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center gap-3">
-        <span className={`h-2 w-2 rounded-full ${taskColorMap[task.color]}`} />
+        <span
+          className="h-2 w-2 rounded-full bg-slate-300"
+          style={task.priorityHexColor ? { backgroundColor: task.priorityHexColor } : undefined}
+        />
         <p className={`font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}>
           {task.name}
         </p>
       </div>
       <div className="flex items-center gap-3">
         <Avatar initials={task.assigneeInitials} size="xs" />
-        <span className="font-segoe-ui text-xs text-slate-700">{getAssigneeName(task.assigneeInitials)}</span>
+        <span className="font-segoe-ui text-xs text-slate-700">{task.assigneeName}</span>
         <span
           className={`rounded-lg px-2.5 py-1 font-segoe-ui text-xs font-medium ${task.status === 'Ukończone' ? 'border border-green-600 text-green-600' : 'bg-slate-100 text-slate-700'}`}
         >
@@ -256,86 +197,54 @@ const BacklogDropZone: React.FC<BacklogDropZoneProps> = ({ children }) => {
 };
 
 type ActiveDragItem =
-  | { source: 'backlog'; task: BacklogTask }
-  | { source: 'sprint'; task: TaskItem; sprintId: string };
+  | { source: 'backlog'; task: SprintBacklogTask }
+  | { source: 'sprint'; task: SprintTaskItem; sprintId: string };
 
 const getSprintDateRange = (sprint: SprintData) => `${sprint.startDate} - ${sprint.endDate}`;
 
-const mockSprintsSeed: SprintData[] = [
-  {
-    id: 'sprint-0',
-    title: 'Sprint 0 - Setup',
-    startDate: '15 sty 2026',
-    endDate: '05 lut 2026',
-    totalTasks: 4,
-    completedTasks: 3,
-    status: 'Ukończony',
-    tasks: [
-      { id: 'project-init', name: 'Project initialization', assigneeInitials: 'AN', status: 'Ukończone', daysLeft: '22 sty', color: 'red' },
-      { id: 'git-setup', name: 'Git repository setup', assigneeInitials: 'EB', status: 'Ukończone', daysLeft: '25 sty', color: 'yellow' },
-      { id: 'dev-env', name: 'Development environment', assigneeInitials: 'MK', status: 'Ukończone', daysLeft: '01 lut', color: 'red' },
-      { id: 'ci-cd', name: 'CI/CD pipeline', assigneeInitials: 'AN', status: 'Ukończone', daysLeft: '05 lut', color: 'green' },
-    ],
-  },
-  {
-    id: 'sprint-1',
-    title: 'Sprint 1 - Core Features',
-    startDate: '06 lut 2026',
-    endDate: '19 lut 2026',
-    totalTasks: 3,
-    completedTasks: 3,
-    status: 'Ukończony',
-    tasks: [
-      { id: 'user-mgmt', name: 'User management module', assigneeInitials: 'EB', status: 'Ukończone', daysLeft: '15 lut', color: 'red' },
-      { id: 'auth-sys', name: 'Authentication system', assigneeInitials: 'MK', status: 'Ukończone', daysLeft: '18 lut', color: 'yellow' },
-      { id: 'dashboard', name: 'Dashboard base layout', assigneeInitials: 'AN', status: 'Ukończone', daysLeft: '20 lut', color: 'yellow' },
-    ],
-  },
-  {
-    id: 'sprint-3',
-    title: 'Sprint 3 - Final Sprint',
-    startDate: '15 mar 2026',
-    endDate: '05 kwi 2026',
-    totalTasks: 4,
-    completedTasks: 1,
-    status: 'Aktywny',
-    tasks: [
-      { id: 'prepare-ui', name: 'Prepare initial UI project', assigneeInitials: 'EB', status: 'Ukończone', daysLeft: '05 kwi', color: 'red' },
-      { id: 'quotes-module', name: 'Quotes Generation Module', assigneeInitials: 'AN', status: 'Nieukończone', daysLeft: '07 kwi', color: 'red' },
-      { id: 'giveaway-campaign', name: 'Giveaway Campaign Setup', assigneeInitials: 'MK', status: 'Nieukończone', daysLeft: '09 kwi', color: 'green' },
-      { id: 'video-reel', name: 'Video Reel Production', assigneeInitials: 'EB', status: 'Nieukończone', daysLeft: '19 kwi', color: 'yellow' },
-    ],
-  },
-  {
-    id: 'sprint-4',
-    title: 'Sprint 4 - Testing',
-    startDate: '06 kwi 2026',
-    endDate: '26 kwi 2026',
-    totalTasks: 0,
-    completedTasks: 0,
-    status: 'Zaplanowany',
-    tasks: [],
-  },
-  {
-    id: 'sprint-5',
-    title: 'Sprint 5 - Deployment',
-    startDate: '27 kwi 2026',
-    endDate: '17 maj 2026',
-    totalTasks: 0,
-    completedTasks: 0,
-    status: 'Zaplanowany',
-    tasks: [],
-  },
-];
-
-const mockTasksByLegacyId = Object.fromEntries(mockSprintsSeed.map((sprint) => [sprint.id, sprint.tasks]));
-const mockTasksByTitle = Object.fromEntries(mockSprintsSeed.map((sprint) => [sprint.title, sprint.tasks]));
-
-const getSeedTasksForSprint = (id: string, title: string): TaskItem[] =>
-  mockTasksByLegacyId[id] ?? mockTasksByTitle[title] ?? [];
-
 const getSprintCompletionPercent = (sprint: SprintData) =>
   sprint.totalTasks > 0 ? Math.round((sprint.completedTasks / sprint.totalTasks) * 100) : 0;
+
+const PriorityFilterSection: React.FC<{
+  priorities: AssignmentPriority[];
+  selectedPriorities: Record<string, boolean>;
+  onToggle: (priorityId: string) => void;
+  isLoading?: boolean;
+}> = ({ priorities, selectedPriorities, onToggle, isLoading = false }) => (
+  <section className="rounded-[10px] border border-gray-200 bg-white p-4">
+    <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Priorytet</h3>
+    {isLoading ? (
+      <p className="font-segoe-ui text-sm text-slate-500 animate-pulse">Ładowanie priorytetów...</p>
+    ) : priorities.length === 0 ? (
+      <p className="font-segoe-ui text-sm text-slate-500">Brak priorytetów.</p>
+    ) : (
+      <div className="flex flex-col gap-2">
+        {priorities.map((priority) => {
+          const isSelected = selectedPriorities[priority.id] ?? false;
+
+          return (
+            <button
+              key={priority.id}
+              type="button"
+              onClick={() => onToggle(priority.id)}
+              className="flex items-center gap-2 text-left"
+              aria-pressed={isSelected}
+            >
+              <span className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
+                <CheckIcon className="h-3 w-3" strokeWidth={2.5} />
+              </span>
+              <span
+                className="h-2 w-2 rounded-full bg-slate-300"
+                style={priority.hexColor ? { backgroundColor: priority.hexColor } : undefined}
+              />
+              <span className="font-segoe-ui text-sm text-slate-900">{priority.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    )}
+  </section>
+);
 
 const SprintsPage: React.FC = () => {
   const { projectId = '' } = useParams();
@@ -368,9 +277,99 @@ const SprintsPage: React.FC = () => {
     isPending: isCreatingSprint,
   } = useCreateSprint();
 
-  const [sprintTasksById, setSprintTasksById] = useState<Record<string, TaskItem[]>>({});
+  const { data: project } = useProject(projectId);
+  const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
+
+  const teamMembers = useMemo(
+    () => mapTeamMembersToPersonFilters(project?.teamMembers ?? []),
+    [project?.teamMembers],
+  );
+
+  const [selectedPriorities, setSelectedPriorities] = useState<Record<string, boolean>>({});
+  const [selectedPeople, setSelectedPeople] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!priorities?.length) {
+      return;
+    }
+
+    setSelectedPriorities((current) => {
+      if (priorities.some((priority) => priority.id in current)) {
+        return current;
+      }
+
+      return Object.fromEntries(priorities.map((priority) => [priority.id, true]));
+    });
+  }, [priorities]);
+
+  const selectedPriorityIds = useMemo(
+    () => priorities?.filter((priority) => selectedPriorities[priority.id]).map((priority) => priority.id) ?? [],
+    [priorities, selectedPriorities],
+  );
+
+  const priorityList = priorities ?? [];
+  const allPrioritiesSelected = !priorityList.length || priorityList.every((priority) => selectedPriorities[priority.id]);
+  const noPrioritiesSelected = priorityList.length > 0 && priorityList.every((priority) => !selectedPriorities[priority.id]);
+
+  const assignmentQuery = useMemo(() => ({
+    ProjectIds: [projectId],
+    Limit: 100,
+    ...(!allPrioritiesSelected && !noPrioritiesSelected ? { PriorityIds: selectedPriorityIds } : {}),
+  }), [
+    projectId,
+    allPrioritiesSelected,
+    noPrioritiesSelected,
+    selectedPriorityIds,
+  ]);
+
+  const { data: assignmentsData } = useAssignments(assignmentQuery);
+
+  const peopleFilterOptions = useMemo(
+    () => buildPeopleFilterOptions(teamMembers, assignmentsData?.items ?? []),
+    [teamMembers, assignmentsData?.items],
+  );
+
+  const peopleFilterIds = useMemo(
+    () => peopleFilterOptions.map((person) => person.id).join('|'),
+    [peopleFilterOptions],
+  );
+
+  useEffect(() => {
+    setSelectedPeople((current) => {
+      let changed = false;
+      const next = { ...current };
+
+      for (const person of peopleFilterOptions) {
+        if (!(person.id in next)) {
+          next[person.id] = true;
+          changed = true;
+        }
+      }
+
+      for (const personId of Object.keys(next)) {
+        if (!peopleFilterOptions.some((person) => person.id === personId)) {
+          delete next[personId];
+          changed = true;
+        }
+      }
+
+      return changed ? next : current;
+    });
+  }, [projectId, peopleFilterIds, peopleFilterOptions]);
+
+  const allPeopleSelected = peopleFilterOptions.length === 0
+    || peopleFilterOptions.every((person) => selectedPeople[person.id] === true);
+  const noPeopleSelected = peopleFilterOptions.length > 0
+    && peopleFilterOptions.every((person) => selectedPeople[person.id] === false);
+
+  const selectedAssigneeIds = useMemo(
+    () => peopleFilterOptions
+      .filter((person) => selectedPeople[person.id] === true)
+      .map((person) => person.id),
+    [peopleFilterOptions, selectedPeople],
+  );
+
   const [sprintModalMessage, setSprintModalMessage] = useState<string | null>(null);
-  const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
   const [dragOverSprintId, setDragOverSprintId] = useState<string | null>(null);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(() => new Set());
@@ -378,48 +377,50 @@ const SprintsPage: React.FC = () => {
   const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
   const [sprintDraft, setSprintDraft] = useState<SprintEditDraft | null>(null);
 
-  // Filter states
   const [selectedSprints, setSelectedSprints] = useState<Record<string, boolean>>({});
-
-  const [selectedPriorities, setSelectedPriorities] = useState<Record<string, boolean>>({
-    wysoki: true,
-    sredni: true,
-    niski: true,
-  });
 
   const [selectedStatuses, setSelectedStatuses] = useState<Record<string, boolean>>({
     ukonczne: true,
     nieukonczne: true,
   });
-  
-  useEffect(() => {
-    if (!sprintsQueryData?.items) {
-      return;
+
+  const visibleAssignments = useMemo(() => {
+    if (!assignmentsData?.items) {
+      return [];
     }
 
-    setSprintTasksById((currentTasks) => {
-      const nextTasks = { ...currentTasks };
-      let changed = false;
+    if (noPrioritiesSelected || noPeopleSelected) {
+      return [];
+    }
 
-      for (const summary of sprintsQueryData.items) {
-        if (nextTasks[summary.id]) {
-          continue;
-        }
+    let items = assignmentsData.items.filter((assignment) =>
+      matchesSprintCompletionFilter(assignment, selectedStatuses),
+    );
 
-        const title = summary.name?.trim() || '—';
-        const seedTasks = getSeedTasksForSprint(summary.id, title);
+    if (!allPeopleSelected) {
+      items = items.filter((assignment) =>
+        matchesPeopleFilter(assignment.assignees, selectedAssigneeIds),
+      );
+    }
 
-        if (seedTasks.length > 0) {
-          nextTasks[summary.id] = seedTasks;
-          changed = true;
-        }
-      }
+    return items;
+  }, [
+    assignmentsData?.items,
+    allPeopleSelected,
+    noPeopleSelected,
+    noPrioritiesSelected,
+    selectedAssigneeIds,
+    selectedStatuses,
+  ]);
 
-      return changed ? nextTasks : currentTasks;
-    });
-  }, [sprintsQueryData?.items]);
+  const backlogTasks = useMemo(
+    () => visibleAssignments
+      .filter((assignment) => !assignment.sprintId)
+      .map(mapAssignmentToSprintBacklogTask),
+    [visibleAssignments],
+  );
 
-  const sprints = useMemo((): SprintData[] => {
+  const baseSprints = useMemo((): SprintData[] => {
     if (!sprintsQueryData?.items) {
       return [];
     }
@@ -429,10 +430,28 @@ const SprintsPage: React.FC = () => {
 
       return {
         ...card,
-        tasks: sprintTasksById[summary.id] ?? [],
+        tasks: visibleAssignments
+          .filter((assignment) => assignment.sprintId === summary.id)
+          .map(mapAssignmentToSprintTaskItem),
       };
     });
-  }, [sprintsQueryData?.items, sprintTasksById]);
+  }, [sprintsQueryData?.items, visibleAssignments]);
+
+  const sprints = useMemo(
+    () => baseSprints.filter((sprint) => selectedSprints[sprint.id] !== false),
+    [baseSprints, selectedSprints],
+  );
+
+  const togglePriority = (priorityId: string) => {
+    setSelectedPriorities((current) => ({
+      ...current,
+      [priorityId]: !current[priorityId],
+    }));
+  };
+
+  const handleSelectedPeopleChange = (next: Record<string, boolean>) => {
+    setSelectedPeople(next);
+  };
 
   const isSavingSprint = isUpdatingSprint || isDeletingSprint;
   const sprintModalErrorMessage = isUpdateSprintError
@@ -466,7 +485,7 @@ const SprintsPage: React.FC = () => {
   }, [sprints]);
 
   useEffect(() => {
-    if (sprints.length === 0) {
+    if (baseSprints.length === 0) {
       return;
     }
 
@@ -474,7 +493,7 @@ const SprintsPage: React.FC = () => {
       const nextSelected = { ...currentSelected };
       let changed = false;
 
-      for (const sprint of sprints) {
+      for (const sprint of baseSprints) {
         if (!(sprint.id in nextSelected)) {
           nextSelected[sprint.id] = true;
           changed = true;
@@ -483,7 +502,7 @@ const SprintsPage: React.FC = () => {
 
       return changed ? nextSelected : currentSelected;
     });
-  }, [sprints]);
+  }, [baseSprints]);
 
   const closeSprintEditModal = () => {
     resetSprintModalMutations();
@@ -572,11 +591,6 @@ const SprintsPage: React.FC = () => {
       { id: editingSprintId, projectId },
       {
         onSuccess: () => {
-          setSprintTasksById((currentTasks) => {
-            const nextTasks = { ...currentTasks };
-            delete nextTasks[editingSprintId];
-            return nextTasks;
-          });
           closeSprintEditModal();
         },
       },
@@ -599,7 +613,7 @@ const SprintsPage: React.FC = () => {
     completed: sprints.filter((s) => s.status === 'Ukończony'),
   };
 
-  const sprintCount = sprintsQueryData?.totalCount ?? sprints.length;
+  const sprintCount = sprintsQueryData?.totalCount ?? baseSprints.length;
 
   const handleAddSprint = () => {
     createSprint({
@@ -933,37 +947,21 @@ const SprintsPage: React.FC = () => {
       return;
     }
 
-    const previousSprintTasks = sprintTasksById;
-    const previousBacklogTasks = backlogTasks;
-
-    const rollback = () => {
-      setSprintTasksById(previousSprintTasks);
-      setBacklogTasks(previousBacklogTasks);
-      alert("Nie udało się przenieść zadania. Spróbuj ponownie.");
-    }
-
     const activeId = String(active.id);
     const overId = String(over.id);
     const sourceSprint = findSprintWithTask(activeId);
     const backlogTask = backlogTasks.find((task) => task.id === activeId);
+
+    const handleMoveError = () => {
+      alert('Nie udało się przenieść zadania. Spróbuj ponownie.');
+    };
 
     if (isBacklogDropTarget(overId)) {
       if (!sourceSprint) {
         return;
       }
 
-      const sprintTask = sourceSprint.tasks.find((task) => task.id === activeId);
-      if (!sprintTask) {
-        return;
-      }
-
-      setSprintTasksById((currentTasks) => ({
-        ...currentTasks,
-        [sourceSprint.id]: sourceSprint.tasks.filter((task) => task.id !== activeId),
-      }));
-      setBacklogTasks((currentTasks) => [...currentTasks, sprintTaskToBacklog(sprintTask)]);
-
-      updateAssignmentSprint({ id: activeId, sprintId: null }, { onError: rollback });
+      updateAssignmentSprint({ id: activeId, sprintId: null }, { onError: handleMoveError });
       return;
     }
 
@@ -977,29 +975,8 @@ const SprintsPage: React.FC = () => {
       return;
     }
 
-    if (backlogTask) {
-      setBacklogTasks((currentTasks) => currentTasks.filter((task) => task.id !== activeId));
-      setSprintTasksById((currentTasks) => ({
-        ...currentTasks,
-        [targetSprint.id]: [...targetSprint.tasks, backlogToSprintTask(backlogTask)],
-      }));
-      
-      updateAssignmentSprint({ id: activeId, sprintId: targetSprint.id }, { onError: rollback });
-      return;
-    }
-
-    if (sourceSprint) {
-      const sprintTask = sourceSprint.tasks.find((task) => task.id === activeId);
-      if (!sprintTask) {
-        return;
-      }
-
-      setSprintTasksById((currentTasks) => ({
-        ...currentTasks,
-        [sourceSprint.id]: sourceSprint.tasks.filter((task) => task.id !== activeId),
-        [targetSprint.id]: [...targetSprint.tasks, sprintTask],
-      }));
-      updateAssignmentSprint({ id: activeId, sprintId: targetSprint.id }, { onError: rollback });
+    if (backlogTask || sourceSprint) {
+      updateAssignmentSprint({ id: activeId, sprintId: targetSprint.id }, { onError: handleMoveError });
     }
   };
 
@@ -1046,7 +1023,7 @@ const SprintsPage: React.FC = () => {
               <section className="rounded-[10px] border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Sprinty</h3>
                 <div className="flex flex-col gap-2">
-                  {sprints.map((sprint) => {
+                  {baseSprints.map((sprint) => {
                     const sprintId = sprint.id;
                     const isSelected = selectedSprints[sprintId] ?? true;
 
@@ -1057,7 +1034,7 @@ const SprintsPage: React.FC = () => {
                         onClick={() =>
                           setSelectedSprints((prev) => ({
                             ...prev,
-                            [sprintId]: !prev[sprintId],
+                            [sprintId]: !isSelected,
                           }))
                         }
                         className="flex items-center gap-2 text-left"
@@ -1073,43 +1050,19 @@ const SprintsPage: React.FC = () => {
                 </div>
               </section>
 
-              {/* Priorytet */}
-              <section className="rounded-[10px] border border-gray-200 bg-white p-4">
-                <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Priorytet</h3>
-                <div className="flex flex-col gap-2">
-                  {[
-                    { id: 'wysoki', label: 'Wysoki', colorClass: 'bg-scrumdone-red-500' },
-                    { id: 'sredni', label: 'Średni', colorClass: 'bg-scrumdone-yellow-500' },
-                    { id: 'niski', label: 'Niski', colorClass: 'bg-scrumdone-green-500' },
-                  ].map((priority) => {
-                    const isSelected = selectedPriorities[priority.id] ?? true;
+              <PriorityFilterSection
+                priorities={priorities ?? []}
+                selectedPriorities={selectedPriorities}
+                onToggle={togglePriority}
+                isLoading={isPrioritiesLoading}
+              />
 
-                    return (
-                      <button
-                        key={priority.id}
-                        type="button"
-                        onClick={() =>
-                          setSelectedPriorities((prev) => ({
-                            ...prev,
-                            [priority.id]: !prev[priority.id],
-                          }))
-                        }
-                        className="flex items-center gap-2 text-left"
-                        aria-pressed={isSelected}
-                      >
-                        <span className={`flex h-4 w-4 items-center justify-center rounded border transition-colors ${isSelected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-transparent'}`}>
-                          <CheckIcon className="h-3 w-3" strokeWidth={2.5} />
-                        </span>
-                        <span className={`h-2 w-2 rounded-full ${priority.colorClass}`} />
-                        <span className="font-segoe-ui text-sm text-slate-900">{priority.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              {/* Członkowie zespołu */}
-              <CalendarPeopleFilter people={personFilterOptions} title="Członkowie zespołu" />
+              <CalendarPeopleFilter
+                people={peopleFilterOptions}
+                title="Członkowie zespołu"
+                selectedPeople={selectedPeople}
+                onSelectedPeopleChange={handleSelectedPeopleChange}
+              />
 
               {/* Status ukończenia */}
               <section className="rounded-[10px] border border-gray-200 bg-white p-4">
