@@ -22,7 +22,7 @@ namespace ScrumDone.Api.Mappers
         public static partial SprintDetailDto ToDetailDto(this Sprint sprint);
 
         private static int CountAssignments(ICollection<Assignment> assignments) => assignments.Count();
-        private static int CountCompleted(ICollection<Assignment> assignments) => assignments.Count(a => a.Status?.Name == "Completed");
+        private static int CountCompleted(ICollection<Assignment> assignments) => assignments.Count(a => a.Status?.Name == "Done");
 
         private static string? CalculateState(Sprint sprint)
         {
