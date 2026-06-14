@@ -1,15 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import type { ProjectData } from '../data/projects';
+import type { ProjectListItem } from '../types/project';
 
 type CompanyAttachProjectModalProps = {
   isOpen: boolean;
   companyName: string;
-  availableProjects: ProjectData[];
-  selectedProjectId: number | null;
+  availableProjects: ProjectListItem[];
+  selectedProjectId: string | null;
+  isLoading?: boolean;
+  isSaving?: boolean;
+  errorMessage?: string | null;
   onClose: () => void;
   onSave: () => void;
-  onProjectSelect: (projectId: number) => void;
+  onProjectSelect: (projectId: string) => void;
 };
 
 const CompanyAttachProjectModal: React.FC<CompanyAttachProjectModalProps> = ({
@@ -17,6 +20,9 @@ const CompanyAttachProjectModal: React.FC<CompanyAttachProjectModalProps> = ({
   companyName,
   availableProjects,
   selectedProjectId,
+  isLoading = false,
+  isSaving = false,
+  errorMessage = null,
   onClose,
   onSave,
   onProjectSelect,
@@ -55,7 +61,7 @@ const CompanyAttachProjectModal: React.FC<CompanyAttachProjectModalProps> = ({
     return null;
   }
 
-  const handleProjectSelect = (projectId: number) => {
+  const handleProjectSelect = (projectId: string) => {
     onProjectSelect(projectId);
     setIsDropdownOpen(false);
   };
@@ -92,7 +98,8 @@ const CompanyAttachProjectModal: React.FC<CompanyAttachProjectModalProps> = ({
               id="company-attach-project-trigger"
               type="button"
               onClick={() => setIsDropdownOpen((prev) => !prev)}
-              className="flex w-full items-center justify-between rounded-lg bg-[#F3F3F5] px-3 py-2 text-left text-sm tracking-[-0.15px] outline-none transition-colors focus:ring-1 focus:ring-scrumdone-blue-main"
+              disabled={isLoading || isSaving}
+              className="flex w-full items-center justify-between rounded-lg bg-[#F3F3F5] px-3 py-2 text-left text-sm tracking-[-0.15px] outline-none transition-colors focus:ring-1 focus:ring-scrumdone-blue-main disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span className={selectedProject ? 'text-slate-700' : 'text-slate-400'}>{selectedProjectLabel}</span>
               <ChevronDownIcon
@@ -102,7 +109,9 @@ const CompanyAttachProjectModal: React.FC<CompanyAttachProjectModalProps> = ({
 
             {isDropdownOpen ? (
               <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-lg border border-slate-200 bg-white p-1 shadow-md">
-                {availableProjects.length > 0 ? (
+                {isLoading ? (
+                  <p className="px-3 py-1.5 text-sm text-slate-500">Ładowanie projektów...</p>
+                ) : availableProjects.length > 0 ? (
                   availableProjects.map((project) => {
                     const isSelected = project.id === selectedProjectId;
 
@@ -129,20 +138,22 @@ const CompanyAttachProjectModal: React.FC<CompanyAttachProjectModalProps> = ({
         </div>
 
         <div className="relative z-10 flex items-center justify-end gap-3 pt-4">
+          {errorMessage ? <p className="mr-auto text-sm text-red-600">{errorMessage}</p> : null}
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50"
+            disabled={isSaving}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Anuluj
           </button>
           <button
             type="button"
             onClick={onSave}
-            disabled={!selectedProjectId}
+            disabled={!selectedProjectId || isLoading || isSaving}
             className="rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-scrumdone-blue-main"
           >
-            Podepnij
+            {isSaving ? 'Podpinanie…' : 'Podepnij'}
           </button>
         </div>
       </div>
