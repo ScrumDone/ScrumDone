@@ -12,7 +12,8 @@ interface WelcomePageTaskProps {
     colorVariant?: TaskColorVariant
     dotColorVariant?: TaskColorVariant
     badgeColorVariant?: TaskColorVariant
-    isBlocked?: boolean
+    isBlocked?: boolean,
+    labels?: { name: string; hexColor: string }[]
 }
 
 const colorVariantClassMap: Record<TaskColorVariant, { dot: string; badgeBorder: string; badgeText: string }> = {
@@ -42,6 +43,7 @@ const WelcomePageTask: React.FC<WelcomePageTaskProps> = ({
     dotColorVariant,
     badgeColorVariant,
     isBlocked = false,
+    labels = [],
 }) => {
     const dotClasses = colorVariantClassMap[dotColorVariant ?? colorVariant]
     const badgeClasses = colorVariantClassMap[badgeColorVariant ?? colorVariant]
@@ -78,26 +80,47 @@ const WelcomePageTask: React.FC<WelcomePageTaskProps> = ({
                 />
             </div>
 
-            {isBlocked ? (
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <div className="w-min rounded-lg border border-scrumdone-red-300 px-2 py-0.5">
-                        <p className="font-segoe-ui text-[0.75rem] leading-5 font-normal tracking-[0em] antialiased text-scrumdone-red-300">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+                {isBlocked ? (
+                    <>
+                        <div className="rounded-lg border border-scrumdone-red-300 px-2 py-0.5">
+                            <p className="font-segoe-ui text-[0.75rem] leading-5 font-normal tracking-[0em] antialiased text-scrumdone-red-300">
+                                {projectName}
+                            </p>
+                        </div>
+                        <div className="rounded-lg border border-scrumdone-red-300 px-2 py-0.5">
+                            <p className="font-segoe-ui text-[0.75rem] leading-5 font-medium tracking-[0em] antialiased text-scrumdone-red-600">
+                                Zablokowane
+                            </p>
+                        </div>
+                    </>
+                ) : (
+                    <div className={`rounded-lg border px-2 py-0.5 ${badgeClasses.badgeBorder}`}>
+                        <p className={`font-segoe-ui text-[0.75rem] leading-5 font-normal tracking-[0em] antialiased ${badgeClasses.badgeText}`}>
                             {projectName}
                         </p>
                     </div>
-                    <div className="w-min rounded-lg border border-scrumdone-red-300 px-2 py-0.5">
-                        <p className="font-segoe-ui text-[0.75rem] leading-5 font-medium tracking-[0em] antialiased text-scrumdone-red-600">
-                            Zablokowane
+                )}
+
+                {/* --- ZMIANA: Renderowanie dynamicznych etykiet --- */}
+                {labels.map((label, index) => (
+                    <div
+                        key={index} 
+                        className="rounded-lg border px-2 py-0.5" 
+                        style={{
+                            borderColor: label.hexColor,
+                            backgroundColor: `${label.hexColor}10`
+                        }}
+                    >
+                        <p 
+                            className="font-segoe-ui text-[0.75rem] leading-5 font-normal tracking-[0em] antialiased"
+                            style={{ color: label.hexColor }}
+                        >
+                            {label.name}
                         </p>
                     </div>
-                </div>
-            ) : (
-                <div className={`mb-2 w-min rounded-lg border px-2 py-0.5 ${badgeClasses.badgeBorder}`}>
-                    <p className={`font-segoe-ui text-[0.75rem] leading-5 font-normal tracking-[0em] antialiased ${badgeClasses.badgeText}`}>
-                        {projectName}
-                    </p>
-                </div>
-            )}
+                ))}
+            </div>
 
             <div className="flex items-center gap-2">
                 <h1 className="font-segoe-ui text-slate-600 text-[0.75rem] leading-6 font-normal tracking-[0em] antialiased">
