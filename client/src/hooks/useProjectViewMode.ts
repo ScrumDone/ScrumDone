@@ -10,13 +10,20 @@ const readStoredMode = (projectId: string | undefined): ProjectViewMode => {
   return stored === 'scrum' ? 'scrum' : 'kanban';
 };
 
-export function useProjectViewMode(projectId: string | undefined) {
+export function useProjectViewMode(
+  projectId: string | undefined,
+  isSetToScrum?: boolean,
+) {
   const [viewMode, setViewMode] = useState<ProjectViewMode>(() => readStoredMode(projectId));
 
   useEffect(() => {
     if (!projectId) return;
+    if (isSetToScrum !== undefined) {
+      setViewMode(isSetToScrum ? 'scrum' : 'kanban');
+      return;
+    }
     setViewMode(readStoredMode(projectId));
-  }, [projectId]);
+  }, [projectId, isSetToScrum]);
 
   useEffect(() => {
     if (!projectId) return;

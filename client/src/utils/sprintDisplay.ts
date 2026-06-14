@@ -1,5 +1,5 @@
 import type { SprintEditDraft } from '../components/SprintEditModal';
-import type { SprintDetail, SprintSummary, SprintUpdateDto } from '../types/sprint';
+import type { SprintCreateDto, SprintDetail, SprintSummary, SprintUpdateDto } from '../types/sprint';
 
 export type SprintStatus = SprintEditDraft['status'];
 
@@ -175,6 +175,70 @@ export const toSprintUpdateDto = (draft: SprintEditDraft): SprintUpdateDto | nul
     name,
     startDate: parseDisplayDateToIso(draft.startDate),
     endDate: parseDisplayDateToIso(draft.endDate),
+  };
+};
+
+const toDateInputValue = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const getDefaultDatesForSprintStatus = (status: SprintStatus): { startDate: string; endDate: string } => {
+  const today = startOfDay(new Date());
+
+  if (status === 'Zaplanowany') {
+    const start = new Date(today);
+    start.setDate(start.getDate() + 7);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 14);
+    return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
+  }
+
+  if (status === 'Ukończony') {
+    const end = new Date(today);
+    end.setDate(end.getDate() - 1);
+    const start = new Date(end);
+    start.setDate(start.getDate() - 14);
+    return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
+  }
+
+  const start = new Date(today);
+  const end = new Date(today);
+  end.setDate(end.getDate() + 14);
+  return { startDate: toDateInputValue(start), endDate: toDateInputValue(end) };
+};
+
+export const createEmptySprintDraft = (defaultTitle: string): SprintEditDraft => {
+  const dates = getDefaultDatesForSprintStatus('Zaplanowany');
+
+  return {
+    title: defaultTitle,
+    startDate: dates.startDate,
+    endDate: dates.endDate,
+    status: 'Zaplanowany',
+  };
+};
+
+export const toSprintCreateDto = (draft: SprintEditDraft): SprintCreateDto | null => {
+  const name = draft.title.trim();
+  if (!name) {
+    return null;
+  }
+
+  const startDate = parseDisplayDateToIso(draft.startDate);
+  const endDate = parseDisplayDateToIso(draft.endDate);
+
+  if (!startDate || !endDate) {
+    return null;
+  }
+
+  return {
+    name,
+    startDate,
+    endDate,
+    isKanban: false,
   };
 };
 

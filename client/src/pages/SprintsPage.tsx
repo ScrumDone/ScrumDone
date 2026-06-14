@@ -27,6 +27,7 @@ import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
 import CalendarPeopleFilter from '../components/calendarPeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
+import SprintCreateModal from '../components/SprintCreateModal';
 import { useCreateSprint } from '../hooks/useCreateSprint';
 import { useDeleteSprint } from '../hooks/useDeleteSprint';
 import { useProjectSprints } from '../hooks/useProjectSprints';
@@ -34,15 +35,18 @@ import { useProjectViewMode } from '../hooks/useProjectViewMode';
 import { useUpdateSprint } from '../hooks/useUpdateSprint';
 import {
   addDaysToDisplayDate,
+  createEmptySprintDraft,
   deriveSprintStatusFromDisplayDates,
   mapSprintSummaryToEditDraft,
   mapSprintSummaryToSprintCard,
+  toSprintCreateDto,
   toSprintEndDateUpdateDto,
   toSprintUpdateDto,
 } from '../utils/sprintDisplay';
 import { useAssignments } from '../hooks/useAssignments';
 import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities';
 import { useProject } from '../hooks/useProject';
+import { useUpdateProject } from '../hooks/useUpdateProject';
 import {
   buildPeopleFilterOptions,
   mapTeamMembersToPersonFilters,
@@ -248,7 +252,9 @@ const PriorityFilterSection: React.FC<{
 
 const SprintsPage: React.FC = () => {
   const { projectId = '' } = useParams();
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
+  const { data: project } = useProject(projectId);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId, project?.isSetToScrum);
+  const { mutate: updateProject } = useUpdateProject();
 
   const { mutate: updateAssignmentSprint } = useUpdateAssignmentSprint();
 
@@ -275,10 +281,20 @@ const SprintsPage: React.FC = () => {
   const {
     mutate: createSprint,
     isPending: isCreatingSprint,
+    isError: isCreateSprintError,
+    error: createSprintError,
+    reset: resetCreateSprint,
   } = useCreateSprint();
 
-  const { data: project } = useProject(projectId);
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
+
+  useEffect(() => {
+    if (!project || project.isSetToScrum) return;
+    updateProject(
+      { id: projectId, data: { isSetToScrum: true } },
+      { onSuccess: () => setProjectViewMode('scrum') },
+    );
+  }, [project, projectId, setProjectViewMode, updateProject]);
 
   const teamMembers = useMemo(
     () => mapTeamMembersToPersonFilters(project?.teamMembers ?? []),
@@ -374,6 +390,8 @@ const SprintsPage: React.FC = () => {
   const [dragOverSprintId, setDragOverSprintId] = useState<string | null>(null);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(() => new Set());
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createDraft, setCreateDraft] = useState<SprintEditDraft | null>(null);
   const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
   const [sprintDraft, setSprintDraft] = useState<SprintEditDraft | null>(null);
 
@@ -615,14 +633,50 @@ const SprintsPage: React.FC = () => {
 
   const sprintCount = sprintsQueryData?.totalCount ?? baseSprints.length;
 
-  const handleAddSprint = () => {
-    createSprint({
-      projectId,
-      data: {
-        name: `Sprint ${sprintCount + 1}`,
-        isKanban: false,
-      },
-    });
+  const createSprintErrorMessage = isCreateSprintError ? createSprintError?.message : null;
+
+  const openCreateModal = () => {
+    resetCreateSprint();
+    setCreateDraft(createEmptySprintDraft(`Sprint ${sprintCount + 1}`));
+    setIsCreateModalOpen(true);
+  };
+
+  const closeCreateModal = () => {
+    resetCreateSprint();
+    setIsCreateModalOpen(false);
+    setCreateDraft(null);
+  };
+
+  const handleCreateSprint = () => {
+    if (!createDraft) {
+      return;
+    }
+
+    const dto = toSprintCreateDto(createDraft);
+    if (!dto) {
+      return;
+    }
+
+    const submitCreate = () => {
+      createSprint(
+        { projectId, data: dto },
+        {
+          onSuccess: () => {
+            closeCreateModal();
+          },
+        },
+      );
+    };
+
+    if (project && !project.isSetToScrum) {
+      updateProject(
+        { id: projectId, data: { isSetToScrum: true } },
+        { onSuccess: submitCreate },
+      );
+      return;
+    }
+
+    submitCreate();
   };
 
   const renderSprintList = () => {
@@ -1006,8 +1060,8 @@ const SprintsPage: React.FC = () => {
                 </h2>
                 <button
                   type="button"
-                  onClick={handleAddSprint}
-                  disabled={isCreatingSprint || !projectId}
+                  onClick={openCreateModal}
+                  disabled={!projectId}
                   className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-scrumdone-blue-main px-4 py-2.5 font-segoe-ui text-[14px] leading-5 font-medium text-white transition-colors hover:bg-[#00A0DD] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <PlusIcon className="h-4 w-4 stroke-2" />
@@ -1136,6 +1190,16 @@ const SprintsPage: React.FC = () => {
           </DndContext>
         </section>
       </main>
+
+      <SprintCreateModal
+        isOpen={isCreateModalOpen}
+        draft={createDraft}
+        onClose={closeCreateModal}
+        onSave={handleCreateSprint}
+        onDraftChange={setCreateDraft}
+        isSaving={isCreatingSprint}
+        errorMessage={createSprintErrorMessage}
+      />
 
       <SprintEditModal
         isOpen={isSprintEditOpen}

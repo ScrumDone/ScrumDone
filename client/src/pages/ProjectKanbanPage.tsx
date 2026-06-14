@@ -301,7 +301,8 @@ const KanbanColumnView: React.FC<{
 
 const ProjectKanbanPage: React.FC = () => {
   const { projectId = '' } = useParams();
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
+  const { data: project } = useProject(projectId);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId, project?.isSetToScrum);
   const {
     data: sprintsData,
     isLoading: isSprintsLoading,
@@ -317,7 +318,6 @@ const ProjectKanbanPage: React.FC = () => {
     selectorSprints,
   );
 
-  const { data: project } = useProject(projectId);
   const { data: statuses } = useAssignmentStatuses();
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
 
