@@ -75,6 +75,7 @@ namespace ScrumDone.Api.Services
                 .Include(p => p.TeamMembers)
                     .ThenInclude(tm => tm.User)
                 .Include(p => p.Company)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(p => p.Id == id)
                 ?? throw new NotFoundException(nameof(Project), id);
 
@@ -133,6 +134,7 @@ namespace ScrumDone.Api.Services
                     .ThenInclude(a => a.Status)
                 .Include(p => p.TeamMembers)
                     .ThenInclude(tm => tm.User)
+                .AsSplitQuery()
                 .FirstAsync(p => p.Id == newProject.Id);
 
             return createdProject.ToDetailDto();
@@ -147,6 +149,7 @@ namespace ScrumDone.Api.Services
                     .ThenInclude(a => a.Status)
                 .Include(p => p.TeamMembers)
                     .ThenInclude(tm => tm.User)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(p => p.Id == id)
                 ?? throw new NotFoundException(nameof(Project), id);
 
