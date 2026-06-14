@@ -1,0 +1,105 @@
+using System.Reflection.Metadata.Ecma335;
+using Bogus.DataSets;
+using Microsoft.EntityFrameworkCore;
+using ScrumDone.Api.Data;
+using ScrumDone.Api.DTOs.Sprints;
+using ScrumDone.Api.Exceptions;
+using ScrumDone.Api.Mappers;
+using ScrumDone.Api.Services;
+
+namespace Scrumdone.Api.Services
+{
+    public class SprintsService : ISprintsService
+    {
+        private readonly AppDbContext _context;
+        public SprintsService(AppDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<SprintDetailDto> GetSprintByIdAsync(Guid id)
+        {
+            var sprint = await _context.Sprints
+                .AsNoTracking()
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Status) 
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Priority)
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Assignees)
+                        .ThenInclude(r => r.User)
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Labels)
+                        .ThenInclude(l => l.AssignmentLabel)
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.SubAssignments)
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Project)
+                .FirstOrDefaultAsync(s => s.Id == id)
+                ?? throw new NotFoundException(nameof(Sprint), id);
+
+            return sprint.ToDetailDto();
+        }
+
+        public async Task<SprintDetailDto> UpdateSprintAsync(Guid id, SprintUpdateDto dto)
+        {
+            var sprint = await _context.Sprints
+                .FirstOrDefaultAsync(s => s.Id == id)
+                ?? throw new NotFoundException(nameof(Sprint), id);
+
+            if (dto.StartDate.HasValue || dto.EndDate.HasValue)
+            {
+                var targetStartDate = dto.StartDate ?? sprint.StartDate;
+                var targetEndDate = dto.EndDate ?? sprint.EndDate;
+
+                bool isDateTaken = await _context.Sprints
+                    .AnyAsync(sp => sp.ProjectId == sprint.ProjectId 
+                                    && sp.Id != id 
+                                    && targetStartDate < sp.EndDate 
+                                    && targetEndDate > sp.StartDate);
+
+                if (isDateTaken)
+                {
+                    throw new ConflictException("Those dates are already taken by another sprint");
+                }
+            }
+
+            if (dto.SetProperties.Contains(nameof(dto.Name))) sprint.Name = dto.Name;
+            if (dto.SetProperties.Contains(nameof(dto.StartDate))) sprint.StartDate = dto.StartDate.Value;
+            if (dto.SetProperties.Contains(nameof(dto.EndDate))) sprint.EndDate = dto.EndDate.Value;
+
+            await _context.SaveChangesAsync();
+
+            sprint = await _context.Sprints
+                .AsNoTracking()
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Status) 
+                .Include(s => s.Assignments)
+                    .ThenInclude(a => a.Labels)
+                        .ThenInclude(l => l.AssignmentLabel)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(s => s.Id == id)
+                ?? throw new NotFoundException(nameof(Sprint), id);
+
+            return sprint.ToDetailDto();
+        }
+
+        public async Task DeleteSprintAsync(Guid id)
+        {
+            var sprint = await _context.Sprints
+                .Include(s => s.Project)
+                .FirstOrDefaultAsync(s => s.Id == id)
+                ?? throw new NotFoundException(nameof(Sprint), id);
+
+            if (!sprint.Project.IsSetToScrum)
+            {
+                throw new ConflictException("Sprints cannot be removed from Kanban projects");
+            }
+
+            _context.Sprints.Remove(sprint);
+            await _context.SaveChangesAsync();
+
+            return;
+        }
+    }
+}

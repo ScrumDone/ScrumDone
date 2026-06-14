@@ -16,6 +16,11 @@ namespace ScrumDone.Api.Validators.Projects
             RuleFor(x => x.Description)
                 .MaximumLength(1000);
 
+            RuleFor(x => x.TeamMemberIds)
+                    .Cascade(CascadeMode.Stop)
+                    .NotEmpty()
+                    .Must(ids => ids.Distinct().Count() == ids.Count());
+
             RuleFor(x => x.ExpectedFinishDate)
                 .GreaterThanOrEqualTo(x => x.StartDate)
                 .When(x => x.StartDate.HasValue && x.ExpectedFinishDate.HasValue);

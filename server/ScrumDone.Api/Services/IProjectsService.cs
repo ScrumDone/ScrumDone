@@ -26,6 +26,7 @@ namespace ScrumDone.Api.Services
         Task RemoveUserFromProjectAsync(Guid id, Guid userId);
 
         // sprints
+        Task<SprintDetailDto?> GetCurrentSprintAsync(Guid id);
         Task<PagedResultDto<SprintSummaryDto>> GetSprintsAsync(Guid id, SprintQueryDto query);
         Task<SprintSummaryDto> CreateSprintAsync(Guid id, SprintCreateDto dto);
 
