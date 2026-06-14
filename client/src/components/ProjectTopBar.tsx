@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeftIcon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from '@heroicons/react/24/outline';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useProject } from '../hooks/useProject';
 import { useUpdateProject } from '../hooks/useUpdateProject';
 import { useUpdateProjectMembers } from '../hooks/useUpdateProjectMembers';
+import { useDeleteProject } from '../hooks/useDeleteProject';
+import { useCompanies } from '../hooks/useCompanies';
 import { useUsers } from '../hooks/useUsers';
 import {
   haveSameMemberIds,
@@ -13,6 +15,7 @@ import {
   toProjectUpdateDto,
 } from '../utils/projectDisplay';
 import ProjectEditModal, { type EditProjectDraft } from './ProjectEditModal';
+import ProjectChangeClientModal from './ProjectChangeClientModal';
 
 interface ProjectTopBarProps {
   projectId: string;
@@ -40,8 +43,10 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   viewMode = 'kanban',
   onViewModeChange,
 }) => {
+  const navigate = useNavigate();
   const { data: projectData, isLoading, isError, error } = useProject(projectId);
   const { data: usersData } = useUsers(1, 100);
+  const { data: companiesData } = useCompanies(1, 100);
   const {
     mutate: updateProject,
     isPending: isSavingProject,
@@ -56,6 +61,13 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     error: updateMembersError,
     reset: resetUpdateMembers,
   } = useUpdateProjectMembers();
+  const {
+    mutate: deleteProject,
+    isPending: isDeleting,
+    isError: isDeleteError,
+    error: deleteError,
+    reset: resetDeleteProject,
+  } = useDeleteProject();
 
   const displayedProject = useMemo(
     () => (projectData ? mapProjectDetailToTopBar(projectData) : null),
@@ -68,14 +80,22 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   );
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isChangeClientModalOpen, setIsChangeClientModalOpen] = useState(false);
   const [draft, setDraft] = useState<EditProjectDraft>(emptyDraft);
+  const [isArchiving, setIsArchiving] = useState(false);
+  const [isChangingClient, setIsChangingClient] = useState(false);
 
   const isSaving = isSavingProject || isSavingMembers;
-  const saveErrorMessage = isUpdateProjectError
+  const saveErrorMessage = isUpdateProjectError && !isChangingClient && !isArchiving
     ? updateProjectError?.message
     : isUpdateMembersError
       ? updateMembersError?.message
       : null;
+  const deleteErrorMessage = isDeleteError ? deleteError?.message : null;
+  const changeClientErrorMessage = isUpdateProjectError && isChangingClient
+    ? updateProjectError?.message
+    : null;
+  const errorMessage = saveErrorMessage ?? deleteErrorMessage ?? changeClientErrorMessage;
 
   useEffect(() => {
     if (!projectData) {
@@ -91,18 +111,25 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     resetUpdateMembers();
   };
 
+  const resetMutations = () => {
+    resetSaveMutations();
+    resetDeleteProject();
+    setIsArchiving(false);
+    setIsChangingClient(false);
+  };
+
   const openEditModal = () => {
     if (!projectData) {
       return;
     }
 
-    resetSaveMutations();
+    resetMutations();
     setDraft(mapProjectDetailToEditDraft(projectData));
     setIsEditModalOpen(true);
   };
 
   const closeEditModal = () => {
-    resetSaveMutations();
+    resetMutations();
     setIsEditModalOpen(false);
   };
 
@@ -147,6 +174,71 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
       {
         onSuccess: () => {
           saveMembersIfChanged(currentMemberIds);
+        },
+      },
+    );
+  };
+
+  const handleDeleteProject = () => {
+    resetDeleteProject();
+    deleteProject(projectId, {
+      onSuccess: () => {
+        navigate('/projects');
+      },
+    });
+  };
+
+  const handleChangeClient = () => {
+    resetSaveMutations();
+    setIsChangeClientModalOpen(true);
+  };
+
+  const closeChangeClientModal = () => {
+    resetSaveMutations();
+    setIsChangeClientModalOpen(false);
+    setIsChangingClient(false);
+  };
+
+  const handleSaveClient = (companyId: string) => {
+    resetSaveMutations();
+    setIsChangingClient(true);
+
+    updateProject(
+      { id: projectId, data: { companyId } },
+      {
+        onSuccess: () => {
+          setIsChangingClient(false);
+          setIsChangeClientModalOpen(false);
+        },
+        onError: () => {
+          setIsChangingClient(false);
+        },
+      },
+    );
+  };
+
+  const handleArchiveProject = () => {
+    if (!projectData) {
+      return;
+    }
+
+    resetSaveMutations();
+    setIsArchiving(true);
+
+    const nextIsActive = !projectData.isActive;
+
+    updateProject(
+      { id: projectId, data: { isActive: nextIsActive } },
+      {
+        onSuccess: () => {
+          setIsArchiving(false);
+          closeEditModal();
+          if (!nextIsActive) {
+            navigate('/projects');
+          }
+        },
+        onError: () => {
+          setIsArchiving(false);
         },
       },
     );
@@ -271,12 +363,28 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
         isOpen={isEditModalOpen}
         draft={draft}
         members={teamMembers}
+        isActive={projectData?.isActive ?? true}
         onClose={closeEditModal}
         onSave={saveProjectChanges}
+        onChangeClient={handleChangeClient}
+        onArchive={handleArchiveProject}
+        onDelete={handleDeleteProject}
         onDraftChange={setDraft}
         onToggleMember={toggleMember}
         isSaving={isSaving}
-        errorMessage={saveErrorMessage}
+        isArchiving={isArchiving}
+        isDeleting={isDeleting}
+        errorMessage={errorMessage}
+      />
+
+      <ProjectChangeClientModal
+        isOpen={isChangeClientModalOpen}
+        companies={companiesData?.items ?? []}
+        currentCompanyId={projectData?.companyId ?? null}
+        onClose={closeChangeClientModal}
+        onSave={handleSaveClient}
+        isSaving={isChangingClient && isSavingProject}
+        errorMessage={changeClientErrorMessage}
       />
     </section>
   );

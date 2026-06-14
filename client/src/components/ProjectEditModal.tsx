@@ -26,11 +26,17 @@ type ProjectEditModalProps = {
   isOpen: boolean;
   draft: EditProjectDraft;
   members: TeamMemberOption[];
+  isActive: boolean;
   onClose: () => void;
   onSave: () => void;
+  onChangeClient: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
   onDraftChange: (updater: (prev: EditProjectDraft) => EditProjectDraft) => void;
   onToggleMember: (memberId: string) => void;
   isSaving?: boolean;
+  isArchiving?: boolean;
+  isDeleting?: boolean;
   errorMessage?: string | null;
 };
 
@@ -38,13 +44,20 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
   isOpen,
   draft,
   members,
+  isActive,
   onClose,
   onSave,
+  onChangeClient,
+  onArchive,
+  onDelete,
   onDraftChange,
   onToggleMember,
   isSaving = false,
+  isArchiving = false,
+  isDeleting = false,
   errorMessage = null,
 }) => {
+  const isBusy = isSaving || isArchiving || isDeleting;
   if (!isOpen) {
     return null;
   }
@@ -89,7 +102,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
               type="text"
               value={draft.name}
               onChange={(event) => onDraftChange((prev) => ({ ...prev, name: event.target.value }))}
-              disabled={isSaving}
+              disabled={isBusy}
               className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
             />
           </div>
@@ -103,7 +116,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
               value={draft.description}
               onChange={(event) => onDraftChange((prev) => ({ ...prev, description: event.target.value }))}
               rows={3}
-              disabled={isSaving}
+              disabled={isBusy}
               className="w-full resize-none rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
             />
           </div>
@@ -118,7 +131,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
                 type="text"
                 value={draft.startDate}
                 onChange={(event) => onDraftChange((prev) => ({ ...prev, startDate: event.target.value }))}
-                disabled={isSaving}
+                disabled={isBusy}
                 className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
               />
             </div>
@@ -132,7 +145,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
                 type="text"
                 value={draft.endDate}
                 onChange={(event) => onDraftChange((prev) => ({ ...prev, endDate: event.target.value }))}
-                disabled={isSaving}
+                disabled={isBusy}
                 className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
               />
             </div>
@@ -162,7 +175,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => onToggleMember(member.id)}
-                        disabled={isSaving}
+                        disabled={isBusy}
                         className="h-4 w-4 rounded border-slate-300 accent-slate-900 disabled:opacity-60"
                         aria-label={`Wybierz ${member.fullName}`}
                       />
@@ -179,7 +192,9 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
             <div className="space-y-2">
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#2563EB] transition-colors hover:bg-slate-50"
+                onClick={onChangeClient}
+                disabled={isBusy}
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#2563EB] transition-colors hover:bg-slate-50 disabled:opacity-60"
               >
                 <BuildingOffice2Icon className="h-4 w-4" />
                 <span className="text-sm tracking-[-0.15px] leading-5">Zmień klienta</span>
@@ -187,18 +202,42 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
 
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50"
+                onClick={() => {
+                  const projectName = draft.name.trim() || 'ten projekt';
+                  const message = isActive
+                    ? `Czy na pewno chcesz zarchiwizować projekt „${projectName}"? Projekt zniknie z listy aktywnych.`
+                    : `Czy na pewno chcesz przywrócić projekt „${projectName}" z archiwum?`;
+
+                  if (window.confirm(message)) {
+                    onArchive();
+                  }
+                }}
+                disabled={isBusy}
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50 disabled:opacity-60"
               >
                 <ArchiveBoxIcon className="h-4 w-4" />
-                <span className="text-sm tracking-[-0.15px] leading-5">Archiwizuj projekt</span>
+                <span className="text-sm tracking-[-0.15px] leading-5">
+                  {isArchiving
+                    ? (isActive ? 'Archiwizowanie…' : 'Przywracanie…')
+                    : (isActive ? 'Archiwizuj projekt' : 'Przywróć z archiwum')}
+                </span>
               </button>
 
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#DC2626] transition-colors hover:bg-red-100"
+                onClick={() => {
+                  const projectName = draft.name.trim() || 'ten projekt';
+                  if (window.confirm(`Czy na pewno chcesz usunąć projekt „${projectName}"? Ta akcja jest nieodwracalna.`)) {
+                    onDelete();
+                  }
+                }}
+                disabled={isBusy}
+                className="flex w-full items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#DC2626] transition-colors hover:bg-red-100 disabled:opacity-60"
               >
                 <TrashIcon className="h-4 w-4" />
-                <span className="text-sm tracking-[-0.15px] leading-5">Usuń projekt</span>
+                <span className="text-sm tracking-[-0.15px] leading-5">
+                  {isDeleting ? 'Usuwanie…' : 'Usuń projekt'}
+                </span>
               </button>
             </div>
           </div>
@@ -208,7 +247,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            disabled={isSaving}
+            disabled={isBusy}
             className="rounded-lg border border-slate-200 bg-white px-4 py-2 font-segoe-ui text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
           >
             Anuluj
@@ -216,7 +255,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
           <button
             type="button"
             onClick={onSave}
-            disabled={isSaving || !draft.name.trim()}
+            disabled={isBusy || !draft.name.trim()}
             className="rounded-lg bg-scrumdone-blue-main px-4 py-2 font-segoe-ui text-sm font-medium text-white hover:bg-[#00A0DD] disabled:opacity-50"
           >
             {isSaving ? 'Zapisywanie…' : 'Zapisz zmiany'}
