@@ -19,6 +19,10 @@ namespace ScrumDone.Api.Validators.Projects
             RuleFor(x => x.HexColor)
                 .Matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
                 .When(x => x is not null);
+            RuleFor(x => x.TeamMemberIds)
+                    .Cascade(CascadeMode.Stop)
+                    .NotEmpty()
+                    .Must(ids => ids.Distinct().Count() == ids.Count());
 
             RuleFor(x => x.ExpectedFinishDate)
                 .GreaterThanOrEqualTo(x => x.StartDate)

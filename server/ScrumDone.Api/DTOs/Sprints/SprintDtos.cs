@@ -6,34 +6,33 @@ namespace ScrumDone.Api.DTOs.Sprints
     public record SprintSummaryDto(
         Guid Id,
         string? Name,
+        string? State,
         DateTimeOffset CreatedAt,
         DateTimeOffset? StartDate,
         DateTimeOffset? EndDate,
         bool IsKanban,
         int AssignmentCount,
-        int CompletedCount,       // frontend calculates percentage and planned/active/finished
-        IEnumerable<AssignmentListItemDto>? Assignments 
+        int CompletedCount      // frontend calculates percentage and planned/active/finished
     );
 
 
     public record SprintDetailDto(
         Guid Id,
         string? Name,
+        string State,
         DateTimeOffset CreatedAt,
         DateTimeOffset? StartDate,
         DateTimeOffset? EndDate,
         bool IsKanban,
         int AssignmentCount,
-        int CompletedCount,
-        IEnumerable<AssignmentListItemDto> Assignments
+        int CompletedCount
     );
 
     public class SprintCreateDto
     {
         public string? Name { get; set; }
-        public DateTimeOffset? StartDate { get; set; }
-        public DateTimeOffset? EndDate { get; set; }
-        public bool IsKanban { get; set; } = false;
+        public DateTimeOffset StartDate { get; set; }
+        public DateTimeOffset EndDate { get; set; }
     }
 
     // Update — PATCH partial update pattern

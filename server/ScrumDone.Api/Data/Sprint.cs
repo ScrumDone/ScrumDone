@@ -6,8 +6,8 @@ namespace ScrumDone.Api.Data
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }
-        public DateTimeOffset? StartDate { get; set; }
-        public DateTimeOffset? EndDate { get; set; }
+        public DateTimeOffset StartDate { get; set; }
+        public DateTimeOffset EndDate { get; set; }
         public bool IsKanban { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }

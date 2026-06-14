@@ -11,16 +11,37 @@ namespace ScrumDone.Api.Mappers
     {
         [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.AssignmentCount), Use = nameof(CountAssignments))]
         [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.CompletedCount), Use = nameof(CountCompleted))]
-        [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.Assignments), Use = nameof(MapAssignments))]
+        [MapProperty(nameof(Sprint), nameof(SprintSummaryDto.State), Use = nameof(CalculateState))]
+        // [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.Assignments), Use = nameof(MapAssignments))]
         public static partial SprintSummaryDto ToSummaryDto(this Sprint sprint);
 
         [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.AssignmentCount), Use = nameof(CountAssignments))]
         [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.CompletedCount), Use = nameof(CountCompleted))]
-        [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.Assignments), Use = nameof(MapAssignments))]
+        [MapProperty(nameof(Sprint), nameof(SprintSummaryDto.State), Use = nameof(CalculateState))]
+        // [MapProperty(nameof(Sprint.Assignments), nameof(SprintSummaryDto.Assignments), Use = nameof(MapAssignments))]
         public static partial SprintDetailDto ToDetailDto(this Sprint sprint);
 
         private static int CountAssignments(ICollection<Assignment> assignments) => assignments.Count();
-        private static int CountCompleted(ICollection<Assignment> assignments) => assignments.Count(a => a.Status?.Name == "Completed");
+        private static int CountCompleted(ICollection<Assignment> assignments) => assignments.Count(a => a.Status?.Name == "Done");
+
+        private static string? CalculateState(Sprint sprint)
+        {
+            if (sprint.IsKanban && sprint.StartDate < DateTimeOffset.UtcNow)
+            {
+                return "Active";
+            }
+
+            if (sprint.StartDate < DateTimeOffset.UtcNow && DateTimeOffset.UtcNow < sprint.EndDate)
+                return "Active";
+
+            if (sprint.StartDate > DateTimeOffset.UtcNow)
+                return "Planned";
+
+            if (sprint.EndDate < DateTimeOffset.UtcNow)
+                return "Finished";
+            
+            return "Being planned";
+        }
 
         private static IEnumerable<AssignmentListItemDto> MapAssignments(ICollection<Assignment>? assignments) 
         {

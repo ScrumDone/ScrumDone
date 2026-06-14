@@ -26,6 +26,7 @@ namespace ScrumDone.Api.Services
         Task RemoveUserFromProjectAsync(Guid id, Guid userId);
 
         // sprints
+        Task<SprintDetailDto?> GetCurrentSprintAsync(Guid id);
         Task<PagedResultDto<SprintSummaryDto>> GetSprintsAsync(Guid id, SprintQueryDto query);
         Task<SprintSummaryDto> CreateSprintAsync(Guid id, SprintCreateDto dto);
 
@@ -34,8 +35,5 @@ namespace ScrumDone.Api.Services
         Task<AssignmentLabelDto> CreateAssignmentLabelAsync(Guid id, AssignmentLabelCreateDto dto);
         Task<AssignmentLabelDto> UpdateAssignmentLabelAsync(Guid id, Guid labelId, AssignmentLabelUpdateDto dto);
         Task DeleteAssignmentLabelAsync(Guid id, Guid labelId);
-
-        // statuses
-        Task<IEnumerable<AssignmentStatusDto>> GetAssignmentStatuses();
     }
 }

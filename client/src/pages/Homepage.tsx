@@ -6,6 +6,8 @@ import NewsFeed from '../components/newsFeed'
 import ProjectsOverview from '../components/projectsOverview'
 import { useAssignments } from '../hooks/useAssignments'
 import type { Assignment } from '../types/assignment'; 
+import { useState} from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react'; 
 
 const Homepage: React.FC = () => {
     // // Pobieramy zadania
@@ -19,15 +21,21 @@ const Homepage: React.FC = () => {
     // 1. Obliczamy datę
     const today = new Date().toISOString().split('T')[0];
 
+    const [currentPage, setCurrentPage] = useState(1)
+
     // 2. Pobieramy zadania przefiltrowane przez API
     const { data: assignments, isLoading } = useAssignments({
         DueFrom: `${today}T00:00:00Z`, 
-        DueTo: `${today}T23:59:59Z`
+        DueTo: `${today}T23:59:59Z`,
+        Page: currentPage,
+        Limit: 3 // Ustawiamy limit na 3
     });
 
     // 3. Przypisujemy wyniki (teraz `assignments.items` zawiera już tylko zadania na dziś)
     const todaysTasks = assignments?.items || [];
 
+    const hasNextPage = assignments?.hasNextPage ?? false;
+    const hasPreviousPage = assignments?.hasPreviousPage ?? false;
 
     return (
         <div className="min-h-screen w-full bg-[#F9FAFB]">
@@ -47,32 +55,53 @@ const Homepage: React.FC = () => {
                                 {isLoading ? (
                                     <p className="text-sm text-slate-500">Pobieranie zadań...</p>
                                 ) : todaysTasks.length > 0 ? (
-                                    todaysTasks.map((task: Assignment) => {
-                                        // Pobieramy pierwszego przypisanego użytkownika (jeśli istnieje)
-                                        const user = task.assignees?.[0];
-                                        
-                                        // Wyciągamy dane z obiektu UserSummary
-                                        const fullName = user ? user.name : "Nieprzypisany";
-                                        
-                                        // Generujemy inicjały z pola name (np. "Artur Nowak" -> "AN")
-                                        const initials = user 
-                                            ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) 
-                                            : "??";
+                                    <>
+                                        {/* Lista zadań */}
+                                        {todaysTasks.map((task: Assignment) => {
+                                            const user = task.assignees?.[0];
+                                            const fullName = user ? user.name : "Nieprzypisany";
+                                            const initials = user
+                                                ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                                                : "??";
 
-                                        return (
-                                            <WelcomePageTask
-                                                key={task.id}
-                                                taskName={task.name}
-                                                projectName={task.projectName || "Brak projektu"}
-                                                initials={initials}
-                                                fullName={fullName}
-                                                colorVariant="red"
-                                                dotColorVariant="red"
-                                                badgeColorVariant="red"
-                                                isBlocked={false}
-                                            />
-                                        )
-                                    })
+                                            return (
+                                                <WelcomePageTask
+                                                    key={task.id}
+                                                    taskName={task.name}
+                                                    projectName={task.projectName || "Brak projektu"}
+                                                    initials={initials}
+                                                    fullName={fullName}
+                                                    colorVariant="red"
+                                                    dotColorVariant="red"
+                                                    badgeColorVariant="red"
+                                                    isBlocked={false}
+                                                />
+                                            );
+                                        })}
+
+                                        {/* Paginacja */}
+                                        <div className="flex items-center justify-between mt-4 border-t border-gray-100 pt-3">
+                                            <button
+                                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                                disabled={!hasPreviousPage || isLoading}
+                                                className="flex items-center gap-1 text-sm text-slate-600 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                                Poprzednia
+                                            </button>
+
+                                            <span className="text-xs font-medium text-slate-400">Strona {currentPage}</span>
+
+                                            <button
+                                                onClick={() => setCurrentPage(prev => prev + 1)}
+                                                disabled={!hasNextPage || isLoading}
+                                                className="flex items-center gap-1 text-sm text-slate-600 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                            >
+                                                Następna
+                                                <ChevronRight className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </>
                                 ) : (
                                     <p className="text-sm text-slate-500">Brak zadań na dzisiaj!</p>
                                 )}

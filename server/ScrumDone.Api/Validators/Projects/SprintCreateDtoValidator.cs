@@ -14,8 +14,11 @@ namespace ScrumDone.Api.Validators.Projects
                 .MaximumLength(200);
 
             RuleFor(x => x.EndDate)
-                .GreaterThanOrEqualTo(x => x.StartDate)
-                .When(x => x.StartDate.HasValue && x.EndDate.HasValue);
+                .NotNull()
+                .GreaterThan(x => x.StartDate);
+
+            RuleFor(x => x.StartDate)
+                .NotNull();
         }
     }
 }

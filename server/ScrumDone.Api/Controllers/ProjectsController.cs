@@ -130,6 +130,16 @@ namespace ScrumDone.Api.Controllers
         }
 
         // /projects/{id}/sprints
+        [HttpGet("{id}/sprints/current")]
+        [ProducesResponseType(typeof(SprintDetailDto), StatusCodes.Status200OK)]  // ← Summary
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCurrentSprint(
+            [FromRoute] Guid id)
+        {
+            var result = await _projectsService.GetCurrentSprintAsync(id);
+            return Ok(result);
+        }
+
 
         [HttpGet("{id}/sprints")]
         [ProducesResponseType(typeof(PagedResultDto<SprintSummaryDto>), StatusCodes.Status200OK)]  // ← Summary
@@ -214,17 +224,6 @@ namespace ScrumDone.Api.Controllers
         {
             await _projectsService.DeleteAssignmentLabelAsync(id, labelId);
             return NoContent();
-        }
-
-        // /projects/{id}/statuses
-
-        [HttpGet("{id}/statuses")]
-        [ProducesResponseType(typeof(IEnumerable<AssignmentStatusDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IEnumerable<AssignmentStatusDto>> GetUsers()
-        {
-            var result = await _projectsService.GetAssignmentStatuses();
-            return result;
         }
     }
 

@@ -112,6 +112,31 @@ export const toProjectUpdateDto = (draft: ProjectEditDraft): ProjectUpdateDto | 
   };
 };
 
+export type ProjectStageCounts = {
+  done: number;
+  inProgress: number;
+  blocked: number;
+};
+
+export const getProjectStageCounts = (project: ProjectListItem): ProjectStageCounts => {
+  let done = 0;
+  let blocked = 0;
+  let inProgress = 0;
+
+  for (const status of project.assignmentStatusCounts) {
+    const name = status.statusName.toLowerCase();
+    if (name === 'done') {
+      done += status.count;
+    } else if (name === 'blocked') {
+      blocked += status.count;
+    } else {
+      inProgress += status.count;
+    }
+  }
+
+  return { done, inProgress, blocked };
+};
+
 export const computeProjectProgress = (project: ProjectListItem): number => {
   if (project.assignmentCount === 0) {
     return 0;

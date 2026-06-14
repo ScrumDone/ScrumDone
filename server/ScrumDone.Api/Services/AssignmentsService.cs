@@ -8,6 +8,7 @@ using ScrumDone.Api.DTOs.Assignments;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Users;
 using ScrumDone.Api.Exceptions;
+using ScrumDone.Api.Mappers;
 using System.ComponentModel;
 using System.Net.NetworkInformation;
 using System.Reflection.Emit;
@@ -329,6 +330,21 @@ namespace ScrumDone.Api.Services
                 p.HexColor,
                 p.Order
             )); 
+        }
+
+        // statuses
+
+        public async Task<IEnumerable<AssignmentStatusDto>> GetStatusesAsync()
+        {
+            var statuses = await _context.AssignmentStatuses.OrderBy(s => s.Order).ToListAsync();
+            var total = statuses.Count();
+            
+            return statuses.Select(s => new AssignmentStatusDto(
+                s.Id,
+                s.Name,
+                s.HexColor,
+                s.Order
+            ));
         }
     }
 }
