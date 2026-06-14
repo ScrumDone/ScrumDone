@@ -249,31 +249,6 @@ const ProjectKanbanPage: React.FC = () => {
     setActiveTask(sourceColumn?.tasks.find((t) => t.id === activeId) ?? null);
   };
 
-  //Task: Connect project kanban board to assignments API #233
-  // const handleDragEnd = ({ active, over }: DragEndEvent) => {
-  //   setActiveTask(null);
-  //   if (!over) return;
-
-  //   const activeId = String(active.id);
-  //   const overId = String(over.id);
-
-  //   const sourceColumn = findColumnByTaskId(activeId);
-  //   const targetColumn = columns.find((col) => col.id === overId) ?? findColumnByTaskId(overId);
-
-  //   if (!sourceColumn || !targetColumn || sourceColumn.id === targetColumn.id) return;
-
-  //   const taskToMove = sourceColumn.tasks.find((t) => t.id === activeId);
-  //   if (!taskToMove) return;
-
-  //   setColumns((prev) =>
-  //     prev.map((col) => {
-  //       if (col.id === sourceColumn.id) return { ...col, tasks: col.tasks.filter((t) => t.id !== activeId) };
-  //       if (col.id === targetColumn.id) return { ...col, tasks: [...col.tasks, taskToMove] };
-  //       return col;
-  //     })
-  //   );
-  // };
-
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setActiveTask(null);
     if (!over) return;
@@ -281,10 +256,12 @@ const ProjectKanbanPage: React.FC = () => {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    // Jeśli upuszczono na kolumnę (overId jest ID kolumny)
-    if (activeId !== overId) {
-      updateStatus({ id: activeId, statusId: overId });
-    }
+    const sourceColumn = findColumnByTaskId(activeId);
+    const targetColumn = columns.find((col) => col.id === overId) ?? findColumnByTaskId(overId);
+
+    if (!sourceColumn || !targetColumn || sourceColumn.id === targetColumn.id) return;
+
+    updateStatus({ id: activeId, statusId: targetColumn.id });
   };
 
   const renderSprintSelector = () => {
