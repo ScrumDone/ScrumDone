@@ -24,7 +24,6 @@ import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
 import { useDeleteCompany } from '../hooks/useDeleteCompany';
 import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
 import {useDeleteCompanyContact} from '../hooks/useDeleteCompanyContact';
-import { useQueryClient } from '@tanstack/react-query';
 import { mapProjectListItemToCard } from '../utils/projectDisplay';
 
 //TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
@@ -104,8 +103,6 @@ const mapCooperationLogToHistoryItem = (log: CooperationLog): CooperationHistory
 };
 
 const CompanyDetailsPage: React.FC = () => {
-  const queryClient = useQueryClient();
-
   const { companyId = '' } = useParams<{ companyId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
