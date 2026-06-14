@@ -28,6 +28,7 @@ import Avatar from '../components/Avatar';
 import CalendarPeopleFilter from '../components/calendarPeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
 import SprintCreateModal from '../components/SprintCreateModal';
+import TaskCreateModal from '../components/TaskCreateModal';
 import { useCreateSprint } from '../hooks/useCreateSprint';
 import { useDeleteSprint } from '../hooks/useDeleteSprint';
 import { useProjectSprints } from '../hooks/useProjectSprints';
@@ -391,6 +392,7 @@ const SprintsPage: React.FC = () => {
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(() => new Set());
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [createDraft, setCreateDraft] = useState<SprintEditDraft | null>(null);
   const [editingSprintId, setEditingSprintId] = useState<string | null>(null);
   const [sprintDraft, setSprintDraft] = useState<SprintEditDraft | null>(null);
@@ -1159,6 +1161,7 @@ const SprintsPage: React.FC = () => {
                   </h3>
                   <button
                     type="button"
+                    onClick={() => setIsTaskModalOpen(true)}
                     className="flex h-6 w-6 items-center justify-center rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium text-white hover:bg-blue-600"
                     title="Dodaj zadanie"
                   >
@@ -1190,6 +1193,13 @@ const SprintsPage: React.FC = () => {
           </DndContext>
         </section>
       </main>
+
+      <TaskCreateModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        teamMembers={teamMembers}
+        projectId={projectId}
+      />
 
       <SprintCreateModal
         isOpen={isCreateModalOpen}
