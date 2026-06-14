@@ -47,7 +47,7 @@ const ProjectOverviewCard: React.FC<{ project: ProjectListItem }> = ({ project }
             className="block rounded-xl border border-gray-200 p-4 transition-shadow hover:shadow-md"
         >
             <div className="mb-3 flex items-start justify-between gap-3">
-                <h2 className="font-segoe-ui text-[18px] leading-6.75 font-normal text-slate-900 antialiased">
+                <h2 className="font-segoe-ui text-[16px] leading-5.75 font-normal text-slate-900 antialiased">
                     {project.name}
                 </h2>
                 {isOfftrack ? (
