@@ -22,14 +22,14 @@ namespace ScrumDone.Api.Mappers
         [MapProperty(nameof(Project.CreatedAt), nameof(ProjectDetailDto.StartDate))]
         [MapProperty(nameof(Project.TeamMembers), nameof(ProjectDetailDto.TeamMemberCount), Use = nameof(CountTeam))]
         [MapProperty(nameof(Project.TeamMembers), nameof(ProjectDetailDto.TeamMembers), Use = nameof(MapTeam))]
-        [MapProperty(nameof(Project.Sprints), nameof(ProjectDetailDto.Sprints), Use = nameof(MapSprints))]
+        [MapProperty(nameof(Project), nameof(ProjectDetailDto.Sprints), Use = nameof(MapSprints))]
         [MapProperty(nameof(Project.Assignments), nameof(ProjectDetailDto.AssignmentCount), Use = nameof(CountAssignments))]
         [MapProperty(nameof(Project.Assignments), nameof(ProjectDetailDto.AssignmentStatusCounts), Use = nameof(CountStatus))]
         public static partial ProjectDetailDto ToDetailDto(this Project project);
 
         private static int CountTeam(ICollection<ProjectUserMTMRelation>? teamMembers) => teamMembers?.Count ?? 0;
         private static int CountAssignments(ICollection<Assignment>? assignments) => assignments?.Count ?? 0;
-        private static IEnumerable<SprintSummaryDto> MapSprints(ICollection<Sprint>? sprints) => sprints?.Select(s => s.ToSummaryDto()).ToArray() ?? Array.Empty<SprintSummaryDto>();
+        private static IEnumerable<SprintSummaryDto> MapSprints(Project project) => project.Sprints?.Where(s => s.IsKanban == !project.IsSetToScrum).Select(s => s.ToSummaryDto()).ToArray() ?? Array.Empty<SprintSummaryDto>();
 
         private static IEnumerable<UserSummaryDto> MapTeam(ICollection<ProjectUserMTMRelation>? teamMembers)
         {
@@ -46,7 +46,8 @@ namespace ScrumDone.Api.Mappers
 
             return assignments
                 .Where(a => a.Status != null)
-                .GroupBy(a => a.Status)
+                // ZMIANA TUTAJ: Grupujemy po anonimowym obiekcie z konkretnymi właściwościami
+                .GroupBy(a => new { a.Status.Id, a.Status.Name, a.Status.HexColor })
                 .Select(g => new AssignmentStatusCountDto(
                     StatusId: g.Key.Id,
                     StatusName: g.Key.Name,

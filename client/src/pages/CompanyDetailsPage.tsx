@@ -1,14 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
 import CompanyAttachProjectModal from '../components/CompanyAttachProjectModal';
-import { projects } from '../data/projects';
+import CompanyProjectListItem from '../components/CompanyProjectListItem';
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
 import { useCompany } from '../hooks/useCompany';
+import { useProjects } from '../hooks/useProjects';
+import { useUpdateProject } from '../hooks/useUpdateProject';
 import { useAddCompanyContact } from '../hooks/useAddCompanyContact';
 import { useAddCompanyNote } from '../hooks/useAddCompanyNote';
 import { useCompanyNotes } from '../hooks/useCompanyNotes';
@@ -22,6 +25,9 @@ import { useDeleteCompany } from '../hooks/useDeleteCompany';
 import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
 import {useDeleteCompanyContact} from '../hooks/useDeleteCompanyContact';
 import { useQueryClient } from '@tanstack/react-query';
+import { mapProjectListItemToCard } from '../utils/projectDisplay';
+
+//TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
 const emptyDisplay = (value: string | null | undefined) => value?.trim() || '—';
 
@@ -102,6 +108,7 @@ const CompanyDetailsPage: React.FC = () => {
 
   const { companyId = '' } = useParams<{ companyId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { mutate: deleteCompany } = useDeleteCompany();
   const { mutate: deleteLog } = useDeleteCompanyLog(companyId);
@@ -171,7 +178,7 @@ const CompanyDetailsPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isContactAddModalOpen, setIsContactAddModalOpen] = useState(false);
   const [isAttachProjectModalOpen, setIsAttachProjectModalOpen] = useState(false);
-  const [selectedAttachProjectId, setSelectedAttachProjectId] = useState<number | null>(null);
+  const [selectedAttachProjectId, setSelectedAttachProjectId] = useState<string | null>(null);
   const [draft, setDraft] = useState<CompanyEditDraft>({
     name: '',
     nip: '',
@@ -221,6 +228,26 @@ const CompanyDetailsPage: React.FC = () => {
   } = useAddCompanyNote();
   const { mutate: updateNote, isPending: isUpdatingNote } = useUpdateCompanyNote();
   const { mutate: deleteNote, isPending: isDeletingNote } = useDeleteCompanyNote();
+  const {
+    mutate: attachProject,
+    isPending: isAttachingProject,
+    isError: isAttachProjectError,
+    error: attachProjectError,
+    reset: resetAttachProject,
+  } = useUpdateProject();
+  const {
+    data: attachProjectsData,
+    isLoading: isAttachProjectsLoading,
+  } = useProjects({ page: 1, limit: 100 }, { enabled: isAttachProjectModalOpen });
+  const {
+    data: companyProjectsData,
+    isLoading: isCompanyProjectsLoading,
+    isError: isCompanyProjectsError,
+    error: companyProjectsError,
+  } = useProjects(
+    { companyId, page: 1, limit: 100, isActive: true },
+    { enabled: Boolean(companyId) },
+  );
 
   const totalNotesCount = notesData?.totalCount ?? 0;
   const cooperationHistory = useMemo(
@@ -228,13 +255,22 @@ const CompanyDetailsPage: React.FC = () => {
     [logsData?.items],
   );
 
-  const availableAttachProjects = useMemo(
-    () =>
-      displayedCompany
-        ? projects.filter((project) => project.clientName !== displayedCompany.name)
-        : [],
-    [displayedCompany?.name],
+  const availableAttachProjects = useMemo(() => {
+    if (!displayedCompany) {
+      return [];
+    }
+
+    return (attachProjectsData?.items ?? []).filter(
+      (project) => project.companyId !== displayedCompany.id,
+    );
+  }, [attachProjectsData?.items, displayedCompany?.id]);
+
+  const companyProjectCards = useMemo(
+    () => (companyProjectsData?.items ?? []).map(mapProjectListItemToCard),
+    [companyProjectsData?.items],
   );
+
+  const companyProjectsCount = companyProjectsData?.totalCount ?? displayedCompany?.projectCount ?? 0;
 
   useEffect(() => {
     if (!displayedCompany) return;
@@ -407,17 +443,35 @@ const CompanyDetailsPage: React.FC = () => {
   };
 
   const openAttachProjectModal = () => {
+    resetAttachProject();
     setSelectedAttachProjectId(null);
     setIsAttachProjectModalOpen(true);
   };
 
   const closeAttachProjectModal = () => {
+    resetAttachProject();
     setIsAttachProjectModalOpen(false);
     setSelectedAttachProjectId(null);
   };
 
   const saveAttachProject = () => {
-    closeAttachProjectModal();
+    if (!selectedAttachProjectId || !displayedCompany) {
+      return;
+    }
+
+    attachProject(
+      {
+        id: selectedAttachProjectId,
+        data: { companyId: displayedCompany.id },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['companies', displayedCompany.id] });
+          queryClient.invalidateQueries({ queryKey: ['companies'] });
+          closeAttachProjectModal();
+        },
+      },
+    );
   };
 
   const toggleNoteMenu = (noteId: string) => {
@@ -695,7 +749,7 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('projects')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'projects' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Aktywne projekty ({displayedCompany.projectCount})
+                  Aktywne projekty ({isCompanyProjectsLoading ? '...' : companyProjectsCount})
                 </button>
                 <button
                   type="button"
@@ -724,12 +778,27 @@ const CompanyDetailsPage: React.FC = () => {
             </div>
 
             {activeTab === 'projects' && (
-              <section className="mx-8 mb-8 border border-gray-200 rounded-[14px] overflow-hidden transition-shadow duration-200 hover:shadow-md">
-                <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
-                  {displayedCompany.projectCount > 0
-                    ? `Firma ma ${displayedCompany.projectCount} powiązanych projektów. Lista pojawi się po podłączeniu API projektów.`
-                    : 'Brak aktywnych projektów powiązanych z tą firmą.'}
-                </div>
+              <section className="mx-8 mb-8 space-y-6">
+                {isCompanyProjectsLoading && (
+                  <p className="text-sm text-slate-500 animate-pulse">Ładowanie projektów...</p>
+                )}
+
+                {isCompanyProjectsError && (
+                  <p className="text-sm text-red-700">
+                    Nie udało się załadować projektów{companyProjectsError?.message ? `: ${companyProjectsError.message}` : '.'}
+                  </p>
+                )}
+
+                {!isCompanyProjectsLoading && !isCompanyProjectsError && companyProjectCards.length > 0 &&
+                  companyProjectCards.map((project) => (
+                    <CompanyProjectListItem key={project.id} {...project} />
+                  ))}
+
+                {!isCompanyProjectsLoading && !isCompanyProjectsError && companyProjectCards.length === 0 && (
+                  <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                    Brak aktywnych projektów powiązanych z tą firmą.
+                  </div>
+                )}
               </section>
             )}
 
@@ -972,6 +1041,9 @@ const CompanyDetailsPage: React.FC = () => {
         companyName={displayedCompany.name}
         availableProjects={availableAttachProjects}
         selectedProjectId={selectedAttachProjectId}
+        isLoading={isAttachProjectsLoading}
+        isSaving={isAttachingProject}
+        errorMessage={isAttachProjectError ? attachProjectError?.message : null}
         onClose={closeAttachProjectModal}
         onSave={saveAttachProject}
         onProjectSelect={setSelectedAttachProjectId}

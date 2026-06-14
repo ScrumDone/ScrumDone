@@ -3,6 +3,7 @@ using MicroElements.AspNetCore.OpenApi.FluentValidation;
 using MicroElements.OpenApi.FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Scrumdone.Api.Services;
 using ScrumDone.Api.Data;
 using ScrumDone.Api.Middleware;
 using ScrumDone.Api.Services;
@@ -53,6 +54,7 @@ builder.Services.AddRouting(options =>
 builder.Services.AddTransient<ICompaniesService, CompaniesService>();
 builder.Services.AddTransient<IProjectsService, ProjectsService>();
 builder.Services.AddTransient<IAssignmentsService, AssignmentsService>();
+builder.Services.AddTransient<ISprintsService, SprintsService>();
 builder.Services.AddTransient<IUsersService, UsersService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
