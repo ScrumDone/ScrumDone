@@ -160,7 +160,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     }
 
     updateProjectMembers(
-      { id: projectId, data: { userIds: draft.memberIds } },
+      { id: projectId, userIds: draft.memberIds, currentUserIds: currentMemberIds },
       {
         onSuccess: () => {
           closeEditModal();
