@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon, PlusIcon } from '@heroicons/react/24/outline';
 import {
   DndContext,
   DragOverlay,
@@ -27,6 +27,7 @@ import ProjectTopBar from '../components/ProjectTopBar';
 import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
+import { useCreateSprint } from '../hooks/useCreateSprint';
 import { useDeleteSprint } from '../hooks/useDeleteSprint';
 import { useProjectSprints } from '../hooks/useProjectSprints';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
@@ -362,7 +363,11 @@ const SprintsPage: React.FC = () => {
     error: deleteSprintError,
     reset: resetDeleteSprint,
   } = useDeleteSprint();
-  
+  const {
+    mutate: createSprint,
+    isPending: isCreatingSprint,
+  } = useCreateSprint();
+
   const [sprintTasksById, setSprintTasksById] = useState<Record<string, TaskItem[]>>({});
   const [sprintModalMessage, setSprintModalMessage] = useState<string | null>(null);
   const [backlogTasks, setBacklogTasks] = useState<BacklogTask[]>(initialBacklogTasks);
@@ -592,6 +597,18 @@ const SprintsPage: React.FC = () => {
     active: sprints.filter((s) => s.status === 'Aktywny'),
     planned: sprints.filter((s) => s.status === 'Zaplanowany'),
     completed: sprints.filter((s) => s.status === 'Ukończony'),
+  };
+
+  const sprintCount = sprintsQueryData?.totalCount ?? sprints.length;
+
+  const handleAddSprint = () => {
+    createSprint({
+      projectId,
+      data: {
+        name: `Sprint ${sprintCount + 1}`,
+        isKanban: false,
+      },
+    });
   };
 
   const renderSprintList = () => {
@@ -1006,6 +1023,20 @@ const SprintsPage: React.FC = () => {
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="grid min-h-0 flex-1 gap-6 overflow-hidden xl:grid-cols-[minmax(0,1fr)_18rem]">
             <div className="min-w-0 space-y-6 overscroll-contain pr-1 xl:min-h-0 xl:overflow-y-auto">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <h2 className="font-segoe-ui text-[18px] leading-7 font-medium tracking-[-0.44px] text-slate-900 antialiased">
+                  Wszystkie sprinty ({sprintCount})
+                </h2>
+                <button
+                  type="button"
+                  onClick={handleAddSprint}
+                  disabled={isCreatingSprint || !projectId}
+                  className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-scrumdone-blue-main px-4 py-2.5 font-segoe-ui text-[14px] leading-5 font-medium text-white transition-colors hover:bg-[#00A0DD] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <PlusIcon className="h-4 w-4 stroke-2" />
+                  Dodaj sprint
+                </button>
+              </div>
               {renderSprintList()}
             </div>
 
