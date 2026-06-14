@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPatch, apiPut, apiDelete } from './client';
+import { apiGet, apiPost, apiPatch, apiPut, apiDelete, type QueryParamValue } from './client';
 import type { 
   Assignment, 
   PaginatedAssignmentsResponse, 
@@ -11,8 +11,27 @@ import type {
   AssignmentQueryParams
 } from '../types/assignment';
 
+function assignmentQueryToParams(params: AssignmentQueryParams): Record<string, QueryParamValue> {
+  const result: Record<string, QueryParamValue> = {};
+
+  if (params.Page != null) result['page'] = params.Page;
+  if (params.Limit != null) result['limit'] = params.Limit;
+  if (params.Backlog != null) result['backlog'] = params.Backlog;
+  if (params.ExcludeNoDeadline != null) result['excludeNoDeadline'] = params.ExcludeNoDeadline;
+  if (params.DueFrom) result['dueOnOrAfter'] = params.DueFrom;
+  if (params.DueTo) result['dueOnOrBefore'] = params.DueTo;
+  if (params.ProjectIds?.length) result['projectIds'] = params.ProjectIds;
+  if (params.SprintIds?.length) result['sprintIds'] = params.SprintIds;
+  if (params.AssigneeIds?.length) result['assigneeIds'] = params.AssigneeIds;
+  if (params.PriorityIds?.length) result['priorityIds'] = params.PriorityIds;
+  if (params.StatusIds?.length) result['statusIds'] = params.StatusIds;
+  if (params.LabelIds?.length) result['labelIds'] = params.LabelIds;
+
+  return result;
+}
+
 export const getAssignments = (params?: AssignmentQueryParams) => {
-  return apiGet<PaginatedAssignmentsResponse>('/api/assignments', params as any);
+  return apiGet<PaginatedAssignmentsResponse>('/api/assignments', params ? assignmentQueryToParams(params) : undefined);
 };
 
 export const getAssignment = (id: string) => {

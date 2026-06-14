@@ -29,7 +29,7 @@ export type Assignment = {
   dueDate: string | null;
   timeEstimate: string;
   status: AssignmentStatus;
-  priority: AssignmentPriority;
+  priority: AssignmentPriority | null;
   assignees: UserSummary[];
   labels: AssignmentLabel[];
   subtaskIds: string[];

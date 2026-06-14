@@ -51,15 +51,21 @@ function formatValidationMessage(errors: ApiValidationErrors): string {
     return url.replace(/\/$/, ''); // bez slasha na końcu
   }
   
+  export type QueryParamValue = string | number | boolean | undefined | null | string[];
+
   function buildUrl(
     path: string,
-    params?: Record<string, string | number | boolean | undefined>,
+    params?: Record<string, QueryParamValue>,
   ): string {
     const url = new URL(path.startsWith('/') ? path : `/${path}`, getBaseUrl());
   
     if (params) {
       for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined && value !== null) {
+        if (value === undefined || value === null) continue;
+
+        if (Array.isArray(value)) {
+          value.forEach((item) => url.searchParams.append(key, String(item)));
+        } else {
           url.searchParams.set(key, String(value));
         }
       }
@@ -111,7 +117,7 @@ function formatValidationMessage(errors: ApiValidationErrors): string {
   
   export async function apiGet<T>(
     path: string,
-    params?: Record<string, string | number | boolean | undefined>,
+    params?: Record<string, QueryParamValue>,
   ): Promise<T> {
     const response = await fetch(buildUrl(path, params), {
       method: 'GET',

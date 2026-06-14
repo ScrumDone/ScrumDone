@@ -57,7 +57,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
                 <DetailRow label="Utworzono" value={new Date(assignment.createdAt).toLocaleDateString()} />
                 <DetailRow label="Termin" value={assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : "Brak"} />
                 <DetailRow label="Czas estimacji" value={assignment.timeEstimate} isPlaceholder={!assignment.timeEstimate} />
-                <DetailRow label="Priorytet" value={assignment.priority.name} />
+                <DetailRow label="Priorytet" value={assignment.priority?.name ?? 'Brak'} />
                 <DetailRow label="Wykonaj po" value="Brak danych" isPlaceholder />
             </div>
         </div>

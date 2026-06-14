@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { EllipsisVerticalIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
@@ -11,6 +11,8 @@ import TaskCreateModal from '../components/TaskCreateModal';
 import { useProjectSprints } from '../hooks/useProjectSprints';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
 import { useSelectedProjectSprint } from '../hooks/useSelectedProjectSprint';
+import { useProject } from '../hooks/useProject';
+import { getInitialsFromName } from '../hooks/useCurrentUser';
 import { mapSprintSummariesToSelectorSprints } from '../utils/sprintDisplay';
 import {
   DndContext,
@@ -32,9 +34,11 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useDroppable } from '@dnd-kit/core';
 import { useAssignmentStatuses } from '../hooks/useAssignmentStatuses';
+import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities';
 import { useAssignments } from '../hooks/useAssignments';
 import { useUpdateAssignmentStatus } from '../hooks/useUpdateAssignmentStatus';
-import {assignmentToKanbanCard} from '../lib/assignmentMappers';
+import { assignmentToKanbanCard } from '../lib/assignmentMappers';
+import type { AssignmentPriority } from '../types/assignment';
 
 // --- Typy i Dane pomocnicze ---
 
@@ -43,99 +47,55 @@ type KanbanCardVM = ReturnType<typeof assignmentToKanbanCard>;
 type KanbanColumnVm = {
   id: string;
   title: string;
-  accentClass: string;
+  accentColor: string;
   count: number;
   tasks: KanbanCardVM[];
 }
 
-type PriorityOption = {
-  id: string;
-  label: string;
-  colorClass: string;
-};
+const mapTeamMembersToPersonFilters = (members: { id: string; name: string }[]): PersonFilter[] =>
+  members.map((member) => ({
+    id: member.id,
+    initials: getInitialsFromName(member.name),
+    fullName: member.name,
+  }));
 
-//Task: Connect project kanban board to assignments API #233
-
-//type TaskDotColor = 'red' | 'yellow' | 'green' | 'blue';
-
-// type KanbanTask = {
-//   id: string;
-//   title: string;
-//   assigneeInitials: string;
-//   assigneeName: string;
-//   dateLabel: string;
-//   dotColor: TaskDotColor;
-// };
-
-// type KanbanColumn = {
-//   id: string;
-//   title: string;
-//   accentClass: string;
-//   count: number;
-//   tasks: KanbanTask[];
-// };
-
-const teamMembers: PersonFilter[] = [
-  { id: 'artur-nowak', initials: 'AN', fullName: 'Artur Nowak' },
-  { id: 'eryk-baczynski', initials: 'EB', fullName: 'Eryk Baczyński' },
-  { id: 'maria-kowalska', initials: 'MK', fullName: 'Maria Kowalska' },
-];
-
-const priorityOptions: PriorityOption[] = [
-  { id: 'wysoki', label: 'Wysoki', colorClass: 'bg-scrumdone-red-500' },
-  { id: 'sredni', label: 'Średni', colorClass: 'bg-scrumdone-yellow-500' },
-  { id: 'niski', label: 'Niski', colorClass: 'bg-scrumdone-green-500' },
-];
-
-//Task: Connect project kanban board to assignments API #233
-
-// const taskDotClassMap: Record<TaskDotColor, string> = {
-//   red: 'bg-scrumdone-red-500',
-//   yellow: 'bg-scrumdone-yellow-500',
-//   green: 'bg-scrumdone-green-500',
-//   blue: 'bg-scrumdone-blue-main',
-// };
-
-// const initialKanbanColumns: KanbanColumn[] = [
-//   { id: 'todo', title: 'Do zrobienia', accentClass: 'bg-slate-400', count: 0, tasks: [] },
-//   {
-//     id: 'in-progress',
-//     title: 'W toku',
-//     accentClass: 'bg-scrumdone-blue-main',
-//     count: 1,
-//     tasks: [
-//       { id: 'cicd-pipeline', title: 'CI/CD pipeline', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', dateLabel: '05 lut', dotColor: 'green' },
-//     ],
-//   },
-//   { id: 'review', title: 'Sprawdzanie', accentClass: 'bg-scrumdone-yellow-500', count: 0, tasks: [] },
-//   {
-//     id: 'done',
-//     title: 'Gotowe',
-//     accentClass: 'bg-scrumdone-green-500',
-//     count: 3,
-//     tasks: [
-//       { id: 'project-init', title: 'Project initialization', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', dateLabel: '22 sty', dotColor: 'red' },
-//       { id: 'git-setup', title: 'Git repository setup', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', dateLabel: '25 sty', dotColor: 'yellow' },
-//       { id: 'dev-env', title: 'Development environment', assigneeInitials: 'MK', assigneeName: 'Maria Kowalska', dateLabel: '01 lut', dotColor: 'red' },
-//     ],
-//   },
-//   { id: "blocked", title: 'Zablokowane', accentClass: 'bg-scrumdone-red-500', count: 0, tasks: [] },
-// ];
-
-// --- Komponenty Wewnętrzne ---
-
-const PriorityFilterCard: React.FC = () => (
+const PriorityFilterCard: React.FC<{
+  priorities: AssignmentPriority[];
+  selectedPriorities: Record<string, boolean>;
+  onToggle: (priorityId: string) => void;
+  isLoading?: boolean;
+}> = ({ priorities, selectedPriorities, onToggle, isLoading = false }) => (
   <section className="rounded-[10px] border border-gray-200 bg-white p-4">
     <h3 className="mb-3 font-segoe-ui text-[18px] leading-7 font-normal text-slate-900 antialiased">Priorytet</h3>
-    <div className="flex flex-col gap-3">
-      {priorityOptions.map((option) => (
-        <label key={option.id} className="flex items-center gap-2">
-          <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 text-slate-900 accent-slate-900 aria-label={option.label}" />
-          <span className={`h-2 w-2 rounded-full ${option.colorClass}`} />
-          <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{option.label}</span>
-        </label>
-      ))}
-    </div>
+    {isLoading ? (
+      <p className="font-segoe-ui text-[14px] leading-5 text-slate-500 antialiased animate-pulse">Ładowanie priorytetów...</p>
+    ) : priorities.length === 0 ? (
+      <p className="font-segoe-ui text-[14px] leading-5 text-slate-500 antialiased">Brak priorytetów.</p>
+    ) : (
+      <div className="flex flex-col gap-3">
+        {priorities.map((priority) => {
+          const isSelected = selectedPriorities[priority.id] ?? false;
+
+          return (
+            <label key={priority.id} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => onToggle(priority.id)}
+                className="h-4 w-4 rounded border-slate-300 text-slate-900 accent-slate-900"
+                aria-label={priority.name}
+              />
+              <span
+                className="h-2 w-2 rounded-full bg-slate-300"
+                style={priority.hexColor ? { backgroundColor: priority.hexColor } : undefined}
+                aria-hidden="true"
+              />
+              <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{priority.name}</span>
+            </label>
+          );
+        })}
+      </div>
+    )}
   </section>
 );
 
@@ -158,7 +118,12 @@ const KanbanTaskCard: React.FC<{ task: KanbanCardVM; isDragOverlay?: boolean }> 
         </button>
       </div>
       <div className="mt-3 flex items-center justify-between">
-        <span className={`h-2 w-2 rounded-full ${task.statusColorClass}`} aria-hidden="true" />
+        <span
+          className="h-2 w-2 rounded-full bg-slate-300"
+          style={task.priorityHexColor ? { backgroundColor: task.priorityHexColor } : undefined}
+          title={task.priorityName ?? 'Brak priorytetu'}
+          aria-label={task.priorityName ?? 'Brak priorytetu'}
+        />
         <div className="flex gap-2 items-center">
           <span className="font-segoe-ui text-[12px] leading-4 text-slate-500 antialiased">{task.formattedDueDate}</span>
           <Avatar initials={task.assigneesInitials[0] ?? '??'} size="xs" bgClassName="bg-scrumdone-blue-main" textClassName="text-white" />
@@ -174,7 +139,11 @@ const KanbanColumnView: React.FC<{ column: KanbanColumnVm }> = ({ column }) => {
   return (
     <section className="flex min-h-80 min-w-0 self-start flex-col gap-2">
       <header className="flex items-center gap-2">
-        <span className={`h-6 w-1 rounded-full ${column.accentClass}`} aria-hidden="true" />
+        <span
+          className="h-6 w-1 rounded-full bg-slate-400"
+          style={column.accentColor ? { backgroundColor: column.accentColor } : undefined}
+          aria-hidden="true"
+        />
         <h3 className="min-w-0 truncate font-segoe-ui text-[16px] leading-6 font-normal text-slate-900 antialiased">{column.title}</h3>
         <span className="ml-1 inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 px-2 text-[12px] font-medium text-slate-600 antialiased">
           {column.tasks.length}
@@ -211,27 +180,128 @@ const ProjectKanbanPage: React.FC = () => {
     selectorSprints,
   );
 
-  const { data: statuses} = useAssignmentStatuses(); 
-  const { data: assignmentsData} = useAssignments({ ProjectIds: [projectId]})
+  const { data: project } = useProject(projectId);
+  const { data: statuses } = useAssignmentStatuses();
+  const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
+
+  const teamMembers = useMemo(
+    () => mapTeamMembersToPersonFilters(project?.teamMembers ?? []),
+    [project?.teamMembers],
+  );
+
+  const [selectedPriorities, setSelectedPriorities] = useState<Record<string, boolean>>({});
+  const [selectedPeople, setSelectedPeople] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!priorities?.length) return;
+
+    setSelectedPriorities((current) => {
+      if (priorities.some((priority) => priority.id in current)) {
+        return current;
+      }
+
+      return Object.fromEntries(priorities.map((priority) => [priority.id, true]));
+    });
+  }, [priorities]);
+
+  useEffect(() => {
+    if (!teamMembers.length) return;
+
+    setSelectedPeople((current) => {
+      if (teamMembers.some((member) => member.id in current)) {
+        return current;
+      }
+
+      return Object.fromEntries(teamMembers.map((member) => [member.id, true]));
+    });
+  }, [teamMembers]);
+
+  const selectedPriorityIds = useMemo(
+    () => priorities?.filter((priority) => selectedPriorities[priority.id]).map((priority) => priority.id) ?? [],
+    [priorities, selectedPriorities],
+  );
+
+  const selectedAssigneeIds = useMemo(
+    () => teamMembers.filter((member) => selectedPeople[member.id]).map((member) => member.id),
+    [teamMembers, selectedPeople],
+  );
+
+  const priorityList = priorities ?? [];
+
+  const allPrioritiesSelected = !priorityList.length || priorityList.every((priority) => selectedPriorities[priority.id]);
+  const noPrioritiesSelected = priorityList.length > 0 && priorityList.every((priority) => !selectedPriorities[priority.id]);
+  const allPeopleSelected = !teamMembers.length || teamMembers.every((member) => selectedPeople[member.id]);
+  const noPeopleSelected = Boolean(teamMembers.length) && teamMembers.every((member) => !selectedPeople[member.id]);
+
+  const assignmentQuery = useMemo(() => ({
+    ProjectIds: [projectId],
+    Limit: 100,
+    ...(!allPrioritiesSelected && !noPrioritiesSelected ? { PriorityIds: selectedPriorityIds } : {}),
+    ...(!allPeopleSelected && !noPeopleSelected ? { AssigneeIds: selectedAssigneeIds } : {}),
+  }), [
+    projectId,
+    allPrioritiesSelected,
+    noPrioritiesSelected,
+    selectedPriorityIds,
+    allPeopleSelected,
+    noPeopleSelected,
+    selectedAssigneeIds,
+  ]);
+
+  const { data: assignmentsData } = useAssignments(assignmentQuery);
   const { mutate: updateStatus } = useUpdateAssignmentStatus();
 
+  const visibleAssignments = useMemo(() => {
+    if (!assignmentsData) return [];
+    if (noPrioritiesSelected || noPeopleSelected) return [];
+
+    let items = assignmentsData.items;
+
+    if (!allPrioritiesSelected) {
+      items = items.filter((assignment) =>
+        assignment.priority && selectedPriorityIds.includes(assignment.priority.id),
+      );
+    }
+
+    if (!allPeopleSelected) {
+      items = items.filter((assignment) =>
+        assignment.assignees.some((assignee) => selectedAssigneeIds.includes(assignee.id)),
+      );
+    }
+
+    return items;
+  }, [
+    assignmentsData,
+    allPrioritiesSelected,
+    allPeopleSelected,
+    noPrioritiesSelected,
+    noPeopleSelected,
+    selectedPriorityIds,
+    selectedAssigneeIds,
+  ]);
+
   const columns = useMemo(() => {
-    if (!statuses || !assignmentsData) return [];
-    
+    if (!statuses) return [];
+
     return statuses.map((status) => {
-      // Filtrujemy zadania dla danego statusu
-      const tasksForStatus = assignmentsData.items.filter((a) => a.status.id === status.id);
-      
+      const tasksForStatus = visibleAssignments.filter((assignment) => assignment.status.id === status.id);
+
       return {
-        id: status.id, // ID statusu z API
-        title: status.name, // Nazwa statusu z API
-        accentClass: 'bg-slate-400', // Tutaj możesz dodać logikę używającą status.hexColor
+        id: status.id,
+        title: status.name,
+        accentColor: status.hexColor,
         count: tasksForStatus.length,
-        // Używamy Twojego mappera zamiast ręcznego mapowania:
-        tasks: tasksForStatus.map(assignmentToKanbanCard) 
+        tasks: tasksForStatus.map(assignmentToKanbanCard),
       };
     });
-  }, [statuses, assignmentsData]);
+  }, [statuses, visibleAssignments]);
+
+  const togglePriority = (priorityId: string) => {
+    setSelectedPriorities((current) => ({
+      ...current,
+      [priorityId]: !current[priorityId],
+    }));
+  };
 
   const [activeTask, setActiveTask] = useState<KanbanCardVM | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -355,8 +425,17 @@ const ProjectKanbanPage: React.FC = () => {
                   </div>
 
                   <aside className="flex flex-col gap-4">
-                    <PriorityFilterCard />
-                    <CalendarPeopleFilter people={teamMembers} />
+                    <PriorityFilterCard
+                      priorities={priorities ?? []}
+                      selectedPriorities={selectedPriorities}
+                      onToggle={togglePriority}
+                      isLoading={isPrioritiesLoading}
+                    />
+                    <CalendarPeopleFilter
+                      people={teamMembers}
+                      selectedPeople={selectedPeople}
+                      onSelectedPeopleChange={setSelectedPeople}
+                    />
                   </aside>
                 </div>
           </section>

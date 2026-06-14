@@ -7,9 +7,9 @@ export type AssignmentVM = {
   name: string;
   description: string;
   statusName: string;
-  priorityName: string;
-  statusColorClass: string; 
-  priorityColorClass: string;
+  priorityName: string | null;
+  statusHexColor: string;
+  priorityHexColor: string | null;
   assigneesInitials: string[];
   formattedDueDate: string;
   sprintId: string | null;
@@ -21,10 +21,9 @@ export const mapAssignmentToVM = (a: Assignment): AssignmentVM => {
     name: a.name,
     description: a.description,
     statusName: a.status.name,
-    priorityName: a.priority.name,
-    // Zakładamy, że hexColor mapujemy na klasę lub używamy arbitralnej wartości (JIT)
-    statusColorClass: `bg-[${a.status.hexColor}]`,
-    priorityColorClass: `text-[${a.priority.hexColor}]`,
+    priorityName: a.priority?.name ?? null,
+    statusHexColor: a.status.hexColor,
+    priorityHexColor: a.priority?.hexColor ?? null,
     assigneesInitials: a.assignees.map(u => getInitialsFromName(u.name)),
     formattedDueDate: a.dueDate ? format(new Date(a.dueDate), 'dd-MM-yyyy') : 'No date',
     sprintId: a.sprintId,
