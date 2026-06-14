@@ -47,9 +47,12 @@ const ProjectCalendarPage: React.FC = () => {
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectId)
 
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 6))
+  const [currentDate, setCurrentDate] = useState(new Date())
   //Task: connect project calendar to assignments API #234
   //const [calendarTasks, setCalendarTasks] = useState<CalendarTask[]>(initialCalendarTasks)
+
+  const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
+  const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart]);
 
   const { data: assignmentsResponse } = useAssignments({ ProjectIds: [projectId] });
   const { data: backlogResponse } = useBacklogAssignments();
@@ -114,7 +117,7 @@ const ProjectCalendarPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="mt-2">
-                          {displayMode === 'week' ? <WeekCalendar startDate={startOfWeek(currentDate, { weekStartsOn: 1 })} tasks={calendarTasks} /> : <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />}
+                          {displayMode === 'week' ? <WeekCalendar dueFrom={weekStart.toISOString()} dueTo={weekEnd.toISOString()} startDate={startOfWeek(currentDate, { weekStartsOn: 1 })} tasks={calendarTasks} /> : <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />}
                         </div>
                       </div>
                       <CalendarNoDeadlineTasks tasks={noDeadlineTasks} />
@@ -140,7 +143,7 @@ const ProjectCalendarPage: React.FC = () => {
           <DragOverlay>
             {activeTask ? (
               <div className="cursor-grabbing">
-                <CalendarTaskItem title={activeTask.title} colorVariant={activeTask.colorVariant} />
+                <CalendarTaskItem id={activeTask.id} title={activeTask.title} colorVariant={activeTask.colorVariant} />
               </div>
             ) : null}
           </DragOverlay>

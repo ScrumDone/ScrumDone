@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
 
 interface CalendarTaskItemProps {
+    id: string 
     title: string
     colorVariant: TaskColor
 }
@@ -36,12 +37,12 @@ const colorVariantMap: Record<TaskColor, { dot: string; border: string; bg: stri
     },
 }
 
-const CalendarTaskItem: React.FC<CalendarTaskItemProps> = ({ title, colorVariant }) => {
+const CalendarTaskItem: React.FC<CalendarTaskItemProps> = ({ id, title, colorVariant }) => {
     const colors = colorVariantMap[colorVariant]
     const navigate = useNavigate()
 
     const handleClick = () => {
-        navigate('/task')
+        navigate(`/task/${id}`)
     }
 
     return (
