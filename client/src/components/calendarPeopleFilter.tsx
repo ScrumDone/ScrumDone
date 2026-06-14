@@ -44,10 +44,14 @@ const CalendarPeopleFilter: React.FC<CalendarPeopleFilterProps> = ({
     const currentSelected = isControlled ? selectedPeople : internalSelected
 
     const togglePerson = (personId: string) => {
-        const next = {
-            ...currentSelected,
-            [personId]: !currentSelected[personId],
-        }
+        const next = Object.fromEntries(
+            people.map((person) => [
+                person.id,
+                person.id === personId
+                    ? currentSelected[person.id] !== true
+                    : currentSelected[person.id] === true,
+            ]),
+        )
 
         if (isControlled) {
             onSelectedPeopleChange(next)
@@ -65,7 +69,7 @@ const CalendarPeopleFilter: React.FC<CalendarPeopleFilterProps> = ({
             ) : (
                 <div className="flex flex-col gap-3">
                     {people.map((person) => {
-                        const isSelected = currentSelected[person.id] ?? false
+                        const isSelected = currentSelected[person.id] === true
 
                         return (
                             <button

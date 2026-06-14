@@ -61,6 +61,39 @@ const mapTeamMembersToPersonFilters = (members: { id: string; name: string }[]):
     fullName: member.name,
   }));
 
+const matchesPeopleFilter = (
+  assignees: { id: string }[],
+  selectedAssigneeIds: string[],
+) => {
+  const primaryAssigneeId = assignees[0]?.id;
+  return Boolean(primaryAssigneeId && selectedAssigneeIds.includes(primaryAssigneeId));
+};
+
+const buildPeopleFilterOptions = (
+  teamMembers: PersonFilter[],
+  assignments: { assignees: { id: string; name: string }[] }[],
+): PersonFilter[] => {
+  const byId = new Map<string, PersonFilter>();
+
+  for (const member of teamMembers) {
+    byId.set(member.id, member);
+  }
+
+  for (const assignment of assignments) {
+    for (const assignee of assignment.assignees) {
+      if (!byId.has(assignee.id)) {
+        byId.set(assignee.id, {
+          id: assignee.id,
+          initials: getInitialsFromName(assignee.name),
+          fullName: assignee.name,
+        });
+      }
+    }
+  }
+
+  return Array.from(byId.values());
+};
+
 const PriorityFilterCard: React.FC<{
   priorities: AssignmentPriority[];
   selectedPriorities: Record<string, boolean>;
@@ -195,7 +228,17 @@ const KanbanTaskCard: React.FC<{
         />
         <div className="flex gap-2 items-center">
           <span className="font-segoe-ui text-[12px] leading-4 text-slate-500 antialiased">{task.formattedDueDate}</span>
-          <Avatar initials={task.assigneesInitials[0] ?? '??'} size="xs" bgClassName="bg-scrumdone-blue-main" textClassName="text-white" />
+          <div className="flex -space-x-1">
+            {task.assigneesInitials.slice(0, 3).map((initials, index) => (
+              <Avatar
+                key={`${task.id}-${initials}-${index}`}
+                initials={initials}
+                size="xs"
+                bgClassName="bg-scrumdone-blue-main ring-2 ring-white"
+                textClassName="text-white"
+              />
+            ))}
+          </div>
         </div>
       </div>
     </article>
@@ -290,51 +333,78 @@ const ProjectKanbanPage: React.FC = () => {
     });
   }, [priorities]);
 
-  useEffect(() => {
-    if (!teamMembers.length) return;
-
-    setSelectedPeople((current) => {
-      if (teamMembers.some((member) => member.id in current)) {
-        return current;
-      }
-
-      return Object.fromEntries(teamMembers.map((member) => [member.id, true]));
-    });
-  }, [teamMembers]);
-
   const selectedPriorityIds = useMemo(
     () => priorities?.filter((priority) => selectedPriorities[priority.id]).map((priority) => priority.id) ?? [],
     [priorities, selectedPriorities],
-  );
-
-  const selectedAssigneeIds = useMemo(
-    () => teamMembers.filter((member) => selectedPeople[member.id]).map((member) => member.id),
-    [teamMembers, selectedPeople],
   );
 
   const priorityList = priorities ?? [];
 
   const allPrioritiesSelected = !priorityList.length || priorityList.every((priority) => selectedPriorities[priority.id]);
   const noPrioritiesSelected = priorityList.length > 0 && priorityList.every((priority) => !selectedPriorities[priority.id]);
-  const allPeopleSelected = !teamMembers.length || teamMembers.every((member) => selectedPeople[member.id]);
-  const noPeopleSelected = Boolean(teamMembers.length) && teamMembers.every((member) => !selectedPeople[member.id]);
 
   const assignmentQuery = useMemo(() => ({
     ProjectIds: [projectId],
     Limit: 100,
     ...(!allPrioritiesSelected && !noPrioritiesSelected ? { PriorityIds: selectedPriorityIds } : {}),
-    ...(!allPeopleSelected && !noPeopleSelected ? { AssigneeIds: selectedAssigneeIds } : {}),
   }), [
     projectId,
     allPrioritiesSelected,
     noPrioritiesSelected,
     selectedPriorityIds,
-    allPeopleSelected,
-    noPeopleSelected,
-    selectedAssigneeIds,
   ]);
 
   const { data: assignmentsData } = useAssignments(assignmentQuery);
+
+  const peopleFilterOptions = useMemo(
+    () => buildPeopleFilterOptions(teamMembers, assignmentsData?.items ?? []),
+    [teamMembers, assignmentsData?.items],
+  );
+
+  const peopleFilterIds = useMemo(
+    () => peopleFilterOptions.map((person) => person.id).join('|'),
+    [peopleFilterOptions],
+  );
+
+  useEffect(() => {
+    setSelectedPeople((current) => {
+      let changed = false;
+      const next = { ...current };
+
+      for (const person of peopleFilterOptions) {
+        if (!(person.id in next)) {
+          next[person.id] = true;
+          changed = true;
+        }
+      }
+
+      for (const personId of Object.keys(next)) {
+        if (!peopleFilterOptions.some((person) => person.id === personId)) {
+          delete next[personId];
+          changed = true;
+        }
+      }
+
+      return changed ? next : current;
+    });
+  }, [projectId, peopleFilterIds, peopleFilterOptions]);
+
+  const allPeopleSelected = peopleFilterOptions.length === 0
+    || peopleFilterOptions.every((person) => selectedPeople[person.id] === true);
+  const noPeopleSelected = peopleFilterOptions.length > 0
+    && peopleFilterOptions.every((person) => selectedPeople[person.id] === false);
+
+  const selectedAssigneeIds = useMemo(
+    () => peopleFilterOptions
+      .filter((person) => selectedPeople[person.id] === true)
+      .map((person) => person.id),
+    [peopleFilterOptions, selectedPeople],
+  );
+
+  const handleSelectedPeopleChange = (next: Record<string, boolean>) => {
+    setSelectedPeople(next);
+  };
+
   const { mutate: updateStatus } = useUpdateAssignmentStatus();
   const { mutate: deleteAssignment } = useDeleteAssignment();
 
@@ -422,7 +492,7 @@ const ProjectKanbanPage: React.FC = () => {
 
     if (!allPeopleSelected) {
       items = items.filter((assignment) =>
-        assignment.assignees.some((assignee) => selectedAssigneeIds.includes(assignee.id)),
+        matchesPeopleFilter(assignment.assignees, selectedAssigneeIds),
       );
     }
 
@@ -603,9 +673,9 @@ const ProjectKanbanPage: React.FC = () => {
                       isLoading={isPrioritiesLoading}
                     />
                     <CalendarPeopleFilter
-                      people={teamMembers}
+                      people={peopleFilterOptions}
                       selectedPeople={selectedPeople}
-                      onSelectedPeopleChange={setSelectedPeople}
+                      onSelectedPeopleChange={handleSelectedPeopleChange}
                     />
                   </aside>
                 </div>
