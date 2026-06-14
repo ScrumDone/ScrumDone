@@ -8,6 +8,7 @@ namespace ScrumDone.Api.Validators.Projects
         public AssignmentLabelUpdateDtoValidator()
         {
             RuleFor(x => x.Name)
+                .NotEmpty()
                 .MaximumLength(200)
                 .When(x =>
                     x.SetProperties.Contains(nameof(AssignmentLabelUpdateDto.Name)));

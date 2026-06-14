@@ -54,6 +54,7 @@ namespace ScrumDone.Api.Controllers
         [HttpPost]
         [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> CreateProject(
             [FromBody] ProjectCreateDto dto,
             [FromServices] IValidator<ProjectCreateDto> validator)
@@ -67,6 +68,7 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> UpdateProject(
             [FromRoute] Guid id,
             [FromBody] ProjectUpdateDto dto,
