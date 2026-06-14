@@ -34,8 +34,5 @@ namespace ScrumDone.Api.Services
         Task<AssignmentLabelDto> CreateAssignmentLabelAsync(Guid id, AssignmentLabelCreateDto dto);
         Task<AssignmentLabelDto> UpdateAssignmentLabelAsync(Guid id, Guid labelId, AssignmentLabelUpdateDto dto);
         Task DeleteAssignmentLabelAsync(Guid id, Guid labelId);
-
-        // statuses
-        Task<IEnumerable<AssignmentStatusDto>> GetAssignmentStatuses();
     }
 }

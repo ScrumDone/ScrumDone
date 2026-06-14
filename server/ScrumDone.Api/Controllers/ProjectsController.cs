@@ -215,17 +215,6 @@ namespace ScrumDone.Api.Controllers
             await _projectsService.DeleteAssignmentLabelAsync(id, labelId);
             return NoContent();
         }
-
-        // /projects/{id}/statuses
-
-        [HttpGet("{id}/statuses")]
-        [ProducesResponseType(typeof(IEnumerable<AssignmentStatusDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
-        public async Task<IEnumerable<AssignmentStatusDto>> GetUsers()
-        {
-            var result = await _projectsService.GetAssignmentStatuses();
-            return result;
-        }
     }
 
 }
