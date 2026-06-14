@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { XMarkIcon, MagnifyingGlassIcon, PaperClipIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import Avatar from './Avatar';
 import { type PersonFilter } from './calendarPeopleFilter';
@@ -14,9 +14,26 @@ type TaskCreateModalProps = {
   onClose: () => void;
   teamMembers: PersonFilter[];
   projectId: string;
+  defaultSprintId?: string | null;
 };
 
-const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ isOpen, onClose, teamMembers, projectId }) => {
+const emptyFormData = (defaultSprintId = '') => ({
+  name: '',
+  description: '',
+  statusId: '',
+  priorityId: '',
+  dueDate: '',
+  assigneeIds: [] as string[],
+  sprintId: defaultSprintId,
+});
+
+const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
+  isOpen,
+  onClose,
+  teamMembers,
+  projectId,
+  defaultSprintId = null,
+}) => {
   const queryClient = useQueryClient();
 
   const { data: statuses } = useStatuses();
@@ -25,15 +42,13 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ isOpen, onClose, team
   const { data: sprintsData } = useSprints(projectId); 
   const sprints = sprintsData?.items || [];
 
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    statusId: '',
-    priorityId: '',
-    dueDate: '',
-    assigneeIds: [] as string[],
-    sprintId: '',
-  });
+  const [formData, setFormData] = useState(() => emptyFormData(defaultSprintId ?? ''));
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(emptyFormData(defaultSprintId ?? ''));
+    }
+  }, [isOpen, defaultSprintId]);
 
   if (!isOpen) return null;
 

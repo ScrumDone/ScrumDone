@@ -364,9 +364,12 @@ const ProjectKanbanPage: React.FC = () => {
   const assignmentQuery = useMemo(() => ({
     ProjectIds: [projectId],
     Limit: 100,
+    ...(viewMode === 'scrum' && selectedSprintId ? { SprintIds: [selectedSprintId] } : {}),
     ...(!allPrioritiesSelected && !noPrioritiesSelected ? { PriorityIds: selectedPriorityIds } : {}),
   }), [
     projectId,
+    viewMode,
+    selectedSprintId,
     allPrioritiesSelected,
     noPrioritiesSelected,
     selectedPriorityIds,
@@ -501,8 +504,13 @@ const ProjectKanbanPage: React.FC = () => {
   const visibleAssignments = useMemo(() => {
     if (!assignmentsData) return [];
     if (noPrioritiesSelected || noPeopleSelected) return [];
+    if (viewMode === 'scrum' && !selectedSprintId) return [];
 
     let items = assignmentsData.items;
+
+    if (viewMode === 'scrum' && selectedSprintId) {
+      items = items.filter((assignment) => assignment.sprintId === selectedSprintId);
+    }
 
     if (!allPrioritiesSelected) {
       items = items.filter((assignment) =>
@@ -519,6 +527,8 @@ const ProjectKanbanPage: React.FC = () => {
     return items;
   }, [
     assignmentsData,
+    viewMode,
+    selectedSprintId,
     allPrioritiesSelected,
     allPeopleSelected,
     noPrioritiesSelected,
@@ -624,7 +634,8 @@ const ProjectKanbanPage: React.FC = () => {
         isOpen={isTaskModalOpen} 
         onClose={() => setIsTaskModalOpen(false)} 
         teamMembers={teamMembers}
-        projectId={projectId} 
+        projectId={projectId}
+        defaultSprintId={viewMode === 'scrum' ? selectedSprintId : null}
       />
 
       <TaskEditModal
