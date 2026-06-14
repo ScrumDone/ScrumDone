@@ -26,12 +26,15 @@ type ProjectEditModalProps = {
   isOpen: boolean;
   draft: EditProjectDraft;
   members: TeamMemberOption[];
+  isActive: boolean;
   onClose: () => void;
   onSave: () => void;
+  onArchive: () => void;
   onDelete: () => void;
   onDraftChange: (updater: (prev: EditProjectDraft) => EditProjectDraft) => void;
   onToggleMember: (memberId: string) => void;
   isSaving?: boolean;
+  isArchiving?: boolean;
   isDeleting?: boolean;
   errorMessage?: string | null;
 };
@@ -40,16 +43,19 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
   isOpen,
   draft,
   members,
+  isActive,
   onClose,
   onSave,
+  onArchive,
   onDelete,
   onDraftChange,
   onToggleMember,
   isSaving = false,
+  isArchiving = false,
   isDeleting = false,
   errorMessage = null,
 }) => {
-  const isBusy = isSaving || isDeleting;
+  const isBusy = isSaving || isArchiving || isDeleting;
   if (!isOpen) {
     return null;
   }
@@ -192,10 +198,25 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
 
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50"
+                onClick={() => {
+                  const projectName = draft.name.trim() || 'ten projekt';
+                  const message = isActive
+                    ? `Czy na pewno chcesz zarchiwizować projekt „${projectName}"? Projekt zniknie z listy aktywnych.`
+                    : `Czy na pewno chcesz przywrócić projekt „${projectName}" z archiwum?`;
+
+                  if (window.confirm(message)) {
+                    onArchive();
+                  }
+                }}
+                disabled={isBusy}
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50 disabled:opacity-60"
               >
                 <ArchiveBoxIcon className="h-4 w-4" />
-                <span className="text-sm tracking-[-0.15px] leading-5">Archiwizuj projekt</span>
+                <span className="text-sm tracking-[-0.15px] leading-5">
+                  {isArchiving
+                    ? (isActive ? 'Archiwizowanie…' : 'Przywracanie…')
+                    : (isActive ? 'Archiwizuj projekt' : 'Przywróć z archiwum')}
+                </span>
               </button>
 
               <button

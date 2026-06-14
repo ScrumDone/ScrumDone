@@ -78,6 +78,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [draft, setDraft] = useState<EditProjectDraft>(emptyDraft);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const isSaving = isSavingProject || isSavingMembers;
   const saveErrorMessage = isUpdateProjectError
@@ -105,6 +106,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   const resetMutations = () => {
     resetSaveMutations();
     resetDeleteProject();
+    setIsArchiving(false);
   };
 
   const openEditModal = () => {
@@ -175,6 +177,33 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
         navigate('/projects');
       },
     });
+  };
+
+  const handleArchiveProject = () => {
+    if (!projectData) {
+      return;
+    }
+
+    resetSaveMutations();
+    setIsArchiving(true);
+
+    const nextIsActive = !projectData.isActive;
+
+    updateProject(
+      { id: projectId, data: { isActive: nextIsActive } },
+      {
+        onSuccess: () => {
+          setIsArchiving(false);
+          closeEditModal();
+          if (!nextIsActive) {
+            navigate('/projects');
+          }
+        },
+        onError: () => {
+          setIsArchiving(false);
+        },
+      },
+    );
   };
 
   if (isLoading) {
@@ -296,12 +325,15 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
         isOpen={isEditModalOpen}
         draft={draft}
         members={teamMembers}
+        isActive={projectData?.isActive ?? true}
         onClose={closeEditModal}
         onSave={saveProjectChanges}
+        onArchive={handleArchiveProject}
         onDelete={handleDeleteProject}
         onDraftChange={setDraft}
         onToggleMember={toggleMember}
         isSaving={isSaving}
+        isArchiving={isArchiving}
         isDeleting={isDeleting}
         errorMessage={errorMessage}
       />
