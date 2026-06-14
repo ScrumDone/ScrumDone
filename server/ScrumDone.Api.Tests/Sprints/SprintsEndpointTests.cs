@@ -27,8 +27,7 @@ public class SprintsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            // Sprint wymaga powiązania z projektem
-            db.Projects.Add(new Project { Id = projectId, Name = "Test Project" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", HexColor = "#0072B2" });
             db.Sprints.Add(new Sprint
             {
                 Id = sprintId,
@@ -81,7 +80,7 @@ public class SprintsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Test Project" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", HexColor = "#0072B2" });
             db.Sprints.Add(new Sprint
             {
                 Id = sprintId,
@@ -96,8 +95,7 @@ public class SprintsEndpointTests
         using var client = app.CreateClient();
 
         var newEndDate = originalStartDate.AddDays(14);
-        
-        // Zmieniamy tylko nazwę i datę zakończenia
+
         var response = await client.PatchAsJsonAsync($"/api/sprints/{sprintId}",
             new { name = "New Name", endDate = newEndDate });
 
@@ -105,8 +103,8 @@ public class SprintsEndpointTests
 
         var sprint = await TestResponse.ReadJsonAsync<SprintDetailDto>(response);
         Assert.Equal("New Name", sprint.Name);
-        Assert.Equal(originalStartDate, sprint.StartDate); // Niezmienione
-        Assert.Equal(newEndDate, sprint.EndDate); // Zmienione
+        Assert.Equal(originalStartDate, sprint.StartDate);
+        Assert.Equal(newEndDate, sprint.EndDate);
     }
 
     [Fact]
@@ -118,7 +116,7 @@ public class SprintsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Test Project" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", HexColor = "#0072B2" });
             db.Sprints.Add(new Sprint
             {
                 Id = sprintId,
@@ -130,7 +128,6 @@ public class SprintsEndpointTests
 
         using var client = app.CreateClient();
 
-        // Wysyłamy pusty obiekt, nic nie powinno się zmienić
         var response = await client.PatchAsJsonAsync($"/api/sprints/{sprintId}", new { });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -148,7 +145,7 @@ public class SprintsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Test Project" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", HexColor = "#0072B2" });
             db.Sprints.Add(new Sprint
             {
                 Id = sprintId,
@@ -162,14 +159,11 @@ public class SprintsEndpointTests
 
         using var client = app.CreateClient();
 
-        // Jawnie wysyłamy null dla wymaganego pola StartDate
         var response = await client.PatchAsJsonAsync($"/api/sprints/{sprintId}",
             new { startDate = (DateTimeOffset?)null });
 
-        // Oczekujemy błędu walidacji, a nie sukcesu!
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        // Weryfikujemy, czy błąd dotyczy konkretnie pola StartDate
         var problem = await TestResponse.ReadJsonAsync<ValidationProblemDetails>(response);
         Assert.True(TestResponse.HasValidationError(problem, "StartDate"));
     }
@@ -198,7 +192,7 @@ public class SprintsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Test Project" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", HexColor = "#0072B2" });
             db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, Name = "Valid Name" });
             return Task.CompletedTask;
         });
@@ -224,11 +218,11 @@ public class SprintsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Test Project" });
-            db.Sprints.Add(new Sprint 
-            { 
-                Id = sprintId, 
-                ProjectId = projectId, 
+            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", HexColor = "#0072B2" });
+            db.Sprints.Add(new Sprint
+            {
+                Id = sprintId,
+                ProjectId = projectId,
                 Name = "Valid Name",
                 StartDate = startDate
             });
@@ -237,7 +231,6 @@ public class SprintsEndpointTests
 
         using var client = app.CreateClient();
 
-        // Próba ustawienia EndDate przed StartDate
         var response = await client.PatchAsJsonAsync($"/api/sprints/{sprintId}",
             new { startDate = startDate, endDate = startDate.AddDays(-1) });
 
@@ -258,7 +251,7 @@ public class SprintsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", IsSetToScrum = true });
+            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", HexColor = "#0072B2", IsSetToScrum = true });
             db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, Name = "Sprint To Delete" });
             return Task.CompletedTask;
         });

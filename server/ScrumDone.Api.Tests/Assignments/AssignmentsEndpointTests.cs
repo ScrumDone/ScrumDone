@@ -44,7 +44,8 @@ public class AssignmentsEndpointTests
         {
             Id = projectId,
             Name = "Test Project",
-            Description = "Test description"
+            Description = "Test description",
+            HexColor = "#AAAAAA"
         });
 
         return new SeedData(projectId, statusId, priorityId);
@@ -110,7 +111,7 @@ public class AssignmentsEndpointTests
             targetProjectId = seed.ProjectId;
 
             var otherProjectId = Guid.NewGuid();
-            db.Projects.Add(new Project { Id = otherProjectId, Name = "Other Project", Description = "Other" });
+            db.Projects.Add(new Project { Id = otherProjectId, Name = "Other Project", Description = "Other", HexColor = "#AAAAAA" });
 
             db.Assignment.AddRange(
                 new Assignment { Name = "Target Project Task", ProjectId = seed.ProjectId, StatusId = seed.StatusId },
@@ -139,10 +140,10 @@ public class AssignmentsEndpointTests
             var seed = SeedBase(db);
             projectA = seed.ProjectId;
             projectB = Guid.NewGuid();
-            db.Projects.Add(new Project { Id = projectB, Name = "Project B", Description = "B" });
+            db.Projects.Add(new Project { Id = projectB, Name = "Project B", Description = "B", HexColor = "#AAAAAA" });
 
             var otherProject = Guid.NewGuid();
-            db.Projects.Add(new Project { Id = otherProject, Name = "Project C", Description = "C" });
+            db.Projects.Add(new Project { Id = otherProject, Name = "Project C", Description = "C", HexColor = "#AAAAAA" });
 
             db.Assignment.AddRange(
                 new Assignment { Name = "A Task", ProjectId = projectA, StatusId = seed.StatusId },

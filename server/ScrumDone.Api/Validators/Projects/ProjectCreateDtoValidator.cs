@@ -16,6 +16,9 @@ namespace ScrumDone.Api.Validators.Projects
             RuleFor(x => x.Description)
                 .MaximumLength(1000);
 
+            RuleFor(x => x.HexColor)
+                .Matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
+                .When(x => x is not null);
             RuleFor(x => x.TeamMemberIds)
                     .Cascade(CascadeMode.Stop)
                     .NotEmpty()

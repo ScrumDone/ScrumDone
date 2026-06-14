@@ -14,7 +14,8 @@ namespace ScrumDone.Api.DTOs.Projects
     public record ProjectListItemDto(
         Guid Id,
         string Name,
-        string Description,
+        string? Description,
+        string HexColor,
         bool IsActive,
         bool IsSetToScrum,
         DateTimeOffset CreatedAt,
@@ -32,12 +33,13 @@ namespace ScrumDone.Api.DTOs.Projects
     public record ProjectDetailDto(
         Guid Id,
         string Name,
-        string Description,
+        string? Description,
+        string HexColor,
         bool IsActive,
         bool IsSetToScrum,
         DateTimeOffset CreatedAt,
         DateTimeOffset UpdatedAt,
-        DateTimeOffset StartDate,
+        DateTimeOffset? StartDate,
         DateTimeOffset? ExpectedFinishDate,
         //string? ProfilePictureUrl,
         Guid? CompanyId,
@@ -53,6 +55,7 @@ namespace ScrumDone.Api.DTOs.Projects
     {
         public required string Name { get; set; }
         public string Description { get; set; } = string.Empty;
+        public string? HexColor { get; set; }
         public bool IsSetToScrum { get; set; } = false;
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? ExpectedFinishDate { get; set; }
@@ -83,6 +86,11 @@ namespace ScrumDone.Api.DTOs.Projects
         {
             get => field;
             set { field = value; _setProperties.Add(nameof(Description)); }
+        }
+        public string? HexColor
+        {
+            get => field;
+            set { field = value; _setProperties.Add(nameof(HexColor)); }
         }
         public bool? IsActive
         {

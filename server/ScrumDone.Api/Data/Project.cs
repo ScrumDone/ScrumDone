@@ -8,6 +8,7 @@ namespace ScrumDone.Api.Data
         public Guid? CompanyId { get; set; }
         public string Name { get; set; }
         public string? Description { get; set; }
+        public string HexColor { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public bool IsActive { get; set; } = true;
         public bool IsSetToScrum { get; set; } = false;

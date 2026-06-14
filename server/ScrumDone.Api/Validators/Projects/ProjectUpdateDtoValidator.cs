@@ -20,6 +20,11 @@ namespace ScrumDone.Api.Validators.Projects
                 .MaximumLength(1000)
                 .When(x => x.SetProperties.Contains(nameof(ProjectUpdateDto.Description)));
 
+            RuleFor(x => x.HexColor)
+                .NotEmpty()
+                .Matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
+                .When(x => x.SetProperties.Contains(nameof(ProjectUpdateDto.HexColor)));
+
             RuleFor(x => x.IsSetToScrum)
                 .NotNull()
                 .When(x => x.SetProperties.Contains(nameof(ProjectUpdateDto.IsSetToScrum)));

@@ -42,7 +42,8 @@ public class LabelsEndpointTests
         {
             Id = projectId,
             Name = "Test Project",
-            Description = "Test description"
+            Description = "Test description",
+            HexColor = "#AAAAAA"
         });
 
         return new SeedData(projectId, statusId, priorityId);

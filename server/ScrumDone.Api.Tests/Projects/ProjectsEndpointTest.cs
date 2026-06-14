@@ -1,16 +1,17 @@
-using System.Net;
-using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using ScrumDone.Api.Data;
+using ScrumDone.Api.DTOs.Assignments;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Projects;
-using ScrumDone.Api.DTOs.Assignments;
 using ScrumDone.Api.DTOs.Sprints;
 using ScrumDone.Api.DTOs.Users;
 using ScrumDone.Api.Tests.Common;
-using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using ScrumDone.Api.Utilities;
+using System.Net;
+using System.Net.Http.Json;
 using System.Text;
+using Xunit;
 
 namespace ScrumDone.Api.Tests.Projects;
 
@@ -24,7 +25,6 @@ public class ProjectsEndpointTests
         using var app = new ScrumDoneApiFactory();
         var userId = Guid.NewGuid();
 
-        // Musimy zseedować usera, żeby API go znalazło
         await app.SeedDatabaseAsync(db =>
         {
             db.Users.Add(new User { Id = userId, Name = "Test User" });
@@ -38,7 +38,7 @@ public class ProjectsEndpointTests
             Name = "Test Project",
             Description = "Test Description",
             IsSetToScrum = true,
-            TeamMemberIds = new List<Guid> { userId } // Przekazujemy poprawnego usera
+            TeamMemberIds = new List<Guid> { userId }
         };
 
         var response = await client.PostAsJsonAsync("/api/projects", request);
@@ -51,7 +51,9 @@ public class ProjectsEndpointTests
         Assert.Equal(request.Description, project.Description);
         Assert.Equal(request.IsSetToScrum, project.IsSetToScrum);
         Assert.True(project.IsActive);
-        Assert.Equal(1, project.TeamMemberCount); // Spodziewamy się 1 członka
+        Assert.Equal(1, project.TeamMemberCount);
+        Assert.NotNull(project.HexColor);
+        Assert.Contains(project.HexColor, ColorHelper.HighlyDistinctColors);
     }
 
     [Fact]
@@ -83,18 +85,18 @@ public class ProjectsEndpointTests
         Assert.Equal("Minimal Project", project.Name);
         Assert.False(project.IsSetToScrum);
         Assert.Null(project.CompanyId);
+        Assert.NotNull(project.HexColor);
         Assert.Equal(1, project.TeamMemberCount);
     }
 
     [Fact]
     public async Task CreateProject_WithEmptyTeamMembers_ReturnsBadRequest()
     {
-        // Nowy test weryfikujący regułę .NotEmpty() dla TeamMemberIds
         using var app = new ScrumDoneApiFactory();
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/projects",
-            new ProjectCreateDto { Name = "No Members Project", TeamMemberIds = new List<Guid>() }); // Pusta lista
+            new ProjectCreateDto { Name = "No Members Project", TeamMemberIds = new List<Guid>() });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -117,7 +119,7 @@ public class ProjectsEndpointTests
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/projects",
-            new ProjectCreateDto { Name = "", TeamMemberIds = new List<Guid> { userId } }); // Prawidłowy user, aby testować TYLKO pustą nazwę
+            new ProjectCreateDto { Name = "", TeamMemberIds = new List<Guid> { userId } });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -158,10 +160,10 @@ public class ProjectsEndpointTests
             new ProjectCreateDto
             {
                 Name = "Test Project",
-                TeamMemberIds = new List<Guid> { Guid.NewGuid() } // Identyfikator, którego nie ma w bazie
+                TeamMemberIds = new List<Guid> { Guid.NewGuid() }
             });
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode); // Upewnij się, że Twoje API rzuca 404 (lub ew. 400), gdy user nie istnieje
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
@@ -191,6 +193,63 @@ public class ProjectsEndpointTests
         Assert.Equal(1, project.TeamMemberCount);
     }
 
+    // ── auto-color tests ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task CreateProject_WithoutColor_AutoAssignsColor()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var userId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/projects",
+            new ProjectCreateDto { Name = "No Color", TeamMemberIds = new List<Guid> { userId } });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
+        Assert.NotNull(project.HexColor);
+        Assert.Contains(project.HexColor, ColorHelper.HighlyDistinctColors);
+    }
+
+    [Fact]
+    public async Task CreateProject_AllColorsUsed_StillGetsAColor()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var userId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            foreach (var color in ColorHelper.HighlyDistinctColors)
+            {
+                db.Projects.Add(new Project
+                {
+                    Id = Guid.NewGuid(),
+                    Name = $"Project {color}",
+                    Description = "",
+                    HexColor = color
+                });
+            }
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/projects",
+            new ProjectCreateDto { Name = "Overflow", TeamMemberIds = new List<Guid> { userId } });
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
+        Assert.NotNull(project.HexColor);
+    }
+
     // GET /api/projects
 
     [Fact]
@@ -218,8 +277,8 @@ public class ProjectsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.AddRange(
-                new Project { Name = "Project 1", Description = "" },
-                new Project { Name = "Project 2", Description = "" }
+                new Project { Name = "Project 1", Description = "", HexColor = "#0072B2" },
+                new Project { Name = "Project 2", Description = "", HexColor = "#D55E00" }
             );
             return Task.CompletedTask;
         });
@@ -247,8 +306,8 @@ public class ProjectsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.AddRange(
-                new Project { Name = "Project 1", Description = "" },
-                new Project { Name = "Project 2", Description = "" }
+                new Project { Name = "Project 1", Description = "", HexColor = "#0072B2" },
+                new Project { Name = "Project 2", Description = "", HexColor = "#D55E00" }
             );
             return Task.CompletedTask;
         });
@@ -270,8 +329,8 @@ public class ProjectsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.AddRange(
-                new Project { Name = "Active", Description = "", IsActive = true },
-                new Project { Name = "Inactive", Description = "", IsActive = false }
+                new Project { Name = "Active", Description = "", IsActive = true, HexColor = "#0072B2" },
+                new Project { Name = "Inactive", Description = "", IsActive = false, HexColor = "#D55E00" }
             );
             return Task.CompletedTask;
         });
@@ -295,8 +354,8 @@ public class ProjectsEndpointTests
         {
             db.Companies.Add(new Company { Id = companyId, Name = "Company" });
             db.Projects.AddRange(
-                new Project { Name = "Company Project", Description = "", CompanyId = companyId },
-                new Project { Name = "Other Project", Description = "" }
+                new Project { Name = "Company Project", Description = "", CompanyId = companyId, HexColor = "#0072B2" },
+                new Project { Name = "Other Project", Description = "", HexColor = "#D55E00" }
             );
             return Task.CompletedTask;
         });
@@ -352,6 +411,7 @@ public class ProjectsEndpointTests
                 Id = projectId,
                 Name = "Existing Project",
                 Description = "Some description",
+                HexColor = "#0072B2",
                 IsActive = true,
                 IsSetToScrum = false
             });
@@ -402,6 +462,7 @@ public class ProjectsEndpointTests
                 Id = projectId,
                 Name = "Old Name",
                 Description = "Old Description",
+                HexColor = "#0072B2",
                 IsActive = true
             });
             return Task.CompletedTask;
@@ -416,8 +477,8 @@ public class ProjectsEndpointTests
 
         var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
         Assert.Equal("New Name", project.Name);
-        Assert.Equal("Old Description", project.Description); // unchanged
-        Assert.True(project.IsActive); // unchanged
+        Assert.Equal("Old Description", project.Description);
+        Assert.True(project.IsActive);
     }
 
     [Fact]
@@ -432,7 +493,8 @@ public class ProjectsEndpointTests
             {
                 Id = projectId,
                 Name = "Original Name",
-                Description = "Original Description"
+                Description = "Original Description",
+                HexColor = "#0072B2"
             });
             return Task.CompletedTask;
         });
@@ -445,8 +507,8 @@ public class ProjectsEndpointTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
-        Assert.Equal("Original Name", project.Name);      // unchanged
-        Assert.Equal("Original Description", project.Description); // unchanged
+        Assert.Equal("Original Name", project.Name);
+        Assert.Equal("Original Description", project.Description);
         Assert.False(project.IsActive);
     }
 
@@ -473,7 +535,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Valid Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Valid Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -496,7 +558,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Valid Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Valid Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -521,7 +583,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "To Delete", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "To Delete", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -550,33 +612,33 @@ public class ProjectsEndpointTests
 
     // POST /api/projects/{id}/members/{userId}
 
-[Fact]
-public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
-{
-    using var app = new ScrumDoneApiFactory();
-    var projectId = Guid.NewGuid();
-    var userId = Guid.NewGuid();
-    var userName = "Test User";
-
-    await app.SeedDatabaseAsync(db =>
+    [Fact]
+    public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
     {
-        db.Projects.Add(new Project { Id = projectId, Name = "Test Project", Description = "" });
-        db.Users.Add(new User { Id = userId, Name = userName });
-        return Task.CompletedTask;
-    });
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var userName = "Test User";
 
-    using var client = app.CreateClient();
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", Description = "", HexColor = "#0072B2" });
+            db.Users.Add(new User { Id = userId, Name = userName });
+            return Task.CompletedTask;
+        });
 
-    var response = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
+        using var client = app.CreateClient();
 
-    Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var response = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
 
-    var returnedUser = await response.Content.ReadFromJsonAsync<UserSummaryDto>();
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-    Assert.NotNull(returnedUser);
-    Assert.Equal(userId, returnedUser.Id);
-    Assert.Equal(userName, returnedUser.Name);
-}
+        var returnedUser = await response.Content.ReadFromJsonAsync<UserSummaryDto>();
+
+        Assert.NotNull(returnedUser);
+        Assert.Equal(userId, returnedUser.Id);
+        Assert.Equal(userName, returnedUser.Name);
+    }
 
     [Fact]
     public async Task AddMember_NonExistentProject_ReturnsNotFound()
@@ -605,7 +667,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -631,6 +693,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 Id = projectId,
                 Name = "Project",
                 Description = "",
+                HexColor = "#0072B2",
                 TeamMembers = new List<ProjectUserMTMRelation>
                 {
                     new ProjectUserMTMRelation { UserId = userId }
@@ -646,17 +709,17 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
+    // DELETE /api/projects/{id}/members/{userId}
+
     [Fact]
-    public async Task RemoveMember_ExistingMember_AlsoRemovesFromAllProjectAssignments()
+    public async Task RemoveMember_MultipleMembers_ReturnsNoContentAndRemovesFromAssignments()
     {
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var otherUserId = Guid.NewGuid();
-        var assignment1Id = Guid.NewGuid();
-        var assignment2Id = Guid.NewGuid();
+        var userToRemoveId = Guid.NewGuid();
+        var userToKeepId = Guid.NewGuid();
+        var assignmentId = Guid.NewGuid();
 
-        // Seed project, users, and assignments with the user as assignee
         await app.SeedDatabaseAsync(async db =>
         {
             db.Projects.Add(new Project
@@ -664,17 +727,19 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 Id = projectId,
                 Name = "Test Project",
                 Description = "",
+                HexColor = "#0072B2",
                 TeamMembers = new List<ProjectUserMTMRelation>
-            {
-                new() { UserId = userId }
-            }
+                {
+                    new() { UserId = userToRemoveId },
+                    new() { UserId = userToKeepId }
+                }
             });
+
             db.Users.AddRange(
-                new User { Id = userId, Name = "Alice" },
-                new User { Id = otherUserId, Name = "Bob" }
+                new User { Id = userToRemoveId, Name = "Alice (To Remove)" },
+                new User { Id = userToKeepId, Name = "Bob (To Keep)" }
             );
 
-            // Need a valid status and priority for Assignment seeding
             var statusId = Guid.NewGuid();
             db.AssignmentStatuses.Add(new AssignmentStatus
             {
@@ -684,61 +749,47 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 Order = 0
             });
 
-            // Two assignments: one with only the target user, one with both users
-            db.Assignment.AddRange(
-                new Assignment
+            db.Assignment.Add(new Assignment
+            {
+                Id = assignmentId,
+                Name = "Shared Task",
+                ProjectId = projectId,
+                StatusId = statusId,
+                Assignees = new List<AssignmentUserMTMRelation>
                 {
-                    Id = assignment1Id,
-                    Name = "Task 1",
-                    ProjectId = projectId,
-                    StatusId = statusId,
-                    Assignees = new List<AssignmentUserMTMRelation>
-                    {
-                    new() { UserId = userId }
-                    }
-                },
-                new Assignment
-                {
-                    Id = assignment2Id,
-                    Name = "Task 2",
-                    ProjectId = projectId,
-                    StatusId = statusId,
-                    Assignees = new List<AssignmentUserMTMRelation>
-                    {
-                    new() { UserId = userId },
-                    new() { UserId = otherUserId }
-                    }
+                    new() { UserId = userToRemoveId },
+                    new() { UserId = userToKeepId }
                 }
-            );
+            });
 
             await db.SaveChangesAsync();
         });
 
         using var client = app.CreateClient();
 
-        // Act: remove the member
-        var deleteResponse = await client.DeleteAsync($"/api/projects/{projectId}/members/{userId}");
+        var deleteResponse = await client.DeleteAsync($"/api/projects/{projectId}/members/{userToRemoveId}");
+
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
-        // Assert: user is no longer a project member
         var projectResponse = await client.GetAsync($"/api/projects/{projectId}");
         var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(projectResponse);
-        Assert.DoesNotContain(project.TeamMembers, m => m.Id == userId);
 
-        // Assert: user is no longer assigned to any assignment in that project
-        var assignmentsResponse = await client.GetAsync(
-            $"/api/assignments?projectIds={projectId}&assigneeIds={userId}");
-        var page = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(assignmentsResponse);
-        Assert.Equal(0, page.TotalCount);
+        Assert.DoesNotContain(project.TeamMembers, m => m.Id == userToRemoveId);
+        Assert.Contains(project.TeamMembers, m => m.Id == userToKeepId);
+        Assert.Equal(1, project.TeamMemberCount);
 
-        // Optional sanity: the other user's assignment still exists
-        var otherAssignmentsResponse = await client.GetAsync(
-            $"/api/assignments?projectIds={projectId}&assigneeIds={otherUserId}");
-        var otherPage = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(otherAssignmentsResponse);
-        Assert.Equal(1, otherPage.TotalCount);
+        var removedUserAssignmentsResponse = await client.GetAsync(
+            $"/api/assignments?projectIds={projectId}&assigneeIds={userToRemoveId}");
+        var removedUserPage = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(removedUserAssignmentsResponse);
+
+        Assert.Equal(0, removedUserPage.TotalCount);
+
+        var keptUserAssignmentsResponse = await client.GetAsync(
+            $"/api/assignments?projectIds={projectId}&assigneeIds={userToKeepId}");
+        var keptUserPage = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(keptUserAssignmentsResponse);
+
+        Assert.Equal(1, keptUserPage.TotalCount);
     }
-
-    // DELETE /api/projects/{id}/members/{userId}
 
     [Fact]
     public async Task RemoveMember_ExistingMember_ReturnsNoContent()
@@ -746,18 +797,22 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var userId = Guid.NewGuid();
+        var userId2 = Guid.NewGuid();
 
         await app.SeedDatabaseAsync(db =>
         {
             db.Users.Add(new User { Id = userId, Name = "User" });
+            db.Users.Add(new User { Id = userId2, Name = "User2" });
             db.Projects.Add(new Project
             {
                 Id = projectId,
                 Name = "Project",
                 Description = "",
+                HexColor = "#0072B2",
                 TeamMembers = new List<ProjectUserMTMRelation>
                 {
-                    new ProjectUserMTMRelation { UserId = userId }
+                    new ProjectUserMTMRelation { UserId = userId },
+                    new ProjectUserMTMRelation { UserId = userId2 }
                 }
             });
             return Task.CompletedTask;
@@ -789,7 +844,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -810,7 +865,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true});
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true });
             db.Sprints.AddRange(
                 new Sprint { ProjectId = projectId, IsKanban = false },
                 new Sprint { ProjectId = projectId, IsKanban = false }
@@ -838,8 +893,8 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.AddRange(
-                new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true },
-                new Project { Id = otherProjectId, Name = "Other", Description = "", IsSetToScrum = true }
+                new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true },
+                new Project { Id = otherProjectId, Name = "Other", Description = "", HexColor = "#D55E00", IsSetToScrum = true }
             );
             db.Sprints.AddRange(
                 new Sprint { ProjectId = projectId, IsKanban = false },
@@ -877,7 +932,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true });
             return Task.CompletedTask;
         });
 
@@ -914,7 +969,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -945,7 +1000,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.AssignmentLabels.AddRange(
                 new AssignmentLabel { ProjectId = projectId, Name = "Frontend", HexColor = "#FF0000" },
                 new AssignmentLabel { ProjectId = projectId, Name = "Backend", HexColor = "#0000FF" }
@@ -973,8 +1028,8 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.AddRange(
-                new Project { Id = projectId, Name = "Project", Description = "" },
-                new Project { Id = otherProjectId, Name = "Other", Description = "" }
+                new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" },
+                new Project { Id = otherProjectId, Name = "Other", Description = "", HexColor = "#D55E00" }
             );
             db.AssignmentLabels.AddRange(
                 new AssignmentLabel { ProjectId = projectId, Name = "My Label", HexColor = "#FF0000" },
@@ -1013,14 +1068,14 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/assignment-labels",
-            new AssignmentLabelCreateDto{ Name = "Bug", HexColor = "#FF0000" });
+            new AssignmentLabelCreateDto { Name = "Bug", HexColor = "#FF0000" });
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
@@ -1038,7 +1093,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -1058,7 +1113,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -1085,8 +1140,6 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    // POST /api/projects/{id}/assignment-labels
-
     [Fact]
     public async Task CreateAssignmentLabel_DuplicateName_ReturnsConflict()
     {
@@ -1096,7 +1149,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.AssignmentLabels.Add(new AssignmentLabel
             {
                 Id = Guid.NewGuid(),
@@ -1123,8 +1176,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
-            // Seed exactly 50 labels – the max allowed
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             for (int i = 0; i < 50; i++)
             {
                 db.AssignmentLabels.Add(new AssignmentLabel
@@ -1154,8 +1206,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
-            // A label with the trimmed name "Bug" already exists
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.AssignmentLabels.Add(new AssignmentLabel
             {
                 Id = Guid.NewGuid(),
@@ -1168,7 +1219,6 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         using var client = app.CreateClient();
 
-        // Attempt to create a label whose name, after trimming, is "Bug"
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/assignment-labels",
             new AssignmentLabelCreateDto { Name = "  Bug  ", HexColor = "#00FF00" });
 
@@ -1183,7 +1233,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -1195,146 +1245,66 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         var label = await TestResponse.ReadJsonAsync<AssignmentLabelDto>(response);
-        Assert.Equal("Clean", label.Name); // Trimmed
+        Assert.Equal("Clean", label.Name);
     }
 
-    // PATCH /api/projects/{id}/assignment-labels/{labelId}
+    // ── auto-color for labels ─────────────────────────────────────────────────
 
     [Fact]
-    public async Task UpdateAssignmentLabel_TrimsNameAndDetectsDuplicate()
+    public async Task CreateAssignmentLabel_WithoutColor_AutoAssignsColor()
     {
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
-        var labelId = Guid.NewGuid();
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
-            db.AssignmentLabels.AddRange(
-                new AssignmentLabel { Id = labelId, ProjectId = projectId, Name = "Frontend", HexColor = "#FF0000" },
-                new AssignmentLabel { Id = Guid.NewGuid(), ProjectId = projectId, Name = "Backend", HexColor = "#00FF00" }
-            );
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
         using var client = app.CreateClient();
 
-        // Try to rename "Frontend" to "  Backend " → should conflict because "Backend" exists
-        var payload = new StringContent("{\"name\":\"  Backend  \"}", Encoding.UTF8, "application/json");
-        var response = await client.PatchAsync($"/api/projects/{projectId}/assignment-labels/{labelId}", payload);
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/assignment-labels",
+            new AssignmentLabelCreateDto { Name = "AutoColor" });
 
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task UpdateAssignmentLabel_SameNameTrimmed_ShouldSucceed()
-    {
-        using var app = new ScrumDoneApiFactory();
-        var projectId = Guid.NewGuid();
-        var labelId = Guid.NewGuid();
-
-        await app.SeedDatabaseAsync(db =>
-        {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
-            db.AssignmentLabels.Add(new AssignmentLabel
-            {
-                Id = labelId,
-                ProjectId = projectId,
-                Name = "Bug",
-                HexColor = "#FF0000"
-            });
-            return Task.CompletedTask;
-        });
-
-        using var client = app.CreateClient();
-
-        // Update the label to the same name but with leading/trailing whitespace
-        var payload = new StringContent("{\"name\":\"  Bug  \"}", Encoding.UTF8, "application/json");
-        var response = await client.PatchAsync($"/api/projects/{projectId}/assignment-labels/{labelId}", payload);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         var label = await TestResponse.ReadJsonAsync<AssignmentLabelDto>(response);
-        Assert.Equal("Bug", label.Name); // Trimmed
+        Assert.NotNull(label.HexColor);
+        Assert.Contains(label.HexColor, ColorHelper.HighlyDistinctColors);
     }
 
     [Fact]
-    public async Task UpdateAssignmentLabel_DuplicateName_ReturnsConflict()
+    public async Task CreateAssignmentLabel_AllColorsUsed_StillGetsAColor()
     {
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
-        var labelId = Guid.NewGuid();
-        var otherLabelId = Guid.NewGuid();
-        var duplicateName = "Duplicate";
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
-            db.AssignmentLabels.AddRange(
-                new AssignmentLabel
-                {
-                    Id = labelId,
-                    ProjectId = projectId,
-                    Name = "Original",
-                    HexColor = "#FF0000"
-                },
-                new AssignmentLabel
-                {
-                    Id = otherLabelId,
-                    ProjectId = projectId,
-                    Name = duplicateName,
-                    HexColor = "#00FF00"
-                }
-            );
-            return Task.CompletedTask;
-        });
-
-        using var client = app.CreateClient();
-
-        // Send only the conflicting name as raw JSON
-        var payload = new StringContent(
-            $"{{\"name\":\"{duplicateName}\"}}",
-            System.Text.Encoding.UTF8,
-            "application/json");
-
-        var response = await client.PatchAsync(
-            $"/api/projects/{projectId}/assignment-labels/{labelId}",
-            payload);
-
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task UpdateAssignmentLabel_WithValidData_UpdatesOnlyProvidedFields()
-    {
-        using var app = new ScrumDoneApiFactory();
-        var projectId = Guid.NewGuid();
-        var labelId = Guid.NewGuid();
-
-        await app.SeedDatabaseAsync(db =>
-        {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
-            db.AssignmentLabels.Add(new AssignmentLabel
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
+            foreach (var color in ColorHelper.HighlyDistinctColors)
             {
-                Id = labelId,
-                ProjectId = projectId,
-                Name = "Old Name",
-                HexColor = "#FF0000"
-            });
+                db.AssignmentLabels.Add(new AssignmentLabel
+                {
+                    Id = Guid.NewGuid(),
+                    ProjectId = projectId,
+                    Name = $"Label {color}",
+                    HexColor = color
+                });
+            }
             return Task.CompletedTask;
         });
 
         using var client = app.CreateClient();
 
-        var response = await client.PatchAsJsonAsync(
-            $"/api/projects/{projectId}/assignment-labels/{labelId}",
-            new { name = "New Name" });
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/assignment-labels",
+            new AssignmentLabelCreateDto { Name = "Overflow" });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
         var label = await TestResponse.ReadJsonAsync<AssignmentLabelDto>(response);
-        Assert.Equal("New Name", label.Name);
-        Assert.Equal("#FF0000", label.HexColor); // unchanged
+        Assert.NotNull(label.HexColor);
     }
 
     [Fact]
@@ -1345,7 +1315,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -1369,13 +1339,13 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.AddRange(
-                new Project { Id = projectId, Name = "Project", Description = "" },
-                new Project { Id = otherProjectId, Name = "Other", Description = "" }
+                new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" },
+                new Project { Id = otherProjectId, Name = "Other", Description = "", HexColor = "#D55E00" }
             );
             db.AssignmentLabels.Add(new AssignmentLabel
             {
                 Id = labelId,
-                ProjectId = otherProjectId, // należy do innego projektu
+                ProjectId = otherProjectId,
                 Name = "Label",
                 HexColor = "#FF0000"
             });
@@ -1402,7 +1372,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.AssignmentLabels.Add(new AssignmentLabel
             {
                 Id = labelId,
@@ -1432,7 +1402,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
@@ -1455,7 +1425,8 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
-        [Fact]
+
+    [Fact]
     public async Task UpdateProject_ChangeToKanbanWithNoSprints_CreatesNewKanbanSprint()
     {
         using var app = new ScrumDoneApiFactory();
@@ -1463,28 +1434,27 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project 
-            { 
-                Id = projectId, 
-                Name = "Scrum Project", 
-                Description = "", 
-                IsSetToScrum = true 
+            db.Projects.Add(new Project
+            {
+                Id = projectId,
+                Name = "Scrum Project",
+                Description = "",
+                HexColor = "#0072B2",
+                IsSetToScrum = true
             });
             return Task.CompletedTask;
         });
 
         using var client = app.CreateClient();
 
-        // Przejście na Kanban
-        var patchResponse = await client.PatchAsJsonAsync($"/api/projects/{projectId}", 
+        var patchResponse = await client.PatchAsJsonAsync($"/api/projects/{projectId}",
             new { isSetToScrum = false });
-            
+
         Assert.Equal(HttpStatusCode.OK, patchResponse.StatusCode);
 
-        // Sprawdzamy czy API automatycznie wygenerowało nowy sprint dla Kanbana
         var sprintsResponse = await client.GetAsync($"/api/projects/{projectId}/sprints");
         var sprintsPage = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(sprintsResponse);
-        
+
         Assert.Equal(1, sprintsPage.TotalCount);
         Assert.True(sprintsPage.Items.First().IsKanban);
     }
@@ -1499,12 +1469,9 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
-            
-            // DODANE: Uzupełniłem pole Name. Jeśli encja Sprint wymaga Name,
-            // EF Core mógł rzucać cichy błąd walidacji podczas zapisu!
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true });
             db.Sprints.AddRange(
-                new Sprint { Id = oldSprintId, ProjectId = projectId, Name = "Stary", StartDate = DateTimeOffset.UtcNow.AddDays(-30), EndDate = DateTimeOffset.UtcNow.AddDays(-16), IsKanban = true }, 
+                new Sprint { Id = oldSprintId, ProjectId = projectId, Name = "Stary", StartDate = DateTimeOffset.UtcNow.AddDays(-30), EndDate = DateTimeOffset.UtcNow.AddDays(-16), IsKanban = true },
                 new Sprint { Id = currentSprintId, ProjectId = projectId, Name = "Obecny", StartDate = DateTimeOffset.UtcNow.AddDays(-2), EndDate = DateTimeOffset.UtcNow.AddDays(12), IsKanban = false }
             );
             return Task.CompletedTask;
@@ -1512,13 +1479,9 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         using var client = app.CreateClient();
 
-        // DODANE: Zmiana z isSetToScrum (mała litera) na IsSetToScrum (wielka litera). 
-        // Jeśli Twój mechanizm SetProperties zależy od dokładnej nazwy (nameof), 
-        // mała litera sprawiała, że logika zmiany całkowicie się pomijała!
-        var patchResponse = await client.PatchAsJsonAsync($"/api/projects/{projectId}", 
+        var patchResponse = await client.PatchAsJsonAsync($"/api/projects/{projectId}",
             new { IsSetToScrum = false });
-        
-        // DODANE: Zrzut błędu do konsoli. Jeśli API wybuchnie, test Ci to pokaże!
+
         if (!patchResponse.IsSuccessStatusCode)
         {
             var errorBody = await patchResponse.Content.ReadAsStringAsync();
@@ -1528,8 +1491,8 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         Assert.Equal(HttpStatusCode.OK, patchResponse.StatusCode);
 
         using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>(); // Upewnij się, że tu jest właściwa nazwa kontekstu
-        
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
         var oldSprint = await dbContext.Sprints.FindAsync(oldSprintId);
         var currentSprint = await dbContext.Sprints.FindAsync(currentSprintId);
 
@@ -1546,17 +1509,16 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Kanban Project", Description = "", IsSetToScrum = false });
+            db.Projects.Add(new Project { Id = projectId, Name = "Kanban Project", Description = "", HexColor = "#0072B2", IsSetToScrum = false });
             db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, IsKanban = true });
             return Task.CompletedTask;
         });
 
         using var client = app.CreateClient();
 
-        // Powrót na Scrum
-        var patchResponse = await client.PatchAsJsonAsync($"/api/projects/{projectId}", 
+        var patchResponse = await client.PatchAsJsonAsync($"/api/projects/{projectId}",
             new { isSetToScrum = true });
-            
+
         Assert.Equal(HttpStatusCode.OK, patchResponse.StatusCode);
 
         using var scope = app.Services.CreateScope();
@@ -1574,12 +1536,10 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            // Projekt w trybie SCRUM
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
-            
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true });
             db.Sprints.AddRange(
                 new Sprint { ProjectId = projectId, Name = "Scrum Sprint 1", IsKanban = false },
-                new Sprint { ProjectId = projectId, Name = "Ghost Kanban", IsKanban = true } // Teoretycznie zepsuty rekord, nie powinien zostać zwrócony
+                new Sprint { ProjectId = projectId, Name = "Ghost Kanban", IsKanban = true }
             );
             return Task.CompletedTask;
         });
@@ -1602,9 +1562,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            // Projekt w trybie KANBAN
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = false });
-            
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = false });
             db.Sprints.AddRange(
                 new Sprint { ProjectId = projectId, Name = "Old Scrum Sprint", IsKanban = false },
                 new Sprint { ProjectId = projectId, Name = "Current Board", IsKanban = true }
@@ -1631,11 +1589,11 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = false });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = false });
             db.Sprints.AddRange(
-                new Sprint { ProjectId = projectId, StartDate = DateTimeOffset.UtcNow.AddDays(-20), EndDate = DateTimeOffset.UtcNow.AddDays(-6) }, // Zakończony
-                new Sprint { Id = activeSprintId, ProjectId = projectId, StartDate = DateTimeOffset.UtcNow.AddDays(-2), EndDate = DateTimeOffset.UtcNow.AddDays(12), IsKanban = true }, // Aktywny
-                new Sprint { ProjectId = projectId, StartDate = DateTimeOffset.UtcNow.AddDays(15), EndDate = DateTimeOffset.UtcNow.AddDays(29) } // Przyszły
+                new Sprint { ProjectId = projectId, StartDate = DateTimeOffset.UtcNow.AddDays(-20), EndDate = DateTimeOffset.UtcNow.AddDays(-6) },
+                new Sprint { Id = activeSprintId, ProjectId = projectId, StartDate = DateTimeOffset.UtcNow.AddDays(-2), EndDate = DateTimeOffset.UtcNow.AddDays(12), IsKanban = true },
+                new Sprint { ProjectId = projectId, StartDate = DateTimeOffset.UtcNow.AddDays(15), EndDate = DateTimeOffset.UtcNow.AddDays(29) }
             );
             return Task.CompletedTask;
         });
@@ -1643,9 +1601,9 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         using var client = app.CreateClient();
 
         var response = await client.GetAsync($"/api/projects/{projectId}/sprints/current");
-        
+
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        
+
         var sprint = await TestResponse.ReadJsonAsync<SprintDetailDto>(response);
         Assert.Equal(activeSprintId, sprint.Id);
     }
@@ -1658,87 +1616,74 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Empty Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Empty Project", Description = "", HexColor = "#0072B2" });
             return Task.CompletedTask;
         });
 
         using var client = app.CreateClient();
 
         var response = await client.GetAsync($"/api/projects/{projectId}/sprints/current");
-        
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode); 
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
     }
 
-        [Fact]
+    [Fact]
     public async Task AddMember_SameUserTwice_ReturnsConflictOnSecondRequest()
     {
-        // Ten test ujawnia buga: dwa sekwencyjne requesty z tym samym userId
-        // powinny zwrócić 409 Conflict przy drugim, a nie 201 Created.
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var userId = Guid.NewGuid();
- 
+
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.Users.Add(new User { Id = userId, Name = "Alice" });
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var first = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
         Assert.Equal(HttpStatusCode.Created, first.StatusCode);
- 
-        // BUG: bez unique constraintu na bazie drugi request może przejść
+
         var second = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
         Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
     }
- 
+
     [Fact]
     public async Task AddMember_SameUserTwice_ProjectHasOnlyOneMember()
     {
-        // Dodatkowe sprawdzenie: nawet jeśli endpoint zwróci błąd,
-        // upewniamy się że w bazie nie ma duplikatu.
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var userId = Guid.NewGuid();
- 
+
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.Users.Add(new User { Id = userId, Name = "Alice" });
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
         await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
- 
+
         var response = await client.GetAsync($"/api/projects/{projectId}");
         var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
- 
-        // BUG: bez constraintu TeamMemberCount może wynosić 2
+
         Assert.Equal(1, project.TeamMemberCount);
         Assert.Single(project.TeamMembers);
     }
- 
-    // ─────────────────────────────────────────────────────────────────
-    // BUG 2: GET /projects/{id} nie filtruje sprintów po IsKanban
-    //        (zwraca inne sprinty niż GET /projects/{id}/sprints)
-    // ─────────────────────────────────────────────────────────────────
- 
+
     [Fact]
     public async Task GetProject_ScrumProject_SprintsFieldContainsOnlyScrumSprints()
     {
-        // GET /projects/{id} powinien w polu Sprints zwracać tylko
-        // sprinty zgodne z trybem projektu (IsKanban == false dla Scrum).
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var scrumSprintId = Guid.NewGuid();
         var kanbanSprintId = Guid.NewGuid();
- 
+
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.Add(new Project
@@ -1746,6 +1691,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 Id = projectId,
                 Name = "Scrum Project",
                 Description = "",
+                HexColor = "#0072B2",
                 IsSetToScrum = true
             });
             db.Sprints.AddRange(
@@ -1754,17 +1700,16 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             );
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.GetAsync($"/api/projects/{projectId}");
         var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
- 
-        // BUG: jeśli GET /projects/{id} nie filtruje po IsKanban, zwróci oba sprinty
+
         Assert.DoesNotContain(project.Sprints, s => s.Id == kanbanSprintId);
         Assert.Contains(project.Sprints, s => s.Id == scrumSprintId);
     }
- 
+
     [Fact]
     public async Task GetProject_KanbanProject_SprintsFieldContainsOnlyKanbanSprints()
     {
@@ -1772,7 +1717,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         var projectId = Guid.NewGuid();
         var scrumSprintId = Guid.NewGuid();
         var kanbanSprintId = Guid.NewGuid();
- 
+
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.Add(new Project
@@ -1780,6 +1725,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 Id = projectId,
                 Name = "Kanban Project",
                 Description = "",
+                HexColor = "#0072B2",
                 IsSetToScrum = false
             });
             db.Sprints.AddRange(
@@ -1788,24 +1734,22 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             );
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.GetAsync($"/api/projects/{projectId}");
         var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
- 
-        // BUG: bez filtra GET /projects/{id} może zwrócić też stary scrum sprint
+
         Assert.DoesNotContain(project.Sprints, s => s.Id == scrumSprintId);
         Assert.Contains(project.Sprints, s => s.Id == kanbanSprintId);
     }
- 
+
     [Fact]
     public async Task GetProject_SprintList_MatchesGetSprintsEndpoint()
     {
-        // Spójność: oba endpointy muszą zwrócić te same sprinty.
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
- 
+
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.Add(new Project
@@ -1813,6 +1757,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 Id = projectId,
                 Name = "Scrum Project",
                 Description = "",
+                HexColor = "#0072B2",
                 IsSetToScrum = true
             });
             db.Sprints.AddRange(
@@ -1821,27 +1766,21 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             );
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var detailResponse = await client.GetAsync($"/api/projects/{projectId}");
         var detail = await TestResponse.ReadJsonAsync<ProjectDetailDto>(detailResponse);
- 
+
         var sprintsResponse = await client.GetAsync($"/api/projects/{projectId}/sprints");
         var sprintsPage = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(sprintsResponse);
- 
+
         var detailIds = detail.Sprints.Select(s => s.Id).OrderBy(x => x).ToList();
         var listIds = sprintsPage.Items.Select(s => s.Id).OrderBy(x => x).ToList();
- 
-        // BUG: jeśli GET /projects/{id} nie filtruje, detailIds będzie miał więcej elementów
+
         Assert.Equal(listIds, detailIds);
     }
- 
-    // ─────────────────────────────────────────────────────────────────
-    // BUG 3: CompletedCount zawsze wynosi 0 (AsNoTracking + AsSplitQuery
-    //        nie ładuje poprawnie Status przez ThenInclude)
-    // ─────────────────────────────────────────────────────────────────
- 
+
     [Fact]
     public async Task GetSprints_WithCompletedAssignments_CompletedCountIsNotZero()
     {
@@ -1850,14 +1789,14 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         var sprintId = Guid.NewGuid();
         var completedStatusId = Guid.NewGuid();
         var otherStatusId = Guid.NewGuid();
- 
+
         await app.SeedDatabaseAsync(async db =>
         {
             db.AssignmentStatuses.AddRange(
                 new AssignmentStatus { Id = completedStatusId, Name = "Done", HexColor = "#00FF00", Order = 2 },
                 new AssignmentStatus { Id = otherStatusId, Name = "In Progress", HexColor = "#FFFF00", Order = 1 }
             );
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true });
             db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, Name = "Sprint 1", IsKanban = false });
             db.Assignment.AddRange(
                 new Assignment { Name = "Done 1", ProjectId = projectId, SprintId = sprintId, StatusId = completedStatusId },
@@ -1866,49 +1805,44 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             );
             await db.SaveChangesAsync();
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.GetAsync($"/api/projects/{projectId}/sprints");
         var page = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(response);
- 
+
         var sprint = page.Items.Single();
         Assert.Equal(3, sprint.AssignmentCount);
- 
-        // BUG: AsNoTracking + AsSplitQuery powoduje że Status jest null,
-        // więc CountCompleted zawsze zwraca 0
         Assert.Equal(2, sprint.CompletedCount);
     }
- 
+
     [Fact]
     public async Task GetSprints_WithNoCompletedAssignments_CompletedCountIsZero()
     {
-        // Przypadek bazowy — upewniamy się że 0 to poprawna wartość gdy nic nie ukończono,
-        // a nie efekt buga.
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var sprintId = Guid.NewGuid();
         var statusId = Guid.NewGuid();
- 
+
         await app.SeedDatabaseAsync(async db =>
         {
             db.AssignmentStatuses.Add(
                 new AssignmentStatus { Id = statusId, Name = "To Do", HexColor = "#808080", Order = 0 }
             );
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true });
             db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, Name = "Sprint 1", IsKanban = false });
             db.Assignment.Add(new Assignment { Name = "Task", ProjectId = projectId, SprintId = sprintId, StatusId = statusId });
             await db.SaveChangesAsync();
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.GetAsync($"/api/projects/{projectId}/sprints");
         var page = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(response);
- 
+
         Assert.Equal(0, page.Items.Single().CompletedCount);
     }
- 
+
     [Fact]
     public async Task GetSprints_AllAssignmentsCompleted_CompletedCountEqualsAssignmentCount()
     {
@@ -1916,13 +1850,13 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         var projectId = Guid.NewGuid();
         var sprintId = Guid.NewGuid();
         var completedStatusId = Guid.NewGuid();
- 
+
         await app.SeedDatabaseAsync(async db =>
         {
             db.AssignmentStatuses.Add(
                 new AssignmentStatus { Id = completedStatusId, Name = "Done", HexColor = "#00FF00", Order = 2 }
             );
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true });
             db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, Name = "Sprint 1", IsKanban = false });
             db.Assignment.AddRange(
                 new Assignment { Name = "Task A", ProjectId = projectId, SprintId = sprintId, StatusId = completedStatusId },
@@ -1930,34 +1864,26 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             );
             await db.SaveChangesAsync();
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.GetAsync($"/api/projects/{projectId}/sprints");
         var page = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(response);
- 
+
         var sprint = page.Items.Single();
         Assert.Equal(sprint.AssignmentCount, sprint.CompletedCount);
     }
- 
-    // ─────────────────────────────────────────────────────────────────
-    // BUG 4: Tworzenie sprintu nie sprawdza nakładania się dat
-    //        (sprawdza tylko s.EndDate > dto.StartDate, brakuje drugiej strony)
-    // ─────────────────────────────────────────────────────────────────
- 
+
     [Fact]
     public async Task CreateSprint_OverlapsExistingFromRight_ReturnsConflict()
     {
-        // Istniejący: 1–15 stycznia
-        // Nowy:      10–20 stycznia  ← zaczyna się w środku istniejącego
-        // BUG: warunek (EndDate > StartDate) wykrywa to, ale brakuje odwrotnej strony
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
- 
+
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.Sprints.Add(new Sprint
             {
                 ProjectId = projectId,
@@ -1967,33 +1893,30 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             });
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
             new SprintCreateDto
             {
                 Name = "Overlapping Sprint",
-                StartDate = baseDate.AddDays(10),  // zaczyna się w środku istniejącego
+                StartDate = baseDate.AddDays(10),
                 EndDate = baseDate.AddDays(20)
             });
- 
-        // BUG: brakuje warunku s.StartDate < dto.EndDate, więc ten overlap nie jest wykrywany
+
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
- 
+
     [Fact]
     public async Task CreateSprint_NewSprintContainsExistingCompletely_ReturnsConflict()
     {
-        // Istniejący: 5–10 stycznia
-        // Nowy:       1–15 stycznia  ← całkowicie ogarnia istniejący
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
- 
+
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.Sprints.Add(new Sprint
             {
                 ProjectId = projectId,
@@ -2003,9 +1926,9 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             });
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
             new SprintCreateDto
             {
@@ -2013,22 +1936,20 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 StartDate = baseDate,
                 EndDate = baseDate.AddDays(15)
             });
- 
+
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
- 
+
     [Fact]
     public async Task CreateSprint_ExistingContainsNewCompletely_ReturnsConflict()
     {
-        // Istniejący: 1–20 stycznia
-        // Nowy:       5–10 stycznia  ← mieści się w środku istniejącego
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
- 
+
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.Sprints.Add(new Sprint
             {
                 ProjectId = projectId,
@@ -2038,9 +1959,9 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             });
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
             new SprintCreateDto
             {
@@ -2048,22 +1969,20 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 StartDate = baseDate.AddDays(5),
                 EndDate = baseDate.AddDays(10)
             });
- 
+
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
- 
+
     [Fact]
     public async Task CreateSprint_OverlapsFromLeft_ReturnsConflict()
     {
-        // Istniejący: 10–20 stycznia
-        // Nowy:        5–12 stycznia  ← kończy się w środku istniejącego
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
- 
+
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
             db.Sprints.Add(new Sprint
             {
                 ProjectId = projectId,
@@ -2073,9 +1992,9 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             });
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
             new SprintCreateDto
             {
@@ -2083,22 +2002,20 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 StartDate = baseDate.AddDays(5),
                 EndDate = baseDate.AddDays(12)
             });
- 
+
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
- 
+
     [Fact]
     public async Task CreateSprint_AdjacentToExisting_IsAllowed()
     {
-        // Istniejący: 1–14 stycznia
-        // Nowy:       15–28 stycznia  ← styka się, ale nie nakłada
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
- 
+
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true });
             db.Sprints.Add(new Sprint
             {
                 ProjectId = projectId,
@@ -2108,9 +2025,9 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
             });
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
             new SprintCreateDto
             {
@@ -2118,25 +2035,24 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 StartDate = baseDate.AddDays(14),
                 EndDate = baseDate.AddDays(28)
             });
- 
+
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
- 
+
     [Fact]
     public async Task CreateSprint_NoExistingSprints_IsAllowed()
     {
-        // Przypadek bazowy — upewniamy się że sprawdzanie nakładania nie blokuje pierwszego sprintu
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
- 
+
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2", IsSetToScrum = true });
             return Task.CompletedTask;
         });
- 
+
         using var client = app.CreateClient();
- 
+
         var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
             new SprintCreateDto
             {
@@ -2144,8 +2060,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
                 StartDate = DateTimeOffset.UtcNow,
                 EndDate = DateTimeOffset.UtcNow.AddDays(14)
             });
- 
+
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
-
 }
