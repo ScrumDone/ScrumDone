@@ -1,151 +1,102 @@
 import React from 'react'
-import { ClockIcon } from '@heroicons/react/24/outline'
-import Avatar from './Avatar'
-
-interface Member {
-    id: string
-    initials: string
-}
-
-interface StageCounts {
-    done: number
-    inProgress: number
-    blocked: number
-}
-
-interface ProjectEntry {
-    id: string
-    name: string
-    dueDate: string
-    issues: number
-    members: Member[]
-    hiddenMembersCount?: number
-    stages: StageCounts
-}
-
-const projects: ProjectEntry[] = [
-    {
-        id: 'adoddle',
-        name: 'Adoddle',
-        dueDate: '05 KWIETNIA 2026',
-        issues: 14,
-        members: [
-            { id: 'an', initials: 'AN' },
-            { id: 'eb', initials: 'EB' },
-        ],
-        hiddenMembersCount: 1,
-        stages: {
-            done: 3,
-            inProgress: 4,
-            blocked: 7,
-        },
-    },
-    {
-        id: 'nexus',
-        name: 'Nexus',
-        dueDate: '06 KWIETNIA 2026',
-        issues: 7,
-        members: [
-            { id: 'an-2', initials: 'AN' },
-            { id: 'eb-2', initials: 'EB' },
-        ],
-        hiddenMembersCount: 1,
-        stages: {
-            done: 0,
-            inProgress: 2,
-            blocked: 5,
-        },
-    },
-    {
-        id: 'hadar',
-        name: 'Hadar',
-        dueDate: '05 KWIETNIA 2026',
-        issues: 9,
-        members: [
-            { id: 'an-3', initials: 'AN' },
-            { id: 'mk', initials: 'MK' },
-        ],
-        hiddenMembersCount: 1,
-        stages: {
-            done: 1,
-            inProgress: 3,
-            blocked: 5,
-        },
-    },
-]
+import { ClockIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { Link } from 'react-router-dom'
+import { useProjects } from '../hooks/useProjects'
+import type { ProjectListItem } from '../types/project'
+import { formatProjectDateForDisplay, getProjectStageCounts } from '../utils/projectDisplay'
 
 const ProjectsOverview: React.FC = () => {
+    const { data, isLoading, isError, error } = useProjects({ page: 1, limit: 3 })
+
+    if (isLoading) {
+        return <p className="text-sm text-slate-500 animate-pulse">Pobieranie projektów...</p>
+    }
+
+    if (isError) {
+        return (
+            <p className="text-sm text-red-600">
+                Nie udało się załadować projektów{error?.message ? `: ${error.message}` : '.'}
+            </p>
+        )
+    }
+
+    const projects = data?.items ?? []
+
+    if (projects.length === 0) {
+        return <p className="text-sm text-slate-500">Brak projektów do wyświetlenia.</p>
+    }
+
     return (
         <div className="flex flex-col gap-4">
-            {projects.map((project) => {
-                const totalTasks = project.stages.done + project.stages.inProgress + project.stages.blocked
-
-                return (
-                    <article key={project.id} className="rounded-xl border border-gray-200 p-4">
-                        <div className="mb-3 flex items-start justify-between gap-3">
-                            <h2 className="font-segoe-ui text-[18px] leading-6.75 font-normal text-slate-900 antialiased">{project.name}</h2>
-                            <span className="rounded-xl border border-scrumdone-red-300 px-3 py-0.5 font-segoe-ui text-[12px] leading-4 font-normal text-scrumdone-red-500 antialiased">
-                                Offtrack
-                            </span>
-                        </div>
-
-                        <div className="mb-3 flex items-center gap-1.5 font-segoe-ui text-[12px] leading-4 font-normal text-slate-500 antialiased">
-                            <ClockIcon className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
-                            <span>{project.dueDate}</span>
-                            <span>•</span>
-                            <span>{project.issues} issues</span>
-                        </div>
-
-                        <div className="mb-4 flex items-center">
-                            <div className="flex -space-x-2">
-                                {project.members.map((member) => (
-                                    <Avatar
-                                        key={member.id}
-                                        initials={member.initials}
-                                        size="xs"
-                                        className="border border-white"
-                                        bgClassName="bg-scrumdone-blue-main"
-                                    />
-                                ))}
-                            </div>
-                            {project.hiddenMembersCount ? (
-                                <span className="ml-1 rounded-md bg-gray-100 px-1.5 py-0.5 font-segoe-ui text-[12px] leading-4 font-normal text-slate-500 antialiased">
-                                    +{project.hiddenMembersCount}
-                                </span>
-                            ) : null}
-                        </div>
-
-                        <div className="flex h-2 w-full overflow-hidden rounded-full bg-gray-100">
-                            {totalTasks > 0 ? (
-                                <>
-                                    {project.stages.done > 0 ? (
-                                        <span
-                                            className="h-full bg-scrumdone-green-500"
-                                            style={{ width: `${(project.stages.done / totalTasks) * 100}%` }}
-                                            aria-label="Zakończone zadania"
-                                        />
-                                    ) : null}
-                                    {project.stages.inProgress > 0 ? (
-                                        <span
-                                            className="h-full bg-scrumdone-yellow-500"
-                                            style={{ width: `${(project.stages.inProgress / totalTasks) * 100}%` }}
-                                            aria-label="Zadania w toku"
-                                        />
-                                    ) : null}
-                                    {project.stages.blocked > 0 ? (
-                                        <span
-                                            className="h-full bg-scrumdone-red-500"
-                                            style={{ width: `${(project.stages.blocked / totalTasks) * 100}%` }}
-                                            aria-label="Zablokowane zadania"
-                                        />
-                                    ) : null}
-                                </>
-                            ) : null}
-                        </div>
-                    </article>
-                )
-            })}
+            {projects.map((project) => (
+                <ProjectOverviewCard key={project.id} project={project} />
+            ))}
         </div>
+    )
+}
+
+const ProjectOverviewCard: React.FC<{ project: ProjectListItem }> = ({ project }) => {
+    const stages = getProjectStageCounts(project)
+    const totalTasks = stages.done + stages.inProgress + stages.blocked
+    const dueDate = formatProjectDateForDisplay(project.expectedFinishDate)
+    const isOfftrack = stages.blocked > 0
+
+    return (
+        <Link
+            to={`/projects/${project.id}/tablica-kanban`}
+            className="block rounded-xl border border-gray-200 p-4 transition-shadow hover:shadow-md"
+        >
+            <div className="mb-3 flex items-start justify-between gap-3">
+                <h2 className="font-segoe-ui text-[18px] leading-6.75 font-normal text-slate-900 antialiased">
+                    {project.name}
+                </h2>
+                {isOfftrack ? (
+                    <span className="rounded-xl border border-scrumdone-red-300 px-3 py-0.5 font-segoe-ui text-[12px] leading-4 font-normal text-scrumdone-red-500 antialiased">
+                        Offtrack
+                    </span>
+                ) : null}
+            </div>
+
+            <div className="mb-3 flex items-center gap-1.5 font-segoe-ui text-[12px] leading-4 font-normal text-slate-500 antialiased">
+                <ClockIcon className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+                <span>{dueDate}</span>
+                <span>•</span>
+                <span>{project.assignmentCount} issues</span>
+            </div>
+
+            <div className="mb-4 flex items-center gap-1.5 font-segoe-ui text-[12px] leading-4 font-normal text-slate-500 antialiased">
+                <UsersIcon className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
+                <span>{project.teamMemberCount} członków</span>
+            </div>
+
+            <div className="flex h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                {totalTasks > 0 ? (
+                    <>
+                        {stages.done > 0 ? (
+                            <span
+                                className="h-full bg-scrumdone-green-500"
+                                style={{ width: `${(stages.done / totalTasks) * 100}%` }}
+                                aria-label="Zakończone zadania"
+                            />
+                        ) : null}
+                        {stages.inProgress > 0 ? (
+                            <span
+                                className="h-full bg-scrumdone-yellow-500"
+                                style={{ width: `${(stages.inProgress / totalTasks) * 100}%` }}
+                                aria-label="Zadania w toku"
+                            />
+                        ) : null}
+                        {stages.blocked > 0 ? (
+                            <span
+                                className="h-full bg-scrumdone-red-500"
+                                style={{ width: `${(stages.blocked / totalTasks) * 100}%` }}
+                                aria-label="Zablokowane zadania"
+                            />
+                        ) : null}
+                    </>
+                ) : null}
+            </div>
+        </Link>
     )
 }
 
