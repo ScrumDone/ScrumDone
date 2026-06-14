@@ -389,14 +389,5 @@ namespace ScrumDone.Api.Services
 
             return;
         }
-
-        // statuses
-
-        public async Task<IEnumerable<AssignmentStatusDto>> GetAssignmentStatuses()
-        {
-            var statuses = await _context.AssignmentStatuses.OrderBy(s => s.Order).ToListAsync();
-            var total = statuses.Count();
-            return statuses.Select(a => a.ToDto());
-        }
     }
 }

@@ -23,7 +23,7 @@ namespace ScrumDone.Api.Services
 
         Task<IEnumerable<UserSummaryDto>> UpdateAssigneesAsync(Guid id, AssignmentAssigneesUpdateDto dto);
         Task<IEnumerable<AssignmentLabelDto>> UpdateLabelsAsync(Guid id, AssignmentLabelsUpdateDto dto);
-        // Task<IEnumerable<AssignmentStatusDto>> GetStatusesAsync();
+        Task<IEnumerable<AssignmentStatusDto>> GetStatusesAsync();
         Task<IEnumerable<AssignmentPriorityDto>> GetPrioritiesAsync();
     }
 }
