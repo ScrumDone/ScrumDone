@@ -1,5 +1,8 @@
-import React from 'react'
+import React, {useState, useMemo} from 'react'
 import Avatar from './Avatar'
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { useAssignments } from '../hooks/useAssignments'
+import type { Assignment } from '../types/assignment'
 
 type TaskAccentColor = 'blue' | 'orange' | 'red' | 'green' | 'yellow'
 
@@ -47,24 +50,24 @@ const dotClassMap: Record<TaskDotColor, string> = {
     orange: 'bg-scrumdone-orange',
 }
 
-const defaultTasks: CalendarNoDeadlineTask[] = [
-    {
-        id: 'code-refactoring-user-module',
-        title: 'Code refactoring - user module',
-        assigneeInitials: 'AN',
-        assigneeName: 'Artur Nowak',
-        accentColor: 'blue',
-        dotColor: 'green',
-    },
-    {
-        id: 'security-audit',
-        title: 'Security audit',
-        assigneeInitials: 'AN',
-        assigneeName: 'Artur Nowak',
-        accentColor: 'orange',
-        dotColor: 'red',
-    },
-]
+// const defaultTasks: CalendarNoDeadlineTask[] = [
+//     {
+//         id: 'code-refactoring-user-module',
+//         title: 'Code refactoring - user module',
+//         assigneeInitials: 'AN',
+//         assigneeName: 'Artur Nowak',
+//         accentColor: 'blue',
+//         dotColor: 'green',
+//     },
+//     {
+//         id: 'security-audit',
+//         title: 'Security audit',
+//         assigneeInitials: 'AN',
+//         assigneeName: 'Artur Nowak',
+//         accentColor: 'orange',
+//         dotColor: 'red',
+//     },
+// ]
 
 export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProps> = ({ task }) => {
     const normalizedInitials = task.assigneeInitials.trim().slice(0, 2).toUpperCase()
@@ -94,21 +97,69 @@ export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProp
     )
 }
 
+const ITEMS_PER_PAGE = 9
+
 const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
     title = 'Zadania bez deadline',
-    tasks = defaultTasks,
 }) => {
+    const [currentPage, setCurrentPage] = useState(1)
+    const { data, isLoading } = useAssignments({ Limit: 100 })
+
+    const processedTasks = useMemo(() => {
+        if (!data?.items) return []
+        
+        return data.items
+            .filter((t: Assignment) => t.dueDate === null)
+            .map((t: Assignment): CalendarNoDeadlineTask => ({
+                id: t.id,
+                title: t.name,
+                assigneeInitials: t.assignees?.[0]?.name.slice(0, 2) || 'NA',
+                assigneeName: t.assignees?.[0]?.name || 'Unassigned',
+                accentColor: t.priority?.name === 'High' ? 'red' : 'blue',
+                dotColor: 'green' // Możesz tu dodać logikę mapowania statusu
+            }))
+    }, [data])
+
+    const totalPages = Math.ceil(processedTasks.length / ITEMS_PER_PAGE) || 1
+    const paginatedTasks = processedTasks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
     return (
         <section className="mt-6 w-full rounded-xl border border-slate-200 bg-white p-4">
-            <h2 className="mb-3 font-segoe-ui text-[18px] leading-7 font-medium text-slate-900 antialiased">
-                {title} ({tasks.length})
-            </h2>
+            <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-segoe-ui text-[18px] leading-7 font-medium text-slate-900 antialiased">
+                    {title} ({processedTasks.length})
+                </h2>
 
-            <div className="flex w-full flex-wrap gap-3">
-                {tasks.map((task) => (
-                    <CalendarNoDeadlineTaskCard key={task.id} task={task} />
-                ))}
+                {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="rounded-lg p-1 hover:bg-slate-100 disabled:opacity-50"
+                        >
+                            <ChevronLeftIcon className="h-5 w-5 text-slate-600" />
+                        </button>
+                        <span className="text-sm text-slate-600">{currentPage} / {totalPages}</span>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="rounded-lg p-1 hover:bg-slate-100 disabled:opacity-50"
+                        >
+                            <ChevronRightIcon className="h-5 w-5 text-slate-600" />
+                        </button>
+                    </div>
+                )}
             </div>
+
+            {isLoading ? (
+                <div className="p-4 text-center text-slate-500">Ładowanie...</div>
+            ) : (
+                <div className="grid grid-cols-3 gap-3">
+                    {paginatedTasks.map((task) => (
+                        <CalendarNoDeadlineTaskCard key={task.id} task={task} />
+                    ))}
+                </div>
+            )}
         </section>
     )
 }
