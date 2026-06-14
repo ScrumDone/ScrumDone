@@ -37,7 +37,7 @@ import { useUpdateSprint } from '../hooks/useUpdateSprint';
 import {
   addDaysToDisplayDate,
   createEmptySprintDraft,
-  deriveSprintStatusFromDisplayDates,
+  mapSprintDetailToSprintStatus,
   mapSprintSummaryToEditDraft,
   mapSprintSummaryToSprintCard,
   toSprintCreateDto,
@@ -586,13 +586,13 @@ const SprintsPage: React.FC = () => {
     updateSprint(
       { id: editingSprintId, projectId, data: toSprintEndDateUpdateDto(sprintDraft.endDate, 7) },
       {
-        onSuccess: () => {
+        onSuccess: (updatedSprint) => {
           setSprintDraft((currentDraft) =>
             currentDraft
               ? {
                   ...currentDraft,
                   endDate: updatedEndDate,
-                  status: deriveSprintStatusFromDisplayDates(currentDraft.startDate, updatedEndDate),
+                  status: mapSprintDetailToSprintStatus(updatedSprint),
                 }
               : currentDraft,
           );

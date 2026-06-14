@@ -1,5 +1,5 @@
 import type { SprintEditDraft } from '../components/SprintEditModal';
-import type { SprintCreateDto, SprintDetail, SprintSummary, SprintUpdateDto } from '../types/sprint';
+import type { SprintCreateDto, SprintDetail, SprintSummary, SprintUpdateDto, SprintApiState } from '../types/sprint';
 
 export type SprintStatus = SprintEditDraft['status'];
 
@@ -74,6 +74,30 @@ const parseDisplayDateToIso = (value: string): string | null => {
   return trimmed;
 };
 
+export const mapApiStateToSprintStatus = (
+  state: SprintApiState | string | null | undefined,
+  startDate: string | null = null,
+  endDate: string | null = null,
+): SprintStatus => {
+  switch (state) {
+    case 'Active':
+      return 'Aktywny';
+    case 'Planned':
+    case 'Being planned':
+      return 'Zaplanowany';
+    case 'Finished':
+      return 'Ukończony';
+    default:
+      return deriveSprintStatus(startDate, endDate);
+  }
+};
+
+export const resolveSprintStatus = (
+  state: SprintApiState | string | null | undefined,
+  startDate: string | null,
+  endDate: string | null,
+): SprintStatus => mapApiStateToSprintStatus(state, startDate, endDate);
+
 export const deriveSprintStatus = (
   startDate: string | null,
   endDate: string | null,
@@ -112,7 +136,7 @@ export const formatSprintDateRangeForDisplay = (
 };
 
 export const mapSprintSummaryToSelectorSprint = (summary: SprintSummary): SprintSelectorViewModel => {
-  const status = deriveSprintStatus(summary.startDate, summary.endDate);
+  const status = resolveSprintStatus(summary.state, summary.startDate, summary.endDate);
 
   return {
     id: summary.id,
@@ -148,21 +172,21 @@ export const mapSprintSummaryToSprintCard = (summary: SprintSummary): SprintCard
   endDate: formatSprintDateForDisplay(summary.endDate),
   totalTasks: summary.assignmentCount,
   completedTasks: summary.completedCount,
-  status: deriveSprintStatus(summary.startDate, summary.endDate),
+  status: resolveSprintStatus(summary.state, summary.startDate, summary.endDate),
 });
 
 export const mapSprintSummaryToEditDraft = (summary: SprintSummary): SprintEditDraft => ({
   title: summary.name?.trim() || '',
   startDate: toEditDateValue(summary.startDate),
   endDate: toEditDateValue(summary.endDate),
-  status: deriveSprintStatus(summary.startDate, summary.endDate),
+  status: resolveSprintStatus(summary.state, summary.startDate, summary.endDate),
 });
 
 export const mapSprintDetailToEditDraft = (sprint: SprintDetail): SprintEditDraft => ({
   title: sprint.name?.trim() || '',
   startDate: toEditDateValue(sprint.startDate),
   endDate: toEditDateValue(sprint.endDate),
-  status: deriveSprintStatus(sprint.startDate, sprint.endDate),
+  status: resolveSprintStatus(sprint.state, sprint.startDate, sprint.endDate),
 });
 
 export const toSprintUpdateDto = (draft: SprintEditDraft): SprintUpdateDto | null => {
@@ -256,6 +280,9 @@ export const addDaysToDisplayDate = (displayDate: string, days: number): string 
 
 export const deriveSprintStatusFromDisplayDates = (startDate: string, endDate: string): SprintStatus =>
   deriveSprintStatus(parseDisplayDateToIso(startDate), parseDisplayDateToIso(endDate));
+
+export const mapSprintDetailToSprintStatus = (sprint: SprintDetail): SprintStatus =>
+  resolveSprintStatus(sprint.state, sprint.startDate, sprint.endDate);
 
 export const toSprintEndDateUpdateDto = (displayEndDate: string, extraDays = 0): SprintUpdateDto => {
   const targetDate = extraDays > 0 ? addDaysToDisplayDate(displayEndDate, extraDays) : displayEndDate;
