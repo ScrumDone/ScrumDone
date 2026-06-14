@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getProjects } from '../api/projects';
 import type { ProjectQueryParams } from '../types/project';
 
-export function useProjects(params: ProjectQueryParams = {}) {
+export function useProjects(params: ProjectQueryParams = {}, options?: { enabled?: boolean }) {
   const { page = 1, limit = 50, companyId, userId, isActive } = params;
 
   return useQuery({
@@ -15,5 +15,6 @@ export function useProjects(params: ProjectQueryParams = {}) {
         ...(userId !== undefined ? { userId } : {}),
         ...(isActive !== undefined ? { isActive } : {}),
       }),
+    enabled: options?.enabled ?? true,
   });
 }
