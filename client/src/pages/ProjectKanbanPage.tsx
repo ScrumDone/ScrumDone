@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { EllipsisVerticalIcon, PencilSquareIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
@@ -142,6 +142,7 @@ const KanbanTaskCard: React.FC<{
   onEdit?: () => void;
   onDelete?: () => void;
   menuRef?: React.RefObject<HTMLDivElement | null>;
+  onClick?: () => void;
 }> = ({
   task,
   isDragOverlay = false,
@@ -150,6 +151,7 @@ const KanbanTaskCard: React.FC<{
   onEdit,
   onDelete,
   menuRef,
+  onClick,
 }) => {
   const sortable = useSortable({ id: task.id, disabled: isDragOverlay });
   const style = isDragOverlay ? undefined : { transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition };
@@ -160,6 +162,7 @@ const KanbanTaskCard: React.FC<{
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
+      onClick={onClick}
       className={`rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -252,7 +255,8 @@ const KanbanColumnView: React.FC<{
   onMenuToggle: (taskId: string) => void;
   onEditTask: (task: KanbanCardVM) => void;
   onDeleteTask: (task: KanbanCardVM) => void;
-}> = ({ column, openMenuTaskId, menuRef, onMenuToggle, onEditTask, onDeleteTask }) => {
+  onTaskClick: (task: KanbanCardVM) => void;
+}> = ({ column, openMenuTaskId, menuRef, onMenuToggle, onEditTask, onDeleteTask, onTaskClick }) => {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
@@ -271,7 +275,7 @@ const KanbanColumnView: React.FC<{
 
       <SortableContext items={column.tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className={`mt-2 flex flex-1 flex-col gap-2 rounded-lg transition-colors ${isOver ? 'bg-slate-50' : ''}`}>
-          {column.tasks.map((task) => (
+          {column.tasks.map((task: KanbanCardVM) => (
             <KanbanTaskCard
               key={task.id}
               task={task}
@@ -280,6 +284,7 @@ const KanbanColumnView: React.FC<{
               onMenuToggle={() => onMenuToggle(task.id)}
               onEdit={() => onEditTask(task)}
               onDelete={() => onDeleteTask(task)}
+              onClick={() => onTaskClick(task)}
             />
           ))}
           {column.tasks.length === 0 && <div className="bg-slate-50/50 border-2 border-dashed border-slate-100 rounded-lg h-24" />}
@@ -292,6 +297,7 @@ const KanbanColumnView: React.FC<{
 // --- Komponent Główny ---
 
 const ProjectKanbanPage: React.FC = () => {
+  const navigate = useNavigate();
   const { projectId = '' } = useParams();
   const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
   const {
@@ -320,6 +326,10 @@ const ProjectKanbanPage: React.FC = () => {
 
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, boolean>>({});
   const [selectedPeople, setSelectedPeople] = useState<Record<string, boolean>>({});
+
+  const handleTaskClick = (task: KanbanCardVM) => {
+    navigate(`/project/${projectId}/task/${task.id}`);
+  };
 
   useEffect(() => {
     if (!priorities?.length) return;
@@ -510,8 +520,8 @@ const ProjectKanbanPage: React.FC = () => {
   const columns = useMemo(() => {
     if (!statuses) return [];
 
-    return statuses.map((status) => {
-      const tasksForStatus = visibleAssignments.filter((assignment) => assignment.status.id === status.id);
+    return statuses.map((status: any) => {
+      const tasksForStatus = visibleAssignments.filter((assignment: any) => assignment.status.id === status.id);
 
       return {
         id: status.id,
@@ -538,12 +548,12 @@ const ProjectKanbanPage: React.FC = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const findColumnByTaskId = (taskId: string) => columns.find((col) => col.tasks.some((t) => t.id === taskId));
+  const findColumnByTaskId = (taskId: string) => columns.find((col: KanbanColumnVm) => col.tasks.some((t) => t.id === taskId));
 
   const handleDragStart = ({ active }: DragStartEvent) => {
     const activeId = String(active.id);
     const sourceColumn = findColumnByTaskId(activeId);
-    setActiveTask(sourceColumn?.tasks.find((t) => t.id === activeId) ?? null);
+    setActiveTask(sourceColumn?.tasks.find((t: KanbanCardVM) => t.id === activeId) ?? null);
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -554,7 +564,7 @@ const ProjectKanbanPage: React.FC = () => {
     const overId = String(over.id);
 
     const sourceColumn = findColumnByTaskId(activeId);
-    const targetColumn = columns.find((col) => col.id === overId) ?? findColumnByTaskId(overId);
+    const targetColumn = columns.find((col: KanbanColumnVm) => col.id === overId) ?? findColumnByTaskId(overId);
 
     if (!sourceColumn || !targetColumn || sourceColumn.id === targetColumn.id) return;
 
@@ -646,7 +656,7 @@ const ProjectKanbanPage: React.FC = () => {
                       onDragEnd={handleDragEnd}
                     >
                       <div className="grid items-start gap-2 xl:grid-cols-5">
-                        {columns.map((column) => (
+                        {columns.map((column: KanbanColumnVm) => (
                           <KanbanColumnView
                             key={column.id}
                             column={column}
@@ -655,6 +665,7 @@ const ProjectKanbanPage: React.FC = () => {
                             onMenuToggle={handleMenuToggle}
                             onEditTask={handleEditTask}
                             onDeleteTask={handleDeleteTask}
+                            onTaskClick={handleTaskClick}
                           />
                         ))}
                       </div>
