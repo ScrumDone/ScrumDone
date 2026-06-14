@@ -1400,4 +1400,484 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
         
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode); 
     }
+
+        [Fact]
+    public async Task AddMember_SameUserTwice_ReturnsConflictOnSecondRequest()
+    {
+        // Ten test ujawnia buga: dwa sekwencyjne requesty z tym samym userId
+        // powinny zwrócić 409 Conflict przy drugim, a nie 201 Created.
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Users.Add(new User { Id = userId, Name = "Alice" });
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var first = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+ 
+        // BUG: bez unique constraintu na bazie drugi request może przejść
+        var second = await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+    }
+ 
+    [Fact]
+    public async Task AddMember_SameUserTwice_ProjectHasOnlyOneMember()
+    {
+        // Dodatkowe sprawdzenie: nawet jeśli endpoint zwróci błąd,
+        // upewniamy się że w bazie nie ma duplikatu.
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Users.Add(new User { Id = userId, Name = "Alice" });
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
+        await client.PostAsync($"/api/projects/{projectId}/members/{userId}", null);
+ 
+        var response = await client.GetAsync($"/api/projects/{projectId}");
+        var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
+ 
+        // BUG: bez constraintu TeamMemberCount może wynosić 2
+        Assert.Equal(1, project.TeamMemberCount);
+        Assert.Single(project.TeamMembers);
+    }
+ 
+    // ─────────────────────────────────────────────────────────────────
+    // BUG 2: GET /projects/{id} nie filtruje sprintów po IsKanban
+    //        (zwraca inne sprinty niż GET /projects/{id}/sprints)
+    // ─────────────────────────────────────────────────────────────────
+ 
+    [Fact]
+    public async Task GetProject_ScrumProject_SprintsFieldContainsOnlyScrumSprints()
+    {
+        // GET /projects/{id} powinien w polu Sprints zwracać tylko
+        // sprinty zgodne z trybem projektu (IsKanban == false dla Scrum).
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var scrumSprintId = Guid.NewGuid();
+        var kanbanSprintId = Guid.NewGuid();
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project
+            {
+                Id = projectId,
+                Name = "Scrum Project",
+                Description = "",
+                IsSetToScrum = true
+            });
+            db.Sprints.AddRange(
+                new Sprint { Id = scrumSprintId, ProjectId = projectId, Name = "Scrum Sprint", IsKanban = false },
+                new Sprint { Id = kanbanSprintId, ProjectId = projectId, Name = "Ghost Kanban", IsKanban = true }
+            );
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.GetAsync($"/api/projects/{projectId}");
+        var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
+ 
+        // BUG: jeśli GET /projects/{id} nie filtruje po IsKanban, zwróci oba sprinty
+        Assert.DoesNotContain(project.Sprints, s => s.Id == kanbanSprintId);
+        Assert.Contains(project.Sprints, s => s.Id == scrumSprintId);
+    }
+ 
+    [Fact]
+    public async Task GetProject_KanbanProject_SprintsFieldContainsOnlyKanbanSprints()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var scrumSprintId = Guid.NewGuid();
+        var kanbanSprintId = Guid.NewGuid();
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project
+            {
+                Id = projectId,
+                Name = "Kanban Project",
+                Description = "",
+                IsSetToScrum = false
+            });
+            db.Sprints.AddRange(
+                new Sprint { Id = scrumSprintId, ProjectId = projectId, Name = "Old Scrum Sprint", IsKanban = false },
+                new Sprint { Id = kanbanSprintId, ProjectId = projectId, Name = "Current Board", IsKanban = true }
+            );
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.GetAsync($"/api/projects/{projectId}");
+        var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(response);
+ 
+        // BUG: bez filtra GET /projects/{id} może zwrócić też stary scrum sprint
+        Assert.DoesNotContain(project.Sprints, s => s.Id == scrumSprintId);
+        Assert.Contains(project.Sprints, s => s.Id == kanbanSprintId);
+    }
+ 
+    [Fact]
+    public async Task GetProject_SprintList_MatchesGetSprintsEndpoint()
+    {
+        // Spójność: oba endpointy muszą zwrócić te same sprinty.
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project
+            {
+                Id = projectId,
+                Name = "Scrum Project",
+                Description = "",
+                IsSetToScrum = true
+            });
+            db.Sprints.AddRange(
+                new Sprint { ProjectId = projectId, Name = "Sprint 1", IsKanban = false },
+                new Sprint { ProjectId = projectId, Name = "Ghost Kanban", IsKanban = true }
+            );
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var detailResponse = await client.GetAsync($"/api/projects/{projectId}");
+        var detail = await TestResponse.ReadJsonAsync<ProjectDetailDto>(detailResponse);
+ 
+        var sprintsResponse = await client.GetAsync($"/api/projects/{projectId}/sprints");
+        var sprintsPage = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(sprintsResponse);
+ 
+        var detailIds = detail.Sprints.Select(s => s.Id).OrderBy(x => x).ToList();
+        var listIds = sprintsPage.Items.Select(s => s.Id).OrderBy(x => x).ToList();
+ 
+        // BUG: jeśli GET /projects/{id} nie filtruje, detailIds będzie miał więcej elementów
+        Assert.Equal(listIds, detailIds);
+    }
+ 
+    // ─────────────────────────────────────────────────────────────────
+    // BUG 3: CompletedCount zawsze wynosi 0 (AsNoTracking + AsSplitQuery
+    //        nie ładuje poprawnie Status przez ThenInclude)
+    // ─────────────────────────────────────────────────────────────────
+ 
+    [Fact]
+    public async Task GetSprints_WithCompletedAssignments_CompletedCountIsNotZero()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var sprintId = Guid.NewGuid();
+        var completedStatusId = Guid.NewGuid();
+        var otherStatusId = Guid.NewGuid();
+ 
+        await app.SeedDatabaseAsync(async db =>
+        {
+            db.AssignmentStatuses.AddRange(
+                new AssignmentStatus { Id = completedStatusId, Name = "Done", HexColor = "#00FF00", Order = 2 },
+                new AssignmentStatus { Id = otherStatusId, Name = "In Progress", HexColor = "#FFFF00", Order = 1 }
+            );
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, Name = "Sprint 1", IsKanban = false });
+            db.Assignment.AddRange(
+                new Assignment { Name = "Done 1", ProjectId = projectId, SprintId = sprintId, StatusId = completedStatusId },
+                new Assignment { Name = "Done 2", ProjectId = projectId, SprintId = sprintId, StatusId = completedStatusId },
+                new Assignment { Name = "In prog", ProjectId = projectId, SprintId = sprintId, StatusId = otherStatusId }
+            );
+            await db.SaveChangesAsync();
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.GetAsync($"/api/projects/{projectId}/sprints");
+        var page = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(response);
+ 
+        var sprint = page.Items.Single();
+        Assert.Equal(3, sprint.AssignmentCount);
+ 
+        // BUG: AsNoTracking + AsSplitQuery powoduje że Status jest null,
+        // więc CountCompleted zawsze zwraca 0
+        Assert.Equal(2, sprint.CompletedCount);
+    }
+ 
+    [Fact]
+    public async Task GetSprints_WithNoCompletedAssignments_CompletedCountIsZero()
+    {
+        // Przypadek bazowy — upewniamy się że 0 to poprawna wartość gdy nic nie ukończono,
+        // a nie efekt buga.
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var sprintId = Guid.NewGuid();
+        var statusId = Guid.NewGuid();
+ 
+        await app.SeedDatabaseAsync(async db =>
+        {
+            db.AssignmentStatuses.Add(
+                new AssignmentStatus { Id = statusId, Name = "To Do", HexColor = "#808080", Order = 0 }
+            );
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, Name = "Sprint 1", IsKanban = false });
+            db.Assignment.Add(new Assignment { Name = "Task", ProjectId = projectId, SprintId = sprintId, StatusId = statusId });
+            await db.SaveChangesAsync();
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.GetAsync($"/api/projects/{projectId}/sprints");
+        var page = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(response);
+ 
+        Assert.Equal(0, page.Items.Single().CompletedCount);
+    }
+ 
+    [Fact]
+    public async Task GetSprints_AllAssignmentsCompleted_CompletedCountEqualsAssignmentCount()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var sprintId = Guid.NewGuid();
+        var completedStatusId = Guid.NewGuid();
+ 
+        await app.SeedDatabaseAsync(async db =>
+        {
+            db.AssignmentStatuses.Add(
+                new AssignmentStatus { Id = completedStatusId, Name = "Done", HexColor = "#00FF00", Order = 2 }
+            );
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
+            db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, Name = "Sprint 1", IsKanban = false });
+            db.Assignment.AddRange(
+                new Assignment { Name = "Task A", ProjectId = projectId, SprintId = sprintId, StatusId = completedStatusId },
+                new Assignment { Name = "Task B", ProjectId = projectId, SprintId = sprintId, StatusId = completedStatusId }
+            );
+            await db.SaveChangesAsync();
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.GetAsync($"/api/projects/{projectId}/sprints");
+        var page = await TestResponse.ReadJsonAsync<PagedResultDto<SprintSummaryDto>>(response);
+ 
+        var sprint = page.Items.Single();
+        Assert.Equal(sprint.AssignmentCount, sprint.CompletedCount);
+    }
+ 
+    // ─────────────────────────────────────────────────────────────────
+    // BUG 4: Tworzenie sprintu nie sprawdza nakładania się dat
+    //        (sprawdza tylko s.EndDate > dto.StartDate, brakuje drugiej strony)
+    // ─────────────────────────────────────────────────────────────────
+ 
+    [Fact]
+    public async Task CreateSprint_OverlapsExistingFromRight_ReturnsConflict()
+    {
+        // Istniejący: 1–15 stycznia
+        // Nowy:      10–20 stycznia  ← zaczyna się w środku istniejącego
+        // BUG: warunek (EndDate > StartDate) wykrywa to, ale brakuje odwrotnej strony
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Sprints.Add(new Sprint
+            {
+                ProjectId = projectId,
+                Name = "Existing Sprint",
+                StartDate = baseDate,
+                EndDate = baseDate.AddDays(14)
+            });
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
+            new SprintCreateDto
+            {
+                Name = "Overlapping Sprint",
+                StartDate = baseDate.AddDays(10),  // zaczyna się w środku istniejącego
+                EndDate = baseDate.AddDays(20)
+            });
+ 
+        // BUG: brakuje warunku s.StartDate < dto.EndDate, więc ten overlap nie jest wykrywany
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+ 
+    [Fact]
+    public async Task CreateSprint_NewSprintContainsExistingCompletely_ReturnsConflict()
+    {
+        // Istniejący: 5–10 stycznia
+        // Nowy:       1–15 stycznia  ← całkowicie ogarnia istniejący
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Sprints.Add(new Sprint
+            {
+                ProjectId = projectId,
+                Name = "Existing Sprint",
+                StartDate = baseDate.AddDays(5),
+                EndDate = baseDate.AddDays(10)
+            });
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
+            new SprintCreateDto
+            {
+                Name = "Wrapping Sprint",
+                StartDate = baseDate,
+                EndDate = baseDate.AddDays(15)
+            });
+ 
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+ 
+    [Fact]
+    public async Task CreateSprint_ExistingContainsNewCompletely_ReturnsConflict()
+    {
+        // Istniejący: 1–20 stycznia
+        // Nowy:       5–10 stycznia  ← mieści się w środku istniejącego
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Sprints.Add(new Sprint
+            {
+                ProjectId = projectId,
+                Name = "Big Existing Sprint",
+                StartDate = baseDate,
+                EndDate = baseDate.AddDays(20)
+            });
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
+            new SprintCreateDto
+            {
+                Name = "Small Sprint Inside",
+                StartDate = baseDate.AddDays(5),
+                EndDate = baseDate.AddDays(10)
+            });
+ 
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+ 
+    [Fact]
+    public async Task CreateSprint_OverlapsFromLeft_ReturnsConflict()
+    {
+        // Istniejący: 10–20 stycznia
+        // Nowy:        5–12 stycznia  ← kończy się w środku istniejącego
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Sprints.Add(new Sprint
+            {
+                ProjectId = projectId,
+                Name = "Existing Sprint",
+                StartDate = baseDate.AddDays(10),
+                EndDate = baseDate.AddDays(20)
+            });
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
+            new SprintCreateDto
+            {
+                Name = "Left Overlap Sprint",
+                StartDate = baseDate.AddDays(5),
+                EndDate = baseDate.AddDays(12)
+            });
+ 
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+ 
+    [Fact]
+    public async Task CreateSprint_AdjacentToExisting_IsAllowed()
+    {
+        // Istniejący: 1–14 stycznia
+        // Nowy:       15–28 stycznia  ← styka się, ale nie nakłada
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+        var baseDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Sprints.Add(new Sprint
+            {
+                ProjectId = projectId,
+                Name = "Sprint 1",
+                StartDate = baseDate,
+                EndDate = baseDate.AddDays(14)
+            });
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
+            new SprintCreateDto
+            {
+                Name = "Sprint 2",
+                StartDate = baseDate.AddDays(14),
+                EndDate = baseDate.AddDays(28)
+            });
+ 
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+ 
+    [Fact]
+    public async Task CreateSprint_NoExistingSprints_IsAllowed()
+    {
+        // Przypadek bazowy — upewniamy się że sprawdzanie nakładania nie blokuje pierwszego sprintu
+        using var app = new ScrumDoneApiFactory();
+        var projectId = Guid.NewGuid();
+ 
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            return Task.CompletedTask;
+        });
+ 
+        using var client = app.CreateClient();
+ 
+        var response = await client.PostAsJsonAsync($"/api/projects/{projectId}/sprints",
+            new SprintCreateDto
+            {
+                Name = "First Sprint",
+                StartDate = DateTimeOffset.UtcNow,
+                EndDate = DateTimeOffset.UtcNow.AddDays(14)
+            });
+ 
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
 }
