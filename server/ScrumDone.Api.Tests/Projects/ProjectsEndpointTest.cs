@@ -21,6 +21,15 @@ public class ProjectsEndpointTests
     public async Task CreateProject_WithValidData_ReturnsCreatedProject()
     {
         using var app = new ScrumDoneApiFactory();
+        var userId = Guid.NewGuid();
+
+        // Musimy zseedować usera, żeby API go znalazło
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            return Task.CompletedTask;
+        });
+
         using var client = app.CreateClient();
 
         var request = new ProjectCreateDto
@@ -28,7 +37,7 @@ public class ProjectsEndpointTests
             Name = "Test Project",
             Description = "Test Description",
             IsSetToScrum = true,
-            TeamMemberIds = new List<Guid>()
+            TeamMemberIds = new List<Guid> { userId } // Przekazujemy poprawnego usera
         };
 
         var response = await client.PostAsJsonAsync("/api/projects", request);
@@ -41,17 +50,25 @@ public class ProjectsEndpointTests
         Assert.Equal(request.Description, project.Description);
         Assert.Equal(request.IsSetToScrum, project.IsSetToScrum);
         Assert.True(project.IsActive);
-        Assert.Equal(0, project.TeamMemberCount);
+        Assert.Equal(1, project.TeamMemberCount); // Spodziewamy się 1 członka
     }
 
     [Fact]
     public async Task CreateProject_WithMinimalData_ReturnsCreatedProject()
     {
         using var app = new ScrumDoneApiFactory();
+        var userId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            return Task.CompletedTask;
+        });
+
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/projects",
-            new ProjectCreateDto { Name = "Minimal Project", TeamMemberIds = new List<Guid>() });
+            new ProjectCreateDto { Name = "Minimal Project", TeamMemberIds = new List<Guid> { userId } });
 
         if (response.StatusCode == HttpStatusCode.InternalServerError)
         {
@@ -65,16 +82,41 @@ public class ProjectsEndpointTests
         Assert.Equal("Minimal Project", project.Name);
         Assert.False(project.IsSetToScrum);
         Assert.Null(project.CompanyId);
+        Assert.Equal(1, project.TeamMemberCount);
+    }
+
+    [Fact]
+    public async Task CreateProject_WithEmptyTeamMembers_ReturnsBadRequest()
+    {
+        // Nowy test weryfikujący regułę .NotEmpty() dla TeamMemberIds
+        using var app = new ScrumDoneApiFactory();
+        using var client = app.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/projects",
+            new ProjectCreateDto { Name = "No Members Project", TeamMemberIds = new List<Guid>() }); // Pusta lista
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var problem = await TestResponse.ReadJsonAsync<ValidationProblemDetails>(response);
+        Assert.True(TestResponse.HasValidationError(problem, "TeamMemberIds"));
     }
 
     [Fact]
     public async Task CreateProject_WithEmptyName_ReturnsBadRequest()
     {
         using var app = new ScrumDoneApiFactory();
+        var userId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            return Task.CompletedTask;
+        });
+
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/projects",
-            new ProjectCreateDto { Name = "", TeamMemberIds = new List<Guid>() });
+            new ProjectCreateDto { Name = "", TeamMemberIds = new List<Guid> { userId } }); // Prawidłowy user, aby testować TYLKO pustą nazwę
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -86,10 +128,18 @@ public class ProjectsEndpointTests
     public async Task CreateProject_WithNameTooLong_ReturnsBadRequest()
     {
         using var app = new ScrumDoneApiFactory();
+        var userId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            return Task.CompletedTask;
+        });
+
         using var client = app.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/projects",
-            new ProjectCreateDto { Name = new string('A', 201), TeamMemberIds = new List<Guid>() });
+            new ProjectCreateDto { Name = new string('A', 201), TeamMemberIds = new List<Guid> { userId } });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
@@ -107,10 +157,10 @@ public class ProjectsEndpointTests
             new ProjectCreateDto
             {
                 Name = "Test Project",
-                TeamMemberIds = new List<Guid> { Guid.NewGuid() }
+                TeamMemberIds = new List<Guid> { Guid.NewGuid() } // Identyfikator, którego nie ma w bazie
             });
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode); // Upewnij się, że Twoje API rzuca 404 (lub ew. 400), gdy user nie istnieje
     }
 
     [Fact]
@@ -826,7 +876,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
             return Task.CompletedTask;
         });
 
@@ -1830,7 +1880,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
  
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
             db.Sprints.Add(new Sprint
             {
                 ProjectId = projectId,
@@ -1863,7 +1913,7 @@ public async Task AddMember_ValidUserAndProject_ReturnsCreatedUserSummaryDto()
  
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", IsSetToScrum = true });
             return Task.CompletedTask;
         });
  

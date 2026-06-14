@@ -258,7 +258,7 @@ public class SprintsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Projects.Add(new Project { Id = projectId, Name = "Test Project" });
+            db.Projects.Add(new Project { Id = projectId, Name = "Test Project", IsSetToScrum = true });
             db.Sprints.Add(new Sprint { Id = sprintId, ProjectId = projectId, Name = "Sprint To Delete" });
             return Task.CompletedTask;
         });
