@@ -86,6 +86,7 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, dueFrom, due
                                 {tasksForThisDay.map((task) => (
                                     <CalendarTaskItem 
                                         key={task.id} 
+                                        id={task.id}
                                         title={task.title} 
                                         colorVariant={task.colorVariant} 
                                     />

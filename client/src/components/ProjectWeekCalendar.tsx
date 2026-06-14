@@ -32,14 +32,14 @@ const DraggableTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
     if (isDragging) {
         return (
             <div ref={setNodeRef} className="opacity-30">
-                <CalendarTaskItem title={task.title} colorVariant={task.colorVariant} />
+                <CalendarTaskItem id={task.id} title={task.title} colorVariant={task.colorVariant} />
             </div>
         )
     }
 
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-none">
-            <CalendarTaskItem title={task.title} colorVariant={task.colorVariant} />
+            <CalendarTaskItem id={task.id} title={task.title} colorVariant={task.colorVariant} />
         </div>
     )
 }
