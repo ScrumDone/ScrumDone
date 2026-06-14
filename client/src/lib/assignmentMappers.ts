@@ -39,7 +39,7 @@ export const assignmentToKanbanCard = (a: Assignment) => {
     statusId: a.status.id,
     priorityId: a.priority?.id ?? '',
     dueDate,
-    shortDescription: vm.description.slice(0, 50) + '...',
+    shortDescription: (vm.description ?? '').slice(0, 50) + '...',
   };
 };
 

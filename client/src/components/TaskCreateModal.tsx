@@ -22,6 +22,8 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ isOpen, onClose, team
   const { data: statuses } = useStatuses();
   const { data: priorities } = usePriorities();
   const { mutate: createAssignment } = useCreateAssignment();
+  const { data: sprintsData } = useSprints(projectId); 
+  const sprints = sprintsData?.items || [];
 
   const [formData, setFormData] = useState({
     name: '',
@@ -78,9 +80,6 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({ isOpen, onClose, team
       }
     });
   };
-
-  const { data: sprintsData } = useSprints(projectId); 
-  const sprints = sprintsData?.items || [];
 
   // Mockowe dane dla sprintów - w rzeczywistości powinny być pobierane z API, podobnie jak statusy i priorytety NOTE: NIE MA
   //  const mockSprints = [
