@@ -21,8 +21,7 @@ import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
 import { useDeleteCompany } from '../hooks/useDeleteCompany';
 import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
 import {useDeleteCompanyContact} from '../hooks/useDeleteCompanyContact';
-
-//TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
+import { useQueryClient } from '@tanstack/react-query';
 
 const emptyDisplay = (value: string | null | undefined) => value?.trim() || '—';
 
@@ -99,6 +98,8 @@ const mapCooperationLogToHistoryItem = (log: CooperationLog): CooperationHistory
 };
 
 const CompanyDetailsPage: React.FC = () => {
+  const queryClient = useQueryClient();
+
   const { companyId = '' } = useParams<{ companyId: string }>();
   const navigate = useNavigate();
 
@@ -109,20 +110,29 @@ const CompanyDetailsPage: React.FC = () => {
 
   const handleDeleteContact = (contactId: string) => {
     if (window.confirm('Czy na pewno chcesz usunąć tę osobę kontaktową?')) {
-      deleteContact(contactId);
+      deleteContact(contactId, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['companies', companyId] });
+        }
+      });
     }
   };
 
   const handleAddLog = (data: CooperationLogCreateDto) => {
-    addLog({ companyId, data });
+    addLog({ companyId, data }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['companies', companyId, 'logs'] });
+      }
+    });
   };
 
   const handleDeleteLog = (logId: string) => {
-    const logItem = cooperationHistory.find((item) => item.id === logId);
-    console.log(`[DEBUG] handleDeleteLog: ID=${logId}, Title="${logItem?.title || 'N/A'}"`);
-
     if (window.confirm('Czy na pewno chcesz usunąć ten wpis z historii?')) {
-      deleteLog(logId);
+      deleteLog(logId, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['companies', companyId, 'logs'] });
+        }
+      });
     }
   };
 
