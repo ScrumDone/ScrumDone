@@ -5,6 +5,7 @@ import { useProject } from '../hooks/useProject';
 import { useUpdateProject } from '../hooks/useUpdateProject';
 import { useUpdateProjectMembers } from '../hooks/useUpdateProjectMembers';
 import { useDeleteProject } from '../hooks/useDeleteProject';
+import { useCompanies } from '../hooks/useCompanies';
 import { useUsers } from '../hooks/useUsers';
 import {
   haveSameMemberIds,
@@ -14,6 +15,7 @@ import {
   toProjectUpdateDto,
 } from '../utils/projectDisplay';
 import ProjectEditModal, { type EditProjectDraft } from './ProjectEditModal';
+import ProjectChangeClientModal from './ProjectChangeClientModal';
 
 interface ProjectTopBarProps {
   projectId: string;
@@ -44,6 +46,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   const navigate = useNavigate();
   const { data: projectData, isLoading, isError, error } = useProject(projectId);
   const { data: usersData } = useUsers(1, 100);
+  const { data: companiesData } = useCompanies(1, 100);
   const {
     mutate: updateProject,
     isPending: isSavingProject,
@@ -77,17 +80,22 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   );
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isChangeClientModalOpen, setIsChangeClientModalOpen] = useState(false);
   const [draft, setDraft] = useState<EditProjectDraft>(emptyDraft);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [isChangingClient, setIsChangingClient] = useState(false);
 
   const isSaving = isSavingProject || isSavingMembers;
-  const saveErrorMessage = isUpdateProjectError
+  const saveErrorMessage = isUpdateProjectError && !isChangingClient && !isArchiving
     ? updateProjectError?.message
     : isUpdateMembersError
       ? updateMembersError?.message
       : null;
   const deleteErrorMessage = isDeleteError ? deleteError?.message : null;
-  const errorMessage = saveErrorMessage ?? deleteErrorMessage;
+  const changeClientErrorMessage = isUpdateProjectError && isChangingClient
+    ? updateProjectError?.message
+    : null;
+  const errorMessage = saveErrorMessage ?? deleteErrorMessage ?? changeClientErrorMessage;
 
   useEffect(() => {
     if (!projectData) {
@@ -107,6 +115,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     resetSaveMutations();
     resetDeleteProject();
     setIsArchiving(false);
+    setIsChangingClient(false);
   };
 
   const openEditModal = () => {
@@ -177,6 +186,35 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
         navigate('/projects');
       },
     });
+  };
+
+  const handleChangeClient = () => {
+    resetSaveMutations();
+    setIsChangeClientModalOpen(true);
+  };
+
+  const closeChangeClientModal = () => {
+    resetSaveMutations();
+    setIsChangeClientModalOpen(false);
+    setIsChangingClient(false);
+  };
+
+  const handleSaveClient = (companyId: string) => {
+    resetSaveMutations();
+    setIsChangingClient(true);
+
+    updateProject(
+      { id: projectId, data: { companyId } },
+      {
+        onSuccess: () => {
+          setIsChangingClient(false);
+          setIsChangeClientModalOpen(false);
+        },
+        onError: () => {
+          setIsChangingClient(false);
+        },
+      },
+    );
   };
 
   const handleArchiveProject = () => {
@@ -328,6 +366,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
         isActive={projectData?.isActive ?? true}
         onClose={closeEditModal}
         onSave={saveProjectChanges}
+        onChangeClient={handleChangeClient}
         onArchive={handleArchiveProject}
         onDelete={handleDeleteProject}
         onDraftChange={setDraft}
@@ -336,6 +375,16 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
         isArchiving={isArchiving}
         isDeleting={isDeleting}
         errorMessage={errorMessage}
+      />
+
+      <ProjectChangeClientModal
+        isOpen={isChangeClientModalOpen}
+        companies={companiesData?.items ?? []}
+        currentCompanyId={projectData?.companyId ?? null}
+        onClose={closeChangeClientModal}
+        onSave={handleSaveClient}
+        isSaving={isChangingClient && isSavingProject}
+        errorMessage={changeClientErrorMessage}
       />
     </section>
   );

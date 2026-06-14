@@ -29,6 +29,7 @@ type ProjectEditModalProps = {
   isActive: boolean;
   onClose: () => void;
   onSave: () => void;
+  onChangeClient: () => void;
   onArchive: () => void;
   onDelete: () => void;
   onDraftChange: (updater: (prev: EditProjectDraft) => EditProjectDraft) => void;
@@ -46,6 +47,7 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
   isActive,
   onClose,
   onSave,
+  onChangeClient,
   onArchive,
   onDelete,
   onDraftChange,
@@ -190,7 +192,9 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
             <div className="space-y-2">
               <button
                 type="button"
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#2563EB] transition-colors hover:bg-slate-50"
+                onClick={onChangeClient}
+                disabled={isBusy}
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#2563EB] transition-colors hover:bg-slate-50 disabled:opacity-60"
               >
                 <BuildingOffice2Icon className="h-4 w-4" />
                 <span className="text-sm tracking-[-0.15px] leading-5">Zmień klienta</span>
