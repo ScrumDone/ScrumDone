@@ -7,6 +7,7 @@ import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserR
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
 import CompanyAttachProjectModal from '../components/CompanyAttachProjectModal';
+import CompanyProjectListItem from '../components/CompanyProjectListItem';
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
 import { useCompany } from '../hooks/useCompany';
 import { useProjects } from '../hooks/useProjects';
@@ -23,6 +24,7 @@ import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
 import { useDeleteCompany } from '../hooks/useDeleteCompany';
 import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
 import {useDeleteCompanyContact} from '../hooks/useDeleteCompanyContact';
+import { mapProjectListItemToCard } from '../utils/projectDisplay';
 
 //TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
@@ -225,6 +227,15 @@ const CompanyDetailsPage: React.FC = () => {
     data: attachProjectsData,
     isLoading: isAttachProjectsLoading,
   } = useProjects({ page: 1, limit: 100 }, { enabled: isAttachProjectModalOpen });
+  const {
+    data: companyProjectsData,
+    isLoading: isCompanyProjectsLoading,
+    isError: isCompanyProjectsError,
+    error: companyProjectsError,
+  } = useProjects(
+    { companyId, page: 1, limit: 100, isActive: true },
+    { enabled: Boolean(companyId) },
+  );
 
   const totalNotesCount = notesData?.totalCount ?? 0;
   const cooperationHistory = useMemo(
@@ -241,6 +252,13 @@ const CompanyDetailsPage: React.FC = () => {
       (project) => project.companyId !== displayedCompany.id,
     );
   }, [attachProjectsData?.items, displayedCompany?.id]);
+
+  const companyProjectCards = useMemo(
+    () => (companyProjectsData?.items ?? []).map(mapProjectListItemToCard),
+    [companyProjectsData?.items],
+  );
+
+  const companyProjectsCount = companyProjectsData?.totalCount ?? displayedCompany?.projectCount ?? 0;
 
   useEffect(() => {
     if (!displayedCompany) return;
@@ -719,7 +737,7 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('projects')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'projects' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Aktywne projekty ({displayedCompany.projectCount})
+                  Aktywne projekty ({isCompanyProjectsLoading ? '...' : companyProjectsCount})
                 </button>
                 <button
                   type="button"
@@ -748,12 +766,27 @@ const CompanyDetailsPage: React.FC = () => {
             </div>
 
             {activeTab === 'projects' && (
-              <section className="mx-8 mb-8 border border-gray-200 rounded-[14px] overflow-hidden transition-shadow duration-200 hover:shadow-md">
-                <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
-                  {displayedCompany.projectCount > 0
-                    ? `Firma ma ${displayedCompany.projectCount} powiązanych projektów. Lista pojawi się po podłączeniu API projektów.`
-                    : 'Brak aktywnych projektów powiązanych z tą firmą.'}
-                </div>
+              <section className="mx-8 mb-8 space-y-6">
+                {isCompanyProjectsLoading && (
+                  <p className="text-sm text-slate-500 animate-pulse">Ładowanie projektów...</p>
+                )}
+
+                {isCompanyProjectsError && (
+                  <p className="text-sm text-red-700">
+                    Nie udało się załadować projektów{companyProjectsError?.message ? `: ${companyProjectsError.message}` : '.'}
+                  </p>
+                )}
+
+                {!isCompanyProjectsLoading && !isCompanyProjectsError && companyProjectCards.length > 0 &&
+                  companyProjectCards.map((project) => (
+                    <CompanyProjectListItem key={project.id} {...project} />
+                  ))}
+
+                {!isCompanyProjectsLoading && !isCompanyProjectsError && companyProjectCards.length === 0 && (
+                  <div className="rounded-[14px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                    Brak aktywnych projektów powiązanych z tą firmą.
+                  </div>
+                )}
               </section>
             )}
 
