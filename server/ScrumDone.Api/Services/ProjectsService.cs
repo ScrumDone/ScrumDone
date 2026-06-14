@@ -382,8 +382,14 @@ namespace ScrumDone.Api.Services
         }
         public async Task<SprintSummaryDto> CreateSprintAsync(Guid id, SprintCreateDto dto)
         {
-            if (!await _context.Projects.AnyAsync(p => p.Id == id))
+            var project = await _context.Projects.FirstOrDefaultAsync(p => p.Id == id);
+            if (project == null)
                 throw new NotFoundException(nameof(Project), id);
+            
+            if (!project.IsSetToScrum)
+            {
+                throw new ConflictException("Sprint is not in Scrum mode, you cannot add new sprints");
+            }       
 
             // date check
             if (await _context.Sprints.AnyAsync(s => s.ProjectId == id && s.EndDate > dto.StartDate && s.StartDate < dto.EndDate))

@@ -87,8 +87,14 @@ namespace Scrumdone.Api.Services
         public async Task DeleteSprintAsync(Guid id)
         {
             var sprint = await _context.Sprints
+                .Include(s => s.Project)
                 .FirstOrDefaultAsync(s => s.Id == id)
                 ?? throw new NotFoundException(nameof(Sprint), id);
+
+            if (!sprint.Project.IsSetToScrum)
+            {
+                throw new ConflictException("Sprints cannot be removed from Kanban projects");
+            }
 
             _context.Sprints.Remove(sprint);
             await _context.SaveChangesAsync();
