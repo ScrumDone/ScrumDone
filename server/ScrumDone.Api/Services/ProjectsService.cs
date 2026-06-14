@@ -9,6 +9,7 @@ using ScrumDone.Api.DTOs.Users;
 using ScrumDone.Api.Mappers;
 using ScrumDone.Api.Exceptions;
 using Bogus.DataSets;
+using ScrumDone.Api.Utilities;
 
 namespace ScrumDone.Api.Services
 {
@@ -89,12 +90,25 @@ namespace ScrumDone.Api.Services
                     throw new NotFoundException(nameof(User), userId);
             }
 
+            if (dto.HexColor == null)
+            {
+                var usedColors = await _context.Projects
+                    .Select(p => p.HexColor)
+                    .Distinct()
+                    .ToListAsync();
+
+                dto.HexColor = ColorHelper.HighlyDistinctColors
+                    .FirstOrDefault(c => !usedColors.Contains(c))
+                    ?? ColorHelper.HighlyDistinctColors.Shuffle().FirstOrDefault();
+            }
+
             var newProject = new Project
             {
                 Id = Guid.NewGuid(),
                 CompanyId = dto.CompanyId,
                 Name = dto.Name,
                 Description = dto.Description,
+                HexColor = dto.HexColor!,
                 IsActive = true,
                 IsSetToScrum = dto.IsSetToScrum,
                 StartDate = dto.StartDate,
@@ -139,7 +153,8 @@ namespace ScrumDone.Api.Services
 
             if(dto.SetProperties.Contains(nameof(dto.Name))) projectToUpdate.Name = dto.Name!;
             if(dto.SetProperties.Contains(nameof(dto.Description))) projectToUpdate.Description = dto.Description;
-            if(dto.SetProperties.Contains(nameof(dto.IsActive))) projectToUpdate.IsActive = dto.IsActive.Value!;
+            if (dto.SetProperties.Contains(nameof(dto.HexColor))) projectToUpdate.HexColor = dto.HexColor!;
+            if (dto.SetProperties.Contains(nameof(dto.IsActive))) projectToUpdate.IsActive = dto.IsActive.Value!;
             if(dto.SetProperties.Contains(nameof(dto.IsSetToScrum))) projectToUpdate.IsSetToScrum = dto.IsSetToScrum.Value;
             if(dto.SetProperties.Contains(nameof(dto.StartDate))) projectToUpdate.StartDate = dto.StartDate;
             if(dto.SetProperties.Contains(nameof(dto.ExpectedFinishDate))) projectToUpdate.ExpectedFinishDate = dto.ExpectedFinishDate;
@@ -335,12 +350,25 @@ namespace ScrumDone.Api.Services
             if (await _context.AssignmentLabels.AnyAsync(l => l.ProjectId == id && l.Name == normalizedLabelName))
                 throw new ConflictException("There is already a label with this name");
 
+            if (dto.HexColor == null)
+            {
+                var usedColors = await _context.AssignmentLabels
+                    .Where(l => l.ProjectId == id)
+                    .Select(l => l.HexColor)
+                    .Distinct()
+                    .ToListAsync();
+
+                dto.HexColor = ColorHelper.HighlyDistinctColors
+                    .FirstOrDefault(c => !usedColors.Contains(c))
+                    ?? ColorHelper.HighlyDistinctColors.Shuffle().FirstOrDefault();
+            }
+
             var label = new AssignmentLabel
             {
                 Id = Guid.NewGuid(),
                 ProjectId = id,
                 Name = normalizedLabelName,
-                HexColor = dto.HexColor,
+                HexColor = dto.HexColor!,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 IsDeleted = false

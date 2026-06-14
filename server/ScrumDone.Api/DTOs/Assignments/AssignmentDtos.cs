@@ -26,7 +26,7 @@ namespace ScrumDone.Api.DTOs.Assignments
     public class AssignmentLabelCreateDto
     {
         public string Name { get; set; }
-        public string HexColor { get; set; }
+        public string? HexColor { get; set; }
     };
 
     public class AssignmentLabelUpdateDto

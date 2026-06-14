@@ -7,6 +7,7 @@ using File = ScrumDone.Api.Data.File;
 using Company = ScrumDone.Api.Data.Company;
 using Bogus.DataSets;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
+using ScrumDone.Api.Utilities;
 public class DatabaseSeeder
 {
     public static void Seed(AppDbContext context)
@@ -126,6 +127,7 @@ public class DatabaseSeeder
             .RuleFor(p => p.Id, f => f.Random.Guid())
             .RuleFor(p => p.Name, f => f.Commerce.ProductName() + " Project")
             .RuleFor(p => p.Description, f => f.Lorem.Paragraph())
+            .RuleFor(p => p.HexColor, f => f.PickRandom(ColorHelper.HighlyDistinctColors))
             .RuleFor(p => p.CompanyId, f => f.PickRandom(companies).Id)
             .RuleFor(p => p.ProfilePictureUrl, f => f.Image.PicsumUrl())
             .RuleFor(p => p.IsSetToScrum, f => f.Random.Bool())

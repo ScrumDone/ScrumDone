@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ScrumDone.Api.Utilities;
 
 namespace ScrumDone.Api.Controllers
 {
@@ -11,6 +12,12 @@ namespace ScrumDone.Api.Controllers
         public async Task<IActionResult> GetHealth()
         {
             return Ok(new { status = "Healthy" });
+        }
+
+        [HttpGet("default-colors")]
+        public async Task<IActionResult> GetDefaultColors()
+        {
+            return Ok(ColorHelper.HighlyDistinctColors.ToList());
         }
     }
 }

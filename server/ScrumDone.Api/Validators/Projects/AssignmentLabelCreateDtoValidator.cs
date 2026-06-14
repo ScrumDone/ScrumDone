@@ -12,8 +12,8 @@ namespace ScrumDone.Api.Validators.Projects
                 .MaximumLength(200);
 
             RuleFor(x => x.HexColor)
-                .NotEmpty()
-                .Matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$");   
+                .Matches("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$")
+                .When(x => x is not null);   
         }
     }
 }
