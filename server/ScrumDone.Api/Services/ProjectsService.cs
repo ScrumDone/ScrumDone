@@ -242,6 +242,11 @@ namespace ScrumDone.Api.Services
             if (!project.TeamMembers.Any(tm => tm.UserId == userId))
                 throw new ConflictException("User is not a member of this project");
 
+            if (project.TeamMembers.Count() == 1)
+            {
+                throw new ConflictException("Cannot remove the only user");
+            }
+
             var member = project.TeamMembers.FirstOrDefault(m => m.UserId == userId)
                 ?? throw new NotFoundException(nameof(User), userId);
 

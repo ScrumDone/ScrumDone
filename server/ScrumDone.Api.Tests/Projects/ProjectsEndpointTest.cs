@@ -656,14 +656,13 @@ public class ProjectsEndpointTests
     // DELETE /api/projects/{id}/members/{userId}
 
     [Fact]
-    public async Task RemoveMember_ExistingMember_AlsoRemovesFromAllProjectAssignments()
+    public async Task RemoveMember_MultipleMembers_ReturnsNoContentAndRemovesFromAssignments()
     {
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-        var otherUserId = Guid.NewGuid();
-        var assignment1Id = Guid.NewGuid();
-        var assignment2Id = Guid.NewGuid();
+        var userToRemoveId = Guid.NewGuid();
+        var userToKeepId = Guid.NewGuid();
+        var assignmentId = Guid.NewGuid();
 
         await app.SeedDatabaseAsync(async db =>
         {
@@ -673,14 +672,17 @@ public class ProjectsEndpointTests
                 Name = "Test Project",
                 Description = "",
                 HexColor = "#0072B2",
+                // Projekt ma dwóch członków, więc można usunąć jednego
                 TeamMembers = new List<ProjectUserMTMRelation>
                 {
-                    new() { UserId = userId }
+                    new() { UserId = userToRemoveId },
+                    new() { UserId = userToKeepId }
                 }
             });
+            
             db.Users.AddRange(
-                new User { Id = userId, Name = "Alice" },
-                new User { Id = otherUserId, Name = "Bob" }
+                new User { Id = userToRemoveId, Name = "Alice (To Remove)" },
+                new User { Id = userToKeepId, Name = "Bob (To Keep)" }
             );
 
             var statusId = Guid.NewGuid();
@@ -692,53 +694,52 @@ public class ProjectsEndpointTests
                 Order = 0
             });
 
-            db.Assignment.AddRange(
-                new Assignment
+            // Zadanie przypisane do obu użytkowników
+            db.Assignment.Add(new Assignment
+            {
+                Id = assignmentId,
+                Name = "Shared Task",
+                ProjectId = projectId,
+                StatusId = statusId,
+                Assignees = new List<AssignmentUserMTMRelation>
                 {
-                    Id = assignment1Id,
-                    Name = "Task 1",
-                    ProjectId = projectId,
-                    StatusId = statusId,
-                    Assignees = new List<AssignmentUserMTMRelation>
-                    {
-                        new() { UserId = userId }
-                    }
-                },
-                new Assignment
-                {
-                    Id = assignment2Id,
-                    Name = "Task 2",
-                    ProjectId = projectId,
-                    StatusId = statusId,
-                    Assignees = new List<AssignmentUserMTMRelation>
-                    {
-                        new() { UserId = userId },
-                        new() { UserId = otherUserId }
-                    }
+                    new() { UserId = userToRemoveId },
+                    new() { UserId = userToKeepId }
                 }
-            );
+            });
 
             await db.SaveChangesAsync();
         });
 
         using var client = app.CreateClient();
 
-        var deleteResponse = await client.DeleteAsync($"/api/projects/{projectId}/members/{userId}");
+        // 1. Próba usunięcia użytkownika (Alice) z projektu
+        var deleteResponse = await client.DeleteAsync($"/api/projects/{projectId}/members/{userToRemoveId}");
+        
+        // Oczekujemy pełnego sukcesu (NoContent)
         Assert.Equal(HttpStatusCode.NoContent, deleteResponse.StatusCode);
 
+        // 2. Sprawdzenie, czy projekt ma teraz tylko jednego członka (Boba)
         var projectResponse = await client.GetAsync($"/api/projects/{projectId}");
         var project = await TestResponse.ReadJsonAsync<ProjectDetailDto>(projectResponse);
-        Assert.DoesNotContain(project.TeamMembers, m => m.Id == userId);
+        
+        Assert.DoesNotContain(project.TeamMembers, m => m.Id == userToRemoveId);
+        Assert.Contains(project.TeamMembers, m => m.Id == userToKeepId);
+        Assert.Equal(1, project.TeamMemberCount);
 
-        var assignmentsResponse = await client.GetAsync(
-            $"/api/assignments?projectIds={projectId}&assigneeIds={userId}");
-        var page = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(assignmentsResponse);
-        Assert.Equal(0, page.TotalCount);
+        // 3. Sprawdzenie, czy usunięty użytkownik (Alice) stracił przypisanie do zadania
+        var removedUserAssignmentsResponse = await client.GetAsync(
+            $"/api/assignments?projectIds={projectId}&assigneeIds={userToRemoveId}");
+        var removedUserPage = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(removedUserAssignmentsResponse);
+        
+        Assert.Equal(0, removedUserPage.TotalCount); // Alice nie ma już tego zadania
 
-        var otherAssignmentsResponse = await client.GetAsync(
-            $"/api/assignments?projectIds={projectId}&assigneeIds={otherUserId}");
-        var otherPage = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(otherAssignmentsResponse);
-        Assert.Equal(1, otherPage.TotalCount);
+        // 4. Sprawdzenie, czy pozostawiony użytkownik (Bob) nadal ma przypisane to zadanie
+        var keptUserAssignmentsResponse = await client.GetAsync(
+            $"/api/assignments?projectIds={projectId}&assigneeIds={userToKeepId}");
+        var keptUserPage = await TestResponse.ReadJsonAsync<PagedResultDto<AssignmentListItemDto>>(keptUserAssignmentsResponse);
+        
+        Assert.Equal(1, keptUserPage.TotalCount); // Zadanie nadal istnieje i Bob jest do niego przypisany
     }
 
     [Fact]
@@ -747,10 +748,12 @@ public class ProjectsEndpointTests
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var userId = Guid.NewGuid();
+        var userId2 = Guid.NewGuid();
 
         await app.SeedDatabaseAsync(db =>
         {
             db.Users.Add(new User { Id = userId, Name = "User" });
+            db.Users.Add(new User { Id = userId2, Name = "User2" });
             db.Projects.Add(new Project
             {
                 Id = projectId,
@@ -759,7 +762,8 @@ public class ProjectsEndpointTests
                 HexColor = "#0072B2",
                 TeamMembers = new List<ProjectUserMTMRelation>
                 {
-                    new ProjectUserMTMRelation { UserId = userId }
+                    new ProjectUserMTMRelation { UserId = userId },
+                    new ProjectUserMTMRelation { UserId = userId2 }
                 }
             });
             return Task.CompletedTask;
