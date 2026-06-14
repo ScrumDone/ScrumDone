@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeftIcon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from '@heroicons/react/24/outline';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useProject } from '../hooks/useProject';
 import { useUpdateProject } from '../hooks/useUpdateProject';
 import { useUpdateProjectMembers } from '../hooks/useUpdateProjectMembers';
+import { useDeleteProject } from '../hooks/useDeleteProject';
 import { useUsers } from '../hooks/useUsers';
 import {
   haveSameMemberIds,
@@ -40,6 +41,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
   viewMode = 'kanban',
   onViewModeChange,
 }) => {
+  const navigate = useNavigate();
   const { data: projectData, isLoading, isError, error } = useProject(projectId);
   const { data: usersData } = useUsers(1, 100);
   const {
@@ -56,6 +58,13 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     error: updateMembersError,
     reset: resetUpdateMembers,
   } = useUpdateProjectMembers();
+  const {
+    mutate: deleteProject,
+    isPending: isDeleting,
+    isError: isDeleteError,
+    error: deleteError,
+    reset: resetDeleteProject,
+  } = useDeleteProject();
 
   const displayedProject = useMemo(
     () => (projectData ? mapProjectDetailToTopBar(projectData) : null),
@@ -76,6 +85,8 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     : isUpdateMembersError
       ? updateMembersError?.message
       : null;
+  const deleteErrorMessage = isDeleteError ? deleteError?.message : null;
+  const errorMessage = saveErrorMessage ?? deleteErrorMessage;
 
   useEffect(() => {
     if (!projectData) {
@@ -91,18 +102,23 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     resetUpdateMembers();
   };
 
+  const resetMutations = () => {
+    resetSaveMutations();
+    resetDeleteProject();
+  };
+
   const openEditModal = () => {
     if (!projectData) {
       return;
     }
 
-    resetSaveMutations();
+    resetMutations();
     setDraft(mapProjectDetailToEditDraft(projectData));
     setIsEditModalOpen(true);
   };
 
   const closeEditModal = () => {
-    resetSaveMutations();
+    resetMutations();
     setIsEditModalOpen(false);
   };
 
@@ -150,6 +166,15 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
         },
       },
     );
+  };
+
+  const handleDeleteProject = () => {
+    resetDeleteProject();
+    deleteProject(projectId, {
+      onSuccess: () => {
+        navigate('/projects');
+      },
+    });
   };
 
   if (isLoading) {
@@ -273,10 +298,12 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
         members={teamMembers}
         onClose={closeEditModal}
         onSave={saveProjectChanges}
+        onDelete={handleDeleteProject}
         onDraftChange={setDraft}
         onToggleMember={toggleMember}
         isSaving={isSaving}
-        errorMessage={saveErrorMessage}
+        isDeleting={isDeleting}
+        errorMessage={errorMessage}
       />
     </section>
   );
