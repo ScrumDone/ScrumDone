@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { EllipsisVerticalIcon, PlusIcon } from '@heroicons/react/24/outline';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { EllipsisVerticalIcon, PencilSquareIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
@@ -8,6 +8,7 @@ import Avatar from '../components/Avatar';
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter';
 import SprintSelector from '../components/SprintSelector';
 import TaskCreateModal from '../components/TaskCreateModal';
+import TaskEditModal, { type TaskEditDraft } from '../components/TaskEditModal';
 import { useProjectSprints } from '../hooks/useProjectSprints';
 import { useProjectViewMode } from '../hooks/useProjectViewMode';
 import { useSelectedProjectSprint } from '../hooks/useSelectedProjectSprint';
@@ -37,6 +38,7 @@ import { useAssignmentStatuses } from '../hooks/useAssignmentStatuses';
 import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities';
 import { useAssignments } from '../hooks/useAssignments';
 import { useUpdateAssignmentStatus } from '../hooks/useUpdateAssignmentStatus';
+import { useDeleteAssignment } from '../hooks/useDeleteAssignment';
 import { assignmentToKanbanCard } from '../lib/assignmentMappers';
 import type { AssignmentPriority } from '../types/assignment';
 
@@ -99,7 +101,23 @@ const PriorityFilterCard: React.FC<{
   </section>
 );
 
-const KanbanTaskCard: React.FC<{ task: KanbanCardVM; isDragOverlay?: boolean }> = ({ task, isDragOverlay = false }) => {
+const KanbanTaskCard: React.FC<{
+  task: KanbanCardVM;
+  isDragOverlay?: boolean;
+  isMenuOpen?: boolean;
+  onMenuToggle?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  menuRef?: React.RefObject<HTMLDivElement | null>;
+}> = ({
+  task,
+  isDragOverlay = false,
+  isMenuOpen = false,
+  onMenuToggle,
+  onEdit,
+  onDelete,
+  menuRef,
+}) => {
   const sortable = useSortable({ id: task.id, disabled: isDragOverlay });
   const style = isDragOverlay ? undefined : { transform: CSS.Transform.toString(sortable.transform), transition: sortable.transition };
 
@@ -113,9 +131,60 @@ const KanbanTaskCard: React.FC<{ task: KanbanCardVM; isDragOverlay?: boolean }> 
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="min-w-0 flex-1 truncate font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">{task.name}</h3>
-        <button type="button" className="rounded-full p-1 text-slate-700 hover:bg-slate-50">
-          <EllipsisVerticalIcon className="h-4 w-4" />
-        </button>
+        {!isDragOverlay && (
+          <div className="relative shrink-0" ref={isMenuOpen ? menuRef : undefined}>
+            <button
+              type="button"
+              aria-label="Opcje zadania"
+              aria-expanded={isMenuOpen}
+              aria-haspopup="menu"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onMenuToggle?.();
+              }}
+              className={`rounded-md p-1 text-slate-700 transition-colors hover:bg-slate-50 ${
+                isMenuOpen ? 'border border-slate-200 bg-white' : ''
+              }`}
+            >
+              <EllipsisVerticalIcon className="h-4 w-4" />
+            </button>
+
+            {isMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full z-20 mt-1 min-w-[9.5rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit?.();
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  <PencilSquareIcon className="h-4 w-4" />
+                  Edytuj
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.();
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  Usuń
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <div className="mt-3 flex items-center justify-between">
         <span
@@ -133,7 +202,14 @@ const KanbanTaskCard: React.FC<{ task: KanbanCardVM; isDragOverlay?: boolean }> 
   );
 };
 
-const KanbanColumnView: React.FC<{ column: KanbanColumnVm }> = ({ column }) => {
+const KanbanColumnView: React.FC<{
+  column: KanbanColumnVm;
+  openMenuTaskId: string | null;
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  onMenuToggle: (taskId: string) => void;
+  onEditTask: (task: KanbanCardVM) => void;
+  onDeleteTask: (task: KanbanCardVM) => void;
+}> = ({ column, openMenuTaskId, menuRef, onMenuToggle, onEditTask, onDeleteTask }) => {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
@@ -152,7 +228,17 @@ const KanbanColumnView: React.FC<{ column: KanbanColumnVm }> = ({ column }) => {
 
       <SortableContext items={column.tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className={`mt-2 flex flex-1 flex-col gap-2 rounded-lg transition-colors ${isOver ? 'bg-slate-50' : ''}`}>
-          {column.tasks.map((task) => <KanbanTaskCard key={task.id} task={task} />)}
+          {column.tasks.map((task) => (
+            <KanbanTaskCard
+              key={task.id}
+              task={task}
+              isMenuOpen={openMenuTaskId === task.id}
+              menuRef={menuRef}
+              onMenuToggle={() => onMenuToggle(task.id)}
+              onEdit={() => onEditTask(task)}
+              onDelete={() => onDeleteTask(task)}
+            />
+          ))}
           {column.tasks.length === 0 && <div className="bg-slate-50/50 border-2 border-dashed border-slate-100 rounded-lg h-24" />}
         </div>
       </SortableContext>
@@ -250,6 +336,77 @@ const ProjectKanbanPage: React.FC = () => {
 
   const { data: assignmentsData } = useAssignments(assignmentQuery);
   const { mutate: updateStatus } = useUpdateAssignmentStatus();
+  const { mutate: deleteAssignment } = useDeleteAssignment();
+
+  const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
+  const [editingTask, setEditingTask] = useState<TaskEditDraft | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const taskMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openMenuTaskId) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (taskMenuRef.current && !taskMenuRef.current.contains(event.target as Node)) {
+        setOpenMenuTaskId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [openMenuTaskId]);
+
+  const handleMenuToggle = (taskId: string) => {
+    setOpenMenuTaskId((current) => (current === taskId ? null : taskId));
+  };
+
+  const handleEditTask = (task: KanbanCardVM) => {
+    if (import.meta.env.DEV) {
+      console.log('[Kanban] Otwieram edycję zadania:', task.id, task.name);
+    }
+    setOpenMenuTaskId(null);
+    setEditingTask({
+      id: task.id,
+      name: task.name,
+      description: task.description,
+      statusId: task.statusId,
+      priorityId: task.priorityId,
+      dueDate: task.dueDate ?? '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteTask = (task: KanbanCardVM) => {
+    setOpenMenuTaskId(null);
+
+    if (!window.confirm('Czy na pewno chcesz usunąć to zadanie?')) {
+      if (import.meta.env.DEV) {
+        console.log('[Kanban] Usuwanie anulowane:', task.id);
+      }
+      return;
+    }
+
+    if (import.meta.env.DEV) {
+      console.log('[Kanban] Usuwam zadanie:', task.id, task.name);
+    }
+
+    deleteAssignment(task.id, {
+      onSuccess: () => {
+        if (import.meta.env.DEV) {
+          console.log('[Kanban] Usuwanie zakończone sukcesem:', task.id);
+        }
+      },
+      onError: (error) => {
+        console.error('Błąd usuwania zadania:', error);
+        alert('Wystąpił błąd podczas usuwania zadania.');
+      },
+    });
+  };
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingTask(null);
+  };
 
   const visibleAssignments = useMemo(() => {
     if (!assignmentsData) return [];
@@ -380,6 +537,12 @@ const ProjectKanbanPage: React.FC = () => {
         projectId={projectId} 
       />
 
+      <TaskEditModal
+        isOpen={isEditModalOpen}
+        task={editingTask}
+        onClose={closeEditModal}
+      />
+
       <main className="ml-64 pt-(--app-header-h)">
         <div className="flex w-full flex-col">
           <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
@@ -414,7 +577,15 @@ const ProjectKanbanPage: React.FC = () => {
                     >
                       <div className="grid items-start gap-2 xl:grid-cols-5">
                         {columns.map((column) => (
-                          <KanbanColumnView key={column.id} column={column} />
+                          <KanbanColumnView
+                            key={column.id}
+                            column={column}
+                            openMenuTaskId={openMenuTaskId}
+                            menuRef={taskMenuRef}
+                            onMenuToggle={handleMenuToggle}
+                            onEditTask={handleEditTask}
+                            onDeleteTask={handleDeleteTask}
+                          />
                         ))}
                       </div>
 

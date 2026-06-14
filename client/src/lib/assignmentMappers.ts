@@ -32,10 +32,13 @@ export const mapAssignmentToVM = (a: Assignment): AssignmentVM => {
 
 export const assignmentToKanbanCard = (a: Assignment) => {
   const vm = mapAssignmentToVM(a);
+  const dueDate = a.dueDate ? a.dueDate.split('T')[0] : '';
+
   return {
     ...vm,
-    // Tu możesz dodać logikę specyficzną tylko dla KanbanCard, 
-    // np. skrócony opis, który jest wymagany w widoku kolumn
+    statusId: a.status.id,
+    priorityId: a.priority?.id ?? '',
+    dueDate,
     shortDescription: vm.description.slice(0, 50) + '...',
   };
 };
