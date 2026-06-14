@@ -16,7 +16,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: (assigneeIds: string[]) => updateAssignees(assignmentId, { assigneeIds }),
+    mutationFn: (assigneeIds: string[]) => updateAssignees(assignmentId, { userIds: assigneeIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['assignment', assignmentId] });
     },

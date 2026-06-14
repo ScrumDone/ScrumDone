@@ -58,7 +58,7 @@ export type UpdateAssignmentDto = Partial<CreateAssignmentDto>;
 
 // Specjalistyczne DTO dla PUT
 export type AssignmentAssigneesUpdateDto = {
-  assigneeIds: string[];
+  userIds: string[];
 };
 
 export type AssignmentLabelsUpdateDto = {

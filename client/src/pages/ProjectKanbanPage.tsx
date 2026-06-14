@@ -232,7 +232,7 @@ const KanbanTaskCard: React.FC<{
         <div className="flex gap-2 items-center">
           <span className="font-segoe-ui text-[12px] leading-4 text-slate-500 antialiased">{task.formattedDueDate}</span>
           <div className="flex -space-x-1">
-            {task.assigneesInitials.slice(0, 3).map((initials, index) => (
+            {task.assigneesInitials.slice(0, 2).map((initials, index) => (
               <Avatar
                 key={`${task.id}-${initials}-${index}`}
                 initials={initials}
@@ -241,6 +241,14 @@ const KanbanTaskCard: React.FC<{
                 textClassName="text-white"
               />
             ))}
+            {task.assigneesInitials.length > 2 && (
+              <div
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 font-segoe-ui text-[10px] font-medium text-slate-600 ring-2 ring-white"
+                aria-label={`+${task.assigneesInitials.length - 2} więcej przypisanych osób`}
+              >
+                +{task.assigneesInitials.length - 2}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -299,7 +307,8 @@ const KanbanColumnView: React.FC<{
 const ProjectKanbanPage: React.FC = () => {
   const navigate = useNavigate();
   const { projectId = '' } = useParams();
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId);
+  const { data: project } = useProject(projectId);
+  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId, project?.isSetToScrum);
   const {
     data: sprintsData,
     isLoading: isSprintsLoading,
@@ -315,7 +324,6 @@ const ProjectKanbanPage: React.FC = () => {
     selectorSprints,
   );
 
-  const { data: project } = useProject(projectId);
   const { data: statuses } = useAssignmentStatuses();
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
 
@@ -444,6 +452,7 @@ const ProjectKanbanPage: React.FC = () => {
     if (import.meta.env.DEV) {
       console.log('[Kanban] Otwieram edycję zadania:', task.id, task.name);
     }
+    const assignment = assignmentsData?.items.find((item) => item.id === task.id);
     setOpenMenuTaskId(null);
     setEditingTask({
       id: task.id,
@@ -452,6 +461,7 @@ const ProjectKanbanPage: React.FC = () => {
       statusId: task.statusId,
       priorityId: task.priorityId,
       dueDate: task.dueDate ?? '',
+      assigneeIds: assignment?.assignees.map((assignee) => assignee.id) ?? [],
     });
     setIsEditModalOpen(true);
   };
@@ -620,6 +630,7 @@ const ProjectKanbanPage: React.FC = () => {
       <TaskEditModal
         isOpen={isEditModalOpen}
         task={editingTask}
+        teamMembers={teamMembers}
         onClose={closeEditModal}
       />
 
