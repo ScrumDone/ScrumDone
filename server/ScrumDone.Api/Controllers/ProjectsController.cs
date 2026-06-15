@@ -33,7 +33,6 @@ namespace ScrumDone.Api.Controllers
         [HttpGet]
         [ProducesResponseType(typeof(PagedResultDto<ProjectListItemDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetProjects(
             [FromQuery] ProjectQueryDto query,
             [FromServices] IValidator<ProjectQueryDto> validator)
@@ -45,7 +44,6 @@ namespace ScrumDone.Api.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(ProjectDetailDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetProject([FromRoute] Guid id)
         {
             return Ok(await _projectsService.GetProjectByIdAsync(id));
@@ -120,7 +118,6 @@ namespace ScrumDone.Api.Controllers
         [HttpDelete("{id}/members/{userId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> RemoveMember(
             [FromRoute] Guid id,
             [FromRoute] Guid userId)
@@ -144,7 +141,6 @@ namespace ScrumDone.Api.Controllers
         [HttpGet("{id}/sprints")]
         [ProducesResponseType(typeof(PagedResultDto<SprintSummaryDto>), StatusCodes.Status200OK)]  // ← Summary
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetSprints(
             [FromRoute] Guid id,
             [FromQuery] SprintQueryDto query,
@@ -159,7 +155,6 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(typeof(SprintSummaryDto), StatusCodes.Status201Created)]  // ← Summary
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateSprint(
             [FromRoute] Guid id,
             [FromBody] SprintCreateDto dto,
@@ -176,7 +171,6 @@ namespace ScrumDone.Api.Controllers
         [HttpGet("{id}/assignment-labels")]
         [ProducesResponseType(typeof(IEnumerable<AssignmentLabelDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetAssignmentLabels([FromRoute] Guid id)
         {
             var result = await _projectsService.GetAssignmentLabelsAsync(id);
@@ -187,7 +181,6 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(typeof(AssignmentLabelDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> CreateAssignmentLabel(
             [FromRoute] Guid id,
             [FromBody] AssignmentLabelCreateDto dto,
@@ -202,7 +195,6 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(typeof(AssignmentLabelDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> UpdateAssignmentLabel(
             [FromRoute] Guid id,
             [FromRoute] Guid labelId,
@@ -217,7 +209,6 @@ namespace ScrumDone.Api.Controllers
         [HttpDelete("{id}/assignment-labels/{labelId}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> DeleteAssignmentLabel(
             [FromRoute] Guid id,
             [FromRoute] Guid labelId)

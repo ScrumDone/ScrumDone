@@ -27,7 +27,6 @@ namespace ScrumDone.Api.Controllers
 
         [HttpGet]
         [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetUsers(
             [FromQuery] UserQueryDto query,
             [FromServices] IValidator<UserQueryDto> validator)

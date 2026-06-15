@@ -164,7 +164,6 @@ namespace ScrumDone.Api.Controllers
 
         [HttpGet("statuses")]
         [ProducesResponseType(typeof(IEnumerable<AssignmentStatusDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status501NotImplemented)]
         public async Task<IActionResult> GetStatuses()
         {
             return Ok(await _assignmentsService.GetStatusesAsync());
