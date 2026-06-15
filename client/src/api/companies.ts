@@ -2,9 +2,9 @@ import { apiDelete, apiGet, apiPatch, apiPost } from './client';
 import type { PagedResult } from '../types/api';
 import type { CompanyListItem, CooperationLogCreateDto } from '../types/company';
 import type { CompanyUpdateDto } from '../types/company';
-import type { ContactPerson, ContactPersonCreateDto } from '../types/contact';
+import type { ContactPerson, ContactPersonCreateDto, ContactPersonUpdateDto } from '../types/contact';
 import type { CompanyNote, CompanyNoteCreateDto, CompanyNoteUpdateDto } from '../types/company';
-import type { CompanyCreateDto, CompanyDetail, CooperationLog } from '../types/company';
+import type { CompanyCreateDto, CompanyDetail, CooperationLog, CooperationLogUpdateDto } from '../types/company';
 
 
 export function getCompanies(page = 1, limit = 10) {
@@ -25,6 +25,10 @@ export function getCompanyContacts(id: string) {
 
 export function addCompanyContact(id: string, data: ContactPersonCreateDto) {
     return apiPost<ContactPerson>(`/api/companies/${id}/contacts`, data);
+}
+
+export function updateCompanyContact(companyId: string, contactId: string, data: ContactPersonUpdateDto) {
+  return apiPatch<ContactPerson>(`/api/companies/${companyId}/contacts/${contactId}`, data);
 }
 
 export function createCompanyNote(companyId: string, data: CompanyNoteCreateDto) {
@@ -53,6 +57,10 @@ export function getCompanyLogs(companyId: string, page = 1, limit = 50) {
 
 export function deleteCompanyLog(companyId: string, logId: string) {
   return apiDelete(`/api/companies/${companyId}/logs/${logId}`);
+}
+
+export function updateCompanyLog(companyId: string, logId: string, data: CooperationLogUpdateDto) {
+  return apiPatch<CooperationLog>(`/api/companies/${companyId}/logs/${logId}`, data);
 }
 
 export function deleteCompany(id: string) {

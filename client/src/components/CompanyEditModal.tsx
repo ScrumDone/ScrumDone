@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { CooperationLogCreateDto } from '../types/company';
+import { COOPERATION_EVENT_TYPES } from '../constants/cooperationEventTypes';
 
 export type CompanyEditDraft = {
   name: string;
@@ -36,7 +37,7 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [eventTitle, setEventTitle] = useState('');
   const [eventDescription, setEventDescription] = useState('');
-  const [eventType, setEventType] = useState('Inne');
+  const [eventType, setEventType] = useState<string>(COOPERATION_EVENT_TYPES[0]);
   const [eventDate, setEventDate] = useState(new Date().toISOString().split('T')[0]);
 
   const handleAddEvent = () => {
@@ -141,15 +142,11 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
                   value={eventType}
                   onChange={(e) => setEventType(e.target.value)}
                   className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm bg-slate-100 outline-none focus:border-scrumdone-blue-main">
-                  <option>Inne</option>
-                  <option>Podpis umowy</option>
-                  <option>Spotkanie</option>
-                  <option>Start projektu</option>
-                  <option>Zakończenie projektu</option>
-                  <option>Zmiana adresu</option>
-                  <option>Zmiana osoby kontaktowej</option>
-                  <option>Wysłano email</option>
-                  <option>Rozmowa telefoniczna</option>
+                  {COOPERATION_EVENT_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

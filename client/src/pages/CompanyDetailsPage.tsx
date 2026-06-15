@@ -6,6 +6,9 @@ import TopBar from '../components/topBar';
 import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import CompanyEditModal, { type CompanyEditDraft } from '../components/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../components/CompanyContactAddModal';
+import CompanyContactEditModal from '../components/CompanyContactEditModal';
+import CompanyLogEditModal from '../components/CompanyLogEditModal';
+import CompanyRowActionMenu from '../components/CompanyRowActionMenu';
 import CompanyAttachProjectModal from '../components/CompanyAttachProjectModal';
 import CompanyProjectListItem from '../components/CompanyProjectListItem';
 import { useUpdateCompany } from '../hooks/useUpdateCompany';
@@ -24,9 +27,16 @@ import {useDeleteCompanyLog} from '../hooks/useDeleteCompanyLog';
 import { useDeleteCompany } from '../hooks/useDeleteCompany';
 import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
 import {useDeleteCompanyContact} from '../hooks/useDeleteCompanyContact';
+import { useUpdateCompanyContact } from '../hooks/useUpdateCompanyContact';
+import { useUpdateCompanyLog } from '../hooks/useUpdateCompanyLog';
 import { mapProjectListItemToCard } from '../utils/projectDisplay';
 import { resolveMainContact } from '../utils/companyDisplay';
-import { parseCooperationLogDisplay } from '../utils/cooperationLogDisplay';
+import {
+  companyLogEditDraftToUpdateDto,
+  cooperationLogToEditDraft,
+  parseCooperationLogDisplay,
+  type CompanyLogEditDraft,
+} from '../utils/cooperationLogDisplay';
 
 //TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
@@ -114,6 +124,20 @@ const CompanyDetailsPage: React.FC = () => {
   const { mutate: deleteLog } = useDeleteCompanyLog(companyId);
   const { mutate: addLog } = useAddCompanyLog();
   const { mutate: deleteContact } = useDeleteCompanyContact(companyId);
+  const {
+    mutate: updateContact,
+    isPending: isUpdatingContact,
+    isError: isUpdateContactError,
+    error: updateContactError,
+    reset: resetUpdateContact,
+  } = useUpdateCompanyContact();
+  const {
+    mutate: updateLog,
+    isPending: isUpdatingLog,
+    isError: isUpdateLogError,
+    error: updateLogError,
+    reset: resetUpdateLog,
+  } = useUpdateCompanyLog();
 
   const handleDeleteContact = (contactId: string) => {
     if (window.confirm('Czy na pewno chcesz usunąć tę osobę kontaktową?')) {
@@ -177,6 +201,16 @@ const CompanyDetailsPage: React.FC = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isContactAddModalOpen, setIsContactAddModalOpen] = useState(false);
+  const [isContactEditModalOpen, setIsContactEditModalOpen] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  const [isLogEditModalOpen, setIsLogEditModalOpen] = useState(false);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
+  const [logEditDraft, setLogEditDraft] = useState<CompanyLogEditDraft>({
+    title: '',
+    eventType: 'Inne',
+    date: '',
+    description: '',
+  });
   const [isAttachProjectModalOpen, setIsAttachProjectModalOpen] = useState(false);
   const [selectedAttachProjectId, setSelectedAttachProjectId] = useState<string | null>(null);
   const [draft, setDraft] = useState<CompanyEditDraft>({
@@ -187,6 +221,13 @@ const CompanyDetailsPage: React.FC = () => {
     address: '',
   });
   const [contactDraft, setContactDraft] = useState<CompanyContactDraft>({
+    name: '',
+    role: '',
+    email: '',
+    phone: '',
+    isMainContact: false,
+  });
+  const [contactEditDraft, setContactEditDraft] = useState<CompanyContactDraft>({
     name: '',
     role: '',
     email: '',
@@ -403,6 +444,43 @@ const CompanyDetailsPage: React.FC = () => {
     setIsContactAddModalOpen(false);
   };
 
+  const openContactEditModal = (contact: ContactPerson) => {
+    resetUpdateContact();
+    setEditingContactId(contact.id);
+    setContactEditDraft({
+      name: contact.name ?? '',
+      role: contact.role ?? '',
+      email: contact.email ?? '',
+      phone: contact.phone ?? '',
+      isMainContact: contact.isPrimary ?? false,
+    });
+    setIsContactEditModalOpen(true);
+  };
+
+  const closeContactEditModal = () => {
+    resetUpdateContact();
+    setIsContactEditModalOpen(false);
+    setEditingContactId(null);
+  };
+
+  const openLogEditModal = (logId: string) => {
+    const log = logsData?.items.find((item) => item.id === logId);
+    if (!log) {
+      return;
+    }
+
+    resetUpdateLog();
+    setEditingLogId(logId);
+    setLogEditDraft(cooperationLogToEditDraft(log));
+    setIsLogEditModalOpen(true);
+  };
+
+  const closeLogEditModal = () => {
+    resetUpdateLog();
+    setIsLogEditModalOpen(false);
+    setEditingLogId(null);
+  };
+
   const saveCompanyChanges = () => {
     updateCompany(
       {
@@ -437,6 +515,51 @@ const CompanyDetailsPage: React.FC = () => {
       },
       {
         onSuccess: () => closeContactAddModal(),
+      },
+    );
+  };
+
+  const saveContactEditChanges = () => {
+    if (!editingContactId) {
+      return;
+    }
+
+    updateContact(
+      {
+        companyId: displayedCompany.id,
+        contactId: editingContactId,
+        data: {
+          name: contactEditDraft.name.trim() || null,
+          role: contactEditDraft.role.trim() || null,
+          email: contactEditDraft.email.trim() || null,
+          phone: contactEditDraft.phone.trim() || null,
+          isPrimary: contactEditDraft.isMainContact,
+        },
+      },
+      {
+        onSuccess: () => closeContactEditModal(),
+      },
+    );
+  };
+
+  const saveLogEditChanges = () => {
+    if (!editingLogId) {
+      return;
+    }
+
+    const originalLog = logsData?.items.find((item) => item.id === editingLogId);
+    if (!originalLog) {
+      return;
+    }
+
+    updateLog(
+      {
+        companyId: displayedCompany.id,
+        logId: editingLogId,
+        data: companyLogEditDraftToUpdateDto(logEditDraft, originalLog),
+      },
+      {
+        onSuccess: () => closeLogEditModal(),
       },
     );
   };
@@ -716,13 +839,11 @@ const CompanyDetailsPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteContact(contact.id)}
-                        className="text-slate-400 hover:text-red-600 p-1 transition-colors rounded hover:bg-red-50"
-                        title="Usuń kontakt"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <CompanyRowActionMenu
+                        ariaLabel="Opcje kontaktu"
+                        onEdit={() => openContactEditModal(contact)}
+                        onDelete={() => handleDeleteContact(contact.id)}
+                      />
                     </div>
                   ))}
                 </div>
@@ -856,17 +977,17 @@ const CompanyDetailsPage: React.FC = () => {
                         <p className="mt-2 font-segoe-ui text-[12px] leading-5 text-slate-500 antialiased">Dodane przez: {item.author}</p>
                       </div>
 
-                      <div className="flex items-start justify-between lg:flex-col lg:items-end gap-2">
-                        <p className="font-segoe-ui text-[14px] leading-6 text-slate-500 antialiased lg:text-right">
-                          {item.dateLabel}
-                        </p>
-                        <button
-                          onClick={() => handleDeleteLog(item.id)}
-                          className="text-slate-400 hover:text-red-600 p-1 transition-colors rounded hover:bg-red-50"
-                          title="Usuń wpis"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                      <div className="flex items-start justify-end gap-3 lg:flex-col lg:items-end">
+                        <div className="flex items-center gap-3">
+                          <p className="font-segoe-ui text-[14px] leading-6 text-slate-500 antialiased lg:text-right">
+                            {item.dateLabel}
+                          </p>
+                          <CompanyRowActionMenu
+                            ariaLabel="Opcje wpisu historii"
+                            onEdit={() => openLogEditModal(item.id)}
+                            onDelete={() => handleDeleteLog(item.id)}
+                          />
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -1033,6 +1154,26 @@ const CompanyDetailsPage: React.FC = () => {
         onDraftChange={setContactDraft}
         isSaving={isAddingContact}
         errorMessage={isAddContactError ? addContactError?.message : null}
+      />
+
+      <CompanyContactEditModal
+        isOpen={isContactEditModalOpen}
+        draft={contactEditDraft}
+        onClose={closeContactEditModal}
+        onSave={saveContactEditChanges}
+        onDraftChange={setContactEditDraft}
+        isSaving={isUpdatingContact}
+        errorMessage={isUpdateContactError ? updateContactError?.message : null}
+      />
+
+      <CompanyLogEditModal
+        isOpen={isLogEditModalOpen}
+        draft={logEditDraft}
+        onClose={closeLogEditModal}
+        onSave={saveLogEditChanges}
+        onDraftChange={setLogEditDraft}
+        isSaving={isUpdatingLog}
+        errorMessage={isUpdateLogError ? updateLogError?.message : null}
       />
 
       <CompanyAttachProjectModal

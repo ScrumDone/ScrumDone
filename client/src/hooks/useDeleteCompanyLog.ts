@@ -7,8 +7,7 @@ export function useDeleteCompanyLog(companyId: string) {
   return useMutation({
     mutationFn: (logId: string) => deleteCompanyLog(companyId, logId),
     onSuccess: () => {
-      // Inwalidujemy cache logów, aby odświeżyć widok po usunięciu
-      queryClient.invalidateQueries({ queryKey: ['companyLogs', companyId] });
+      queryClient.invalidateQueries({ queryKey: ['companies', companyId, 'logs'] });
     },
   });
 }
