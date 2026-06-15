@@ -33,7 +33,10 @@ const CalendarDayColumn: React.FC<{
     tasks: CalendarTask[]
 }> = ({ columnDate, shortName, isToday, bodyBgClass, tasks }) => {
     const dateString = format(columnDate, 'yyyy-MM-dd')
-    const { setNodeRef } = useDroppable({ id: dateString })
+    const { setNodeRef } = useDroppable({
+        id: dateString,
+        data: { type: 'calendar-day', date: dateString },
+    })
 
     return (
         <article
@@ -59,7 +62,10 @@ const CalendarDayColumn: React.FC<{
 }
 
 const DraggableTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: task.id,
+        data: { type: 'calendar-task' },
+    })
     const style = {
         transform: transform ? CSS.Translate.toString(transform) : undefined
     }

@@ -35,7 +35,6 @@ import { useAssignments } from '../hooks/useAssignments';
 import { useUpdateAssignmentStatus } from '../hooks/useUpdateAssignmentStatus';
 import { useDeleteAssignment } from '../hooks/useDeleteAssignment';
 import { assignmentToKanbanCard } from '../lib/assignmentMappers';
-import { taskDropAnimation } from '../lib/dndDropAnimation';
 import { findKanbanAssignment, findKanbanStatusIdForTask } from '../utils/kanbanAssignmentCache';
 import type { Assignment, AssignmentPriority } from '../types/assignment';
 
@@ -140,8 +139,28 @@ const ProjectKanbanPage: React.FC = () => {
     currentSprint?.id,
   );
 
+  useEffect(() => {
+    if (isSprintsLoading || selectorSprints.length === 0) return;
+    if (selectedSprintId && selectorSprints.some((sprint) => sprint.id === selectedSprintId)) return;
+
+    const firstSprint = selectorSprints[0];
+    if (!firstSprint) return;
+
+    const fallbackSprintId = currentSprint?.id && selectorSprints.some((sprint) => sprint.id === currentSprint.id)
+      ? currentSprint.id
+      : firstSprint.id;
+
+    setSelectedSprintId(fallbackSprintId);
+  }, [
+    currentSprint?.id,
+    isSprintsLoading,
+    selectedSprintId,
+    selectorSprints,
+    setSelectedSprintId,
+  ]);
+
   const boardSprintId = selectedSprintId;
-  const isBoardSprintReady = Boolean(boardSprintId);
+  const isBoardSprintReady = !isScrumProject || Boolean(boardSprintId);
 
   const { data: statuses } = useAssignmentStatuses();
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
@@ -389,7 +408,9 @@ const ProjectKanbanPage: React.FC = () => {
     updateStatus(
       { id: activeId, statusId: targetStatusId },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          await queryClient.invalidateQueries({ queryKey: ['assignments'] });
+
           setOptimisticStatuses((prev) => {
             const next = { ...prev };
             delete next[activeId];
@@ -529,7 +550,7 @@ const ProjectKanbanPage: React.FC = () => {
                         ))}
                       </div>
 
-                      <DragOverlay dropAnimation={taskDropAnimation}>
+                      <DragOverlay dropAnimation={null}>
                         {activeTask ? <KanbanTaskCard task={activeTask} isDragOverlay /> : null}
                       </DragOverlay>
                     </DndContext>

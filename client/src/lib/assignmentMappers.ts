@@ -61,7 +61,8 @@ export const assignmentToNoDeadlineTask = (a: Assignment) => ({
   assigneeInitials: a.assignees[0]?.name ? getInitialsFromName(a.assignees[0].name) : '??',
   assigneeName: a.assignees[0]?.name ?? 'Unassigned',
   accentColor: a.priority?.name === 'High' ? 'red' as const : 'blue' as const,
-  dotColor: 'green' as const,
+  dotColor: a.priority?.name === 'High' ? 'red' as const : 'blue' as const,
+  priorityHexColor: a.priority?.hexColor ?? null,
 });
 
 

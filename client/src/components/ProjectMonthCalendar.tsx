@@ -20,7 +20,10 @@ interface ProjectMonthCalendarProps {
 }
 
 const DraggableTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: task.id,
+        data: { type: 'calendar-task' },
+    })
     const style = {
         transform: transform ? CSS.Translate.toString(transform) : undefined
     }
@@ -47,7 +50,10 @@ const ProjectMonthDayCell: React.FC<{
     tasks: CalendarTask[]
 }> = ({ day, index, currentDate, tasks }) => {
     const dateString = format(day, 'yyyy-MM-dd')
-    const { setNodeRef } = useDroppable({ id: dateString })
+    const { setNodeRef } = useDroppable({
+        id: dateString,
+        data: { type: 'calendar-day', date: dateString },
+    })
     const dayOfWeek = index % 7
     const isCurrentMonth = isSameMonth(day, currentDate)
     const isWeekendDay = dayOfWeek === 5 || dayOfWeek === 6
