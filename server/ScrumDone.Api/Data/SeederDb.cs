@@ -403,6 +403,7 @@ public class DatabaseSeeder
         var requiredProjectIds = new Queue<Guid>(
             projects.Where(p => !p.IsSetToScrum).Select(p => p.Id)
         );
+        var scrumIds = projects.Where(p => p.IsSetToScrum).Select(p => p.Id).ToList();
         int sprintsToGenerate = Math.Max(10, requiredProjectIds.Count);
 
         var sprintsFaker = new Faker<Sprint>("pl")
@@ -412,10 +413,8 @@ public class DatabaseSeeder
                 {
                     return guaranteedProjectId;
                 }
-
-                var availableKeys = projects.Where(p => p.IsSetToScrum).Select(p => p.Id).ToList();
                 
-                return f.PickRandom(availableKeys);
+                return f.PickRandom(scrumIds);
             })
             .RuleFor(s => s.Name, f => f.Company.CatchPhrase())
             .RuleFor(s => s.IsDeleted, f => false)
