@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from './client';
+import { apiDelete, apiGet, apiPatch, apiPost } from './client';
 import type { PagedResult } from '../types/api';
 import type {
   ProjectAssignmentLabel,
@@ -7,7 +7,6 @@ import type {
   ProjectLabelCreateDto,
   ProjectLabelUpdateDto,
   ProjectListItem,
-  ProjectMembersUpdateDto,
   ProjectQueryParams,
   ProjectUpdateDto,
 } from '../types/project';
@@ -44,8 +43,34 @@ export function getProjectMembers(id: string) {
   return apiGet<UserSummary[]>(`/api/projects/${id}/members`);
 }
 
-export function updateProjectMembers(id: string, data: ProjectMembersUpdateDto) {
-  return apiPut<string[], ProjectMembersUpdateDto>(`/api/projects/${id}/members`, data);
+export function addProjectMember(projectId: string, userId: string) {
+  return apiPost<UserSummary, Record<string, never>>(
+    `/api/projects/${projectId}/members/${userId}`,
+    {},
+  );
+}
+
+export function removeProjectMember(projectId: string, userId: string) {
+  return apiDelete(`/api/projects/${projectId}/members/${userId}`);
+}
+
+export async function syncProjectMembers(
+  projectId: string,
+  currentUserIds: string[],
+  nextUserIds: string[],
+): Promise<void> {
+  const current = new Set(currentUserIds);
+  const next = new Set(nextUserIds);
+  const toRemove = currentUserIds.filter((id) => !next.has(id));
+  const toAdd = nextUserIds.filter((id) => !current.has(id));
+
+  for (const userId of toRemove) {
+    await removeProjectMember(projectId, userId);
+  }
+
+  for (const userId of toAdd) {
+    await addProjectMember(projectId, userId);
+  }
 }
 
 export function getProjectAssignmentLabels(projectId: string) {

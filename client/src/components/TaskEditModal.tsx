@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import Avatar from './Avatar';
+import { type PersonFilter } from './calendarPeopleFilter';
 import { usePriorities, useStatuses } from '../hooks/useAssignments';
 import { useUpdateAssignment } from '../hooks/useUpdateAssignment';
+import { useUpdateAssignees } from '../hooks/useUpdateAssignees';
 import type { UpdateAssignmentDto } from '../types/assignment';
 
 export type TaskEditDraft = {
@@ -11,18 +14,32 @@ export type TaskEditDraft = {
   statusId: string;
   priorityId: string;
   dueDate: string;
+  assigneeIds: string[];
 };
 
 type TaskEditModalProps = {
   isOpen: boolean;
   task: TaskEditDraft | null;
+  teamMembers: PersonFilter[];
   onClose: () => void;
 };
 
-const TaskEditModal: React.FC<TaskEditModalProps> = ({ isOpen, task, onClose }) => {
+const haveSameAssigneeIds = (left: string[], right: string[]) => {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  const sortedLeft = [...left].sort();
+  const sortedRight = [...right].sort();
+
+  return sortedLeft.every((id, index) => id === sortedRight[index]);
+};
+
+const TaskEditModal: React.FC<TaskEditModalProps> = ({ isOpen, task, teamMembers, onClose }) => {
   const { data: statuses } = useStatuses();
   const { data: priorities } = usePriorities();
-  const { mutate: updateAssignment, isPending } = useUpdateAssignment();
+  const { mutate: updateAssignment, isPending: isUpdatingAssignment } = useUpdateAssignment();
+  const { mutate: updateAssignees, isPending: isUpdatingAssignees } = useUpdateAssignees();
 
   const [formData, setFormData] = useState<TaskEditDraft>({
     id: '',
@@ -31,7 +48,10 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ isOpen, task, onClose }) 
     statusId: '',
     priorityId: '',
     dueDate: '',
+    assigneeIds: [],
   });
+
+  const isPending = isUpdatingAssignment || isUpdatingAssignees;
 
   useEffect(() => {
     if (!task) return;
@@ -39,6 +59,18 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ isOpen, task, onClose }) 
   }, [task]);
 
   if (!isOpen || !task) return null;
+
+  const toggleAssignee = (memberId: string) => {
+    setFormData((prev) => {
+      const isAlreadyAssigned = prev.assigneeIds.includes(memberId);
+      return {
+        ...prev,
+        assigneeIds: isAlreadyAssigned
+          ? prev.assigneeIds.filter((id) => id !== memberId)
+          : [...prev.assigneeIds, memberId],
+      };
+    });
+  };
 
   const handleSubmit = () => {
     if (!formData.name.trim()) {
@@ -54,14 +86,37 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ isOpen, task, onClose }) 
       dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
     };
 
+    const assigneesChanged = !haveSameAssigneeIds(formData.assigneeIds, task.assigneeIds);
+
     if (import.meta.env.DEV) {
-      console.log('[Kanban] Zapis edycji zadania:', formData.id, payload);
+      console.log('[Kanban] Zapis edycji zadania:', formData.id, payload, {
+        assigneeIds: formData.assigneeIds,
+        assigneesChanged,
+      });
     }
+
+    const finishSave = () => {
+      if (assigneesChanged) {
+        updateAssignees(
+          { id: formData.id, data: { userIds: formData.assigneeIds } },
+          {
+            onSuccess: () => onClose(),
+            onError: (error) => {
+              console.error('Błąd zmiany osoby przypisanej:', error);
+              alert('Zadanie zapisane, ale nie udało się zmienić osoby przypisanej.');
+            },
+          },
+        );
+        return;
+      }
+
+      onClose();
+    };
 
     updateAssignment(
       { id: formData.id, data: payload },
       {
-        onSuccess: () => onClose(),
+        onSuccess: finishSave,
         onError: (error) => {
           console.error('Błąd edycji zadania:', error);
           alert('Wystąpił błąd podczas zapisywania zadania.');
@@ -109,6 +164,30 @@ const TaskEditModal: React.FC<TaskEditModalProps> = ({ isOpen, task, onClose }) 
               rows={3}
               className="w-full resize-none rounded-[8px] border-none bg-[#F5F6F8] px-4 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-scrumdone-blue-main"
             />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-[14px] font-medium text-slate-900">Osoba przypisana</label>
+            <div className="rounded-[8px] border border-slate-200 p-1">
+              <div className="max-h-36 space-y-1 overflow-y-auto px-2">
+                {teamMembers.length === 0 ? (
+                  <p className="px-2 py-2 text-[13px] text-slate-500">Brak członków zespołu w projekcie.</p>
+                ) : (
+                  teamMembers.map((member) => (
+                    <label key={member.id} className="flex cursor-pointer items-center gap-3 rounded-md py-1.5 hover:bg-slate-50">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-300 text-scrumdone-blue-main focus:ring-scrumdone-blue-main"
+                        checked={formData.assigneeIds.includes(member.id)}
+                        onChange={() => toggleAssignee(member.id)}
+                      />
+                      <Avatar initials={member.initials} size="xs" bgClassName="bg-[#00BFFF]" textClassName="text-white" />
+                      <span className="text-[14px] text-slate-700">{member.fullName}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

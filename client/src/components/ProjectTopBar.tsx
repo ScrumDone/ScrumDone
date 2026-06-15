@@ -19,8 +19,6 @@ import ProjectChangeClientModal from './ProjectChangeClientModal';
 
 interface ProjectTopBarProps {
   projectId: string;
-  viewMode?: 'kanban' | 'scrum';
-  onViewModeChange?: (mode: 'kanban' | 'scrum') => void;
 }
 
 const projectTabs = [
@@ -38,11 +36,7 @@ const emptyDraft = (): EditProjectDraft => ({
   memberIds: [],
 });
 
-const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
-  projectId,
-  viewMode = 'kanban',
-  onViewModeChange,
-}) => {
+const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
   const navigate = useNavigate();
   const { data: projectData, isLoading, isError, error } = useProject(projectId);
   const { data: usersData } = useUsers(1, 100);
@@ -118,6 +112,15 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     setIsChangingClient(false);
   };
 
+  const viewMode: 'kanban' | 'scrum' = projectData?.isSetToScrum ? 'scrum' : 'kanban';
+
+  const handleViewModeChange = (mode: 'kanban' | 'scrum') => {
+    if (!projectData) return;
+    const nextIsScrum = mode === 'scrum';
+    if (projectData.isSetToScrum === nextIsScrum) return;
+    updateProject({ id: projectId, data: { isSetToScrum: nextIsScrum } });
+  };
+
   const openEditModal = () => {
     if (!projectData) {
       return;
@@ -152,7 +155,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     }
 
     updateProjectMembers(
-      { id: projectId, data: { userIds: draft.memberIds } },
+      { id: projectId, userIds: draft.memberIds, currentUserIds: currentMemberIds },
       {
         onSuccess: () => {
           closeEditModal();
@@ -313,7 +316,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
             <div className="inline-flex w-full gap-2 rounded-[10px] bg-slate-50 p-1">
               <button
                 type="button"
-                onClick={() => onViewModeChange?.('kanban')}
+                onClick={() => handleViewModeChange('kanban')}
                 className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   viewMode === 'kanban' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'
                 }`}
@@ -322,7 +325,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
               </button>
               <button
                 type="button"
-                onClick={() => onViewModeChange?.('scrum')}
+                onClick={() => handleViewModeChange('scrum')}
                 className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                   viewMode === 'scrum' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'
                 }`}
@@ -351,7 +354,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
             className={({ isActive }) =>
               `text-sm leading-5 tracking-[-0.15px] transition-colors ${
                 isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'
-              } ${tab.label === 'Sprinty' && viewMode === 'kanban' ? 'hidden' : ''}`
+              } ${tab.label === 'Sprinty' && !projectData.isSetToScrum ? 'hidden' : ''}`
             }
           >
             {tab.label}

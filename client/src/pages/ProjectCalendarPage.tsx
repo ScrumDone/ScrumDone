@@ -18,6 +18,7 @@ import { getInitialsFromName } from '../hooks/useCurrentUser'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments'
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
+import { taskDropAnimation } from '../lib/dndDropAnimation'
 
 type CalendarTask = {
   id: string
@@ -29,7 +30,6 @@ type CalendarTask = {
 
 const ProjectCalendarPage: React.FC = () => {
   const { projectId = '' } = useParams()
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId)
 
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -225,7 +225,7 @@ const ProjectCalendarPage: React.FC = () => {
       <main className="ml-64 pt-(--app-header-h)">
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex w-full flex-col">
-            <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
+            <ProjectTopBar projectId={projectId} />
             <section className="mx-6 mt-6 pb-8">
                   <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                     <div className="min-w-0 space-y-4">
@@ -278,7 +278,7 @@ const ProjectCalendarPage: React.FC = () => {
                   </div>
             </section>
           </div>
-          <DragOverlay>
+          <DragOverlay dropAnimation={taskDropAnimation}>
             {activeTask ? (
               <div className="cursor-grabbing">
                 <CalendarTaskItem id={activeTask.id} title={activeTask.title} colorVariant={activeTask.colorVariant} priorityHexColor={activeTask.priorityHexColor} />

@@ -1,4 +1,5 @@
 import type { CompanyListItem } from '../types/company';
+import type { ContactPerson } from '../types/contact';
 
 export type CompanyCardDisplay = {
   id: string;
@@ -15,8 +16,15 @@ export type CompanyCardDisplay = {
 const emptyDisplay = (value: string | null | undefined, fallback = '—') =>
   value?.trim() || fallback;
 
-export function mapCompanyListItemToCard(company: CompanyListItem): CompanyCardDisplay {
-  const main = company.mainContact;
+export function resolveMainContact(contacts: ContactPerson[]): ContactPerson | null {
+  return contacts.find((contact) => contact.isPrimary) ?? contacts[0] ?? null;
+}
+
+export function mapCompanyListItemToCard(
+  company: CompanyListItem,
+  contacts?: ContactPerson[],
+): CompanyCardDisplay {
+  const main = company.mainContact ?? (contacts ? resolveMainContact(contacts) : null);
 
   return {
     id: company.id,

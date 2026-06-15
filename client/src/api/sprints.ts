@@ -16,6 +16,10 @@ export function getProjectSprints(projectId: string, params: SprintQueryParams =
   });
 }
 
+export function getCurrentProjectSprint(projectId: string) {
+  return apiGet<SprintDetail | undefined>(`/api/projects/${projectId}/sprints/current`);
+}
+
 export function createSprint(projectId: string, data: SprintCreateDto) {
   return apiPost<SprintSummary, SprintCreateDto>(`/api/projects/${projectId}/sprints`, data);
 }
