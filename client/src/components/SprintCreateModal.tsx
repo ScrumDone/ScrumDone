@@ -154,7 +154,7 @@ const SprintCreateModal: React.FC<SprintCreateModalProps> = ({
             </div>
           </div>
 
-          <div ref={statusDropdownRef} className="relative">
+          {/* <div ref={statusDropdownRef} className="relative">
             <label className="mb-2 block font-segoe-ui text-sm font-medium leading-3.5 tracking-[-0.15px] text-slate-700">
               Status
             </label>
@@ -187,7 +187,7 @@ const SprintCreateModal: React.FC<SprintCreateModalProps> = ({
                 })}
               </div>
             )}
-          </div>
+          </div> */}
         </div>
 
         <div className="relative z-0 flex items-center justify-end gap-3 border-t border-slate-100 px-8 py-4">

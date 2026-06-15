@@ -138,7 +138,7 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
             <h3 className="mb-3 block font-segoe-ui text-[15px] font-medium text-slate-800">Akcje sprintu</h3>
 
             <div className="space-y-2">
-              <button
+              {/*<button
                 type="button"
                 onClick={onStartNextSprint}
                 disabled={isSaving}
@@ -146,7 +146,7 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
               >
                 <PlusIcon className="h-4 w-4" />
                 <span className="text-sm leading-5 tracking-[-0.15px]">Zamknij i rozpocznij nowy sprint</span>
-              </button>
+              </button>*/}
 
               <button
                 type="button"
@@ -156,7 +156,7 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
               >
                 <CalendarDaysIcon className="h-4 w-4" />
                 <span className="text-sm leading-5 tracking-[-0.15px]">Przedłuż sprint o tydzień</span>
-              </button>
+              </button> 
 
               <button
                 type="button"
