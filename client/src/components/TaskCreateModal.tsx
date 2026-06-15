@@ -198,7 +198,7 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 className="w-full appearance-none rounded-[8px] border-none bg-[#F5F6F8] px-4 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-scrumdone-blue-main">
                 <option value="">Wybierz status</option>
                 {statuses?.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
+                  <option key={s.id} value={s.id}>{s.name ?? "---"}</option>
                 ))}
               </select>
                 <ChevronDownIcon className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 pointer-events-none" />
