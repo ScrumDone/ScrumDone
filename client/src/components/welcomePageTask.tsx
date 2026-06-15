@@ -14,6 +14,7 @@ interface WelcomePageTaskProps {
     badgeColorVariant?: TaskColorVariant
     isBlocked?: boolean,
     labels?: { name: string; hexColor: string }[]
+    onClick?: () => void
 }
 
 const colorVariantClassMap: Record<TaskColorVariant, { dot: string; badgeBorder: string; badgeText: string }> = {
@@ -44,6 +45,7 @@ const WelcomePageTask: React.FC<WelcomePageTaskProps> = ({
     badgeColorVariant,
     isBlocked = false,
     labels = [],
+    onClick,
 }) => {
     const dotClasses = colorVariantClassMap[dotColorVariant ?? colorVariant]
     const badgeClasses = colorVariantClassMap[badgeColorVariant ?? colorVariant]
@@ -51,11 +53,21 @@ const WelcomePageTask: React.FC<WelcomePageTaskProps> = ({
 
     return (
         <div
+            role={onClick ? 'button' : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            onClick={onClick}
+            onKeyDown={(event) => {
+                if (!onClick) return
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    onClick()
+                }
+            }}
             className={`rounded-lg p-4 ${
                 isBlocked
                     ? 'border border-scrumdone-red-300 bg-scrumdone-red-100'
                     : 'border border-gray-200 bg-white'
-            }`}
+            } ${onClick ? 'cursor-pointer transition-colors hover:bg-slate-50' : ''}`}
         >
             <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-start gap-2">

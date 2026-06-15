@@ -103,6 +103,7 @@ namespace ScrumDone.Api.Services
 
             var items = await q
                 .OrderByDescending(t => t.CreatedAt)
+                .ThenBy(t => t.Id)
                 .Skip((dto.Page - 1) * dto.Limit)
                 .Take(dto.Limit)
                 .Select(t => new AssignmentListItemDto(

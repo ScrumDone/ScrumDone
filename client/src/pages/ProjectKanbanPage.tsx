@@ -183,7 +183,7 @@ const ProjectKanbanPage: React.FC = () => {
   const [selectedPeople, setSelectedPeople] = useState<Record<string, boolean>>({});
 
   const handleTaskClick = (task: KanbanCardVM) => {
-    navigate(`/project/${projectId}/task/${task.id}`);
+    navigate(`/task/${task.id}`);
   };
 
   useEffect(() => {
