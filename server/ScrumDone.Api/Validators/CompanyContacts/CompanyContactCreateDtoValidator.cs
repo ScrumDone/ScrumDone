@@ -12,13 +12,18 @@ namespace ScrumDone.Api.Validators.Companies
                 .Must(c => !AreRelevantNull(c))
                 .WithMessage("All relevant values are null");
 
-            RuleFor(c => c.Name).MaximumLength(50);
+            RuleFor(c => c.Name)
+                .MaximumLength(50);
 
-            RuleFor(c => c.Role).MaximumLength(50);
+            RuleFor(c => c.Role)
+                .MaximumLength(50);
 
-            RuleFor(c => c.Phone).MaximumLength(20);
+            RuleFor(c => c.Phone)
+                .MaximumLength(20);
 
-            RuleFor(c => c.Email).MaximumLength(50);
+            RuleFor(c => c.Email)
+                .EmailAddress()
+                .MaximumLength(50);
         }
 
         // Don't want tu accept empty person only with IsPrimary = true

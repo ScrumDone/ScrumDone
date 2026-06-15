@@ -17,10 +17,12 @@ namespace ScrumDone.Api.Validators.Companies
 
             RuleFor(x => x.Nip)
                 .Length(10)
+                .Matches(@"^[0-9]{10}$")
                 .When(x => x.SetProperties.Contains(nameof(CompanyUpdateDto.Nip)));
 
             RuleFor(x => x.Krs)
                 .Length(10)
+                .Matches(@"^[0-9]{10}$")
                 .When(x => x.SetProperties.Contains(nameof(CompanyUpdateDto.Krs)));
 
             RuleFor(x => x.Regon)
