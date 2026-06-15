@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon, PlusIcon } from '@heroicons/react/24/outline';
 import {
   DndContext,
@@ -32,7 +32,6 @@ import TaskCreateModal from '../components/TaskCreateModal';
 import { useCreateSprint } from '../hooks/useCreateSprint';
 import { useDeleteSprint } from '../hooks/useDeleteSprint';
 import { useProjectSprints } from '../hooks/useProjectSprints';
-import { useProjectViewMode } from '../hooks/useProjectViewMode';
 import { useUpdateSprint } from '../hooks/useUpdateSprint';
 import {
   addDaysToDisplayDate,
@@ -254,8 +253,8 @@ const PriorityFilterSection: React.FC<{
 
 const SprintsPage: React.FC = () => {
   const { projectId = '' } = useParams();
+  const navigate = useNavigate();
   const { data: project } = useProject(projectId);
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId, project?.isSetToScrum);
   const { mutate: updateProject } = useUpdateProject();
 
   const { mutate: updateAssignmentSprint } = useUpdateAssignmentSprint();
@@ -292,11 +291,8 @@ const SprintsPage: React.FC = () => {
 
   useEffect(() => {
     if (!project || project.isSetToScrum) return;
-    updateProject(
-      { id: projectId, data: { isSetToScrum: true } },
-      { onSuccess: () => setProjectViewMode('scrum') },
-    );
-  }, [project, projectId, setProjectViewMode, updateProject]);
+    navigate(`/projects/${projectId}/tablica-kanban`, { replace: true });
+  }, [project, projectId, navigate]);
 
   const teamMembers = useMemo(
     () => mapTeamMembersToPersonFilters(project?.teamMembers ?? []),
@@ -1077,7 +1073,7 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
       <TopBar />
 
       <main className="ml-64 flex h-screen flex-col overflow-hidden pt-(--app-header-h)">
-        <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
+        <ProjectTopBar projectId={projectId} />
 
         <section className="mx-6 mt-6 mb-6 flex min-h-0 flex-1 flex-col overflow-y-auto xl:overflow-hidden">
           <DndContext

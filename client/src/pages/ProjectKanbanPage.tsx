@@ -12,8 +12,8 @@ import TaskEditModal, { type TaskEditDraft } from '../components/TaskEditModal';
 import KanbanColumnContainer from '../components/KanbanColumnContainer';
 import { KanbanTaskCard, type KanbanCardVM } from '../components/KanbanTaskCard';
 import { useProjectSprints } from '../hooks/useProjectSprints';
-import { useProjectViewMode } from '../hooks/useProjectViewMode';
-import { useSelectedProjectSprint } from '../hooks/useSelectedProjectSprint';
+import { useCurrentProjectSprint } from '../hooks/useCurrentProjectSprint';
+import { useProjectBoardSprint } from '../hooks/useProjectBoardSprint';
 import { useProject } from '../hooks/useProject';
 import { getInitialsFromName } from '../hooks/useCurrentUser';
 import { mapSprintSummariesToSelectorSprints } from '../utils/sprintDisplay';
@@ -120,7 +120,10 @@ const ProjectKanbanPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { projectId = '' } = useParams();
   const { data: project } = useProject(projectId);
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId, project?.isSetToScrum);
+  const isScrumProject = project?.isSetToScrum ?? false;
+  const {
+    data: currentSprint,
+  } = useCurrentProjectSprint(projectId);
   const {
     data: sprintsData,
     isLoading: isSprintsLoading,
@@ -131,15 +134,25 @@ const ProjectKanbanPage: React.FC = () => {
     () => mapSprintSummariesToSelectorSprints(sprintsData?.items ?? []),
     [sprintsData?.items],
   );
-  const { selectedSprintId, setSelectedSprintId } = useSelectedProjectSprint(
+
+  const { selectedSprintId, setSelectedSprintId } = useProjectBoardSprint(
     projectId,
-    selectorSprints,
+    currentSprint?.id,
   );
+
+  const boardSprintId = selectedSprintId;
+  const isBoardSprintReady = Boolean(boardSprintId);
 
   const { data: statuses } = useAssignmentStatuses();
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
   const [optimisticSnapshots, setOptimisticSnapshots] = useState<Record<string, Assignment>>({});
+
+  useEffect(() => {
+    setOptimisticStatuses({});
+    setOptimisticSnapshots({});
+    queryClient.removeQueries({ queryKey: ['assignments'] });
+  }, [isScrumProject, projectId, queryClient]);
 
 
   const teamMembers = useMemo(
@@ -228,13 +241,12 @@ const ProjectKanbanPage: React.FC = () => {
 
   const kanbanBaseQuery = useMemo(() => ({
     ProjectIds: [projectId],
-    ...(viewMode === 'scrum' && selectedSprintId ? { SprintIds: [selectedSprintId] } : {}),
+    ...(boardSprintId ? { SprintIds: [boardSprintId] } : {}),
     ...(!allPrioritiesSelected && !noPrioritiesSelected ? { PriorityIds: selectedPriorityIds } : {}),
     ...(!allPeopleSelected && !noPeopleSelected ? { AssigneeIds: selectedAssigneeIds } : {}),
   }), [
     projectId,
-    viewMode,
-    selectedSprintId,
+    boardSprintId,
     allPrioritiesSelected,
     noPrioritiesSelected,
     selectedPriorityIds,
@@ -244,9 +256,9 @@ const ProjectKanbanPage: React.FC = () => {
   ]);
 
   const kanbanColumnsEnabled = Boolean(projectId)
+    && isBoardSprintReady
     && !noPrioritiesSelected
-    && !noPeopleSelected
-    && !(viewMode === 'scrum' && !selectedSprintId);
+    && !noPeopleSelected;
 
   const handleSelectedPeopleChange = (next: Record<string, boolean>) => {
     setSelectedPeople(next);
@@ -448,7 +460,7 @@ const ProjectKanbanPage: React.FC = () => {
         onClose={() => setIsTaskModalOpen(false)} 
         teamMembers={teamMembers}
         projectId={projectId}
-        defaultSprintId={viewMode === 'scrum' ? selectedSprintId : null}
+        defaultSprintId={boardSprintId}
       />
 
       <TaskEditModal
@@ -460,17 +472,17 @@ const ProjectKanbanPage: React.FC = () => {
 
       <main className="ml-64 pt-(--app-header-h)">
         <div className="flex w-full flex-col">
-          <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
+          <ProjectTopBar projectId={projectId} />
 
           <section className="mx-6 mt-6 pb-8">
                 <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                   <div className="min-w-0">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-                      <div className={viewMode === 'kanban' ? 'hidden' : ''}>
+                      <div className={isScrumProject ? '' : 'hidden'}>
                         {renderSprintSelector()}
                       </div>
 
-                      <h2 className={`font-segoe-ui text-[18px] leading-7 font-medium tracking-[-0.44px] text-slate-900 antialiased ${viewMode === 'kanban' ? '' : 'hidden'}`}>
+                      <h2 className={`font-segoe-ui text-[18px] leading-7 font-medium tracking-[-0.44px] text-slate-900 antialiased ${isScrumProject ? 'hidden' : ''}`}>
                         Tablica Kanban
                       </h2>
 
@@ -484,6 +496,11 @@ const ProjectKanbanPage: React.FC = () => {
                       </button>
                     </div>
 
+                    {!isBoardSprintReady ? (
+                      <p className="py-12 text-center font-segoe-ui text-sm text-slate-500 animate-pulse">
+                        Ładowanie sprintu...
+                      </p>
+                    ) : (
                     <DndContext
                       sensors={sensors}
                       collisionDetection={closestCorners}
@@ -516,6 +533,7 @@ const ProjectKanbanPage: React.FC = () => {
                         {activeTask ? <KanbanTaskCard task={activeTask} isDragOverlay /> : null}
                       </DragOverlay>
                     </DndContext>
+                    )}
                   </div>
 
                   <aside className="flex flex-col gap-4">

@@ -11,7 +11,6 @@ import ProjectMonthCalendar from '../components/ProjectMonthCalendar'
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter'
 import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
 import CalendarTaskItem from '../components/calendarTaskItem'
-import { useProjectViewMode } from '../hooks/useProjectViewMode'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useAssignments, useBacklogAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments';
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
@@ -45,7 +44,6 @@ const teamMembers: PersonFilter[] = [
 
 const ProjectCalendarPage: React.FC = () => {
   const { projectId = '' } = useParams()
-  const { viewMode, setProjectViewMode } = useProjectViewMode(projectId)
 
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -101,7 +99,7 @@ const ProjectCalendarPage: React.FC = () => {
       <main className="ml-64 pt-(--app-header-h)">
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex w-full flex-col">
-            <ProjectTopBar projectId={projectId} viewMode={viewMode} onViewModeChange={setProjectViewMode} />
+            <ProjectTopBar projectId={projectId} />
             <section className="mx-6 mt-6 pb-8">
                   <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                     <div className="min-w-0 space-y-4">
