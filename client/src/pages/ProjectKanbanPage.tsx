@@ -326,6 +326,8 @@ const ProjectKanbanPage: React.FC = () => {
 
   const { data: statuses } = useAssignmentStatuses();
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
+  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
+
 
   const teamMembers = useMemo(
     () => mapTeamMembersToPersonFilters(project?.teamMembers ?? []),
@@ -432,6 +434,7 @@ const ProjectKanbanPage: React.FC = () => {
   const [openMenuTaskId, setOpenMenuTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<TaskEditDraft | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
   const taskMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -541,7 +544,11 @@ const ProjectKanbanPage: React.FC = () => {
     if (!statuses) return [];
 
     return statuses.map((status: any) => {
-      const tasksForStatus = visibleAssignments.filter((assignment: any) => assignment.status.id === status.id);
+      const tasksForStatus = visibleAssignments.filter((assignment: any) => {
+        // Pobieramy optymistyczny status, a jeśli go nie ma - ten oryginalny z backendu
+        const currentStatusId = optimisticStatuses[assignment.id] || assignment.status.id;
+        return currentStatusId === status.id;
+      });
 
       return {
         id: status.id,
@@ -551,7 +558,7 @@ const ProjectKanbanPage: React.FC = () => {
         tasks: tasksForStatus.map(assignmentToKanbanCard),
       };
     });
-  }, [statuses, visibleAssignments]);
+  }, [statuses, visibleAssignments, optimisticStatuses]);
 
   const togglePriority = (priorityId: string) => {
     setSelectedPriorities((current) => ({
@@ -587,8 +594,29 @@ const ProjectKanbanPage: React.FC = () => {
     const targetColumn = columns.find((col: KanbanColumnVm) => col.id === overId) ?? findColumnByTaskId(overId);
 
     if (!sourceColumn || !targetColumn || sourceColumn.id === targetColumn.id) return;
+    setOptimisticStatuses((prev) => ({ ...prev, [activeId]: targetColumn.id }));
 
-    updateStatus({ id: activeId, statusId: targetColumn.id });
+    updateStatus(
+      { id: activeId, statusId: targetColumn.id },
+      {
+        onSuccess: () => {
+          setOptimisticStatuses((prev) => {
+            const next = { ...prev };
+            delete next[activeId];
+            return next;
+          });
+        },
+        onError: (error) => {
+          setOptimisticStatuses((prev) => {
+            const next = { ...prev };
+            delete next[activeId];
+            return next;
+          });
+          console.error('Błąd przenoszenia zadania:', error);
+          alert('Nie udało się przenieść zadania na serwerze. Karta wróci na swoje miejsce.');
+        },
+      }
+    );
   };
 
   const renderSprintSelector = () => {
