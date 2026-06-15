@@ -1,14 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import CompanyCard from '../components/CompanyCard';
 import CompanyCreateModal from '../components/CompanyCreateModal';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import type { CompanyEditDraft } from '../components/CompanyEditModal';
-import { useCompanies } from '../hooks/useCompanies';
+import { useCompanyListCards } from '../hooks/useCompanyListCards';
 import { useCreateCompany } from '../hooks/useCreateCompany';
 import type { CompanyCreateDto } from '../types/company';
-import { mapCompanyListItemToCard } from '../utils/companyDisplay';
 
 const emptyToNull = (value: string): string | null => {
     const trimmed = value.trim();
@@ -24,7 +23,7 @@ const toCompanyCreateDto = (draft: CompanyEditDraft): CompanyCreateDto => ({
 });
 
 const CompaniesPage: React.FC = () => {
-    const { data, isLoading, isError, error } = useCompanies(1, 100);
+    const { companyCards, isLoading, isError, error } = useCompanyListCards(1, 100);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const {
@@ -42,11 +41,6 @@ const CompaniesPage: React.FC = () => {
         regon: '',
         address: '',
     });
-
-    const companyCards = useMemo(
-        () => (data?.items ?? []).map(mapCompanyListItemToCard),
-        [data?.items],
-    );
 
     const openCreateModal = () => {
         setIsCreateModalOpen(true);

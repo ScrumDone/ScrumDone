@@ -25,6 +25,7 @@ import { useDeleteCompany } from '../hooks/useDeleteCompany';
 import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
 import {useDeleteCompanyContact} from '../hooks/useDeleteCompanyContact';
 import { mapProjectListItemToCard } from '../utils/projectDisplay';
+import { resolveMainContact } from '../utils/companyDisplay';
 
 //TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
@@ -364,8 +365,7 @@ const CompanyDetailsPage: React.FC = () => {
   }
 
   const contactsToShow = displayedCompany.contacts;
-  const mainContactId =
-    contactsToShow.find((contact) => contact.isPrimary)?.id ?? contactsToShow[0]?.id;
+  const mainContactId = resolveMainContact(contactsToShow)?.id;
 
   const openEditModal = () => {
     resetUpdateCompany();
