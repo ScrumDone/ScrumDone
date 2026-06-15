@@ -20,6 +20,7 @@ namespace Scrumdone.Api.Services
         public async Task<SprintDetailDto> GetSprintByIdAsync(Guid id)
         {
             var sprint = await _context.Sprints
+                .OrderByDescending(s => s.StartDate)
                 .AsNoTracking()
                 .Include(s => s.Assignments)
                     .ThenInclude(a => a.Status) 

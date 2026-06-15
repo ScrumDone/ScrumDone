@@ -102,7 +102,8 @@ namespace ScrumDone.Api.Services
             var totalCount = await q.CountAsync();
 
             var items = await q
-                .OrderByDescending(t => t.CreatedAt)
+                .OrderBy(t => t.DueDate != null ? Math.Abs(t.DueDate.Value.Ticks - DateTimeOffset.UtcNow.Ticks) : TimeSpan.TicksPerDay * 4)
+                    .ThenByDescending(t => t.Priority != null ? t.Priority.Order : 0)            
                 .Skip((dto.Page - 1) * dto.Limit)
                 .Take(dto.Limit)
                 .Select(t => new AssignmentListItemDto(
@@ -336,7 +337,10 @@ namespace ScrumDone.Api.Services
 
         public async Task<IEnumerable<AssignmentStatusDto>> GetStatusesAsync()
         {
-            var statuses = await _context.AssignmentStatuses.OrderBy(s => s.Order).ToListAsync();
+            var statuses = await _context.AssignmentStatuses
+                .OrderBy(s => s.Order)
+                .ToListAsync();
+                
             var total = statuses.Count();
             
             return statuses.Select(s => new AssignmentStatusDto(
