@@ -101,13 +101,15 @@ const ITEMS_PER_PAGE = 9
 
 const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
     title = 'Zadania bez deadline',
+    tasks,
 }) => {
     const [currentPage, setCurrentPage] = useState(1)
     const { data, isLoading } = useAssignments({ Limit: 100 })
 
     const processedTasks = useMemo(() => {
+        if (tasks) return tasks
         if (!data?.items) return []
-        
+
         return data.items
             .filter((t: Assignment) => t.dueDate === null)
             .map((t: Assignment): CalendarNoDeadlineTask => ({
@@ -118,7 +120,7 @@ const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
                 accentColor: t.priority?.name === 'High' ? 'red' : 'blue',
                 dotColor: 'green' // Możesz tu dodać logikę mapowania statusu
             }))
-    }, [data])
+    }, [data, tasks])
 
     const totalPages = Math.ceil(processedTasks.length / ITEMS_PER_PAGE) || 1
     const paginatedTasks = processedTasks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
@@ -151,7 +153,7 @@ const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
                 )}
             </div>
 
-            {isLoading ? (
+            {!tasks && isLoading ? (
                 <div className="p-4 text-center text-slate-500">Ładowanie...</div>
             ) : (
                 <div className="grid grid-cols-3 gap-3">

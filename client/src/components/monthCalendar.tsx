@@ -1,8 +1,8 @@
 import React from 'react'
 import { format, startOfMonth, startOfWeek, addDays, isSameDay, isSameMonth, parseISO } from 'date-fns'
 import CalendarTaskItem from './calendarTaskItem'
-import {useAssignments} from '../hooks/useAssignments'
-import type {Assignment} from '../types/assignment'
+import { useAssignments } from '../hooks/useAssignments'
+import type { Assignment } from '../types/assignment'
 
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
 
@@ -10,38 +10,63 @@ interface CalendarTask {
     id: string
     title: string
     colorVariant: TaskColor
-    date: string 
+    date: string
+    priorityHexColor?: string | null | undefined
 }
 
 interface MonthCalendarProps {
     currentDate: Date
     dueFrom: string
     dueTo: string
+    selectedProjectIds: string[]
+    selectedPriorityIds: string[]
 }
 
-const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, dueFrom, dueTo }) => {
-    // const allTasks: CalendarTask[] = [
-    //     { id: 'task-1', title: 'Quotes Generation', colorVariant: 'red', date: '2026-04-08' },
-    //     { id: 'task-2', title: 'Database schema', colorVariant: 'yellow', date: '2026-04-08' },
-    //     { id: 'task-3', title: 'Real-time notification', colorVariant: 'green', date: '2026-04-12' },
-    // ]
+const MonthCalendar: React.FC<MonthCalendarProps> = ({
+    currentDate,
+    dueFrom,
+    dueTo,
+    selectedProjectIds,
+    selectedPriorityIds
+}) => {
+    const { data: assignments } = useAssignments({
+        DueFrom: dueFrom,
+        DueTo: dueTo,
+        ProjectIds: selectedProjectIds,
+        PriorityIds: selectedPriorityIds,
+        Limit: 100,
+        ExcludeNoDeadline: true,
+    })
+    const items = assignments?.items ?? []
+    const hasEmptyFilter = selectedProjectIds.length === 0 || selectedPriorityIds.length === 0
 
-    const { data: assignments } = useAssignments({ DueFrom: dueFrom, DueTo: dueTo })
+    // Filtrowanie zadań zgodnie z wybranymi projektami i priorytetami
+    const allTasks: CalendarTask[] = hasEmptyFilter ? [] : items
+        .filter((task: Assignment) => {
+            const priorityId = task.priority?.id;
 
-    const allTasks: CalendarTask[] = (assignments?.items || [])
+            const isProjectMatch = selectedProjectIds.includes(task.projectId);
+
+            const isPriorityMatch = priorityId
+                ? selectedPriorityIds.includes(priorityId)
+                : false;
+
+            return isProjectMatch && isPriorityMatch;
+        })
         .filter((task): task is Assignment & { dueDate: string } => task.dueDate !== null)
         .map((task) => ({
             id: task.id,
             title: task.name,
             date: task.dueDate,
-            colorVariant: task.priority?.name === 'High' ? 'red' : 'blue' // Dostosuj logikę kolorów wedle potrzeb TODO
+            colorVariant: task.priority?.name === 'High' ? 'red' : 'blue',
+            priorityHexColor: task.priority?.hexColor ?? null
         }))
 
     const monthStart = startOfMonth(currentDate)
     const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
     const dayNames = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz']
     
-    const days: Date[] = Array.from({ length: 35 }, (_, i) => addDays(calendarStart, i))
+    const days: Date[] = Array.from({ length: 42 }, (_, i) => addDays(calendarStart, i))
     const isWeekend = (dayIndex: number) => dayIndex === 5 || dayIndex === 6
 
     return (
@@ -72,7 +97,7 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, dueFrom, due
                             key={day.toISOString()}
                             className={`h-[120px] border-r border-b border-slate-200 last:border-r-0 p-2 flex flex-col overflow-hidden ${
                                 isCurrentMonth && !isWeekendDay ? 'bg-white' : 'bg-slate-50/50'
-                            } ${index >= 28 ? 'border-b-0' : ''}`}
+                            } ${index >= 35 ? 'border-b-0' : ''}`}
                         >
                             <p className={`font-segoe-ui text-[13px] leading-tight font-normal ${
                                 isCurrentMonth ? 'text-slate-900' : 'text-slate-400'
@@ -84,11 +109,12 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, dueFrom, due
                             {/* Scroll zadań wewnątrz komórki */}
                             <div className="flex-1 overflow-y-auto space-y-1 scrollbar-hide">
                                 {tasksForThisDay.map((task) => (
-                                    <CalendarTaskItem 
-                                        key={task.id} 
+                                    <CalendarTaskItem
+                                        key={task.id}
                                         id={task.id}
-                                        title={task.title} 
-                                        colorVariant={task.colorVariant} 
+                                        title={task.title}
+                                        colorVariant={task.colorVariant}
+                                        priorityHexColor={task.priorityHexColor}
                                     />
                                 ))}
                             </div>

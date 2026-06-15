@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react'
-import { startOfWeek, addDays, format, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { startOfWeek, endOfWeek, startOfMonth, endOfDay, addDays, format, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns'
 import { pl } from 'date-fns/locale'
 import { useParams } from 'react-router-dom'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
@@ -12,8 +12,11 @@ import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarP
 import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
 import CalendarTaskItem from '../components/calendarTaskItem'
 import { useProjectViewMode } from '../hooks/useProjectViewMode'
+import { useProject } from '../hooks/useProject'
+import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities'
+import { getInitialsFromName } from '../hooks/useCurrentUser'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
-import { useAssignments, useBacklogAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments';
+import { useAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments'
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
 
 type CalendarTask = {
@@ -21,26 +24,8 @@ type CalendarTask = {
   title: string
   colorVariant: 'red' | 'yellow' | 'green' | 'orange' | 'blue'
   date: string
+  priorityHexColor?: string | null | undefined
 }
-
-const teamMembers: PersonFilter[] = [
-  { id: 'artur-nowak', initials: 'AN', fullName: 'Artur Nowak' },
-  { id: 'eryk-baczynski', initials: 'EB', fullName: 'Eryk Baczyński' },
-  { id: 'maria-kowalska', initials: 'MK', fullName: 'Maria Kowalska' },
-]
-
-//Task: connect project calendar to assignments API #234
-// const noDeadlineTasks: CalendarNoDeadlineTask[] = [
-//   { id: 'code-refactoring-user-module', title: 'Code refactoring - user module', assigneeInitials: 'AN', assigneeName: 'Artur Nowak', accentColor: 'blue', dotColor: 'green' },
-//   { id: 'documentation-update', title: 'Documentation update', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', accentColor: 'blue', dotColor: 'orange' },
-//   { id: 'e2e-testing-setup', title: 'E2E testing setup', assigneeInitials: 'EB', assigneeName: 'Eryk Baczyński', accentColor: 'blue', dotColor: 'red' },
-//   { id: 'mobile-responsiveness', title: 'Mobile responsiveness', assigneeInitials: 'MK', assigneeName: 'Maria Kowalska', accentColor: 'blue', dotColor: 'orange' },
-// ]
-
-// const initialCalendarTasks: CalendarTask[] = [
-//   { id: 'quotes-generation', title: 'Quotes Generation', colorVariant: 'red', date: '2026-04-07' },
-//   { id: 'giveaway-campaign', title: 'Giveaway Campaign', colorVariant: 'green', date: '2026-04-09' },
-// ]
 
 const ProjectCalendarPage: React.FC = () => {
   const { projectId = '' } = useParams()
@@ -48,33 +33,161 @@ const ProjectCalendarPage: React.FC = () => {
 
   const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
-  //Task: connect project calendar to assignments API #234
-  //const [calendarTasks, setCalendarTasks] = useState<CalendarTask[]>(initialCalendarTasks)
 
-  const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
-  const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart]);
+  const { data: project } = useProject(projectId)
+  const { data: priorities = [] } = useAssignmentPriorities()
 
-  const { data: assignmentsResponse } = useAssignments({ ProjectIds: [projectId] });
-  const { data: backlogResponse } = useBacklogAssignments();
+  const teamMembers: PersonFilter[] = useMemo(
+    () => (project?.teamMembers ?? []).map((member) => ({
+      id: member.id,
+      initials: getInitialsFromName(member.name),
+      fullName: member.name,
+    })),
+    [project?.teamMembers],
+  )
 
-  const calendarTasks: CalendarTask[] = assignmentsResponse?.items.map(assignmentToCalendarTask) ?? [];
-  const noDeadlineTasks = backlogResponse?.items.map(assignmentToNoDeadlineTask) ?? [];
+  const [selectedPeopleIds, setSelectedPeopleIds] = useState<string[]>([])
+  const [selectedPriorityIds, setSelectedPriorityIds] = useState<string[]>([])
+  const initializedPeopleProjectRef = useRef<string | null>(null)
+  const initializedPrioritiesRef = useRef(false)
+
+  useEffect(() => {
+    const peopleIds = teamMembers.map((person) => person.id)
+
+    if (initializedPeopleProjectRef.current !== projectId) {
+      setSelectedPeopleIds(peopleIds)
+      initializedPeopleProjectRef.current = projectId
+      return
+    }
+
+    setSelectedPeopleIds((current) => current.filter((id) => peopleIds.includes(id)))
+  }, [projectId, teamMembers])
+
+  useEffect(() => {
+    const priorityIds = priorities.map((priority) => priority.id)
+
+    if (!initializedPrioritiesRef.current && priorityIds.length > 0) {
+      setSelectedPriorityIds(priorityIds)
+      initializedPrioritiesRef.current = true
+      return
+    }
+
+    setSelectedPriorityIds((current) => {
+      const kept = current.filter((id) => priorityIds.includes(id))
+      return kept.length === current.length && kept.every((id, index) => id === current[index])
+        ? current
+        : kept
+    })
+  }, [priorities])
+
+  useEffect(() => {
+    setCurrentDate(new Date())
+  }, [projectId])
+
+  const allPeopleSelected = teamMembers.length === 0 || teamMembers.every((person) => selectedPeopleIds.includes(person.id))
+  const noPeopleSelected = teamMembers.length > 0 && teamMembers.every((person) => !selectedPeopleIds.includes(person.id))
+  const noPrioritiesSelected = priorities.length > 0 && priorities.every((priority) => !selectedPriorityIds.includes(priority.id))
+
+  const dateRange = useMemo(() => {
+    if (displayMode === 'week') {
+      return {
+        dueFrom: startOfWeek(currentDate, { weekStartsOn: 1 }).toISOString(),
+        dueTo: endOfWeek(currentDate, { weekStartsOn: 1 }).toISOString(),
+      }
+    }
+
+    const calendarStart = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
+    return {
+      dueFrom: calendarStart.toISOString(),
+      dueTo: endOfDay(addDays(calendarStart, 41)).toISOString(),
+    }
+  }, [currentDate, displayMode])
+
+  const assignmentQuery = useMemo(() => ({
+    ProjectIds: [projectId],
+    Limit: 100,
+    ExcludeNoDeadline: true,
+    DueFrom: dateRange.dueFrom,
+    DueTo: dateRange.dueTo,
+    ...(!allPeopleSelected && !noPeopleSelected ? { AssigneeIds: selectedPeopleIds } : {}),
+    ...(selectedPriorityIds.length > 0 ? { PriorityIds: selectedPriorityIds } : {}),
+  }), [
+    projectId,
+    dateRange,
+    allPeopleSelected,
+    noPeopleSelected,
+    selectedPeopleIds,
+    selectedPriorityIds,
+  ])
+
+  const { data: assignmentsResponse } = useAssignments(assignmentQuery)
+  const { data: noDeadlineAssignmentsResponse } = useAssignments({
+    ProjectIds: [projectId],
+    Limit: 100,
+    ...(!allPeopleSelected && !noPeopleSelected ? { AssigneeIds: selectedPeopleIds } : {}),
+    ...(selectedPriorityIds.length > 0 ? { PriorityIds: selectedPriorityIds } : {}),
+  })
+
+  const visibleAssignments = useMemo(() => {
+    if (!assignmentsResponse) return []
+    if (noPeopleSelected || noPrioritiesSelected) return []
+
+    let items = assignmentsResponse.items
+
+    if (!allPeopleSelected) {
+      items = items.filter((assignment) =>
+        assignment.assignees.some((assignee) => selectedPeopleIds.includes(assignee.id)),
+      )
+    }
+
+    if (selectedPriorityIds.length > 0) {
+      items = items.filter((assignment) =>
+        assignment.priority && selectedPriorityIds.includes(assignment.priority.id),
+      )
+    }
+
+    return items
+  }, [
+    assignmentsResponse,
+    allPeopleSelected,
+    noPeopleSelected,
+    selectedPeopleIds,
+    noPrioritiesSelected,
+    selectedPriorityIds,
+  ])
+
+  const calendarTasks: CalendarTask[] = visibleAssignments
+    .filter((assignment) => assignment.dueDate !== null)
+    .map(assignmentToCalendarTask)
+  const noDeadlineTasks = noPeopleSelected || noPrioritiesSelected
+    ? []
+    : noDeadlineAssignmentsResponse?.items
+      .filter((assignment) => {
+        const matchesProject = assignment.projectId === projectId
+        const matchesPerson = allPeopleSelected || assignment.assignees.some((assignee) => selectedPeopleIds.includes(assignee.id))
+        const matchesPriority = selectedPriorityIds.length > 0
+          ? Boolean(assignment.priority?.id && selectedPriorityIds.includes(assignment.priority.id))
+          : priorities.length === 0
+
+        return assignment.dueDate === null && matchesProject && matchesPerson && matchesPriority
+      })
+      .map(assignmentToNoDeadlineTask) ?? []
 
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const handleDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id))
-  
-  const { mutate: updateDueDate } = useUpdateAssignmentDueDate();
+
+  const { mutate: updateDueDate } = useUpdateAssignmentDueDate()
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveId(null);
+    const { active, over } = event
+    setActiveId(null)
     if (over && active.id !== over.id) {
-      updateDueDate({ id: String(active.id), dueDate: String(over.id) });
+      updateDueDate({ id: String(active.id), dueDate: String(over.id) })
     }
-  };
+  }
 
   const activeTask = useMemo(() => calendarTasks.find(t => t.id === activeId), [activeId, calendarTasks])
 
@@ -92,6 +205,18 @@ const ProjectCalendarPage: React.FC = () => {
 
   const monthButtonClass = (mode: 'week' | 'month') =>
     `rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer ${displayMode === mode ? 'bg-slate-200/50 text-slate-900' : 'bg-transparent text-slate-900 hover:text-slate-700'}`
+
+  const togglePerson = (personId: string) => {
+    setSelectedPeopleIds((current) =>
+      current.includes(personId) ? current.filter((id) => id !== personId) : [...current, personId],
+    )
+  }
+
+  const togglePriority = (priorityId: string) => {
+    setSelectedPriorityIds((current) =>
+      current.includes(priorityId) ? current.filter((id) => id !== priorityId) : [...current, priorityId],
+    )
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB]">
@@ -117,21 +242,34 @@ const ProjectCalendarPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="mt-2">
-                          {displayMode === 'week' ? <WeekCalendar dueFrom={weekStart.toISOString()} dueTo={weekEnd.toISOString()} startDate={startOfWeek(currentDate, { weekStartsOn: 1 })} tasks={calendarTasks} /> : <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />}
+                          {displayMode === 'week' ? <WeekCalendar startDate={startOfWeek(currentDate, { weekStartsOn: 1 })} tasks={calendarTasks} /> : <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />}
                         </div>
                       </div>
                       <CalendarNoDeadlineTasks tasks={noDeadlineTasks} />
                     </div>
                     <aside className="flex flex-col gap-4">
-                      <CalendarPeopleFilter people={teamMembers} title="Członkowie zespołu" />
+                      <CalendarPeopleFilter
+                        people={teamMembers}
+                        title="Członkowie zespołu"
+                        selectedIds={selectedPeopleIds}
+                        onSelectionChange={togglePerson}
+                      />
                       <section className="rounded-[10px] border border-slate-200 bg-white p-4">
                         <h3 className="mb-3 font-segoe-ui text-[18px] leading-7 font-normal text-slate-900 antialiased">Priorytet</h3>
                         <div className="flex flex-col gap-3">
-                          {[{ id: 'wysoki', label: 'Wysoki', colorClass: 'bg-scrumdone-red-500' }, { id: 'sredni', label: 'Średni', colorClass: 'bg-scrumdone-yellow-500' }, { id: 'niski', label: 'Niski', colorClass: 'bg-scrumdone-green-500' }].map((option) => (
-                            <label key={option.id} className="flex items-center gap-2 cursor-pointer">
-                              <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-slate-300 text-slate-900 accent-slate-900 cursor-pointer" />
-                              <span className={`h-2 w-2 rounded-full ${option.colorClass}`} />
-                              <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{option.label}</span>
+                          {priorities.map((priority) => (
+                            <label key={priority.id} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedPriorityIds.includes(priority.id)}
+                                onChange={() => togglePriority(priority.id)}
+                                className="h-4 w-4 rounded border-slate-300 text-slate-900 accent-slate-900 cursor-pointer"
+                              />
+                              <span
+                                className="h-2 w-2 rounded-full bg-slate-300"
+                                style={priority.hexColor ? { backgroundColor: priority.hexColor } : undefined}
+                              />
+                              <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{priority.name}</span>
                             </label>
                           ))}
                         </div>
@@ -143,7 +281,7 @@ const ProjectCalendarPage: React.FC = () => {
           <DragOverlay>
             {activeTask ? (
               <div className="cursor-grabbing">
-                <CalendarTaskItem id={activeTask.id} title={activeTask.title} colorVariant={activeTask.colorVariant} />
+                <CalendarTaskItem id={activeTask.id} title={activeTask.title} colorVariant={activeTask.colorVariant} priorityHexColor={activeTask.priorityHexColor} />
               </div>
             ) : null}
           </DragOverlay>
