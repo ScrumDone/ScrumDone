@@ -62,6 +62,7 @@ import {
 } from '../utils/sprintTaskMappers';
 import { useUpdateAssignmentSprint } from '../hooks/useUpdateAssignmentSprint';
 import type { AssignmentPriority } from '../types/assignment';
+import { taskDropAnimation } from '../lib/dndDropAnimation';
 
 const BACKLOG_ID = 'backlog';
 
@@ -99,7 +100,7 @@ const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay =
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
-      className={`rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing shadow-md' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      className={`rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'w-full box-border cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="mb-1 flex items-start gap-2">
         <span
@@ -133,7 +134,7 @@ const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = fal
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
-      className={`flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing shadow-md' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      className={`flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 box-border cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center gap-3">
         <span
@@ -1084,7 +1085,10 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
             collisionDetection={closestCorners}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
-            onDragCancel={() => setDragOverSprintId(null)}
+            onDragCancel={() => {
+              setActiveDragItem(null);
+              setDragOverSprintId(null);
+            }}
             onDragEnd={handleDragEnd}
           >
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -1216,7 +1220,7 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
             </div>
             </div>
 
-            <DragOverlay>
+            <DragOverlay dropAnimation={taskDropAnimation}>
               {activeDragItem?.source === 'backlog' ? (
                 <BacklogTaskCard task={activeDragItem.task} isDragOverlay />
               ) : null}

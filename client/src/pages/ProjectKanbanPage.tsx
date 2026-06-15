@@ -40,6 +40,7 @@ import { useAssignments } from '../hooks/useAssignments';
 import { useUpdateAssignmentStatus } from '../hooks/useUpdateAssignmentStatus';
 import { useDeleteAssignment } from '../hooks/useDeleteAssignment';
 import { assignmentToKanbanCard } from '../lib/assignmentMappers';
+import { taskDropAnimation } from '../lib/dndDropAnimation';
 import type { AssignmentPriority } from '../types/assignment';
 
 // --- Typy i Dane pomocnicze ---
@@ -163,30 +164,36 @@ const KanbanTaskCard: React.FC<{
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
       onClick={onClick}
-      className={`rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      className={`rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab active:cursor-grabbing ${isDragOverlay ? 'w-full box-border cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <h3 className="min-w-0 flex-1 truncate font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">{task.name}</h3>
-        {!isDragOverlay && (
-          <div className="relative shrink-0" ref={isMenuOpen ? menuRef : undefined}>
-            <button
-              type="button"
-              aria-label="Opcje zadania"
-              aria-expanded={isMenuOpen}
-              aria-haspopup="menu"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                onMenuToggle?.();
-              }}
-              className={`rounded-md p-1 text-slate-700 transition-colors hover:bg-slate-50 ${
-                isMenuOpen ? 'border border-slate-200 bg-white' : ''
-              }`}
-            >
-              <EllipsisVerticalIcon className="h-4 w-4" />
-            </button>
+        <div
+          className={`relative shrink-0 ${isDragOverlay ? 'pointer-events-none' : ''}`}
+          ref={!isDragOverlay && isMenuOpen ? menuRef : undefined}
+        >
+          <button
+            type="button"
+            aria-label="Opcje zadania"
+            aria-expanded={isMenuOpen}
+            aria-haspopup="menu"
+            tabIndex={isDragOverlay ? -1 : undefined}
+            onPointerDown={(e) => {
+              if (!isDragOverlay) e.stopPropagation();
+            }}
+            onClick={(e) => {
+              if (isDragOverlay) return;
+              e.stopPropagation();
+              onMenuToggle?.();
+            }}
+            className={`rounded-md p-1 text-slate-700 transition-colors hover:bg-slate-50 ${
+              isMenuOpen && !isDragOverlay ? 'border border-slate-200 bg-white' : ''
+            } ${isDragOverlay ? 'invisible' : ''}`}
+          >
+            <EllipsisVerticalIcon className="h-4 w-4" />
+          </button>
 
-            {isMenuOpen && (
+          {!isDragOverlay && isMenuOpen && (
               <div
                 role="menu"
                 className="absolute right-0 top-full z-20 mt-1 min-w-[9.5rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
@@ -219,8 +226,7 @@ const KanbanTaskCard: React.FC<{
                 </button>
               </div>
             )}
-          </div>
-        )}
+        </div>
       </div>
       <div className="mt-3 flex items-center justify-between">
         <span
@@ -704,6 +710,7 @@ const ProjectKanbanPage: React.FC = () => {
                       collisionDetection={closestCorners}
                       onDragStart={handleDragStart}
                       onDragEnd={handleDragEnd}
+                      onDragCancel={() => setActiveTask(null)}
                     >
                       <div className="grid items-start gap-2 xl:grid-cols-5">
                         {columns.map((column: KanbanColumnVm) => (
@@ -720,7 +727,7 @@ const ProjectKanbanPage: React.FC = () => {
                         ))}
                       </div>
 
-                      <DragOverlay>
+                      <DragOverlay dropAnimation={taskDropAnimation}>
                         {activeTask ? <KanbanTaskCard task={activeTask} isDragOverlay /> : null}
                       </DragOverlay>
                     </DndContext>
