@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getAssignments, updateAssignment } from '../api/assignments';
 import { ApiError } from '../api/client';
 import type { Assignment, AssignmentQueryParams, PaginatedAssignmentsResponse } from '../types/assignment'; 
@@ -14,6 +14,8 @@ export const useCreateAssignment = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['assignments'] }),
   });
 };
+
+export const KANBAN_COLUMN_PAGE_SIZE = 20;
 
 export function useAssignments(params: AssignmentQueryParams = {}) {
   // Domyślne wartości, jeśli nie zostały przekazane
@@ -32,9 +34,31 @@ export function useAssignments(params: AssignmentQueryParams = {}) {
   });
 }
 
-// Fabryka: Kanban Column
-export function useKanbanColumnAssignments(statusId: string) {
-  return useAssignments({ StatusIds: [statusId] });
+// Fabryka: Kanban Column (paginacja per status)
+export function useKanbanColumnAssignments(
+  statusId: string,
+  baseParams: AssignmentQueryParams,
+  enabled = true,
+) {
+  const columnParams = {
+    Limit: KANBAN_COLUMN_PAGE_SIZE,
+    ...baseParams,
+  };
+
+  return useInfiniteQuery<PaginatedAssignmentsResponse, ApiError>({
+    queryKey: ['assignments', 'kanban-column', statusId, columnParams],
+    queryFn: ({ pageParam }) =>
+      getAssignments({
+        ...columnParams,
+        StatusIds: [statusId],
+        Page: pageParam,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNextPage ? Number(lastPage.page) + 1 : undefined,
+    enabled: enabled && Boolean(statusId),
+    staleTime: 1000 * 30,
+  });
 }
 
 // Fabryka: Backlog
