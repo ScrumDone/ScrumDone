@@ -14,3 +14,11 @@ export type ContactPersonCreateDto = {
     phone: string | null;
     isPrimary: boolean | null;
     };
+
+export type ContactPersonUpdateDto = {
+    name: string | null;
+    role: string | null;
+    email: string | null;
+    phone: string | null;
+    isPrimary: boolean | null;
+};

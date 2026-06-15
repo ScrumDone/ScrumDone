@@ -79,3 +79,10 @@ export type CooperationLogCreateDto = {
   newValue: string | null;
   oldValue: string | null;
 };
+
+export type CooperationLogUpdateDto = {
+  title: string | null;
+  description: string | null;
+  newValue: string | null;
+  oldValue: string | null;
+};
