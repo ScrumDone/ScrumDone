@@ -15,6 +15,7 @@ import { useProjectViewMode } from '../hooks/useProjectViewMode'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useAssignments, useBacklogAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments';
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
+import { taskDropAnimation } from '../lib/dndDropAnimation'
 
 type CalendarTask = {
   id: string
@@ -140,7 +141,7 @@ const ProjectCalendarPage: React.FC = () => {
                   </div>
             </section>
           </div>
-          <DragOverlay>
+          <DragOverlay dropAnimation={taskDropAnimation}>
             {activeTask ? (
               <div className="cursor-grabbing">
                 <CalendarTaskItem id={activeTask.id} title={activeTask.title} colorVariant={activeTask.colorVariant} />

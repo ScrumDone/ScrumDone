@@ -62,6 +62,7 @@ import {
 } from '../utils/sprintTaskMappers';
 import { useUpdateAssignmentSprint } from '../hooks/useUpdateAssignmentSprint';
 import type { AssignmentPriority } from '../types/assignment';
+import { taskDropAnimation } from '../lib/dndDropAnimation';
 
 const BACKLOG_ID = 'backlog';
 
@@ -99,18 +100,18 @@ const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay =
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
-      className={`rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing shadow-md' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      className={`rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'w-full box-border cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="mb-1 flex items-start gap-2">
         <span
           className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-slate-300"
           style={task.priorityHexColor ? { backgroundColor: task.priorityHexColor } : undefined}
         />
-        <p className="font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
+        <p className="flex-1 min-w-0 truncate font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
       </div>
       <div className="flex items-center gap-2">
         <Avatar initials={task.assigneeInitials} size="xs" />
-        <span className="font-segoe-ui text-[10px] tracking-[0.12px] leading-4 text-slate-700">{task.assigneeName}</span>
+        <span className="flex-1 font-segoe-ui text-[10px] tracking-[0.12px] leading-4 text-slate-700">{task.assigneeName}</span>
       </div>
     </div>
   );
@@ -133,7 +134,7 @@ const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = fal
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
-      className={`flex items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing shadow-md' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      className={`flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 box-border cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center gap-3">
         <span
@@ -403,6 +404,7 @@ const SprintsPage: React.FC = () => {
     ukonczne: true,
     nieukonczne: true,
   });
+  const [optimisticSprints, setOptimisticSprints] = useState<Record<string, string | null>>({});
 
   const visibleAssignments = useMemo(() => {
     if (!assignmentsData?.items) {
@@ -413,7 +415,15 @@ const SprintsPage: React.FC = () => {
       return [];
     }
 
-    let items = assignmentsData.items.filter((assignment) =>
+    let items = assignmentsData.items.map((assignment) => {
+      const optimisticSprintId = optimisticSprints[assignment.id];
+      
+      if (optimisticSprintId !== undefined) {
+        return { ...assignment, sprintId: optimisticSprintId };
+      }
+      
+      return assignment;
+    }).filter((assignment) =>
       matchesSprintCompletionFilter(assignment, selectedStatuses),
     );
 
@@ -431,6 +441,7 @@ const SprintsPage: React.FC = () => {
     noPrioritiesSelected,
     selectedAssigneeIds,
     selectedStatuses,
+    optimisticSprints,
   ]);
 
   const backlogTasks = useMemo(
@@ -996,7 +1007,7 @@ const SprintsPage: React.FC = () => {
     setDragOverSprintId(targetSprint?.id ?? null);
   };
 
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setActiveDragItem(null);
     setDragOverSprintId(null);
     if (!over) {
@@ -1008,7 +1019,21 @@ const SprintsPage: React.FC = () => {
     const sourceSprint = findSprintWithTask(activeId);
     const backlogTask = backlogTasks.find((task) => task.id === activeId);
 
-    const handleMoveError = () => {
+    const handleMoveSuccess = () => {
+      setOptimisticSprints((prev) => {
+        const next = { ...prev };
+        delete next[activeId];
+        return next;
+      });
+    };
+
+    const handleMoveError = (error: any) => {
+      setOptimisticSprints((prev) => {
+        const next = { ...prev };
+        delete next[activeId];
+        return next;
+      });
+      console.error('Błąd przenoszenia zadania:', error);
       alert('Nie udało się przenieść zadania. Spróbuj ponownie.');
     };
 
@@ -1017,7 +1042,12 @@ const SprintsPage: React.FC = () => {
         return;
       }
 
-      updateAssignmentSprint({ id: activeId, sprintId: null }, { onError: handleMoveError });
+      setOptimisticSprints((prev) => ({ ...prev, [activeId]: null }));
+
+      updateAssignmentSprint(
+        { id: activeId, sprintId: null }, 
+        { onSuccess: handleMoveSuccess, onError: handleMoveError }
+      );
       return;
     }
 
@@ -1032,7 +1062,12 @@ const SprintsPage: React.FC = () => {
     }
 
     if (backlogTask || sourceSprint) {
-      updateAssignmentSprint({ id: activeId, sprintId: targetSprint.id }, { onError: handleMoveError });
+      setOptimisticSprints((prev) => ({ ...prev, [activeId]: targetSprint.id }));
+
+      updateAssignmentSprint(
+        { id: activeId, sprintId: targetSprint.id }, 
+        { onSuccess: handleMoveSuccess, onError: handleMoveError }
+      );
     }
   };
 
@@ -1050,7 +1085,10 @@ const SprintsPage: React.FC = () => {
             collisionDetection={closestCorners}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
-            onDragCancel={() => setDragOverSprintId(null)}
+            onDragCancel={() => {
+              setActiveDragItem(null);
+              setDragOverSprintId(null);
+            }}
             onDragEnd={handleDragEnd}
           >
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -1182,7 +1220,7 @@ const SprintsPage: React.FC = () => {
             </div>
             </div>
 
-            <DragOverlay>
+            <DragOverlay dropAnimation={taskDropAnimation}>
               {activeDragItem?.source === 'backlog' ? (
                 <BacklogTaskCard task={activeDragItem.task} isDragOverlay />
               ) : null}
