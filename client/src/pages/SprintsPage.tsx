@@ -85,9 +85,10 @@ const sprintStatusBadgeMap: Record<string, string> = {
 type BacklogTaskCardProps = {
   task: SprintBacklogTask;
   isDragOverlay?: boolean;
+  onClick?: () => void;
 };
 
-const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay = false }) => {
+const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay = false, onClick }) => {
   const sortable = useSortable({ id: task.id, disabled: isDragOverlay });
   const style = isDragOverlay
     ? undefined
@@ -99,7 +100,17 @@ const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay =
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
-      className={`rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100 cursor-grab active:cursor-grabbing ${isDragOverlay ? 'w-full box-border cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      role={onClick && !isDragOverlay ? 'button' : undefined}
+      tabIndex={onClick && !isDragOverlay ? 0 : undefined}
+      onClick={isDragOverlay ? undefined : onClick}
+      onKeyDown={(event) => {
+        if (!onClick || isDragOverlay) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      className={`rounded-lg border-2 border-slate-200 bg-slate-50 p-2 hover:bg-slate-100 cursor-grab active:cursor-grabbing ${onClick && !isDragOverlay ? 'cursor-pointer' : ''} ${isDragOverlay ? 'w-full box-border cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="mb-1 flex items-start gap-2">
         <span
@@ -119,9 +130,10 @@ const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay =
 type SprintTaskRowProps = {
   task: SprintTaskItem;
   isDragOverlay?: boolean;
+  onClick?: () => void;
 };
 
-const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = false }) => {
+const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = false, onClick }) => {
   const sortable = useSortable({ id: task.id, disabled: isDragOverlay });
   const style = isDragOverlay
     ? undefined
@@ -133,7 +145,17 @@ const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = fal
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
-      className={`flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 box-border cursor-grab active:cursor-grabbing ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      role={onClick && !isDragOverlay ? 'button' : undefined}
+      tabIndex={onClick && !isDragOverlay ? 0 : undefined}
+      onClick={isDragOverlay ? undefined : onClick}
+      onKeyDown={(event) => {
+        if (!onClick || isDragOverlay) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      className={`flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 box-border cursor-grab active:cursor-grabbing ${onClick && !isDragOverlay ? 'cursor-pointer' : ''} ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-center gap-3">
         <span
@@ -779,7 +801,7 @@ const SprintsPage: React.FC = () => {
                         <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
                           <div className="space-y-3">
                             {sprint.tasks.map((task) => (
-                              <SprintTaskRow key={task.id} task={task} />
+                              <SprintTaskRow key={task.id} task={task} onClick={() => navigate(`/task/${task.id}`)} />
                             ))}
                           </div>
                         </SortableContext>
@@ -854,7 +876,7 @@ const SprintsPage: React.FC = () => {
                         <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
                           <div className="space-y-3">
                             {sprint.tasks.map((task) => (
-                              <SprintTaskRow key={task.id} task={task} />
+                              <SprintTaskRow key={task.id} task={task} onClick={() => navigate(`/task/${task.id}`)} />
                             ))}
                           </div>
                         </SortableContext>
@@ -932,7 +954,7 @@ const SprintsPage: React.FC = () => {
                         <SortableContext items={sprint.tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
                           <div className="space-y-2">
                             {sprint.tasks.map((task) => (
-                              <SprintTaskRow key={task.id} task={task} />
+                              <SprintTaskRow key={task.id} task={task} onClick={() => navigate(`/task/${task.id}`)} />
                             ))}
                           </div>
                         </SortableContext>
@@ -1206,7 +1228,7 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
                   <SortableContext items={backlogTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
                     <div className="flex flex-col gap-2">
                       {backlogTasks.map((task) => (
-                        <BacklogTaskCard key={task.id} task={task} />
+                        <BacklogTaskCard key={task.id} task={task} onClick={() => navigate(`/task/${task.id}`)} />
                       ))}
                     </div>
                   </SortableContext>

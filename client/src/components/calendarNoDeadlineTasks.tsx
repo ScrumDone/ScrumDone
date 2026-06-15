@@ -5,6 +5,7 @@ import { useAssignments } from '../hooks/useAssignments'
 import type { Assignment } from '../types/assignment'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
+import { useNavigate } from 'react-router-dom'
 
 type TaskAccentColor = 'blue' | 'orange' | 'red' | 'green' | 'yellow'
 
@@ -91,6 +92,7 @@ const hexToRgba = (hexColor: string, alpha: number) => {
 // ]
 
 export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProps> = ({ task }) => {
+    const navigate = useNavigate()
     const normalizedInitials = task.assigneeInitials.trim().slice(0, 2).toUpperCase()
     const backgroundClass = backgroundClassMap[task.accentColor]
     const priorityStyles = task.priorityHexColor
@@ -101,7 +103,19 @@ export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProp
         : undefined
 
     return (
-        <article className={`flex-none w-full max-w-75 rounded-xl border border-l-4 p-3 ${accentClassMap[task.accentColor]} ${backgroundClass}`} style={priorityStyles}>
+        <article
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/task/${task.id}`)}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    navigate(`/task/${task.id}`)
+                }
+            }}
+            className={`flex-none w-full max-w-75 cursor-pointer rounded-xl border border-l-4 p-3 transition-colors hover:opacity-90 ${accentClassMap[task.accentColor]} ${backgroundClass}`}
+            style={priorityStyles}
+        >
             <div className="mb-3 flex items-center gap-3">
                 <span
                     className={`h-2 w-2 shrink-0 rounded-full ${dotClassMap[task.dotColor]}`}
