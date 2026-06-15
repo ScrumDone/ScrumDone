@@ -26,6 +26,7 @@ import {useAddCompanyLog} from '../hooks/useAddCompanyLog';
 import {useDeleteCompanyContact} from '../hooks/useDeleteCompanyContact';
 import { mapProjectListItemToCard } from '../utils/projectDisplay';
 import { resolveMainContact } from '../utils/companyDisplay';
+import { parseCooperationLogDisplay } from '../utils/cooperationLogDisplay';
 
 //TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
@@ -55,7 +56,7 @@ type CompanyDisplay = {
 type CooperationHistoryItem = {
   id: string;
   title: string;
-  tag: string;
+  type: string;
   description: string;
   dateLabel: string;
   author: string;
@@ -90,11 +91,12 @@ const isOptimisticNoteId = (id: string) => id.startsWith('note-');
 const mapCooperationLogToHistoryItem = (log: CooperationLog): CooperationHistoryItem => {
   const changeFrom = log.oldValue?.trim();
   const changeTo = log.newValue?.trim();
+  const { type, title } = parseCooperationLogDisplay(log);
 
   return {
     id: log.id,
-    title: log.title,
-    tag: log.title,
+    title,
+    type,
     description: log.description?.trim() || '—',
     dateLabel: formatBackendDate(log.createdAt),
     author: log.author?.name?.trim() || 'Nieznany autor',
@@ -838,7 +840,7 @@ const CompanyDetailsPage: React.FC = () => {
                       <div className="min-w-0">
                         <h3 className="text-[16px] leading-6 font-medium text-slate-900 antialiased">{item.title}</h3>
                         <span className="mt-2 inline-flex rounded-lg border text-[12px] font-medium border-scrumdone-blue-main px-1 py-0.5 text-scrumdone-blue-main">
-                          {item.tag}
+                          {item.type}
                         </span>
 
                         <p className="mt-4 font-segoe-ui text-[14px] leading-6 text-slate-600 antialiased">{item.description}</p>
