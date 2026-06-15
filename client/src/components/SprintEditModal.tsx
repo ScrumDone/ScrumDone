@@ -51,6 +51,20 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
       status: deriveSprintStatusFromDisplayDates(nextDraft.startDate, nextDraft.endDate),
     });
   };
+  
+  const handleExtendClick = () => {
+    const isConfirmed = window.confirm('Czy na pewno chcesz przedłużyć ten sprint o tydzień?');
+    if (isConfirmed) {
+      onExtendSprint();
+    }
+  };
+
+  const handleDeleteClick = () => {
+    const isConfirmed = window.confirm('Czy na pewno chcesz usunąć ten sprint? Tej operacji nie można cofnąć.');
+    if (isConfirmed) {
+      onDeleteSprint();
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4" onClick={onClose}>
@@ -138,7 +152,7 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
             <h3 className="mb-3 block font-segoe-ui text-[15px] font-medium text-slate-800">Akcje sprintu</h3>
 
             <div className="space-y-2">
-              <button
+              {/*<button
                 type="button"
                 onClick={onStartNextSprint}
                 disabled={isSaving}
@@ -146,21 +160,21 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
               >
                 <PlusIcon className="h-4 w-4" />
                 <span className="text-sm leading-5 tracking-[-0.15px]">Zamknij i rozpocznij nowy sprint</span>
-              </button>
+              </button>*/}
 
               <button
                 type="button"
-                onClick={onExtendSprint}
+                onClick={handleExtendClick}
                 disabled={isSaving}
                 className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50 disabled:opacity-60"
               >
                 <CalendarDaysIcon className="h-4 w-4" />
                 <span className="text-sm leading-5 tracking-[-0.15px]">Przedłuż sprint o tydzień</span>
-              </button>
+              </button> 
 
               <button
                 type="button"
-                onClick={onDeleteSprint}
+                onClick={handleDeleteClick}
                 disabled={isSaving}
                 className="flex w-full items-center gap-3 rounded-xl border border-red-100 bg-red-50 px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#DC2626] transition-colors hover:bg-red-100 disabled:opacity-60"
               >
