@@ -96,6 +96,10 @@ namespace Scrumdone.Api.Services
                 throw new ConflictException("Sprints cannot be removed from Kanban projects");
             }
 
+            await _context.Assignment
+                .Where(a => a.SprintId == sprint.Id)
+                .ExecuteUpdateAsync(s => s.SetProperty(a => a.SprintId, a => null));  
+
             _context.Sprints.Remove(sprint);
             await _context.SaveChangesAsync();
 
