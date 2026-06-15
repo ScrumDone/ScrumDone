@@ -19,6 +19,7 @@ namespace ScrumDone.Api.Validators.Companies
                 .MaximumLength(50);
 
             RuleFor(c => c.Phone)
+                .Matches(@"^(\+\d{1,3}\s?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{3,4}$")
                 .MaximumLength(20);
 
             RuleFor(c => c.Email)
