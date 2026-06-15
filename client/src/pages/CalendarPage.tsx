@@ -5,7 +5,7 @@ import {
     ChevronDownIcon,
     CheckIcon,
 } from '@heroicons/react/24/outline'
-import { format, startOfWeek, endOfWeek, startOfMonth, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns'
+import { format, startOfWeek, endOfWeek, startOfMonth, addWeeks, subWeeks, addMonths, subMonths, addDays, endOfDay } from 'date-fns'
 import { pl } from 'date-fns/locale' 
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
@@ -13,6 +13,10 @@ import WeekCalendar from '../components/ProjectWeekCalendar'
 import MonthCalendar from '../components/monthCalendar'
 import CalendarFilters from '../components/calendarFilters'
 import CalendarNoDeadlineTasks from '../components/calendarNoDeadlineTasks'
+import { useProjects } from '../hooks/useProjects'
+import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities'
+import { useAssignments } from '../hooks/useAssignments'
+import { assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
 
 
 type CalendarMode = 'Personal' | 'Team'
@@ -29,13 +33,66 @@ const CalendarPage: React.FC = () => {
 
     const monthStart = startOfMonth(currentDate)
     const calendarGridStart = startOfWeek(monthStart, { weekStartsOn: 1 })
-    const calendarGridEnd = addWeeks(calendarGridStart, 5) 
+    const calendarGridEnd = endOfDay(addDays(calendarGridStart, 41))
 
     const rangeFrom = viewMode === 'week' ? startDate : calendarGridStart
     const rangeTo = viewMode === 'week' ? endDate : calendarGridEnd
 
     const dueFrom = rangeFrom.toISOString()
     const dueTo = rangeTo.toISOString()
+
+    const { data: projectsResponse } = useProjects({ limit: 100 })
+    const { data: priorities = [] } = useAssignmentPriorities()
+
+    const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([])
+    const [selectedPriorityIds, setSelectedPriorityIds] = useState<string[]>([])
+    const hasInitializedProjectsRef = useRef(false)
+    const hasInitializedPrioritiesRef = useRef(false)
+
+    const projects = projectsResponse?.items ?? []
+    const hasEmptyFilter = selectedProjectIds.length === 0 || selectedPriorityIds.length === 0
+    const { data: noDeadlineAssignments } = useAssignments({
+        ProjectIds: selectedProjectIds,
+        PriorityIds: selectedPriorityIds,
+        Limit: 100,
+    })
+    const noDeadlineTasks = hasEmptyFilter
+        ? []
+        : noDeadlineAssignments?.items
+            .filter((assignment) => (
+                assignment.dueDate === null
+                && selectedProjectIds.includes(assignment.projectId)
+                && Boolean(assignment.priority?.id && selectedPriorityIds.includes(assignment.priority.id))
+            ))
+            .map(assignmentToNoDeadlineTask) ?? []
+
+    const toggleProject = (id: string) => {
+        setSelectedProjectIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        )
+    }
+
+    const togglePriority = (id: string) => {
+        setSelectedPriorityIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        )
+    }
+
+    // Domyślne zaznaczenie projektów po ich pobraniu
+    useEffect(() => {
+        if (!hasInitializedProjectsRef.current && projects.length > 0) {
+            setSelectedProjectIds(projects.map(p => p.id))
+            hasInitializedProjectsRef.current = true
+        }
+    }, [projects])
+
+    // Domyślne zaznaczenie priorytetów po ich pobraniu
+    useEffect(() => {
+        if (!hasInitializedPrioritiesRef.current && priorities.length > 0) {
+            setSelectedPriorityIds(priorities.map(p => p.id))
+            hasInitializedPrioritiesRef.current = true
+        }
+    }, [priorities])
 
     const handlePrevWeek = () => setCurrentDate(subWeeks(currentDate, 1))
     const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1))
@@ -152,15 +209,35 @@ const CalendarPage: React.FC = () => {
                             <div className="flex flex-1 flex-col gap-6">
                                 <div className={viewMode === 'week' ? "h-[calc(100vh-22rem)] min-h-96" : "w-full"}>
                                     {viewMode === 'week' ? (
-                                        <WeekCalendar startDate={startDate} dueFrom={dueFrom} dueTo={dueTo} />
+                                        <WeekCalendar
+                                            startDate={startDate}
+                                            dueFrom={dueFrom}
+                                            dueTo={dueTo}
+                                            selectedProjectIds={selectedProjectIds}
+                                            selectedPriorityIds={selectedPriorityIds}
+                                        />
                                     ) : (
-                                        <MonthCalendar currentDate={currentDate} dueFrom={dueFrom} dueTo={dueTo} />
+                                        <MonthCalendar
+                                            currentDate={currentDate}
+                                            dueFrom={dueFrom}
+                                            dueTo={dueTo}
+                                            selectedProjectIds={selectedProjectIds}
+                                            selectedPriorityIds={selectedPriorityIds}  />
                                     )}
                                 </div>
-                                <CalendarNoDeadlineTasks />
+                                <CalendarNoDeadlineTasks tasks={noDeadlineTasks} />
                             </div>
                         </div>
-                        <CalendarFilters mode={selectedMode} />
+                        <CalendarFilters
+                            mode={selectedMode}
+                            projects={projects}
+                            priorities={priorities}
+                            people={[]}
+                            selectedProjectIds={selectedProjectIds}
+                            onToggleProject={toggleProject}
+                            selectedPriorityIds={selectedPriorityIds}
+                            onTogglePriority={togglePriority}
+                        />
                     </div>
                 </div>
             </main>

@@ -15,7 +15,12 @@ function assignmentQueryToParams(params: AssignmentQueryParams): Record<string, 
   const result: Record<string, QueryParamValue> = {};
 
   if (params.Page != null) result['page'] = params.Page;
-  if (params.Limit != null) result['limit'] = params.Limit;
+  if (params.Limit != null) {
+    const parsedLimit = Number(params.Limit);
+    result['limit'] = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(parsedLimit, 1), 100)
+      : params.Limit;
+  }
   if (params.Backlog != null) result['backlog'] = params.Backlog;
   if (params.ExcludeNoDeadline != null) result['excludeNoDeadline'] = params.ExcludeNoDeadline;
   if (params.DueFrom) result['dueOnOrAfter'] = params.DueFrom;
