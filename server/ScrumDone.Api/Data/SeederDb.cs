@@ -399,12 +399,24 @@ public class DatabaseSeeder
         context.CooperationLogs.AddRange(CooperationLogs);
 
         var projectSprintEndDate = projects.ToDictionary(p => p.Id, _ => now);
-        var availableProjects = projects.ToDictionary(p => p.Id, _ => true);
-
+        
+        var requiredProjectIds = new Queue<Guid>(
+            projects.Where(p => !p.IsSetToScrum).Select(p => p.Id)
+        );
+        int sprintsToGenerate = Math.Max(10, requiredProjectIds.Count);
 
         var sprintsFaker = new Faker<Sprint>("pl")
             .RuleFor(s => s.Id, f => f.Random.Guid())
-            .RuleFor(s => s.ProjectId, f => f.PickRandom(availableProjects.Where(ap => ap.Value == true).Select(ap => ap.Key)))
+            .RuleFor(s => s.ProjectId, f => {
+                if (requiredProjectIds.TryDequeue(out var guaranteedProjectId))
+                {
+                    return guaranteedProjectId;
+                }
+
+                var availableKeys = projects.Where(p => p.IsSetToScrum).Select(p => p.Id).ToList();
+                
+                return f.PickRandom(availableKeys);
+            })
             .RuleFor(s => s.Name, f => f.Company.CatchPhrase())
             .RuleFor(s => s.IsDeleted, f => false)
             .RuleFor(s => s.StartDate, (f,s) => projectSprintEndDate[s.ProjectId])
@@ -424,7 +436,6 @@ public class DatabaseSeeder
             .RuleFor(s =>s.IsKanban, (f, s) => {
                 if (!projects.FirstOrDefault(p => p.Id == s.ProjectId)?.IsSetToScrum ?? false)
                 {
-                    availableProjects[s.ProjectId] = false;
                     return true;
                 }
                 else
@@ -446,7 +457,7 @@ public class DatabaseSeeder
                 return picked;
             });
 
-        var sprints = sprintsFaker.Generate(6);
+        var sprints = sprintsFaker.Generate(sprintsToGenerate);        
         context.Sprints.AddRange(sprints);
 
         var filesBaseFaker = new Faker<File>("pl")
