@@ -254,9 +254,20 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 onChange={(e) => setFormData({ ...formData, sprintId: e.target.value })}
                 className="w-full appearance-none rounded-[8px] border-none bg-[#F5F6F8] px-4 py-2.5 text-[14px] text-slate-700 outline-none focus:ring-2 focus:ring-scrumdone-blue-main">
                 <option value="">Wybierz sprint</option>
-                {sprints.map(sprint => (
-                  <option key={sprint.id} value={sprint.id}>{sprint.name}</option>
-                ))}
+                {sprints.map((sprint, index) => {
+                  const nameWithCounter = `${index + 1}. ${sprint.name}`; 
+                  
+                  const dates = `${sprint.startDate?.split('T')[0]?.replaceAll("-", "/")}-${sprint.endDate?.split('T')[0]?.replaceAll("-", "/")}`;
+                  
+                  const rowLength = 68; 
+                  const paddedName = nameWithCounter.padEnd(rowLength - dates.length, '\u00A0'); 
+
+                  return (
+                    <option key={sprint.id} value={sprint.id}>
+                      {paddedName}{dates}
+                    </option>
+                  );
+                })}
               </select>
               <ChevronDownIcon className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 pointer-events-none" />
             </div>
