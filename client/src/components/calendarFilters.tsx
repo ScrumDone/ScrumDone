@@ -1,5 +1,6 @@
 import React from 'react'
-import CalendarPeopleFilter, { type PersonFilter } from './calendarPeopleFilter'
+// import CalendarPeopleFilter, { type PersonFilter } from './calendarPeopleFilter'
+import type { PersonFilter } from './calendarPeopleFilter'
 import type { ProjectListItem } from '../types/project'
 import type { AssignmentPriority } from '../types/assignment'
 
@@ -57,7 +58,16 @@ const FilterSection: React.FC<FilterSectionProps> = ({ title, options, selectedI
     )
 }
 
-const CalendarFilters: React.FC<CalendarFiltersProps> = ({ mode, projects, priorities, people, selectedPriorityIds, selectedProjectIds, onTogglePriority, onToggleProject }) => {
+const CalendarFilters: React.FC<CalendarFiltersProps> = ({
+    mode: _mode,
+    projects,
+    priorities,
+    people: _people,
+    selectedPriorityIds,
+    selectedProjectIds,
+    onTogglePriority,
+    onToggleProject,
+}) => {
     const projectOptions: FilterOption[] = projects.map(p => ({
         id: p.id,
         label: p.name,
@@ -73,7 +83,9 @@ const CalendarFilters: React.FC<CalendarFiltersProps> = ({ mode, projects, prior
 
     return (
         <aside className="flex w-44 flex-col gap-3 pr-1">
+            {/*
             {mode === 'Team' ? <CalendarPeopleFilter people={people} /> : null}
+            */}
 
             <FilterSection
                 title="Projekty"
