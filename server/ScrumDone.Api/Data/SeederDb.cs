@@ -141,8 +141,9 @@ public class DatabaseSeeder
                     ProjectId = CurrentProject.Id
                 }).ToList();
             })
+            .RuleFor(p => p.ExpectedFinishDate, f => DateTimeOffset.UtcNow.AddDays(rnd.Next(10, 30)))
             .RuleFor(p => p.CreatedAt, f => now)
-            .RuleFor(l => l.UpdatedAt, f => 
+            .RuleFor(p => p.UpdatedAt, f => 
             {
                 if (f.Random.Bool())
                     return DateTimeOffset.Now;
@@ -397,13 +398,32 @@ public class DatabaseSeeder
         var CooperationLogs = cooperationLogsFaker.Generate(10);
         context.CooperationLogs.AddRange(CooperationLogs);
 
+        var projectSprintEndDate = projects.ToDictionary(p => p.Id, _ => now);
+        
+        var requiredProjectIds = new Queue<Guid>(
+            projects.Where(p => !p.IsSetToScrum).Select(p => p.Id)
+        );
+        var scrumIds = projects.Where(p => p.IsSetToScrum).Select(p => p.Id).ToList();
+        int sprintsToGenerate = Math.Max(10, requiredProjectIds.Count);
+
         var sprintsFaker = new Faker<Sprint>("pl")
             .RuleFor(s => s.Id, f => f.Random.Guid())
-            .RuleFor(s => s.ProjectId, f => f.PickRandom(projects).Id)
+            .RuleFor(s => s.ProjectId, f => {
+                if (requiredProjectIds.TryDequeue(out var guaranteedProjectId))
+                {
+                    return guaranteedProjectId;
+                }
+                
+                return f.PickRandom(scrumIds);
+            })
             .RuleFor(s => s.Name, f => f.Company.CatchPhrase())
             .RuleFor(s => s.IsDeleted, f => false)
-            .RuleFor(s => s.StartDate, f => now)
-            .RuleFor(s => s.EndDate, f => now.AddDays(14))
+            .RuleFor(s => s.StartDate, (f,s) => projectSprintEndDate[s.ProjectId])
+            .RuleFor(s => s.EndDate, (f, s) => {
+                var end = s.StartDate.AddDays(14);
+                projectSprintEndDate[s.ProjectId] = end;
+                return end;
+            })
             .RuleFor(s => s.CreatedAt, f => now)
             .RuleFor(l => l.UpdatedAt, f => 
             {
@@ -412,14 +432,31 @@ public class DatabaseSeeder
                 else
                     return now;
             })
-            .RuleFor(s =>s.IsKanban, f => f.Random.Bool())
-            .RuleFor(s => s.Assignments, (f, l) => 
+            .RuleFor(s =>s.IsKanban, (f, s) => {
+                if (!projects.FirstOrDefault(p => p.Id == s.ProjectId)?.IsSetToScrum ?? false)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            })
+            .RuleFor(s => s.Assignments, (f, s) => 
             {
-                var assignmentsFromThisProject = assignments.Where(t => t.ProjectId == l.ProjectId).ToList();
-                return f.PickRandom(assignmentsFromThisProject, f.Random.Int(2, 5)).ToList();
+                var assignmentsFromThisProject = assignments.Where(t => t.ProjectId == s.ProjectId && t.SprintId == null).ToList();
+                var picked =  f.PickRandom(assignmentsFromThisProject, f.Random.Int(2, 5)).ToList();
+
+                foreach (var assignment in picked)
+                {
+                    assignment.DueDate = s.StartDate.AddDays(f.Random.Int(0,12));
+                    assignment.SprintId = s.Id;
+                }
+
+                return picked;
             });
 
-        var sprints = sprintsFaker.Generate(6);
+        var sprints = sprintsFaker.Generate(sprintsToGenerate);        
         context.Sprints.AddRange(sprints);
 
         var filesBaseFaker = new Faker<File>("pl")
