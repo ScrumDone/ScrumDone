@@ -35,7 +35,7 @@ const App: React.FC = () => {
       <Route path="/task/:assignmentId" element={<TaskPage />} />
       <Route path="/files" element={<FilesPage />} />
     </Routes>
-    <ReactQueryDevtools initialIsOpen={false} />
+    {/* <ReactQueryDevtools initialIsOpen={true} /> */}
     </>
   )
 }
