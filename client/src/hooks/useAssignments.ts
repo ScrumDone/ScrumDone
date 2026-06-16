@@ -51,7 +51,7 @@ export function useKanbanColumnAssignments(
       getAssignments({
         ...columnParams,
         StatusIds: [statusId],
-        Page: pageParam,
+        Page: typeof pageParam === 'number' ? pageParam : Number(pageParam),
       }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>

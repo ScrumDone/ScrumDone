@@ -13,7 +13,6 @@ import ProjectFilesPage from './pages/ProjectFilesPage'
 import ProjectKanbanPage from './pages/ProjectKanbanPage'
 import ProjectCalendarPage from './pages/ProjectCalendarPage'
 import SprintsPage from './pages/SprintsPage'
-import  { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import HomepageManager from './pages/HomepageManager'
 
 const App: React.FC = () => {

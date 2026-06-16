@@ -354,7 +354,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
             className={({ isActive }) =>
               `text-sm leading-5 tracking-[-0.15px] transition-colors ${
                 isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'
-              } ${tab.label === 'Sprinty' && !projectData.isSetToScrum ? 'hidden' : ''}`
+              } ${tab.label === 'Sprinty' && !projectData?.isSetToScrum ? 'hidden' : ''}`
             }
           >
             {tab.label}

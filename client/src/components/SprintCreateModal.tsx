@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { SprintEditDraft } from './SprintEditModal';
 import {
   deriveSprintStatusFromDisplayDates,
-  getDefaultDatesForSprintStatus,
 } from '../utils/sprintDisplay';
 
 type SprintCreateModalProps = {
@@ -15,8 +14,6 @@ type SprintCreateModalProps = {
   isSaving?: boolean;
   errorMessage?: string | null;
 };
-
-const statusOptions: SprintEditDraft['status'][] = ['Zaplanowany', 'Aktywny', 'Ukończony'];
 
 const SprintCreateModal: React.FC<SprintCreateModalProps> = ({
   isOpen,
@@ -64,17 +61,6 @@ const SprintCreateModal: React.FC<SprintCreateModalProps> = ({
       ...nextDraft,
       status: deriveSprintStatusFromDisplayDates(nextDraft.startDate, nextDraft.endDate),
     });
-  };
-
-  const handleStatusSelect = (status: SprintEditDraft['status']) => {
-    const dates = getDefaultDatesForSprintStatus(status);
-    onDraftChange({
-      ...draft,
-      status,
-      startDate: dates.startDate,
-      endDate: dates.endDate,
-    });
-    setIsStatusOpen(false);
   };
 
   return (

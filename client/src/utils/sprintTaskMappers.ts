@@ -89,8 +89,8 @@ export const matchesSprintCompletionFilter = (
   assignment: Assignment,
   selectedStatuses: Record<string, boolean>,
 ) => {
-  const doneSelected = selectedStatuses.ukonczne !== false;
-  const notDoneSelected = selectedStatuses.nieukonczne !== false;
+  const doneSelected = selectedStatuses['ukonczne'] !== false;
+  const notDoneSelected = selectedStatuses['nieukonczne'] !== false;
 
   if (!doneSelected && !notDoneSelected) {
     return false;

@@ -139,28 +139,8 @@ const ProjectKanbanPage: React.FC = () => {
     currentSprint?.id,
   );
 
-  useEffect(() => {
-    if (isSprintsLoading || selectorSprints.length === 0) return;
-    if (selectedSprintId && selectorSprints.some((sprint) => sprint.id === selectedSprintId)) return;
-
-    const firstSprint = selectorSprints[0];
-    if (!firstSprint) return;
-
-    const fallbackSprintId = currentSprint?.id && selectorSprints.some((sprint) => sprint.id === currentSprint.id)
-      ? currentSprint.id
-      : firstSprint.id;
-
-    setSelectedSprintId(fallbackSprintId);
-  }, [
-    currentSprint?.id,
-    isSprintsLoading,
-    selectedSprintId,
-    selectorSprints,
-    setSelectedSprintId,
-  ]);
-
   const boardSprintId = selectedSprintId;
-  const isBoardSprintReady = !isScrumProject || Boolean(boardSprintId);
+  const isBoardSprintReady = Boolean(boardSprintId);
 
   const { data: statuses } = useAssignmentStatuses();
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();

@@ -110,7 +110,7 @@ const CompaniesPage: React.FC = () => {
 
                     {isError && (
                         <section className="rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
-                            Błąd: {error.message}
+                            Błąd: {error?.message ?? 'Nieznany błąd'}
                         </section>
                     )}
 
