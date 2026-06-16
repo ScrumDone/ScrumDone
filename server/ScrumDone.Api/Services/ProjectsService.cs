@@ -25,6 +25,8 @@ namespace ScrumDone.Api.Services
         {
             var baseQuery = _context.Projects
                 .AsNoTracking()
+                .OrderByDescending(p => p.IsActive)
+                    .ThenByDescending(p => p.Name)
                 .Include(p => p.TeamMembers)
                 .Include(p => p.Assignments)
                     .ThenInclude(a => a.Status)
@@ -266,6 +268,7 @@ namespace ScrumDone.Api.Services
             var total = project.TeamMembers.Count();
 
             var team = project.TeamMembers
+                .OrderBy(tm => tm.User.Name)
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
                 .Select(tm => tm.User.ToSummaryDto())
@@ -361,10 +364,10 @@ namespace ScrumDone.Api.Services
             {
                 currentSprint = await _context.Sprints
                     .AsNoTracking()
+                    .OrderByDescending(s => s.StartDate)
                     .Include(s => s.Assignments)
                         .ThenInclude(a => a.Status)
                     .Where(s => s.ProjectId == id && s.IsKanban == !project.IsSetToScrum)
-                    .OrderByDescending(s => s.StartDate)
                     .FirstOrDefaultAsync();
             }
 
@@ -391,7 +394,7 @@ namespace ScrumDone.Api.Services
 
             var sprintsFromDb = await baseQuery
 
-                .OrderByDescending(s => s.CreatedAt)
+                .OrderByDescending(s => s.StartDate) // maybe Abs(startDate - DateTimeOffset.UtcNow) would be better?
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
                 .ToListAsync();
@@ -444,6 +447,7 @@ namespace ScrumDone.Api.Services
                 throw new NotFoundException(nameof(Project), id); 
 
             var labels = await _context.AssignmentLabels
+                .OrderBy(l => l.Name)
                 .Where(al => al.ProjectId == id)
                 .ToListAsync();
 

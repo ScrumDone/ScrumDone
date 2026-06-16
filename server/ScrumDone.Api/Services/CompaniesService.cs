@@ -25,6 +25,7 @@ namespace ScrumDone.Api.Services
         {
             var total = await _context.Companies.CountAsync();
             var companies = await _context.Companies
+                .OrderByDescending(c => c.Name)
                 .Skip((query.Page - 1) * (query.Limit))
                 .Take(query.Limit)
                 .Select(c => new CompanyListItemDto(
@@ -188,7 +189,7 @@ namespace ScrumDone.Api.Services
 
             var contactsFromDb = await baseQuery
                 .OrderByDescending(c => c.IsPrimary)
-                .ThenBy(n => n.CreatedAt)
+                    .ThenBy(n => n.CreatedAt)
                 .Skip((query.Page-1) * query.Limit)
                 .Take(query.Limit)
                 .ToListAsync();
