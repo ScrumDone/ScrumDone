@@ -17,6 +17,7 @@ import CalendarTaskItem from '../components/calendarTaskItem'
 import { useProjects } from '../hooks/useProjects'
 import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities'
 import { useAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments'
+import { useCurrentUser } from '../hooks/useCurrentUser'
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 
@@ -55,25 +56,30 @@ const CalendarPage: React.FC = () => {
 
     const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([])
     const [selectedPriorityIds, setSelectedPriorityIds] = useState<string[]>([])
+    const [selectedMode, setSelectedMode] = useState<CalendarMode>('Personal')
     const hasInitializedProjectsRef = useRef(false)
     const hasInitializedPrioritiesRef = useRef(false)
+
+    const { selectedUserId } = useCurrentUser()
 
     const projects = projectsResponse?.items ?? []
     const hasEmptyFilter = selectedProjectIds.length === 0 || selectedPriorityIds.length === 0
     const [optimisticDueDates, setOptimisticDueDates] = useState<Record<string, string | null>>({})
+
+    const assignmentBaseParams = useMemo(() => ({
+        ProjectIds: selectedProjectIds,
+        PriorityIds: selectedPriorityIds,
+        Limit: 100,
+        ...(selectedMode === 'Personal' && selectedUserId ? { AssigneeIds: [selectedUserId] } : {}),
+    }), [selectedProjectIds, selectedPriorityIds, selectedMode, selectedUserId])
+
     const { data: assignmentsResponse } = useAssignments({
+        ...assignmentBaseParams,
         DueFrom: dueFrom,
         DueTo: dueTo,
-        ProjectIds: selectedProjectIds,
-        PriorityIds: selectedPriorityIds,
-        Limit: 100,
         ExcludeNoDeadline: true,
     })
-    const { data: noDeadlineAssignments } = useAssignments({
-        ProjectIds: selectedProjectIds,
-        PriorityIds: selectedPriorityIds,
-        Limit: 100,
-    })
+    const { data: noDeadlineAssignments } = useAssignments(assignmentBaseParams)
     const calendarTasks: CalendarTask[] = useMemo(() => {
         if (hasEmptyFilter) return []
 
@@ -211,7 +217,6 @@ const CalendarPage: React.FC = () => {
         ? `${format(startDate, 'd MMMM', { locale: pl })} - ${format(endDate, 'd MMMM yyyy', { locale: pl })}`
         : `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`
 
-    const [selectedMode, setSelectedMode] = useState<CalendarMode>('Personal')
     const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false)
     const modeDropdownRef = useRef<HTMLDivElement | null>(null)
 
