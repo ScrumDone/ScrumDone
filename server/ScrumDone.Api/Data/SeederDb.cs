@@ -186,7 +186,8 @@ public class DatabaseSeeder
             })
             .RuleFor(a => a.Labels, (f, currentAssignment) =>
             {
-               var SelectedLabels = f.PickRandom(labels.Where(l => l.ProjectId == currentAssignment.ProjectId), f.Random.Int(0,Math.Min(3, labels.Count())));
+               var availableLabels = labels.Where(l => l.ProjectId == currentAssignment.ProjectId).ToList();
+               var SelectedLabels = f.PickRandom(availableLabels, f.Random.Int(0, Math.Min(3, availableLabels.Count)));
 
                return SelectedLabels.Select(label => new AssignmentAssignmentLabelMTMRelation
                {
@@ -445,7 +446,8 @@ public class DatabaseSeeder
             .RuleFor(s => s.Assignments, (f, s) => 
             {
                 var assignmentsFromThisProject = assignments.Where(t => t.ProjectId == s.ProjectId && t.SprintId == null).ToList();
-                var picked =  f.PickRandom(assignmentsFromThisProject, f.Random.Int(2, 5)).ToList();
+                var amountToPick = f.Random.Int(0, Math.Min(5, assignmentsFromThisProject.Count));
+                var picked = f.PickRandom(assignmentsFromThisProject, amountToPick).ToList();
 
                 foreach (var assignment in picked)
                 {

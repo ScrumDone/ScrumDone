@@ -102,8 +102,9 @@ namespace ScrumDone.Api.Services
             var totalCount = await q.CountAsync();
 
             var items = await q
-                .OrderBy(t => t.DueDate != null ? Math.Abs(t.DueDate.Value.Ticks - DateTimeOffset.UtcNow.Ticks) : TimeSpan.TicksPerDay * 4)
-                    .ThenByDescending(t => t.Priority != null ? t.Priority.Order : 0)            
+                .OrderBy(t => t.DueDate == null)
+                .ThenBy(t => t.DueDate)
+                .ThenByDescending(t => t.Priority != null ? t.Priority.Order : 0)
                 .Skip((dto.Page - 1) * dto.Limit)
                 .Take(dto.Limit)
                 .Select(t => new AssignmentListItemDto(
