@@ -394,7 +394,7 @@ namespace ScrumDone.Api.Services
 
             var sprintsFromDb = await baseQuery
 
-                .OrderByDescending(s => s.StartDate) // maybe Abs(startDate - DateTimeOffset.UtcNow) would be better?
+                .OrderBy(s => s.StartDate) // maybe Abs(startDate - DateTimeOffset.UtcNow) would be better?
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
                 .ToListAsync();
