@@ -14,10 +14,12 @@ namespace ScrumDone.Api.Validators.Companies
 
             RuleFor(x => x.Nip)
                 .Length(10)
+                .Matches(@"^[0-9]{10}$")
                 .When(x => x.Nip is not null);
 
             RuleFor(x => x.Krs)
                 .Length(10)
+                .Matches(@"^[0-9]{10}$")
                 .When(x => x.Krs is not null);
 
             RuleFor(x => x.Regon)
