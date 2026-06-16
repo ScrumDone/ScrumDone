@@ -11,24 +11,29 @@ export interface PersonFilter {
 interface CalendarPeopleFilterProps {
     people: PersonFilter[]
     title?: string
+    selectedIds?: string[] // Teraz oczekujemy tablicy ID
+    onSelectionChange?: (id: string) => void // Callback do zmiany stanu w rodzicu
     selectedPeople?: Record<string, boolean>
-    onSelectedPeopleChange?: (selected: Record<string, boolean>) => void
+    onSelectedPeopleChange?: (selectedPeople: Record<string, boolean>) => void
 }
 
 const CalendarPeopleFilter: React.FC<CalendarPeopleFilterProps> = ({
     people,
     title = 'Osoby',
+    selectedIds,
+    onSelectionChange,
     selectedPeople,
     onSelectedPeopleChange,
 }) => {
-    const isControlled = selectedPeople !== undefined && onSelectedPeopleChange !== undefined
+    const isSelectedIdsControlled = selectedIds !== undefined && onSelectionChange !== undefined
+    const isSelectedPeopleControlled = selectedPeople !== undefined && onSelectedPeopleChange !== undefined
 
     const [internalSelected, setInternalSelected] = useState<Record<string, boolean>>(
         () => Object.fromEntries(people.map((person) => [person.id, true])),
     )
 
     useEffect(() => {
-        if (isControlled) return
+        if (isSelectedIdsControlled || isSelectedPeopleControlled) return
 
         setInternalSelected((current) => {
             const next = { ...current }
@@ -39,21 +44,30 @@ const CalendarPeopleFilter: React.FC<CalendarPeopleFilterProps> = ({
             })
             return next
         })
-    }, [people, isControlled])
+    }, [people, isSelectedIdsControlled, isSelectedPeopleControlled])
 
-    const currentSelected = isControlled ? selectedPeople : internalSelected
+    const activeSelectedIds = selectedIds
+        ?? Object.entries(isSelectedPeopleControlled ? selectedPeople : internalSelected)
+            .filter(([, isSelected]) => isSelected)
+            .map(([id]) => id)
 
-    const togglePerson = (personId: string) => {
+    const handleSelectionChange = (id: string) => {
+        if (isSelectedIdsControlled) {
+            onSelectionChange(id)
+            return
+        }
+
+        const currentSelected = isSelectedPeopleControlled ? selectedPeople : internalSelected
         const next = Object.fromEntries(
             people.map((person) => [
                 person.id,
-                person.id === personId
+                person.id === id
                     ? currentSelected[person.id] !== true
                     : currentSelected[person.id] === true,
             ]),
         )
 
-        if (isControlled) {
+        if (isSelectedPeopleControlled) {
             onSelectedPeopleChange(next)
             return
         }
@@ -69,13 +83,14 @@ const CalendarPeopleFilter: React.FC<CalendarPeopleFilterProps> = ({
             ) : (
                 <div className="flex flex-col gap-3">
                     {people.map((person) => {
-                        const isSelected = currentSelected[person.id] === true
+                        // Sprawdzamy czy ID jest w tablicy selectedIds
+                        const isSelected = activeSelectedIds.includes(person.id)
 
                         return (
                             <button
                                 key={person.id}
                                 type="button"
-                                onClick={() => togglePerson(person.id)}
+                                onClick={() => handleSelectionChange(person.id)}
                                 className="flex items-center gap-2 text-left"
                                 aria-pressed={isSelected}
                             >

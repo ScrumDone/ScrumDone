@@ -8,8 +8,10 @@ import { useAssignments } from '../hooks/useAssignments'
 import type { Assignment } from '../types/assignment'; 
 import { useState} from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react'; 
+import { useNavigate } from 'react-router-dom'
 
 const Homepage: React.FC = () => {
+    const navigate = useNavigate()
     // // Pobieramy zadania
     // const { data: assignments, isLoading } = useAssignments();
 
@@ -27,6 +29,7 @@ const Homepage: React.FC = () => {
     const { data: assignments, isLoading } = useAssignments({
         DueFrom: `${today}T00:00:00Z`, 
         DueTo: `${today}T23:59:59Z`,
+        ExcludeNoDeadline: true,
         Page: currentPage,
         Limit: 3 // Ustawiamy limit na 3
     });
@@ -36,6 +39,7 @@ const Homepage: React.FC = () => {
 
     const hasNextPage = assignments?.hasNextPage ?? false;
     const hasPreviousPage = assignments?.hasPreviousPage ?? false;
+    const showPagination = hasPreviousPage || hasNextPage || currentPage > 1;
 
     return (
         <div className="min-h-screen w-full bg-[#F9FAFB]">
@@ -54,10 +58,10 @@ const Homepage: React.FC = () => {
                             <div className="flex flex-col gap-3">
                                 {isLoading ? (
                                     <p className="text-sm text-slate-500">Pobieranie zadań...</p>
-                                ) : todaysTasks.length > 0 ? (
+                                ) : (
                                     <>
                                         {/* Lista zadań */}
-                                        {todaysTasks.map((task: Assignment) => {
+                                        {todaysTasks.length > 0 ? todaysTasks.map((task: Assignment) => {
                                             const user = task.assignees?.[0];
                                             const fullName = user ? user.name : "Nieprzypisany";
                                             const initials = user
@@ -75,15 +79,19 @@ const Homepage: React.FC = () => {
                                                     dotColorVariant="red"
                                                     badgeColorVariant="red"
                                                     isBlocked={false}
+                                                    onClick={() => navigate(`/task/${task.id}`)}
                                                 />
                                             );
-                                        })}
+                                        }) : (
+                                            <p className="text-sm text-slate-500">Brak zadaĹ„ na dzisiaj!</p>
+                                        )}
 
                                         {/* Paginacja */}
+                                        {showPagination && (
                                         <div className="flex items-center justify-between mt-4 border-t border-gray-100 pt-3">
                                             <button
                                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                                disabled={!hasPreviousPage || isLoading}
+                                                disabled={currentPage <= 1 || isLoading}
                                                 className="flex items-center gap-1 text-sm text-slate-600 hover:text-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                             >
                                                 <ChevronLeft className="w-4 h-4" />
@@ -101,9 +109,8 @@ const Homepage: React.FC = () => {
                                                 <ChevronRight className="w-4 h-4" />
                                             </button>
                                         </div>
+                                        )}
                                     </>
-                                ) : (
-                                    <p className="text-sm text-slate-500">Brak zadań na dzisiaj!</p>
                                 )}
                             </div>
                         </div>

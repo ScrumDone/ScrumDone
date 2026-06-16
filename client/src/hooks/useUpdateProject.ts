@@ -12,9 +12,14 @@ export function useUpdateProject() {
 
   return useMutation({
     mutationFn: ({ id, data }: UpdateProjectInput) => updateProject(id, data),
-    onSuccess: (_updatedProject, { id }) => {
+    onSuccess: (_updatedProject, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['projects', id] });
+
+      if (data.isSetToScrum !== undefined && data.isSetToScrum !== null) {
+        queryClient.invalidateQueries({ queryKey: ['assignments'] });
+        queryClient.invalidateQueries({ queryKey: ['projects', id, 'sprints'] });
+      }
     },
   });
 }

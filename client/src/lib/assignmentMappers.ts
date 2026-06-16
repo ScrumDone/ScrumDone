@@ -44,13 +44,14 @@ export const assignmentToKanbanCard = (a: Assignment) => {
 };
 
 export const assignmentToCalendarTask = (a: Assignment) => {
-  const normalizedDate = a.dueDate ?? new Date().toISOString()
+  const normalizedDate = a.dueDate ?? ''
   const [date = ''] = normalizedDate.split('T')
   return {
     id: a.id,
     title: a.name,
     date,
     colorVariant: 'blue' as const,
+    priorityHexColor: a.priority?.hexColor ?? null,
   }
 };
 
@@ -59,8 +60,9 @@ export const assignmentToNoDeadlineTask = (a: Assignment) => ({
   title: a.name,
   assigneeInitials: a.assignees[0]?.name ? getInitialsFromName(a.assignees[0].name) : '??',
   assigneeName: a.assignees[0]?.name ?? 'Unassigned',
-  accentColor: 'blue' as const,
-  dotColor: 'green' as const,
+  accentColor: a.priority?.name === 'High' ? 'red' as const : 'blue' as const,
+  dotColor: a.priority?.name === 'High' ? 'red' as const : 'blue' as const,
+  priorityHexColor: a.priority?.hexColor ?? null,
 });
 
 

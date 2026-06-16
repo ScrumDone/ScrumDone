@@ -3,6 +3,9 @@ import Avatar from './Avatar'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { useAssignments } from '../hooks/useAssignments'
 import type { Assignment } from '../types/assignment'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
+import { useNavigate } from 'react-router-dom'
 
 type TaskAccentColor = 'blue' | 'orange' | 'red' | 'green' | 'yellow'
 
@@ -15,6 +18,7 @@ export interface CalendarNoDeadlineTask {
     assigneeName: string
     accentColor: TaskAccentColor
     dotColor: TaskDotColor
+    priorityHexColor?: string | null
 }
 
 export interface CalendarNoDeadlineTaskCardProps {
@@ -24,7 +28,11 @@ export interface CalendarNoDeadlineTaskCardProps {
 export interface CalendarNoDeadlineTasksProps {
     title?: string
     tasks?: CalendarNoDeadlineTask[]
+    draggable?: boolean
+    droppable?: boolean
 }
+
+const sectionClassName = 'mt-6 w-full rounded-xl border border-slate-200 bg-white p-4'
 
 const accentClassMap: Record<TaskAccentColor, string> = {
     blue: 'border-scrumdone-blue-main border-l-scrumdone-blue-main',
@@ -50,6 +58,20 @@ const dotClassMap: Record<TaskDotColor, string> = {
     orange: 'bg-scrumdone-orange',
 }
 
+const hexToRgba = (hexColor: string, alpha: number) => {
+    const normalized = hexColor.replace('#', '').trim()
+
+    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+        return undefined
+    }
+
+    const r = Number.parseInt(normalized.slice(0, 2), 16)
+    const g = Number.parseInt(normalized.slice(2, 4), 16)
+    const b = Number.parseInt(normalized.slice(4, 6), 16)
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 // const defaultTasks: CalendarNoDeadlineTask[] = [
 //     {
 //         id: 'code-refactoring-user-module',
@@ -70,13 +92,36 @@ const dotClassMap: Record<TaskDotColor, string> = {
 // ]
 
 export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProps> = ({ task }) => {
+    const navigate = useNavigate()
     const normalizedInitials = task.assigneeInitials.trim().slice(0, 2).toUpperCase()
     const backgroundClass = backgroundClassMap[task.accentColor]
+    const priorityStyles = task.priorityHexColor
+        ? {
+            borderLeftColor: task.priorityHexColor,
+            backgroundColor: hexToRgba(task.priorityHexColor, 0.1),
+        }
+        : undefined
 
     return (
-        <article className={`flex-none w-full max-w-75 rounded-xl border border-l-4 p-3 ${accentClassMap[task.accentColor]} ${backgroundClass}`}>
+        <article
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/task/${task.id}`)}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    navigate(`/task/${task.id}`)
+                }
+            }}
+            className={`flex-none w-full max-w-75 cursor-pointer rounded-xl border border-l-4 p-3 transition-colors hover:opacity-90 ${accentClassMap[task.accentColor]} ${backgroundClass}`}
+            style={priorityStyles}
+        >
             <div className="mb-3 flex items-center gap-3">
-                <span className={`h-2 w-2 shrink-0 rounded-full ${dotClassMap[task.dotColor]}`} aria-hidden="true" />
+                <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${dotClassMap[task.dotColor]}`}
+                    style={task.priorityHexColor ? { backgroundColor: task.priorityHexColor } : undefined}
+                    aria-hidden="true"
+                />
                 <h2 className="font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">
                     {task.title}
                 </h2>
@@ -97,17 +142,58 @@ export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProp
     )
 }
 
+const DraggableCalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProps> = ({ task }) => {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: task.id,
+        data: { type: 'calendar-task' },
+    })
+    const style = {
+        transform: transform ? CSS.Translate.toString(transform) : undefined,
+    }
+
+    if (isDragging) {
+        return (
+            <div ref={setNodeRef} className="opacity-30">
+                <CalendarNoDeadlineTaskCard task={task} />
+            </div>
+        )
+    }
+
+    return (
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-none">
+            <CalendarNoDeadlineTaskCard task={task} />
+        </div>
+    )
+}
+
+const DroppableNoDeadlineSection: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { setNodeRef } = useDroppable({
+        id: 'calendar-no-deadline',
+        data: { type: 'calendar-no-deadline' },
+    })
+
+    return (
+        <section ref={setNodeRef} className={sectionClassName}>
+            {children}
+        </section>
+    )
+}
+
 const ITEMS_PER_PAGE = 9
 
 const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
     title = 'Zadania bez deadline',
+    tasks,
+    draggable = false,
+    droppable = false,
 }) => {
     const [currentPage, setCurrentPage] = useState(1)
     const { data, isLoading } = useAssignments({ Limit: 100 })
 
     const processedTasks = useMemo(() => {
+        if (tasks) return tasks
         if (!data?.items) return []
-        
+
         return data.items
             .filter((t: Assignment) => t.dueDate === null)
             .map((t: Assignment): CalendarNoDeadlineTask => ({
@@ -116,15 +202,16 @@ const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
                 assigneeInitials: t.assignees?.[0]?.name.slice(0, 2) || 'NA',
                 assigneeName: t.assignees?.[0]?.name || 'Unassigned',
                 accentColor: t.priority?.name === 'High' ? 'red' : 'blue',
-                dotColor: 'green' // Możesz tu dodać logikę mapowania statusu
+                dotColor: t.priority?.name === 'High' ? 'red' : 'blue',
+                priorityHexColor: t.priority?.hexColor ?? null,
             }))
-    }, [data])
+    }, [data, tasks])
 
     const totalPages = Math.ceil(processedTasks.length / ITEMS_PER_PAGE) || 1
     const paginatedTasks = processedTasks.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
 
-    return (
-        <section className="mt-6 w-full rounded-xl border border-slate-200 bg-white p-4">
+    const content = (
+        <>
             <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-segoe-ui text-[18px] leading-7 font-medium text-slate-900 antialiased">
                     {title} ({processedTasks.length})
@@ -151,15 +238,27 @@ const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
                 )}
             </div>
 
-            {isLoading ? (
+            {!tasks && isLoading ? (
                 <div className="p-4 text-center text-slate-500">Ładowanie...</div>
             ) : (
                 <div className="grid grid-cols-3 gap-3">
                     {paginatedTasks.map((task) => (
-                        <CalendarNoDeadlineTaskCard key={task.id} task={task} />
+                        draggable
+                            ? <DraggableCalendarNoDeadlineTaskCard key={task.id} task={task} />
+                            : <CalendarNoDeadlineTaskCard key={task.id} task={task} />
                     ))}
                 </div>
             )}
+        </>
+    )
+
+    if (droppable) {
+        return <DroppableNoDeadlineSection>{content}</DroppableNoDeadlineSection>
+    }
+
+    return (
+        <section className={sectionClassName}>
+            {content}
         </section>
     )
 }

@@ -1,5 +1,7 @@
 import React from 'react'
 import CalendarPeopleFilter, { type PersonFilter } from './calendarPeopleFilter'
+import type { ProjectListItem } from '../types/project'
+import type { AssignmentPriority } from '../types/assignment'
 
 type CalendarMode = 'Personal' | 'Team'
 
@@ -7,25 +9,29 @@ interface FilterOption {
     id: string
     label: string
     colorClass: string
+    hexColor?: string | null
 }
 
 interface FilterSectionProps {
     title: string
     options: FilterOption[]
+    selectedIds: string[]
+    onToggle: (id: string) => void
 }
 
 interface CalendarFiltersProps {
     mode: CalendarMode
+    projects: ProjectListItem[]
+    priorities: AssignmentPriority[]
+    people: PersonFilter[]
+
+    selectedProjectIds: string[]
+    onToggleProject: (id: string) => void
+    selectedPriorityIds: string[]
+    onTogglePriority: (id: string) => void
 }
 
-const personFilterOptions: PersonFilter[] = [
-    { id: 'artur-nowak', initials: 'AN', fullName: 'Artur Nowak' },
-    { id: 'eryk-baczynski', initials: 'EB', fullName: 'Eryk Baczyński' },
-    { id: 'maria-kowalska', initials: 'MK', fullName: 'Maria Kowalska' },
-    { id: 'jan-nowicki', initials: 'JN', fullName: 'Jan Nowicki' },
-]
-
-const FilterSection: React.FC<FilterSectionProps> = ({ title, options }) => {
+const FilterSection: React.FC<FilterSectionProps> = ({ title, options, selectedIds, onToggle }) => {
     return (
         <section className="rounded-[10px] border border-gray-200 bg-white p-4">
             <h3 className="mb-3 font-segoe-ui text-[18px] leading-7 font-normal text-slate-900 antialiased">{title}</h3>
@@ -34,11 +40,15 @@ const FilterSection: React.FC<FilterSectionProps> = ({ title, options }) => {
                     <label key={option.id} className="flex items-center gap-2">
                         <input
                             type="checkbox"
-                            defaultChecked
+                            checked={selectedIds.includes(option.id)}
+                            onChange={() => onToggle(option.id)}
                             className="h-4 w-4 rounded border-slate-300 text-slate-900 accent-slate-900"
                             aria-label={option.label}
                         />
-                        <span className={`h-2 w-2 rounded-full ${option.colorClass}`} />
+                        <span
+                            className={`h-2 w-2 rounded-full ${option.colorClass}`}
+                            style={option.hexColor ? { backgroundColor: option.hexColor } : undefined}
+                        />
                         <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{option.label}</span>
                     </label>
                 ))}
@@ -47,27 +57,36 @@ const FilterSection: React.FC<FilterSectionProps> = ({ title, options }) => {
     )
 }
 
-const CalendarFilters: React.FC<CalendarFiltersProps> = ({ mode }) => {
+const CalendarFilters: React.FC<CalendarFiltersProps> = ({ mode, projects, priorities, people, selectedPriorityIds, selectedProjectIds, onTogglePriority, onToggleProject }) => {
+    const projectOptions: FilterOption[] = projects.map(p => ({
+        id: p.id,
+        label: p.name,
+        colorClass: 'bg-slate-400'
+    }))
+
+    const priorityOptions: FilterOption[] = priorities.map(p => ({
+        id: p.id,
+        label: p.name,
+        colorClass: 'bg-slate-400',
+        hexColor: p.hexColor
+    }))
+
     return (
         <aside className="flex w-44 flex-col gap-3 pr-1">
-            {mode === 'Team' ? <CalendarPeopleFilter people={personFilterOptions} /> : null}
+            {mode === 'Team' ? <CalendarPeopleFilter people={people} /> : null}
 
             <FilterSection
                 title="Projekty"
-                options={[
-                    { id: 'adoddle', label: 'Adoddle', colorClass: 'bg-scrumdone-yellow-500' },
-                    { id: 'nexus', label: 'Nexus', colorClass: 'bg-scrumdone-red-500' },
-                    { id: 'hadar', label: 'Hadar', colorClass: 'bg-scrumdone-green-500' },
-                ]}
+                options={projectOptions}
+                selectedIds={selectedProjectIds}
+                onToggle={onToggleProject}
             />
 
             <FilterSection
                 title="Priorytet"
-                options={[
-                    { id: 'wysoki', label: 'Wysoki', colorClass: 'bg-scrumdone-red-500' },
-                    { id: 'sredni', label: 'Średni', colorClass: 'bg-scrumdone-yellow-500' },
-                    { id: 'niski', label: 'Niski', colorClass: 'bg-scrumdone-green-500' },
-                ]}
+                options={priorityOptions}
+                selectedIds={selectedPriorityIds}
+                onToggle={onTogglePriority}
             />
         </aside>
     )

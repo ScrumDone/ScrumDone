@@ -19,8 +19,6 @@ import ProjectChangeClientModal from './ProjectChangeClientModal';
 
 interface ProjectTopBarProps {
   projectId: string;
-  viewMode?: 'kanban' | 'scrum';
-  onViewModeChange?: (mode: 'kanban' | 'scrum') => void;
 }
 
 const projectTabs = [
@@ -38,11 +36,7 @@ const emptyDraft = (): EditProjectDraft => ({
   memberIds: [],
 });
 
-const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
-  projectId,
-  viewMode = 'kanban',
-  onViewModeChange,
-}) => {
+const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
   const navigate = useNavigate();
   const { data: projectData, isLoading, isError, error } = useProject(projectId);
   const { data: usersData } = useUsers(1, 100);
@@ -118,8 +112,9 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
     setIsChangingClient(false);
   };
 
+  const viewMode: 'kanban' | 'scrum' = projectData?.isSetToScrum ? 'scrum' : 'kanban';
+
   const handleViewModeChange = (mode: 'kanban' | 'scrum') => {
-    onViewModeChange?.(mode);
     if (!projectData) return;
     const nextIsScrum = mode === 'scrum';
     if (projectData.isSetToScrum === nextIsScrum) return;
@@ -359,7 +354,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({
             className={({ isActive }) =>
               `text-sm leading-5 tracking-[-0.15px] transition-colors ${
                 isActive ? 'font-medium text-slate-950' : 'text-slate-800 hover:text-slate-950'
-              } ${tab.label === 'Sprinty' && viewMode === 'kanban' ? 'hidden' : ''}`
+              } ${tab.label === 'Sprinty' && !projectData.isSetToScrum ? 'hidden' : ''}`
             }
           >
             {tab.label}

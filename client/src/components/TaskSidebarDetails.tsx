@@ -21,6 +21,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
       queryClient.invalidateQueries({ queryKey: ['assignment', assignmentId] });
     },
   });
+  void mutation;
 
   // TODO: Podpiąć wywołanie mutation.mutate(noewAssigneeIds) pod UI
 
