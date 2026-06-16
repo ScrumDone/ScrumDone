@@ -12,8 +12,8 @@ export const STRINGS = {
 
   navigation: {
     brand: {
-      name: 'randlab',
-      tld: '.pl',
+      name: 'scrum',
+      tld: 'done',
     },
     items: {
       home: 'Strona główna',
@@ -28,7 +28,7 @@ export const STRINGS = {
       unreadAriaLabel: 'Nieodczytane',
       user: {
         name: 'Artur Nowak',
-        org: 'Randlab',
+        org: 'Randomo',
       },
     },
   },

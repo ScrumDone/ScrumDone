@@ -25,8 +25,8 @@ const SideBar: React.FC = () => {
             <div className="h-full flex flex-col">
                 <div className="flex h-(--app-header-h) items-center border-b border-slate-200 px-6">
                     <div className='flex gap-2'>
-                        <h1 className="font-segoe-ui text-scrumdone-blue-main text-[1rem] leading-6 font-normal tracking-[0em] antialiased">randlab</h1>
-                        <h1 className="font-segoe-ui text-black text-[1rem] leading-6 font-normal tracking-[0em] antialiased">.pl</h1>
+                        <h1 className="font-segoe-ui text-scrumdone-blue-main text-[1rem] leading-6 font-normal tracking-[0em] antialiased">scrum</h1>
+                        <h1 className="font-segoe-ui text-black text-[1rem] leading-6 font-normal tracking-[0em] antialiased">done</h1>
                     </div>
                 </div>
 
