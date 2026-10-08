@@ -1,8 +1,9 @@
 import React from 'react'
-import { format, startOfMonth, startOfWeek, addDays, isSameDay, isSameMonth, parseISO } from 'date-fns'
+import { format, isSameMonth } from 'date-fns'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import CalendarTaskItem from './calendarTaskItem'
+import { getCalendarRange, toDayKey } from '../lib/calendarRange'
 
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
 
@@ -49,7 +50,7 @@ const ProjectMonthDayCell: React.FC<{
     currentDate: Date
     tasks: CalendarTask[]
 }> = ({ day, index, currentDate, tasks }) => {
-    const dateString = format(day, 'yyyy-MM-dd')
+    const dateString = toDayKey(day)
     const { setNodeRef } = useDroppable({
         id: dateString,
         data: { type: 'calendar-day', date: dateString },
@@ -57,7 +58,7 @@ const ProjectMonthDayCell: React.FC<{
     const dayOfWeek = index % 7
     const isCurrentMonth = isSameMonth(day, currentDate)
     const isWeekendDay = dayOfWeek === 5 || dayOfWeek === 6
-    const tasksForThisDay = tasks.filter(task => isSameDay(parseISO(task.date), day))
+    const tasksForThisDay = tasks.filter(task => task.date === dateString)
 
     return (
         <div
@@ -83,11 +84,8 @@ const ProjectMonthDayCell: React.FC<{
 }
 
 const ProjectMonthCalendar: React.FC<ProjectMonthCalendarProps> = ({ currentDate, tasks }) => {
-    const monthStart = startOfMonth(currentDate)
-    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+    const { days } = getCalendarRange('month', currentDate)
     const dayNames = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz']
-
-    const days: Date[] = Array.from({ length: 42 }, (_, i) => addDays(calendarStart, i))
 
     return (
         <section className="flex flex-col overflow-hidden rounded-[10px] border border-slate-200 bg-white shadow-sm w-full">

@@ -5,7 +5,7 @@ import {
     ChevronDownIcon,
     CheckIcon,
 } from '@heroicons/react/24/outline'
-import { format, startOfWeek, endOfWeek, startOfMonth, addWeeks, subWeeks, addMonths, subMonths, addDays, endOfDay } from 'date-fns'
+import { format, addWeeks, subWeeks, addMonths, subMonths, addDays } from 'date-fns'
 import { pl } from 'date-fns/locale' 
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
@@ -17,6 +17,7 @@ import CalendarTaskItem from '../components/calendarTaskItem'
 import { useProjects } from '../hooks/useProjects'
 import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities'
 import { useAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments'
+import { useCalendarAssignments } from '../hooks/useCalendarAssignments'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
@@ -37,19 +38,6 @@ const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec'
 const CalendarPage: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [viewMode, setViewMode] = useState<ViewMode>('week')
-    
-    const startDate = startOfWeek(currentDate, { weekStartsOn: 1 })
-    const endDate = endOfWeek(currentDate, { weekStartsOn: 1 })
-
-    const monthStart = startOfMonth(currentDate)
-    const calendarGridStart = startOfWeek(monthStart, { weekStartsOn: 1 })
-    const calendarGridEnd = endOfDay(addDays(calendarGridStart, 41))
-
-    const rangeFrom = viewMode === 'week' ? startDate : calendarGridStart
-    const rangeTo = viewMode === 'week' ? endDate : calendarGridEnd
-
-    const dueFrom = rangeFrom.toISOString()
-    const dueTo = rangeTo.toISOString()
 
     const { data: projectsResponse } = useProjects({ limit: 100 })
     const { data: priorities = [] } = useAssignmentPriorities()
@@ -66,25 +54,22 @@ const CalendarPage: React.FC = () => {
     const hasEmptyFilter = selectedProjectIds.length === 0 || selectedPriorityIds.length === 0
     const [optimisticDueDates, setOptimisticDueDates] = useState<Record<string, string | null>>({})
 
-    const assignmentBaseParams = useMemo(() => ({
+    const assignmentFilters = useMemo(() => ({
         ProjectIds: selectedProjectIds,
         PriorityIds: selectedPriorityIds,
-        Limit: 100,
         ...(selectedMode === 'Personal' && selectedUserId ? { AssigneeIds: [selectedUserId] } : {}),
     }), [selectedProjectIds, selectedPriorityIds, selectedMode, selectedUserId])
 
-    const { data: assignmentsResponse } = useAssignments({
-        ...assignmentBaseParams,
-        DueFrom: dueFrom,
-        DueTo: dueTo,
-        ExcludeNoDeadline: true,
-    })
-    const { data: noDeadlineAssignments } = useAssignments(assignmentBaseParams)
+    const { data: calendarAssignments, range } = useCalendarAssignments(viewMode, currentDate, assignmentFilters, !hasEmptyFilter)
+    const startDate = range.start
+    const endDate = addDays(range.start, 6)
+
+    const { data: noDeadlineAssignments } = useAssignments({ ...assignmentFilters, Limit: 100 })
     const calendarTasks: CalendarTask[] = useMemo(() => {
         if (hasEmptyFilter) return []
 
-        return assignmentsResponse?.items
-            .map((assignment) => Object.prototype.hasOwnProperty.call(optimisticDueDates, assignment.id)
+        return calendarAssignments
+            ?.map((assignment) => Object.prototype.hasOwnProperty.call(optimisticDueDates, assignment.id)
                 ? { ...assignment, dueDate: optimisticDueDates[assignment.id] ?? null }
                 : assignment)
             .filter((assignment) => (
@@ -94,7 +79,7 @@ const CalendarPage: React.FC = () => {
             ))
             .map(assignmentToCalendarTask) ?? []
     }, [
-        assignmentsResponse?.items,
+        calendarAssignments,
         hasEmptyFilter,
         selectedProjectIds,
         selectedPriorityIds,
@@ -325,19 +310,11 @@ const CalendarPage: React.FC = () => {
                                     {viewMode === 'week' ? (
                                         <WeekCalendar
                                             startDate={startDate}
-                                            dueFrom={dueFrom}
-                                            dueTo={dueTo}
-                                            selectedProjectIds={selectedProjectIds}
-                                            selectedPriorityIds={selectedPriorityIds}
                                             tasks={calendarTasks}
                                         />
                                     ) : (
                                         <MonthCalendar
                                             currentDate={currentDate}
-                                            dueFrom={dueFrom}
-                                            dueTo={dueTo}
-                                            selectedProjectIds={selectedProjectIds}
-                                            selectedPriorityIds={selectedPriorityIds}
                                             tasks={calendarTasks}
                                         />
                                     )}
