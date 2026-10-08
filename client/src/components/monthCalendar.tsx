@@ -1,10 +1,9 @@
 import React from 'react'
-import { format, startOfMonth, startOfWeek, addDays, isSameDay, isSameMonth, parseISO } from 'date-fns'
+import { format, isSameMonth } from 'date-fns'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import CalendarTaskItem from './calendarTaskItem'
-import { useAssignments } from '../hooks/useAssignments'
-import type { Assignment } from '../types/assignment'
+import { getCalendarRange, toDayKey } from '../lib/calendarRange'
 
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
 
@@ -18,11 +17,7 @@ interface CalendarTask {
 
 interface MonthCalendarProps {
     currentDate: Date
-    dueFrom?: string
-    dueTo?: string
-    selectedProjectIds?: string[]
-    selectedPriorityIds?: string[]
-    tasks?: CalendarTask[]
+    tasks: CalendarTask[]
 }
 
 const DraggableTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
@@ -55,7 +50,7 @@ const MonthDayCell: React.FC<{
     currentDate: Date
     tasks: CalendarTask[]
 }> = ({ day, index, currentDate, tasks }) => {
-    const dateString = format(day, 'yyyy-MM-dd')
+    const dateString = toDayKey(day)
     const { setNodeRef } = useDroppable({
         id: dateString,
         data: { type: 'calendar-day', date: dateString },
@@ -63,9 +58,7 @@ const MonthDayCell: React.FC<{
     const dayOfWeek = index % 7
     const isCurrentMonth = isSameMonth(day, currentDate)
     const isWeekendDay = dayOfWeek === 5 || dayOfWeek === 6
-    const tasksForThisDay = tasks.filter(task =>
-        isSameDay(parseISO(task.date), day)
-    )
+    const tasksForThisDay = tasks.filter(task => task.date === dateString)
 
     return (
         <div
@@ -90,52 +83,9 @@ const MonthDayCell: React.FC<{
     )
 }
 
-const MonthCalendar: React.FC<MonthCalendarProps> = ({
-    currentDate,
-    dueFrom,
-    dueTo,
-    selectedProjectIds = [],
-    selectedPriorityIds = [],
-    tasks,
-}) => {
-    const { data: assignments } = useAssignments({
-        ProjectIds: selectedProjectIds,
-        PriorityIds: selectedPriorityIds,
-        Limit: 100,
-        ExcludeNoDeadline: true,
-        ...(dueFrom ? { DueFrom: dueFrom } : {}),
-        ...(dueTo ? { DueTo: dueTo } : {}),
-    })
-    const items = assignments?.items ?? []
-    const hasEmptyFilter = selectedProjectIds.length === 0 || selectedPriorityIds.length === 0
-
-    // Filtrowanie zadań zgodnie z wybranymi projektami i priorytetami
-    const allTasks: CalendarTask[] = tasks ?? (hasEmptyFilter ? [] : items
-        .filter((task: Assignment) => {
-            const priorityId = task.priority?.id;
-
-            const isProjectMatch = selectedProjectIds.includes(task.projectId);
-
-            const isPriorityMatch = priorityId
-                ? selectedPriorityIds.includes(priorityId)
-                : false;
-
-            return isProjectMatch && isPriorityMatch;
-        })
-        .filter((task): task is Assignment & { dueDate: string } => task.dueDate !== null)
-        .map((task) => ({
-            id: task.id,
-            title: task.name,
-            date: task.dueDate,
-            colorVariant: task.priority?.name === 'High' ? 'red' : 'blue',
-            priorityHexColor: task.priority?.hexColor ?? null
-        })))
-
-    const monthStart = startOfMonth(currentDate)
-    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, tasks }) => {
+    const { days } = getCalendarRange('month', currentDate)
     const dayNames = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz']
-    
-    const days: Date[] = Array.from({ length: 42 }, (_, i) => addDays(calendarStart, i))
 
     return (
         <section className="flex flex-col overflow-hidden rounded-[10px] border border-slate-200 bg-white shadow-sm w-full">
@@ -158,7 +108,7 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({
                         day={day}
                         index={index}
                         currentDate={currentDate}
-                        tasks={allTasks}
+                        tasks={tasks}
                     />
                 ))}
             </div>

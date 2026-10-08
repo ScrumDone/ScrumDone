@@ -1,10 +1,9 @@
 import React from 'react'
-import { format, addDays, isSameDay, parseISO } from 'date-fns'
+import { format, addDays, isSameDay } from 'date-fns'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import CalendarTaskItem from './calendarTaskItem'
-import { useAssignments } from '../hooks/useAssignments'
-import type { Assignment } from '../types/assignment'
+import { toDayKey } from '../lib/calendarRange'
 
 type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
 
@@ -18,11 +17,7 @@ interface CalendarTask {
 
 interface WeekCalendarProps {
     startDate: Date
-    dueFrom?: string | undefined
-    dueTo?: string | undefined
-    selectedProjectIds?: string[]
-    selectedPriorityIds?: string[]
-    tasks?: CalendarTask[]
+    tasks: CalendarTask[]
 }
 
 const CalendarDayColumn: React.FC<{
@@ -32,7 +27,7 @@ const CalendarDayColumn: React.FC<{
     bodyBgClass: string
     tasks: CalendarTask[]
 }> = ({ columnDate, shortName, isToday, bodyBgClass, tasks }) => {
-    const dateString = format(columnDate, 'yyyy-MM-dd')
+    const dateString = toDayKey(columnDate)
     const { setNodeRef } = useDroppable({
         id: dateString,
         data: { type: 'calendar-day', date: dateString },
@@ -85,15 +80,7 @@ const DraggableTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
     )
 }
 
-const assignmentToTask = (task: Assignment): CalendarTask => ({
-    id: task.id,
-    title: task.name,
-    date: task.dueDate ?? '',
-    colorVariant: task.priority?.name === 'High' ? 'red' : 'blue',
-    priorityHexColor: task.priority?.hexColor ?? null,
-})
-
-const WeekCalendarGrid: React.FC<{ startDate: Date; tasks: CalendarTask[] }> = ({ startDate, tasks }) => {
+const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks }) => {
     const dayNames = ['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.']
 
     return (
@@ -104,9 +91,7 @@ const WeekCalendarGrid: React.FC<{ startDate: Date; tasks: CalendarTask[] }> = (
                 const isWeekend = index >= 5
                 const bodyBgClass = isToday || isWeekend ? 'bg-slate-50' : 'bg-white'
 
-                const tasksForThisDay = tasks.filter(task =>
-                    isSameDay(parseISO(task.date), columnDate)
-                )
+                const tasksForThisDay = tasks.filter(task => task.date === toDayKey(columnDate))
 
                 return (
                     <CalendarDayColumn
@@ -120,59 +105,6 @@ const WeekCalendarGrid: React.FC<{ startDate: Date; tasks: CalendarTask[] }> = (
                 )
             })}
         </div>
-    )
-}
-
-const WeekCalendarFromQuery: React.FC<Omit<WeekCalendarProps, 'tasks'> & { selectedProjectIds: string[]; selectedPriorityIds: string[] }> = ({
-    startDate,
-    dueFrom,
-    dueTo,
-    selectedProjectIds,
-    selectedPriorityIds,
-}) => {
-    const { data: assignments } = useAssignments({
-        ProjectIds: selectedProjectIds,
-        PriorityIds: selectedPriorityIds,
-        Limit: 100,
-        ExcludeNoDeadline: true,
-        ...(dueFrom ? { DueFrom: dueFrom } : {}),
-        ...(dueTo ? { DueTo: dueTo } : {}),
-    })
-    const items = assignments?.items ?? []
-
-    const hasEmptyFilter = selectedProjectIds.length === 0 || selectedPriorityIds.length === 0
-    const tasks = hasEmptyFilter ? [] : items
-        .filter((task: Assignment) => {
-            const priorityId = task.priority?.id
-            return selectedProjectIds.includes(task.projectId)
-                && Boolean(priorityId && selectedPriorityIds.includes(priorityId))
-                && task.dueDate !== null
-        })
-        .map(assignmentToTask)
-
-    return <WeekCalendarGrid startDate={startDate} tasks={tasks} />
-}
-
-const WeekCalendar: React.FC<WeekCalendarProps> = ({
-    startDate,
-    dueFrom,
-    dueTo,
-    selectedProjectIds = [],
-    selectedPriorityIds = [],
-    tasks,
-}) => {
-    if (tasks) {
-        return <WeekCalendarGrid startDate={startDate} tasks={tasks} />
-    }
-
-    return (
-        <WeekCalendarFromQuery
-            startDate={startDate}
-            dueFrom={dueFrom}
-            dueTo={dueTo}
-            selectedProjectIds={selectedProjectIds}
-            selectedPriorityIds={selectedPriorityIds}
-        />
     )
 }
 

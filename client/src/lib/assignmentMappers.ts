@@ -44,8 +44,7 @@ export const assignmentToKanbanCard = (a: Assignment) => {
 };
 
 export const assignmentToCalendarTask = (a: Assignment) => {
-  const normalizedDate = a.dueDate ?? ''
-  const [date = ''] = normalizedDate.split('T')
+  const date = a.dueDate ? format(new Date(a.dueDate), 'yyyy-MM-dd') : ''
   return {
     id: a.id,
     title: a.name,

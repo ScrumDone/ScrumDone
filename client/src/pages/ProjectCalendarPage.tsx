@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { startOfWeek, endOfWeek, startOfMonth, endOfDay, addDays, format, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns'
+import { addDays, format, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns'
 import { pl } from 'date-fns/locale'
 import { useParams } from 'react-router-dom'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
@@ -16,6 +16,7 @@ import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities'
 import { getInitialsFromName } from '../hooks/useCurrentUser'
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments'
+import { useCalendarAssignments } from '../hooks/useCalendarAssignments'
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
 
 type CalendarTask = {
@@ -88,51 +89,26 @@ const ProjectCalendarPage: React.FC = () => {
   const noPeopleSelected = teamMembers.length > 0 && teamMembers.every((person) => !selectedPeopleIds.includes(person.id))
   const noPrioritiesSelected = priorities.length > 0 && priorities.every((priority) => !selectedPriorityIds.includes(priority.id))
 
-  const dateRange = useMemo(() => {
-    if (displayMode === 'week') {
-      return {
-        dueFrom: startOfWeek(currentDate, { weekStartsOn: 1 }).toISOString(),
-        dueTo: endOfWeek(currentDate, { weekStartsOn: 1 }).toISOString(),
-      }
-    }
-
-    const calendarStart = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
-    return {
-      dueFrom: calendarStart.toISOString(),
-      dueTo: endOfDay(addDays(calendarStart, 41)).toISOString(),
-    }
-  }, [currentDate, displayMode])
-
-  const assignmentQuery = useMemo(() => ({
+  const assignmentFilters = useMemo(() => ({
     ProjectIds: [projectId],
-    Limit: 100,
-    ExcludeNoDeadline: true,
-    DueFrom: dateRange.dueFrom,
-    DueTo: dateRange.dueTo,
     ...(!allPeopleSelected && !noPeopleSelected ? { AssigneeIds: selectedPeopleIds } : {}),
     ...(selectedPriorityIds.length > 0 ? { PriorityIds: selectedPriorityIds } : {}),
   }), [
     projectId,
-    dateRange,
     allPeopleSelected,
     noPeopleSelected,
     selectedPeopleIds,
     selectedPriorityIds,
   ])
 
-  const { data: assignmentsResponse } = useAssignments(assignmentQuery)
-  const { data: noDeadlineAssignmentsResponse } = useAssignments({
-    ProjectIds: [projectId],
-    Limit: 100,
-    ...(!allPeopleSelected && !noPeopleSelected ? { AssigneeIds: selectedPeopleIds } : {}),
-    ...(selectedPriorityIds.length > 0 ? { PriorityIds: selectedPriorityIds } : {}),
-  })
+  const { data: calendarAssignments, range } = useCalendarAssignments(displayMode, currentDate, assignmentFilters, Boolean(projectId))
+  const { data: noDeadlineAssignmentsResponse } = useAssignments({ ...assignmentFilters, Limit: 100 })
 
   const visibleAssignments = useMemo(() => {
-    if (!assignmentsResponse) return []
+    if (!calendarAssignments) return []
     if (noPeopleSelected || noPrioritiesSelected) return []
 
-    let items = assignmentsResponse.items
+    let items = calendarAssignments
 
     if (!allPeopleSelected) {
       items = items.filter((assignment) =>
@@ -148,7 +124,7 @@ const ProjectCalendarPage: React.FC = () => {
 
     return items
   }, [
-    assignmentsResponse,
+    calendarAssignments,
     allPeopleSelected,
     noPeopleSelected,
     selectedPeopleIds,
@@ -262,12 +238,11 @@ const ProjectCalendarPage: React.FC = () => {
 
   const dateLabel = useMemo(() => {
     if (displayMode === 'week') {
-      const start = startOfWeek(currentDate, { weekStartsOn: 1 })
-      const end = addDays(start, 6)
-      return `${format(start, 'd MMMM', { locale: pl })} - ${format(end, 'd MMMM yyyy', { locale: pl })}`
+      const end = addDays(range.start, 6)
+      return `${format(range.start, 'd MMMM', { locale: pl })} - ${format(end, 'd MMMM yyyy', { locale: pl })}`
     }
     return format(currentDate, 'LLLL yyyy', { locale: pl })
-  }, [currentDate, displayMode])
+  }, [currentDate, displayMode, range.start])
 
   const monthButtonClass = (mode: 'week' | 'month') =>
     `rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer ${displayMode === mode ? 'bg-slate-200/50 text-slate-900' : 'bg-transparent text-slate-900 hover:text-slate-700'}`
@@ -308,7 +283,7 @@ const ProjectCalendarPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="mt-2">
-                          {displayMode === 'week' ? <WeekCalendar startDate={startOfWeek(currentDate, { weekStartsOn: 1 })} tasks={calendarTasks} /> : <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />}
+                          {displayMode === 'week' ? <WeekCalendar startDate={range.start} tasks={calendarTasks} /> : <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />}
                         </div>
                       </div>
                       <CalendarNoDeadlineTasks tasks={noDeadlineTasks} draggable droppable />
