@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { BellIcon, CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import Avatar from '../common/Avatar';
 import { STRINGS } from '../../constants/strings';
-import { getInitialsFromName, useCurrentUser } from '../../hooks/useCurrentUser';
+import { getInitialsFromName, useCurrentUser } from '../../hooks/users/useCurrentUser';
 
 const TopBar: React.FC = () => {
   const { users, selectedUser, setSelectedUserId, isLoading } = useCurrentUser();

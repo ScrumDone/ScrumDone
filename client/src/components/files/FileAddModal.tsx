@@ -6,7 +6,7 @@ import {
   GlobeAltIcon,
   LockClosedIcon,
 } from '@heroicons/react/24/outline';
-import { useCompanies } from '../../hooks/useCompanies';
+import { useCompanies } from '../../hooks/companies/useCompanies';
 import { projects } from '../../data/projects';   
 
 export type FileDraft = {

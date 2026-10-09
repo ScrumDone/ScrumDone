@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { XMarkIcon, MagnifyingGlassIcon, PaperClipIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import Avatar from '../common/Avatar';
 import { type PersonFilter } from '../common/PeopleFilter';
-import { useStatuses, usePriorities, useCreateAssignment } from '../../hooks/useAssignments';
+import { useStatuses, usePriorities, useCreateAssignment } from '../../hooks/assignments/useAssignments';
 import { useQueryClient } from '@tanstack/react-query';
 import type { CreateAssignmentDto } from '../../types/assignment';
-import { useSprints } from '../../hooks/useSprints'; 
+import { useSprints } from '../../hooks/sprints/useSprints'; 
 
 //NOTE: Priorytety i statusy są pobierane dynamicznie z API bez mocku!!!!
 

@@ -1,7 +1,7 @@
 import React, {useState, useMemo} from 'react'
 import Avatar from '../common/Avatar'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
-import { useAssignments } from '../../hooks/useAssignments'
+import { useAssignments } from '../../hooks/assignments/useAssignments'
 import type { Assignment } from '../../types/assignment'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'

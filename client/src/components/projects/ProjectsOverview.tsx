@@ -1,7 +1,7 @@
 import React from 'react'
 import { ClockIcon, UsersIcon } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
-import { useProjects } from '../../hooks/useProjects'
+import { useProjects } from '../../hooks/projects/useProjects'
 import type { ProjectListItem } from '../../types/project'
 import { formatProjectDateForDisplay, getProjectStageCounts } from '../../utils/projectDisplay'
 
