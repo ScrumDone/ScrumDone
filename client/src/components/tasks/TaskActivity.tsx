@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowUturnLeftIcon, ChevronDownIcon, EllipsisVerticalIcon, FaceSmileIcon, HandThumbUpIcon, PaperClipIcon } from '@heroicons/react/24/outline';
-import Avatar from './Avatar';
+import Avatar from '../common/Avatar';
 
 const activityTabs = ['Rozmowy', 'Komentarze', 'Historia', 'Wymagania'];
 

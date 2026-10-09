@@ -3,8 +3,8 @@ import {
   EllipsisVerticalIcon 
 } from '@heroicons/react/24/outline';
 import { TaskStatusDropdown } from './TaskStatusDropdown';
-import type { Assignment } from '../types/assignment';
-import { updateAssignees } from '../api/assignments';
+import type { Assignment } from '../../types/assignment';
+import { updateAssignees } from '../../api/assignments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface TaskSidebarDetailsProps {

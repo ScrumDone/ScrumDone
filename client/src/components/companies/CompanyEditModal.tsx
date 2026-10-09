@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import type { CooperationLogCreateDto } from '../types/company';
-import { COOPERATION_EVENT_TYPES } from '../constants/cooperationEventTypes';
+import type { CooperationLogCreateDto } from '../../types/company';
+import { COOPERATION_EVENT_TYPES } from '../../constants/cooperationEventTypes';
 
 export type CompanyEditDraft = {
   name: string;

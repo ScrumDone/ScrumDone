@@ -1,18 +1,18 @@
 import React from 'react';
-import SideBar from '../components/sideBar';
-import TopBar from '../components/topBar';
+import SideBar from '../components/layout/SideBar';
+import TopBar from '../components/layout/TopBar';
 
 import { useParams } from 'react-router-dom'; 
 import { useQuery } from '@tanstack/react-query'; 
 import { getAssignment } from '../api/assignments'; 
 
-import { TaskMainContent } from '../components/TaskMainContent';
-import { TaskAttachments } from '../components/TaskAttachments';
-import { TaskSubtasks } from '../components/TaskSubtasks';
-import { TaskRelatedIssues } from '../components/TaskRelatedIssues';
-import { TaskActivity } from '../components/TaskActivity';
-import { TaskSidebarDetails } from '../components/TaskSidebarDetails';
-import { TaskLabels } from '../components/TaskLabels'
+import { TaskMainContent } from '../components/tasks/TaskMainContent';
+import { TaskAttachments } from '../components/tasks/TaskAttachments';
+import { TaskSubtasks } from '../components/tasks/TaskSubtasks';
+import { TaskRelatedIssues } from '../components/tasks/TaskRelatedIssues';
+import { TaskActivity } from '../components/tasks/TaskActivity';
+import { TaskSidebarDetails } from '../components/tasks/TaskSidebarDetails';
+import { TaskLabels } from '../components/tasks/TaskLabels'
 
 const TaskPage: React.FC = () => {
     const { assignmentId } = useParams<{ assignmentId: string }>(); 

@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { KANBAN_COLUMN_PAGE_SIZE, useKanbanColumnAssignments } from '../hooks/useAssignments';
-import { assignmentToKanbanCard } from '../lib/assignmentMappers';
-import type { Assignment, AssignmentQueryParams } from '../types/assignment';
+import { KANBAN_COLUMN_PAGE_SIZE, useKanbanColumnAssignments } from '../../hooks/useAssignments';
+import { assignmentToKanbanCard } from '../../lib/assignmentMappers';
+import type { Assignment, AssignmentQueryParams } from '../../types/assignment';
 import { KanbanTaskCard } from './KanbanTaskCard';
 
 type KanbanCardVM = ReturnType<typeof assignmentToKanbanCard>;

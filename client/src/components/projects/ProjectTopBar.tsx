@@ -1,19 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowLeftIcon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { useProject } from '../hooks/useProject';
-import { useUpdateProject } from '../hooks/useUpdateProject';
-import { useUpdateProjectMembers } from '../hooks/useUpdateProjectMembers';
-import { useDeleteProject } from '../hooks/useDeleteProject';
-import { useCompanies } from '../hooks/useCompanies';
-import { useUsers } from '../hooks/useUsers';
+import { useProject } from '../../hooks/useProject';
+import { useUpdateProject } from '../../hooks/useUpdateProject';
+import { useUpdateProjectMembers } from '../../hooks/useUpdateProjectMembers';
+import { useDeleteProject } from '../../hooks/useDeleteProject';
+import { useCompanies } from '../../hooks/useCompanies';
+import { useUsers } from '../../hooks/useUsers';
 import {
   haveSameMemberIds,
   mapProjectDetailToEditDraft,
   mapProjectDetailToTopBar,
   mapUsersToTeamMemberOptions,
   toProjectUpdateDto,
-} from '../utils/projectDisplay';
+} from '../../utils/projectDisplay';
 import ProjectEditModal, { type EditProjectDraft } from './ProjectEditModal';
 import ProjectChangeClientModal from './ProjectChangeClientModal';
 

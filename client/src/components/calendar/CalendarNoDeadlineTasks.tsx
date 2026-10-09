@@ -1,5 +1,5 @@
 import React, {useState, useMemo} from 'react'
-import Avatar from '../Avatar'
+import Avatar from '../common/Avatar'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { useAssignments } from '../../hooks/useAssignments'
 import type { Assignment } from '../../types/assignment'

@@ -1,5 +1,5 @@
 import { ChevronDownIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
-import type { Assignment } from '../types/assignment';
+import type { Assignment } from '../../types/assignment';
 
 interface TaskSubtasksProps {
   assignment: Assignment; 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { COOPERATION_EVENT_TYPES } from '../constants/cooperationEventTypes';
-import type { CompanyLogEditDraft } from '../utils/cooperationLogDisplay';
+import { COOPERATION_EVENT_TYPES } from '../../constants/cooperationEventTypes';
+import type { CompanyLogEditDraft } from '../../utils/cooperationLogDisplay';
 
 type CompanyLogEditModalProps = {
   isOpen: boolean;

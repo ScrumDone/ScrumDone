@@ -3,7 +3,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { SprintEditDraft } from './SprintEditModal';
 import {
   deriveSprintStatusFromDisplayDates,
-} from '../utils/sprintDisplay';
+} from '../../utils/sprintDisplay';
 
 type SprintCreateModalProps = {
   isOpen: boolean;

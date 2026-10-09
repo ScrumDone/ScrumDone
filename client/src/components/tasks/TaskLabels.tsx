@@ -1,7 +1,7 @@
 import { ChevronDownIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
-import type { AssignmentLabel } from '../types/assignment';
+import type { AssignmentLabel } from '../../types/assignment';
 import {useMutation, useQueryClient} from "@tanstack/react-query";
-import { updateLabels } from '../api/assignments';
+import { updateLabels } from '../../api/assignments';
 
 
 interface TaskLabelsProps {

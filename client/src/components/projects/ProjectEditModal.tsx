@@ -5,7 +5,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import Avatar from './Avatar';
+import Avatar from '../common/Avatar';
 
 export type TeamMemberOption = {
   id: string;

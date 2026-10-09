@@ -2,8 +2,8 @@ import React from 'react';
 import { EllipsisVerticalIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import Avatar from './Avatar';
-import { assignmentToKanbanCard } from '../lib/assignmentMappers';
+import Avatar from '../common/Avatar';
+import { assignmentToKanbanCard } from '../../lib/assignmentMappers';
 
 export type KanbanCardVM = ReturnType<typeof assignmentToKanbanCard>;
 

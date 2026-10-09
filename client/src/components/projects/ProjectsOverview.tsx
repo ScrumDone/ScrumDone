@@ -1,9 +1,9 @@
 import React from 'react'
 import { ClockIcon, UsersIcon } from '@heroicons/react/24/outline'
 import { Link } from 'react-router-dom'
-import { useProjects } from '../hooks/useProjects'
-import type { ProjectListItem } from '../types/project'
-import { formatProjectDateForDisplay, getProjectStageCounts } from '../utils/projectDisplay'
+import { useProjects } from '../../hooks/useProjects'
+import type { ProjectListItem } from '../../types/project'
+import { formatProjectDateForDisplay, getProjectStageCounts } from '../../utils/projectDisplay'
 
 const ProjectsOverview: React.FC = () => {
     const { data, isLoading, isError, error } = useProjects({ page: 1, limit: 3 })

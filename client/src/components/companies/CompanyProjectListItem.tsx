@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import type { ProjectCardViewModel } from '../utils/projectDisplay';
+import type { ProjectCardViewModel } from '../../utils/projectDisplay';
 
 type CompanyProjectListItemProps = ProjectCardViewModel;
 

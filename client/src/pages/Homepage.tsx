@@ -1,9 +1,9 @@
 import React from 'react'
-import SideBar from '../components/sideBar'
-import TopBar from '../components/topBar'
-import WelcomePageTask from '../components/welcomePageTask'
-import NewsFeed from '../components/newsFeed'
-import ProjectsOverview from '../components/projectsOverview'
+import SideBar from '../components/layout/SideBar'
+import TopBar from '../components/layout/TopBar'
+import WelcomePageTask from '../components/homepage/WelcomePageTask'
+import NewsFeed from '../components/homepage/NewsFeed'
+import ProjectsOverview from '../components/projects/ProjectsOverview'
 import { useAssignments } from '../hooks/useAssignments'
 import type { Assignment } from '../types/assignment'; 
 import { useState} from 'react';

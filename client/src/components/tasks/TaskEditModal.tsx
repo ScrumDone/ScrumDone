@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import Avatar from './Avatar';
-import { type PersonFilter } from './calendarPeopleFilter';
-import { usePriorities, useStatuses } from '../hooks/useAssignments';
-import { useUpdateAssignment } from '../hooks/useUpdateAssignment';
-import { useUpdateAssignees } from '../hooks/useUpdateAssignees';
-import type { UpdateAssignmentDto } from '../types/assignment';
+import Avatar from '../common/Avatar';
+import { type PersonFilter } from '../common/PeopleFilter';
+import { usePriorities, useStatuses } from '../../hooks/useAssignments';
+import { useUpdateAssignment } from '../../hooks/useUpdateAssignment';
+import { useUpdateAssignees } from '../../hooks/useUpdateAssignees';
+import type { UpdateAssignmentDto } from '../../types/assignment';
 
 export type TaskEditDraft = {
   id: string;

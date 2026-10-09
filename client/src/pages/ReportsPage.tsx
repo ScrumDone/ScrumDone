@@ -1,7 +1,7 @@
 import React from 'react'
 import { PlusIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
-import SideBar from '../components/sideBar'
-import TopBar from '../components/topBar'
+import SideBar from '../components/layout/SideBar'
+import TopBar from '../components/layout/TopBar'
 
 const ReportsPage: React.FC = () => {
     return (

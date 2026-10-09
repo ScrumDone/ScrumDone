@@ -5,8 +5,8 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import Avatar from './Avatar';
-import type { CompanyListItem } from '../types/company';
+import Avatar from '../common/Avatar';
+import type { CompanyListItem } from '../../types/company';
 
 export type TeamMemberOption = {
   id: string;

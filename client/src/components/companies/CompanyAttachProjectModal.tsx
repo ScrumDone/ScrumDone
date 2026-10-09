@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CheckIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import type { ProjectListItem } from '../types/project';
+import type { ProjectListItem } from '../../types/project';
 
 type CompanyAttachProjectModalProps = {
   isOpen: boolean;

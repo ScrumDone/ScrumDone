@@ -1,6 +1,6 @@
 import React from 'react';
 import { CalendarDaysIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { deriveSprintStatusFromDisplayDates } from '../utils/sprintDisplay';
+import { deriveSprintStatusFromDisplayDates } from '../../utils/sprintDisplay';
 
 export type SprintEditDraft = {
   title: string;

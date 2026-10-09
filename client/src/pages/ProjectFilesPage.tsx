@@ -1,9 +1,9 @@
 import React from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { useParams } from 'react-router-dom';
-import SideBar from '../components/sideBar';
-import TopBar from '../components/topBar';
-import ProjectTopBar from '../components/ProjectTopBar';
+import SideBar from '../components/layout/SideBar';
+import TopBar from '../components/layout/TopBar';
+import ProjectTopBar from '../components/projects/ProjectTopBar';
 import ProjectFileRow, { type FileItem } from '../components/files/ProjectFileCard';
 
 const FILES: FileItem[] = [

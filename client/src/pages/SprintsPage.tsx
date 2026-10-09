@@ -21,14 +21,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import SideBar from '../components/sideBar';
-import TopBar from '../components/topBar';
-import ProjectTopBar from '../components/ProjectTopBar';
-import Avatar from '../components/Avatar';
-import CalendarPeopleFilter from '../components/calendarPeopleFilter';
-import SprintEditModal, { type SprintEditDraft } from '../components/SprintEditModal';
-import SprintCreateModal from '../components/SprintCreateModal';
-import TaskCreateModal from '../components/TaskCreateModal';
+import SideBar from '../components/layout/SideBar';
+import TopBar from '../components/layout/TopBar';
+import ProjectTopBar from '../components/projects/ProjectTopBar';
+import Avatar from '../components/common/Avatar';
+import CalendarPeopleFilter from '../components/common/PeopleFilter';
+import SprintEditModal, { type SprintEditDraft } from '../components/sprints/SprintEditModal';
+import SprintCreateModal from '../components/sprints/SprintCreateModal';
+import TaskCreateModal from '../components/tasks/TaskCreateModal';
 import { useCreateSprint } from '../hooks/useCreateSprint';
 import { useDeleteSprint } from '../hooks/useDeleteSprint';
 import { useProjectSprints } from '../hooks/useProjectSprints';

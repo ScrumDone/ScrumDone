@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import SideBar from '../components/sideBar';
-import TopBar from '../components/topBar';
-import ProjectCard from '../components/ProjectCard';
+import SideBar from '../components/layout/SideBar';
+import TopBar from '../components/layout/TopBar';
+import ProjectCard from '../components/projects/ProjectCard';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import ProjectCreateModal, { type EditProjectDraft } from '../components/ProjectCreateModal';
+import ProjectCreateModal, { type EditProjectDraft } from '../components/projects/ProjectCreateModal';
 import { useCompanies } from '../hooks/useCompanies';
 import { useCreateProject } from '../hooks/useCreateProject';
 import { getInitialsFromName } from '../hooks/useCurrentUser';

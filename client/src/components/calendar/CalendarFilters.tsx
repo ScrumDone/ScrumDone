@@ -1,6 +1,6 @@
 import React from 'react'
-// import CalendarPeopleFilter, { type PersonFilter } from '../calendarPeopleFilter'
-import type { PersonFilter } from '../calendarPeopleFilter'
+// import CalendarPeopleFilter, { type PersonFilter } from '../common/PeopleFilter'
+import type { PersonFilter } from '../common/PeopleFilter'
 import type { ProjectListItem } from '../../types/project'
 import type { AssignmentPriority } from '../../types/assignment'
 import type { CalendarMode } from '../../types/calendar'

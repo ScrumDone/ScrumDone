@@ -5,7 +5,7 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
-import type { CompanyListItem } from '../types/company';
+import type { CompanyListItem } from '../../types/company';
 
 type ProjectChangeClientModalProps = {
   isOpen: boolean;

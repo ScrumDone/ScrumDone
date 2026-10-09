@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import SideBar from '../components/sideBar';
-import TopBar from '../components/topBar';
-import CompanyCard from '../components/CompanyCard';
-import CompanyCreateModal from '../components/CompanyCreateModal';
+import SideBar from '../components/layout/SideBar';
+import TopBar from '../components/layout/TopBar';
+import CompanyCard from '../components/companies/CompanyCard';
+import CompanyCreateModal from '../components/companies/CompanyCreateModal';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import type { CompanyEditDraft } from '../components/CompanyEditModal';
+import type { CompanyEditDraft } from '../components/companies/CompanyEditModal';
 import { useCompanyListCards } from '../hooks/useCompanyListCards';
 import { useCreateCompany } from '../hooks/useCreateCompany';
 import type { CompanyCreateDto } from '../types/company';
