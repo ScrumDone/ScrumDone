@@ -1,0 +1,61 @@
+
+import React from 'react'
+import SideBar from '../../components/layout/SideBar'
+import TopBar from '../../components/layout/TopBar'
+import WelcomePageTask from '../../components/homepage/WelcomePageTask'
+import NewsFeed from '../../components/homepage/NewsFeed'
+import ProjectsOverview from '../../components/projects/ProjectsOverview'
+
+const ManagerHomePage: React.FC = () => {
+    return (
+        <div className="min-h-screen w-full bg-[#F9FAFB]">
+            <SideBar />
+
+            <TopBar />
+
+            <main className="ml-64 pt-(--app-header-h)">
+                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-8 py-6">
+                    <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-[0em] antialiased mb-6">Strona Główna</h1>
+
+                    <div className="grid grid-cols-3 gap-6">
+                        <div className="bg-white rounded-xl border border-gray-200 p-6">
+                            <h1 className="font-segoe-ui  text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-6">
+                                Zablokowane zadania
+                            </h1>
+                            <div className="flex flex-col gap-3">
+                                <WelcomePageTask
+                                    taskName="API Integration with Payment Gateway"
+                                    projectName="Adoddle"
+                                    initials="EB"
+                                    fullName="Eryk Baczyński"
+                                    isBlocked={true}
+                                />
+                                <WelcomePageTask
+                                    taskName="Database schema design"
+                                    projectName="Nexus"
+                                    initials="AR"
+                                    fullName="Aleksander Radecki"
+                                    isBlocked={true}
+                                />
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl border border-gray-200 p-6">
+                            <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-6">
+                                Aktualności
+                            </h1>
+                            <NewsFeed />
+                        </div>
+                        <div className="bg-white rounded-xl border border-gray-200 p-6">
+                            <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-6">
+                                Projekty
+                            </h1>
+                            <ProjectsOverview />
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    )
+}
+
+export default ManagerHomePage 

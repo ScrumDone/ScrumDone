@@ -1,4 +1,4 @@
-import type { SprintEditDraft } from '../components/SprintEditModal';
+import type { SprintEditDraft } from '../components/sprints/SprintEditModal';
 import type { SprintCreateDto, SprintDetail, SprintSummary, SprintUpdateDto, SprintApiState } from '../types/sprint';
 
 export type SprintStatus = SprintEditDraft['status'];

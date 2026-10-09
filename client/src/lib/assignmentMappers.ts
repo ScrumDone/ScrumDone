@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import type { Assignment } from '../types/assignment';
-import { getInitialsFromName } from '../hooks/useCurrentUser';
+import { getInitialsFromName } from '../hooks/users/useCurrentUser';
 
 export type AssignmentVM = {
   id: string;
@@ -54,14 +54,19 @@ export const assignmentToCalendarTask = (a: Assignment) => {
   }
 };
 
-export const assignmentToNoDeadlineTask = (a: Assignment) => ({
-  id: a.id,
-  title: a.name,
-  assigneeInitials: a.assignees[0]?.name ? getInitialsFromName(a.assignees[0].name) : '??',
-  assigneeName: a.assignees[0]?.name ?? 'Unassigned',
-  accentColor: a.priority?.name === 'High' ? 'red' as const : 'blue' as const,
-  dotColor: a.priority?.name === 'High' ? 'red' as const : 'blue' as const,
-  priorityHexColor: a.priority?.hexColor ?? null,
-});
+export const assignmentToNoDeadlineTask = (a: Assignment) => {
+  // Kolor zapasowy, gdy priorytet nie ma hexColor
+  const fallbackColor = a.priority?.name === 'High' ? 'red' as const : 'blue' as const
+
+  return {
+    id: a.id,
+    title: a.name,
+    assigneeInitials: a.assignees[0]?.name ? getInitialsFromName(a.assignees[0].name) : '??',
+    assigneeName: a.assignees[0]?.name ?? 'Unassigned',
+    accentColor: fallbackColor,
+    dotColor: fallbackColor,
+    priorityHexColor: a.priority?.hexColor ?? null,
+  }
+};
 
 

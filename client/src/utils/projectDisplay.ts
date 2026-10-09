@@ -1,6 +1,6 @@
-import type { EditProjectDraft } from '../components/ProjectCreateModal';
-import type { EditProjectDraft as ProjectEditDraft, TeamMemberOption } from '../components/ProjectEditModal';
-import { getInitialsFromName } from '../hooks/useCurrentUser';
+import type { EditProjectDraft } from '../components/projects/ProjectCreateModal';
+import type { EditProjectDraft as ProjectEditDraft, TeamMemberOption } from '../components/projects/ProjectEditModal';
+import { getInitialsFromName } from '../hooks/users/useCurrentUser';
 import type { ProjectCreateDto, ProjectDetail, ProjectListItem, ProjectUpdateDto } from '../types/project';
 import type { UserSummary } from '../types/user';
 
