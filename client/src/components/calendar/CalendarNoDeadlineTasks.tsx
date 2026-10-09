@@ -1,11 +1,12 @@
 import React, {useState, useMemo} from 'react'
-import Avatar from './Avatar'
+import Avatar from '../Avatar'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
-import { useAssignments } from '../hooks/useAssignments'
-import type { Assignment } from '../types/assignment'
+import { useAssignments } from '../../hooks/useAssignments'
+import type { Assignment } from '../../types/assignment'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
+import { hexToRgba } from '../../utils/color'
 
 type TaskAccentColor = 'blue' | 'orange' | 'red' | 'green' | 'yellow'
 
@@ -57,39 +58,6 @@ const dotClassMap: Record<TaskDotColor, string> = {
     blue: 'bg-scrumdone-blue-main',
     orange: 'bg-scrumdone-orange',
 }
-
-const hexToRgba = (hexColor: string, alpha: number) => {
-    const normalized = hexColor.replace('#', '').trim()
-
-    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
-        return undefined
-    }
-
-    const r = Number.parseInt(normalized.slice(0, 2), 16)
-    const g = Number.parseInt(normalized.slice(2, 4), 16)
-    const b = Number.parseInt(normalized.slice(4, 6), 16)
-
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-// const defaultTasks: CalendarNoDeadlineTask[] = [
-//     {
-//         id: 'code-refactoring-user-module',
-//         title: 'Code refactoring - user module',
-//         assigneeInitials: 'AN',
-//         assigneeName: 'Artur Nowak',
-//         accentColor: 'blue',
-//         dotColor: 'green',
-//     },
-//     {
-//         id: 'security-audit',
-//         title: 'Security audit',
-//         assigneeInitials: 'AN',
-//         assigneeName: 'Artur Nowak',
-//         accentColor: 'orange',
-//         dotColor: 'red',
-//     },
-// ]
 
 export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProps> = ({ task }) => {
     const navigate = useNavigate()
@@ -262,7 +230,5 @@ const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
         </section>
     )
 }
-
-
 
 export default CalendarNoDeadlineTasks

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-
-type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
+import type { TaskColor } from '../../types/calendar'
+import { hexToRgba } from '../../utils/color'
 
 interface CalendarTaskItemProps {
     id: string
@@ -36,20 +36,6 @@ const colorVariantMap: Record<TaskColor, { dot: string; border: string; bg: stri
         border: 'border-l-scrumdone-blue-main',
         bg: 'bg-blue-50',
     },
-}
-
-const hexToRgba = (hexColor: string, alpha: number) => {
-    const normalized = hexColor.replace('#', '').trim()
-
-    if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
-        return undefined
-    }
-
-    const r = Number.parseInt(normalized.slice(0, 2), 16)
-    const g = Number.parseInt(normalized.slice(2, 4), 16)
-    const b = Number.parseInt(normalized.slice(4, 6), 16)
-
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
 
 const CalendarTaskItem: React.FC<CalendarTaskItemProps> = ({ id, title, colorVariant, priorityHexColor }) => {

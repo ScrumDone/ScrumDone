@@ -1,10 +1,9 @@
 import React from 'react'
-// import CalendarPeopleFilter, { type PersonFilter } from './calendarPeopleFilter'
-import type { PersonFilter } from './calendarPeopleFilter'
-import type { ProjectListItem } from '../types/project'
-import type { AssignmentPriority } from '../types/assignment'
-
-type CalendarMode = 'Personal' | 'Team'
+// import CalendarPeopleFilter, { type PersonFilter } from '../calendarPeopleFilter'
+import type { PersonFilter } from '../calendarPeopleFilter'
+import type { ProjectListItem } from '../../types/project'
+import type { AssignmentPriority } from '../../types/assignment'
+import type { CalendarMode } from '../../types/calendar'
 
 interface FilterOption {
     id: string

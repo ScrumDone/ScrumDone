@@ -6,31 +6,26 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
 import ProjectTopBar from '../components/ProjectTopBar'
-import WeekCalendar from '../components/ProjectWeekCalendar'
-import ProjectMonthCalendar from '../components/ProjectMonthCalendar'
+import WeekCalendar from '../components/calendar/WeekCalendar'
+import MonthCalendar from '../components/calendar/MonthCalendar'
 import CalendarPeopleFilter, { type PersonFilter } from '../components/calendarPeopleFilter'
-import CalendarNoDeadlineTasks, { CalendarNoDeadlineTaskCard } from '../components/calendarNoDeadlineTasks'
-import CalendarTaskItem from '../components/calendarTaskItem'
+import CalendarNoDeadlineTasks from '../components/calendar/CalendarNoDeadlineTasks'
+import CalendarDragOverlay from '../components/calendar/CalendarDragOverlay'
 import { useProject } from '../hooks/useProject'
 import { useAssignmentPriorities } from '../hooks/useAssignmentPriorities'
 import { getInitialsFromName } from '../hooks/useCurrentUser'
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
-import { useAssignments, useUpdateAssignmentDueDate } from '../hooks/useAssignments'
+import { DndContext } from '@dnd-kit/core'
+import { useAssignments } from '../hooks/useAssignments'
 import { useCalendarAssignments } from '../hooks/useCalendarAssignments'
+import { applyOptimisticDueDate, useCalendarDueDateDrag } from '../hooks/useCalendarDueDateDrag'
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../lib/assignmentMappers'
-
-type CalendarTask = {
-  id: string
-  title: string
-  colorVariant: 'red' | 'yellow' | 'green' | 'orange' | 'blue'
-  date: string
-  priorityHexColor?: string | null | undefined
-}
+import type { CalendarView } from '../lib/calendarRange'
+import type { CalendarTask } from '../types/calendar'
 
 const ProjectCalendarPage: React.FC = () => {
   const { projectId = '' } = useParams()
 
-  const [displayMode, setDisplayMode] = useState<'week' | 'month'>('week')
+  const [displayMode, setDisplayMode] = useState<CalendarView>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const { data: project } = useProject(projectId)
@@ -132,12 +127,17 @@ const ProjectCalendarPage: React.FC = () => {
     selectedPriorityIds,
   ])
 
-  const [optimisticDueDates, setOptimisticDueDates] = useState<Record<string, string | null>>({})
+  const {
+    sensors,
+    activeId,
+    optimisticDueDates,
+    handleDragStart,
+    handleDragEnd,
+    handleDragCancel,
+  } = useCalendarDueDateDrag()
 
   const calendarTasks: CalendarTask[] = visibleAssignments
-    .map((assignment) => Object.prototype.hasOwnProperty.call(optimisticDueDates, assignment.id)
-      ? { ...assignment, dueDate: optimisticDueDates[assignment.id] ?? null }
-      : assignment)
+    .map((assignment) => applyOptimisticDueDate(assignment, optimisticDueDates))
     .filter((assignment) => assignment.dueDate !== null)
     .map(assignmentToCalendarTask)
   const noDeadlineTasks = useMemo(() => {
@@ -151,9 +151,7 @@ const ProjectCalendarPage: React.FC = () => {
           ? Boolean(assignment.priority?.id && selectedPriorityIds.includes(assignment.priority.id))
           : priorities.length === 0
 
-        const dueDate = Object.prototype.hasOwnProperty.call(optimisticDueDates, assignment.id)
-          ? optimisticDueDates[assignment.id] ?? null
-          : assignment.dueDate
+        const { dueDate } = applyOptimisticDueDate(assignment, optimisticDueDates)
 
         return dueDate === null && matchesProject && matchesPerson && matchesPriority
       })
@@ -170,69 +168,6 @@ const ProjectCalendarPage: React.FC = () => {
     optimisticDueDates,
   ])
 
-  const [activeId, setActiveId] = useState<string | null>(null)
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
-
-  const handleDragStart = (event: DragStartEvent) => setActiveId(String(event.active.id))
-
-  const { mutate: updateDueDate } = useUpdateAssignmentDueDate()
-
-  const getDropDueDate = (over: DragEndEvent['over']) => {
-    const type = over?.data.current?.['type']
-    const date = over?.data.current?.['date']
-
-    if (type === 'calendar-day' && typeof date === 'string') {
-      return { dueDate: date }
-    }
-
-    if (type === 'calendar-no-deadline') {
-      return { dueDate: null }
-    }
-
-    return null
-  }
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    setActiveId(null)
-
-    const dropTarget = getDropDueDate(over)
-    if (!dropTarget) return
-
-    const activeAssignmentId = String(active.id)
-    const currentTask = calendarTasks.find((task) => task.id === activeAssignmentId)
-    const currentNoDeadlineTask = noDeadlineTasks.find((task) => task.id === activeAssignmentId)
-
-    if (dropTarget.dueDate === null && currentNoDeadlineTask) return
-    if (currentTask?.date === dropTarget.dueDate) return
-
-    setOptimisticDueDates((current) => ({
-      ...current,
-      [activeAssignmentId]: dropTarget.dueDate,
-    }))
-
-    updateDueDate(
-      { id: activeAssignmentId, dueDate: dropTarget.dueDate },
-      {
-        onError: () => {
-          setOptimisticDueDates((current) => {
-            const next = { ...current }
-            delete next[activeAssignmentId]
-            return next
-          })
-        },
-      },
-    )
-  }
-
-  const handleDragCancel = () => {
-    setActiveId(null)
-  }
-
-  const activeTask = useMemo(() => calendarTasks.find(t => t.id === activeId), [activeId, calendarTasks])
-  const activeNoDeadlineTask = useMemo(() => noDeadlineTasks.find(t => t.id === activeId), [activeId, noDeadlineTasks])
-
   const handlePrev = () => setCurrentDate(prev => displayMode === 'week' ? subWeeks(prev, 1) : subMonths(prev, 1))
   const handleNext = () => setCurrentDate(prev => displayMode === 'week' ? addWeeks(prev, 1) : addMonths(prev, 1))
 
@@ -244,7 +179,7 @@ const ProjectCalendarPage: React.FC = () => {
     return format(currentDate, 'LLLL yyyy', { locale: pl })
   }, [currentDate, displayMode, range.start])
 
-  const monthButtonClass = (mode: 'week' | 'month') =>
+  const monthButtonClass = (mode: CalendarView) =>
     `rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 cursor-pointer ${displayMode === mode ? 'bg-slate-200/50 text-slate-900' : 'bg-transparent text-slate-900 hover:text-slate-700'}`
 
   const togglePerson = (personId: string) => {
@@ -264,7 +199,12 @@ const ProjectCalendarPage: React.FC = () => {
       <SideBar />
       <TopBar />
       <main className="ml-64 pt-(--app-header-h)">
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragEnd={(event) => handleDragEnd(event, calendarTasks, noDeadlineTasks)}
+          onDragCancel={handleDragCancel}
+        >
           <div className="flex w-full flex-col">
             <ProjectTopBar projectId={projectId} />
             <section className="mx-6 mt-6 pb-8">
@@ -283,7 +223,7 @@ const ProjectCalendarPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="mt-2">
-                          {displayMode === 'week' ? <WeekCalendar startDate={range.start} tasks={calendarTasks} /> : <ProjectMonthCalendar currentDate={currentDate} tasks={calendarTasks} />}
+                          {displayMode === 'week' ? <WeekCalendar startDate={range.start} tasks={calendarTasks} /> : <MonthCalendar currentDate={currentDate} tasks={calendarTasks} compact />}
                         </div>
                       </div>
                       <CalendarNoDeadlineTasks tasks={noDeadlineTasks} draggable droppable />
@@ -319,17 +259,7 @@ const ProjectCalendarPage: React.FC = () => {
                   </div>
             </section>
           </div>
-          <DragOverlay dropAnimation={null}>
-            {activeTask ? (
-              <div className="cursor-grabbing">
-                <CalendarTaskItem id={activeTask.id} title={activeTask.title} colorVariant={activeTask.colorVariant} priorityHexColor={activeTask.priorityHexColor} />
-              </div>
-            ) : activeNoDeadlineTask ? (
-              <div className="cursor-grabbing">
-                <CalendarNoDeadlineTaskCard task={activeNoDeadlineTask} />
-              </div>
-            ) : null}
-          </DragOverlay>
+          <CalendarDragOverlay activeId={activeId} calendarTasks={calendarTasks} noDeadlineTasks={noDeadlineTasks} />
         </DndContext>
       </main>
     </div>

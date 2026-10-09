@@ -1,55 +1,45 @@
 import React from 'react'
 import { format, isSameMonth } from 'date-fns'
-import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
-import CalendarTaskItem from './calendarTaskItem'
-import { getCalendarRange, toDayKey } from '../lib/calendarRange'
-
-type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
-
-interface CalendarTask {
-    id: string
-    title: string
-    colorVariant: TaskColor
-    date: string
-    priorityHexColor?: string | null | undefined
-}
+import { useDroppable } from '@dnd-kit/core'
+import DraggableCalendarTask from './DraggableCalendarTask'
+import { getCalendarRange, toDayKey } from '../../lib/calendarRange'
+import type { CalendarTask } from '../../types/calendar'
 
 interface MonthCalendarProps {
     currentDate: Date
     tasks: CalendarTask[]
+    // Mniejsze komórki - używane w kalendarzu projektu
+    compact?: boolean
 }
 
-const DraggableTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-        id: task.id,
-        data: { type: 'calendar-task' },
-    })
-    const style = {
-        transform: transform ? CSS.Translate.toString(transform) : undefined,
-    }
-
-    if (isDragging) {
-        return (
-            <div ref={setNodeRef} className="opacity-30">
-                <CalendarTaskItem id={task.id} title={task.title} colorVariant={task.colorVariant} priorityHexColor={task.priorityHexColor} />
-            </div>
-        )
-    }
-
-    return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-none">
-            <CalendarTaskItem id={task.id} title={task.title} colorVariant={task.colorVariant} priorityHexColor={task.priorityHexColor} />
-        </div>
-    )
+const sizeClasses = {
+    regular: {
+        headerCell: 'py-4',
+        headerText: 'text-[14px] leading-5 font-normal text-slate-700',
+        grid: 'grid-rows-5',
+        dayCell: 'h-[120px] p-2',
+        dayNumber: 'text-[13px] font-normal mb-1.5',
+        taskList: 'space-y-1',
+    },
+    compact: {
+        headerCell: 'py-2',
+        headerText: 'text-[13px] font-medium text-slate-500',
+        grid: '',
+        dayCell: 'h-[90px] p-1.5',
+        dayNumber: 'text-[12px] mb-1',
+        taskList: 'space-y-0.5',
+    },
 }
+
+type SizeClasses = typeof sizeClasses.regular
 
 const MonthDayCell: React.FC<{
     day: Date
     index: number
     currentDate: Date
     tasks: CalendarTask[]
-}> = ({ day, index, currentDate, tasks }) => {
+    classes: SizeClasses
+}> = ({ day, index, currentDate, tasks, classes }) => {
     const dateString = toDayKey(day)
     const { setNodeRef } = useDroppable({
         id: dateString,
@@ -63,37 +53,38 @@ const MonthDayCell: React.FC<{
     return (
         <div
             ref={setNodeRef}
-            className={`h-[120px] border-r border-b border-slate-200 last:border-r-0 p-2 flex flex-col overflow-hidden ${
+            className={`${classes.dayCell} border-r border-b border-slate-200 last:border-r-0 flex flex-col overflow-hidden ${
                 isCurrentMonth && !isWeekendDay ? 'bg-white' : 'bg-slate-50/50'
             } ${index >= 35 ? 'border-b-0' : ''}`}
         >
-            <p className={`font-segoe-ui text-[13px] leading-tight font-normal ${
+            <p className={`font-segoe-ui ${classes.dayNumber} leading-tight ${
                 isCurrentMonth ? 'text-slate-900' : 'text-slate-400'
-            } antialiased mb-1.5`}
+            } antialiased`}
             >
                 {format(day, 'd')}
             </p>
 
-            <div className="flex-1 overflow-y-auto space-y-1 scrollbar-hide">
+            <div className={`flex-1 overflow-y-auto ${classes.taskList} scrollbar-hide`}>
                 {tasksForThisDay.map((task) => (
-                    <DraggableTask key={task.id} task={task} />
+                    <DraggableCalendarTask key={task.id} task={task} />
                 ))}
             </div>
         </div>
     )
 }
 
-const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, tasks }) => {
+const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, tasks, compact = false }) => {
     const { days } = getCalendarRange('month', currentDate)
     const dayNames = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz']
+    const classes = compact ? sizeClasses.compact : sizeClasses.regular
 
     return (
         <section className="flex flex-col overflow-hidden rounded-[10px] border border-slate-200 bg-white shadow-sm w-full">
             {/* Nagłówek dni tygodnia */}
             <div className="grid grid-cols-7 border-b border-slate-200 bg-white shrink-0">
                 {dayNames.map((dayName) => (
-                    <div key={dayName} className="border-r border-slate-200 last:border-r-0 py-4 text-center">
-                        <p className="font-segoe-ui text-[14px] leading-5 font-normal text-slate-700 antialiased">
+                    <div key={dayName} className={`border-r border-slate-200 last:border-r-0 ${classes.headerCell} text-center`}>
+                        <p className={`font-segoe-ui ${classes.headerText} antialiased`}>
                             {dayName}
                         </p>
                     </div>
@@ -101,7 +92,7 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, tasks }) => 
             </div>
 
             {/* Siatka kalendarza */}
-            <div className="grid grid-cols-7 grid-rows-5">
+            <div className={`grid grid-cols-7 ${classes.grid}`}>
                 {days.map((day, index) => (
                     <MonthDayCell
                         key={day.toISOString()}
@@ -109,6 +100,7 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, tasks }) => 
                         index={index}
                         currentDate={currentDate}
                         tasks={tasks}
+                        classes={classes}
                     />
                 ))}
             </div>

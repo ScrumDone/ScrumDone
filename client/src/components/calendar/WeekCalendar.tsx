@@ -1,19 +1,9 @@
 import React from 'react'
 import { format, addDays, isSameDay } from 'date-fns'
-import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
-import CalendarTaskItem from './calendarTaskItem'
-import { toDayKey } from '../lib/calendarRange'
-
-type TaskColor = 'red' | 'yellow' | 'green' | 'orange' | 'blue'
-
-interface CalendarTask {
-    id: string
-    title: string
-    colorVariant: TaskColor
-    date: string
-    priorityHexColor?: string | null | undefined
-}
+import { useDroppable } from '@dnd-kit/core'
+import DraggableCalendarTask from './DraggableCalendarTask'
+import { toDayKey } from '../../lib/calendarRange'
+import type { CalendarTask } from '../../types/calendar'
 
 interface WeekCalendarProps {
     startDate: Date
@@ -48,35 +38,11 @@ const CalendarDayColumn: React.FC<{
             <div className={`flex-1 p-2 ${bodyBgClass}`}>
                 <div className="flex flex-col gap-2">
                     {tasks.map((task) => (
-                        <DraggableTask key={task.id} task={task} />
+                        <DraggableCalendarTask key={task.id} task={task} />
                     ))}
                 </div>
             </div>
         </article>
-    )
-}
-
-const DraggableTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-        id: task.id,
-        data: { type: 'calendar-task' },
-    })
-    const style = {
-        transform: transform ? CSS.Translate.toString(transform) : undefined
-    }
-
-    if (isDragging) {
-        return (
-            <div ref={setNodeRef} className="opacity-30">
-                <CalendarTaskItem id={task.id} title={task.title} colorVariant={task.colorVariant} priorityHexColor={task.priorityHexColor} />
-            </div>
-        )
-    }
-
-    return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-none">
-            <CalendarTaskItem id={task.id} title={task.title} colorVariant={task.colorVariant} priorityHexColor={task.priorityHexColor} />
-        </div>
     )
 }
 

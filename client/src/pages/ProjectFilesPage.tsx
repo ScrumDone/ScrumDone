@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import SideBar from '../components/sideBar';
 import TopBar from '../components/topBar';
 import ProjectTopBar from '../components/ProjectTopBar';
-import ProjectFileRow, { type FileItem } from '../components/ProjectFileCard';
+import ProjectFileRow, { type FileItem } from '../components/files/ProjectFileCard';
 
 const FILES: FileItem[] = [
   { id: 1, name: 'Umowa_Adoddle_2026.pdf', size: '2.3 MB', author: 'Artur Nowak', date: '15.01.2026', type: 'PDF' },

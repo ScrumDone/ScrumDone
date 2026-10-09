@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { DocumentTextIcon, PlusIcon } from '@heroicons/react/24/outline'
 import SideBar from '../components/sideBar'
 import TopBar from '../components/topBar'
-import FilesFilters, { type FileItem } from '../components/filesFilters'
-import FileCard from '../components/FileCard'
-import FileAddModal, { type FileDraft } from '../components/FileAddModal'
+import FilesFilters, { type FileItem } from '../components/files/FilesFilters'
+import FileCard from '../components/files/FileCard'
+import FileAddModal, { type FileDraft } from '../components/files/FileAddModal'
 
 const sampleFileModules = import.meta.glob('../sample-files/*', {
     eager: true,

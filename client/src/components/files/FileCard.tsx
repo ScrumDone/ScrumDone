@@ -7,7 +7,7 @@ import {
     TableCellsIcon, 
     PresentationChartBarIcon 
 } from '@heroicons/react/24/outline'
-import type { FileItem } from './filesFilters'
+import type { FileItem } from './FilesFilters'
 import ImagePreviewModal from './ImagePreviewModal'
 
 interface FileCardProps {

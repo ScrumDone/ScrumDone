@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAssignments } from '../api/assignments';
+import { ASSIGNMENTS_STALE_TIME } from './useAssignments';
 import { ApiError } from '../api/client';
 import type { Assignment, AssignmentQueryParams } from '../types/assignment';
 import { getCalendarRange, type CalendarView } from '../lib/calendarRange';
@@ -42,7 +43,7 @@ export function useCalendarAssignments(
     queryKey: ['assignments', 'calendar', params],
     queryFn: () => getAllAssignmentsInRange(params),
     enabled,
-    staleTime: 1000 * 30,
+    staleTime: ASSIGNMENTS_STALE_TIME,
   });
 
   return { ...query, range };

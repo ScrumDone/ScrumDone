@@ -1,4 +1,3 @@
-// src/hooks/useSprints.ts
 import { useQuery } from '@tanstack/react-query';
 import { getProjectSprints } from '../api/sprints';
 

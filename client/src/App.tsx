@@ -2,7 +2,7 @@ import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Homepage from './pages/Homepage'
 import ProjectsPage from './pages/ProjectsPage'
-import Companiespage from './pages/Companiespage'
+import CompaniesPage from './pages/CompaniesPage'
 import CompanyDetailsPage from './pages/CompanyDetailsPage'
 import CalendarPage from './pages/CalendarPage'
 import ReportsPage from './pages/ReportsPage'
@@ -27,7 +27,7 @@ const App: React.FC = () => {
       <Route path="/projects/:projectId/kalendarz" element={<ProjectCalendarPage />} />
       <Route path="/projects/:projectId/sprinty" element={<SprintsPage />} />
       <Route path="/projects/:projectId/repozytorium-plikow" element={<ProjectFilesPage />} />
-      <Route path="/companies" element={<Companiespage />} />
+      <Route path="/companies" element={<CompaniesPage />} />
       <Route path="/companies/:companyId" element={<CompanyDetailsPage />} />
       <Route path="/calendar" element={<CalendarPage />} />
       <Route path="/reports" element={<ReportsPage />} />
