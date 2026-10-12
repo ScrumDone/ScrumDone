@@ -3,11 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import SideBar from '../../components/layout/SideBar';
 import TopBar from '../../components/layout/TopBar';
-import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { MapPin, Mail, UserPlus, Edit, Phone, PlusIcon, MessageSquareText, UserRoundPen, MoreVertical, Pencil, Trash2, Users } from 'lucide-react';
 import CompanyEditModal, { type CompanyEditDraft } from '../../components/companies/CompanyEditModal';
 import CompanyContactAddModal, { type CompanyContactDraft } from '../../components/companies/CompanyContactAddModal';
 import CompanyContactEditModal from '../../components/companies/CompanyContactEditModal';
 import CompanyLogEditModal from '../../components/companies/CompanyLogEditModal';
+import CompanyMeetingNoteModal from '../../components/companies/CompanyMeetingNoteModal';
 import CompanyRowActionMenu from '../../components/companies/CompanyRowActionMenu';
 import CompanyAttachProjectModal from '../../components/companies/CompanyAttachProjectModal';
 import CompanyProjectListItem from '../../components/companies/CompanyProjectListItem';
@@ -21,6 +22,8 @@ import { useCompanyNotes } from '../../hooks/companies/useCompanyNotes';
 import { useUpdateCompanyNote } from '../../hooks/companies/useUpdateCompanyNote';
 import { useDeleteCompanyNote } from '../../hooks/companies/useDeleteCompanyNote';
 import { useCompanyLogs } from '../../hooks/companies/useCompanyLogs';
+import { useCompanyContacts } from '../../hooks/companies/useCompanyContacts';
+import { useUsers } from '../../hooks/users/useUsers';
 import type { ContactPerson } from '../../types/contact';
 import type { CompanyNote, CooperationLog, CooperationLogCreateDto } from '../../types/company';
 import {useDeleteCompanyLog} from '../../hooks/companies/useDeleteCompanyLog';
@@ -37,6 +40,16 @@ import {
   parseCooperationLogDisplay,
   type CompanyLogEditDraft,
 } from '../../utils/cooperationLogDisplay';
+import {
+  MEETING_EVENT_TYPE,
+  createEmptyMeetingNoteDraft,
+  isMeetingLog,
+  meetingLogToDraft,
+  meetingNoteDraftToCreateDto,
+  meetingNoteDraftToUpdateDto,
+  parseMeetingDescription,
+  type MeetingNoteDraft,
+} from '../../utils/meetingNote';
 
 //TODO: Log jest usuwany, ale zmiana nie nastepuje od razu na froncie
 
@@ -50,6 +63,16 @@ const formatBackendDate = (date: string) =>
     hour: '2-digit',
     minute: '2-digit',
   });
+
+// Data spotkania (YYYY-MM-DD) bez godziny - parsowana lokalnie, żeby nie przesuwała się o strefę czasową
+const formatMeetingDate = (date: string) => {
+  const [year = 0, month = 1, day = 1] = date.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('pl-PL', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+};
 
 type CompanyDisplay = {
   id: string;
@@ -72,6 +95,8 @@ type CooperationHistoryItem = {
   author: string;
   changeFrom?: string;
   changeTo?: string;
+  participants?: string[];
+  meetingDateLabel?: string;
   Icon: React.ComponentType<{ className?: string }>;
 };
 
@@ -102,6 +127,23 @@ const mapCooperationLogToHistoryItem = (log: CooperationLog): CooperationHistory
   const changeFrom = log.oldValue?.trim();
   const changeTo = log.newValue?.trim();
   const { type, title } = parseCooperationLogDisplay(log);
+
+  if (type === MEETING_EVENT_TYPE) {
+    const { participants, content } = parseMeetingDescription(log.description);
+    const meetingDate = log.newValue?.trim();
+
+    return {
+      id: log.id,
+      title,
+      type,
+      description: content || '—',
+      dateLabel: formatBackendDate(log.createdAt),
+      author: log.author?.name?.trim() || 'Nieznany autor',
+      participants,
+      ...(meetingDate && /^\d{4}-\d{2}-\d{2}$/.test(meetingDate) ? { meetingDateLabel: formatMeetingDate(meetingDate) } : {}),
+      Icon: Users,
+    };
+  }
 
   return {
     id: log.id,
@@ -261,6 +303,18 @@ const CompanyDetailsPage: React.FC = () => {
     isLoading: isLogsLoading,
     isError: isLogsError,
   } = useCompanyLogs(companyId);
+  const [meetingNoteModalMode, setMeetingNoteModalMode] = useState<'create' | 'edit' | null>(null);
+  const [editingMeetingLogId, setEditingMeetingLogId] = useState<string | null>(null);
+  const [meetingNoteDraft, setMeetingNoteDraft] = useState<MeetingNoteDraft>(createEmptyMeetingNoteDraft);
+  const { data: companyContactsData, isLoading: isCompanyContactsLoading } = useCompanyContacts(companyId);
+  const { data: usersData, isLoading: isUsersLoading } = useUsers(1, 100);
+  const {
+    mutate: addMeetingNote,
+    isPending: isAddingMeetingNote,
+    isError: isAddMeetingNoteError,
+    error: addMeetingNoteError,
+    reset: resetAddMeetingNote,
+  } = useAddCompanyLog();
   const {
     mutate: createNote,
     isPending: isAddingNote,
@@ -469,10 +523,55 @@ const CompanyDetailsPage: React.FC = () => {
       return;
     }
 
+    if (isMeetingLog(log)) {
+      resetUpdateLog();
+      setEditingMeetingLogId(logId);
+      setMeetingNoteDraft(meetingLogToDraft(log));
+      setMeetingNoteModalMode('edit');
+      return;
+    }
+
     resetUpdateLog();
     setEditingLogId(logId);
     setLogEditDraft(cooperationLogToEditDraft(log));
     setIsLogEditModalOpen(true);
+  };
+
+  const openMeetingNoteCreateModal = () => {
+    resetAddMeetingNote();
+    setEditingMeetingLogId(null);
+    setMeetingNoteDraft(createEmptyMeetingNoteDraft());
+    setMeetingNoteModalMode('create');
+  };
+
+  const closeMeetingNoteModal = () => {
+    resetAddMeetingNote();
+    resetUpdateLog();
+    setMeetingNoteModalMode(null);
+    setEditingMeetingLogId(null);
+  };
+
+  const saveMeetingNote = () => {
+    if (meetingNoteModalMode === 'create') {
+      addMeetingNote(
+        { companyId: displayedCompany.id, data: meetingNoteDraftToCreateDto(meetingNoteDraft) },
+        { onSuccess: () => closeMeetingNoteModal() },
+      );
+      return;
+    }
+
+    if (!editingMeetingLogId) {
+      return;
+    }
+
+    updateLog(
+      {
+        companyId: displayedCompany.id,
+        logId: editingMeetingLogId,
+        data: meetingNoteDraftToUpdateDto(meetingNoteDraft),
+      },
+      { onSuccess: () => closeMeetingNoteModal() },
+    );
   };
 
   const closeLogEditModal = () => {
@@ -930,6 +1029,17 @@ const CompanyDetailsPage: React.FC = () => {
                   ['--history-icon-size' as string]: '40px',
                 } as React.CSSProperties}
               >
+                <div className="mb-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={openMeetingNoteCreateModal}
+                    className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium leading-2.5 text-white transition-all hover:bg-[#00A0DD] active:scale-95"
+                  >
+                    <PlusIcon className="h-4 w-4 stroke-2" />
+                    Dodaj notatkę ze spotkania
+                  </button>
+                </div>
+
                 {isLogsLoading && (
                   <p className="text-sm text-gray-500 py-4 animate-pulse">Ładowanie historii współpracy...</p>
                 )}
@@ -964,7 +1074,24 @@ const CompanyDetailsPage: React.FC = () => {
                           {item.type}
                         </span>
 
-                        <p className="mt-4 font-segoe-ui text-[14px] leading-6 text-slate-600 antialiased">{item.description}</p>
+                        {(item.meetingDateLabel || (item.participants && item.participants.length > 0)) && (
+                          <div className="mt-4 space-y-1 font-segoe-ui text-[14px] leading-6 text-slate-700 antialiased">
+                            {item.meetingDateLabel && (
+                              <p>
+                                <span className="text-slate-500">Data spotkania: </span>
+                                {item.meetingDateLabel}
+                              </p>
+                            )}
+                            {item.participants && item.participants.length > 0 && (
+                              <p>
+                                <span className="text-slate-500">Uczestnicy: </span>
+                                {item.participants.join(', ')}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        <p className="mt-4 whitespace-pre-line font-segoe-ui text-[14px] leading-6 text-slate-600 antialiased">{item.description}</p>
 
                         {item.changeFrom && item.changeTo && (
                           <p className="mt-2 font-segoe-ui text-[14px] leading-6 text-slate-700 antialiased">
@@ -1174,6 +1301,24 @@ const CompanyDetailsPage: React.FC = () => {
         onDraftChange={setLogEditDraft}
         isSaving={isUpdatingLog}
         errorMessage={isUpdateLogError ? updateLogError?.message : null}
+      />
+
+      <CompanyMeetingNoteModal
+        isOpen={meetingNoteModalMode !== null}
+        mode={meetingNoteModalMode ?? 'create'}
+        draft={meetingNoteDraft}
+        contacts={companyContactsData?.items ?? displayedCompany.contacts}
+        users={usersData?.items ?? []}
+        isParticipantsLoading={isCompanyContactsLoading || isUsersLoading}
+        onClose={closeMeetingNoteModal}
+        onSave={saveMeetingNote}
+        onDraftChange={setMeetingNoteDraft}
+        isSaving={meetingNoteModalMode === 'create' ? isAddingMeetingNote : isUpdatingLog}
+        errorMessage={
+          meetingNoteModalMode === 'create'
+            ? (isAddMeetingNoteError ? addMeetingNoteError?.message : null)
+            : (isUpdateLogError ? updateLogError?.message : null)
+        }
       />
 
       <CompanyAttachProjectModal

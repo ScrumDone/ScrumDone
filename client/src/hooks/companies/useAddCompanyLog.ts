@@ -10,7 +10,7 @@ export function useAddCompanyLog() {
       createCompanyLog(companyId, data),
     onSuccess: (_, variables) => {
       // Inwalidacja logów, aby odświeżyć listę w widoku historii
-      queryClient.invalidateQueries({ queryKey: ['companyLogs', variables.companyId] });
+      queryClient.invalidateQueries({ queryKey: ['companies', variables.companyId, 'logs'] });
     },
   });
 }
