@@ -109,6 +109,7 @@ public class DatabaseSeeder
         var userFaker = new Faker<User>("pl")
             .RuleFor(u => u.Id, f => f.Random.Guid())
             .RuleFor(u => u.Name, f => f.Name.FullName())
+            .RuleFor(u => u.Email, f => f.Internet.Email())
             .RuleFor(u => u.ProfilePictureUrl, f => f.Internet.Avatar())
             .RuleFor(u => u.UserPermissionsTypeId, f => f.PickRandom(permissions).Id)
             .RuleFor(u => u.CreatedAt, f => now.AddDays(-rnd.Next(14)))
