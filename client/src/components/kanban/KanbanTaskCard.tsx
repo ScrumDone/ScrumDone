@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatCount, PLURALS } from '../../utils/plural';
 import { EllipsisVerticalIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -122,7 +123,7 @@ export const KanbanTaskCard: React.FC<{
             {task.assigneesInitials.length > 2 && (
               <div
                 className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 font-segoe-ui text-[10px] font-medium text-slate-600 ring-2 ring-white"
-                aria-label={`+${task.assigneesInitials.length - 2} więcej przypisanych osób`}
+                aria-label={`+${formatCount(task.assigneesInitials.length - 2, PLURALS.assignedPeople)}`}
               >
                 +{task.assigneesInitials.length - 2}
               </div>
