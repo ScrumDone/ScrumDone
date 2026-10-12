@@ -52,8 +52,8 @@ public class AssigneesEndpointTests
 
     private static async Task<(Guid User1, Guid User2)> SeedTwoUsers(AppDbContext db)
     {
-        var user1 = new User { Id = Guid.NewGuid(), Name = "Alice" };
-        var user2 = new User { Id = Guid.NewGuid(), Name = "Bob" };
+        var user1 = new User { Id = Guid.NewGuid(), Name = "Alice", Email = "test1@example.com", UserName = "test1example.com" };
+        var user2 = new User { Id = Guid.NewGuid(), Name = "Bob", Email = "test2@example.com", UserName = "test2example.com" };
         db.Users.AddRange(user1, user2);
         await db.SaveChangesAsync();
         return (user1.Id, user2.Id);
