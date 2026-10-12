@@ -47,6 +47,9 @@ namespace ScrumDone.Api.Services
             };
 
             _context.Invitations.Add(invitation);
+
+            Console.WriteLine($"This invitation ID is: {invitation.Id}");
+
             await _context.SaveChangesAsync();
 
             return;
@@ -76,6 +79,7 @@ namespace ScrumDone.Api.Services
             }
 
             _context.Invitations.Remove(invitation);
+
 
             await _context.SaveChangesAsync();            
 
