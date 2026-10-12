@@ -8,10 +8,13 @@ using Company = ScrumDone.Api.Data.Company;
 using Bogus.DataSets;
 using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using ScrumDone.Api.Utilities;
+using Microsoft.AspNetCore.Identity;
 public class DatabaseSeeder
 {
     public static void Seed(AppDbContext context)
     {
+        var hasher = new PasswordHasher<User>();
+
         if(context.UserPermissionsTypes.Any())
         {
             return;
@@ -112,6 +115,11 @@ public class DatabaseSeeder
             .RuleFor(u => u.Email, f => f.Internet.Email())
             .RuleFor(u => u.ProfilePictureUrl, f => f.Internet.Avatar())
             .RuleFor(u => u.UserPermissionsTypeId, f => f.PickRandom(permissions).Id)
+            .RuleFor(u => u.UserName, (f, u) => u.Email)
+            .RuleFor(u => u.NormalizedUserName, (f, u) => u.Email.ToUpper())
+            .RuleFor(u => u.NormalizedEmail, (f, u) => u.Email.ToUpper())
+            .RuleFor(u => u.SecurityStamp, f => Guid.NewGuid().ToString())
+            .RuleFor(u => u.PasswordHash, (f, u) => hasher.HashPassword(u, "Haslo123"))
             .RuleFor(u => u.CreatedAt, f => now.AddDays(-rnd.Next(14)))
             .RuleFor(l => l.UpdatedAt, (f, currentUser) => 
             {
@@ -121,7 +129,7 @@ public class DatabaseSeeder
                     return now;
             });
 
-        var users = userFaker.Generate(15);
+        var users = userFaker.Generate(20);
         context.Users.AddRange(users);
 
         var projectFaker = new Faker<Project>("pl")
