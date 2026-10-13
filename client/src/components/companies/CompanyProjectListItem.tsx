@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Unlink } from 'lucide-react';
 import type { ProjectCardViewModel } from '../../utils/projectDisplay';
 
-type CompanyProjectListItemProps = ProjectCardViewModel;
+type CompanyProjectListItemProps = ProjectCardViewModel & {
+  onDetach: (projectId: string) => void;
+};
 
 const CompanyProjectListItem: React.FC<CompanyProjectListItemProps> = ({
   id,
@@ -13,7 +16,14 @@ const CompanyProjectListItem: React.FC<CompanyProjectListItemProps> = ({
   membersCount,
   progress,
   status,
+  onDetach,
 }) => {
+  const handleDetachClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDetach(id);
+  };
+
   return (
     <Link
       to={`/projects/${id}/tablica-kanban`}
@@ -21,9 +31,19 @@ const CompanyProjectListItem: React.FC<CompanyProjectListItemProps> = ({
     >
       <div className="flex items-start justify-between">
         <h3 className="text-xl font-medium text-gray-900">{name}</h3>
-        <span className="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg bg-scrumdone-blue-main px-2 py-0.5 text-[12px] font-medium leading-4 text-white">
-          {status}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg bg-scrumdone-blue-main px-2 py-0.5 text-[12px] font-medium leading-4 text-white">
+            {status}
+          </span>
+          <button
+            type="button"
+            onClick={handleDetachClick}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Unlink className="w-4 h-4 text-gray-600" />
+            <span>Odepnij</span>
+          </button>
+        </div>
       </div>
 
       <p className="min-h-0 text-sm leading-relaxed text-gray-700">{description}</p>
