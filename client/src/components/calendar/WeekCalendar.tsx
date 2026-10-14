@@ -2,12 +2,16 @@ import React from 'react'
 import { format, addDays, isSameDay } from 'date-fns'
 import { useDroppable } from '@dnd-kit/core'
 import DraggableCalendarTask from './DraggableCalendarTask'
+import CalendarShowMoreButton from './CalendarShowMoreButton'
 import { toDayKey } from '../../lib/calendarRange'
 import type { CalendarTask } from '../../types/calendar'
 
 interface WeekCalendarProps {
     startDate: Date
     tasks: CalendarTask[]
+    // Liczba wszystkich zadań dla dni, które mogły nie zostać w pełni wczytane
+    dayTotals?: Record<string, number>
+    onShowMore?: (dayKey: string) => void
 }
 
 const CalendarDayColumn: React.FC<{
@@ -16,7 +20,9 @@ const CalendarDayColumn: React.FC<{
     isToday: boolean
     bodyBgClass: string
     tasks: CalendarTask[]
-}> = ({ columnDate, shortName, isToday, bodyBgClass, tasks }) => {
+    dayTotal?: number | undefined
+    onShowMore?: ((dayKey: string) => void) | undefined
+}> = ({ columnDate, shortName, isToday, bodyBgClass, tasks, dayTotal, onShowMore }) => {
     const dateString = toDayKey(columnDate)
     const { setNodeRef } = useDroppable({
         id: dateString,
@@ -40,13 +46,19 @@ const CalendarDayColumn: React.FC<{
                     {tasks.map((task) => (
                         <DraggableCalendarTask key={task.id} task={task} />
                     ))}
+                    <CalendarShowMoreButton
+                        dayKey={dateString}
+                        dayTotal={dayTotal}
+                        shownCount={tasks.length}
+                        onShowMore={onShowMore}
+                    />
                 </div>
             </div>
         </article>
     )
 }
 
-const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks }) => {
+const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks, dayTotals, onShowMore }) => {
     const dayNames = ['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.']
 
     return (
@@ -57,7 +69,8 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks }) => {
                 const isWeekend = index >= 5
                 const bodyBgClass = isToday || isWeekend ? 'bg-slate-50' : 'bg-white'
 
-                const tasksForThisDay = tasks.filter(task => task.date === toDayKey(columnDate))
+                const dayKey = toDayKey(columnDate)
+                const tasksForThisDay = tasks.filter(task => task.date === dayKey)
 
                 return (
                     <CalendarDayColumn
@@ -67,6 +80,8 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks }) => {
                         isToday={isToday}
                         bodyBgClass={bodyBgClass}
                         tasks={tasksForThisDay}
+                        dayTotal={dayTotals?.[dayKey]}
+                        onShowMore={onShowMore}
                     />
                 )
             })}

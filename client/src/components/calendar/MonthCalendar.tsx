@@ -2,6 +2,7 @@ import React from 'react'
 import { format, isSameMonth } from 'date-fns'
 import { useDroppable } from '@dnd-kit/core'
 import DraggableCalendarTask from './DraggableCalendarTask'
+import CalendarShowMoreButton from './CalendarShowMoreButton'
 import { getCalendarRange, toDayKey } from '../../lib/calendarRange'
 import type { CalendarTask } from '../../types/calendar'
 
@@ -10,6 +11,9 @@ interface MonthCalendarProps {
     tasks: CalendarTask[]
     // Mniejsze komórki - używane w kalendarzu projektu
     compact?: boolean
+    // Liczba wszystkich zadań dla dni, które mogły nie zostać w pełni wczytane
+    dayTotals?: Record<string, number>
+    onShowMore?: (dayKey: string) => void
 }
 
 const sizeClasses = {
@@ -39,7 +43,9 @@ const MonthDayCell: React.FC<{
     currentDate: Date
     tasks: CalendarTask[]
     classes: SizeClasses
-}> = ({ day, index, currentDate, tasks, classes }) => {
+    dayTotal?: number | undefined
+    onShowMore?: ((dayKey: string) => void) | undefined
+}> = ({ day, index, currentDate, tasks, classes, dayTotal, onShowMore }) => {
     const dateString = toDayKey(day)
     const { setNodeRef } = useDroppable({
         id: dateString,
@@ -69,11 +75,19 @@ const MonthDayCell: React.FC<{
                     <DraggableCalendarTask key={task.id} task={task} />
                 ))}
             </div>
+
+            <CalendarShowMoreButton
+                dayKey={dateString}
+                dayTotal={dayTotal}
+                shownCount={tasksForThisDay.length}
+                onShowMore={onShowMore}
+                className="mt-1 shrink-0"
+            />
         </div>
     )
 }
 
-const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, tasks, compact = false }) => {
+const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, tasks, compact = false, dayTotals, onShowMore }) => {
     const { days } = getCalendarRange('month', currentDate)
     const dayNames = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz']
     const classes = compact ? sizeClasses.compact : sizeClasses.regular
@@ -101,6 +115,8 @@ const MonthCalendar: React.FC<MonthCalendarProps> = ({ currentDate, tasks, compa
                         currentDate={currentDate}
                         tasks={tasks}
                         classes={classes}
+                        dayTotal={dayTotals?.[toDayKey(day)]}
+                        onShowMore={onShowMore}
                     />
                 ))}
             </div>
