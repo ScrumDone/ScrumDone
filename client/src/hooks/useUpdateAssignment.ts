@@ -13,6 +13,8 @@ export function useUpdateAssignment() {
       if (import.meta.env.DEV) {
         console.log('[Kanban] Zadanie zaktualizowane:', id, response);
       }
+      queryClient.setQueryData(['assignment', id], response);
+      queryClient.invalidateQueries({ queryKey: ['assignment', id] });
       queryClient.invalidateQueries({ queryKey: ['assignments'] });
     },
   });
