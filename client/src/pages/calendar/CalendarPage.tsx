@@ -43,7 +43,12 @@ const CalendarPage: React.FC = () => {
 
     const { selectedUserId } = useCurrentUser()
 
-    const projects = projectsResponse?.items ?? []
+    const projects = useMemo(() => projectsResponse?.items ?? [], [projectsResponse?.items])
+    // Lista zadań nie zwraca koloru projektu – dobieramy go po projectId
+    const projectColorById = useMemo(
+        () => new Map(projects.map((project) => [project.id, project.hexColor])),
+        [projects],
+    )
     const hasEmptyFilter = selectedProjectIds.length === 0 || selectedPriorityIds.length === 0
     const {
         sensors,
@@ -75,9 +80,11 @@ const CalendarPage: React.FC = () => {
                 && selectedProjectIds.includes(assignment.projectId)
                 && Boolean(assignment.priority?.id && selectedPriorityIds.includes(assignment.priority.id))
             ))
-            .map(assignmentToCalendarTask) ?? []
+            .map((assignment) => assignmentToCalendarTask(assignment, projectColorById.get(assignment.projectId)))
+            ?? []
     }, [
         calendarAssignments,
+        projectColorById,
         hasEmptyFilter,
         selectedProjectIds,
         selectedPriorityIds,
@@ -94,9 +101,11 @@ const CalendarPage: React.FC = () => {
                     && selectedProjectIds.includes(assignment.projectId)
                     && Boolean(assignment.priority?.id && selectedPriorityIds.includes(assignment.priority.id))
             })
-            .map(assignmentToNoDeadlineTask) ?? []
+            .map((assignment) => assignmentToNoDeadlineTask(assignment, projectColorById.get(assignment.projectId)))
+            ?? []
     }, [
         hasEmptyFilter,
+        projectColorById,
         noDeadlineAssignments?.items,
         selectedProjectIds,
         selectedPriorityIds,

@@ -139,7 +139,7 @@ const ProjectCalendarPage: React.FC = () => {
   const calendarTasks: CalendarTask[] = visibleAssignments
     .map((assignment) => applyOptimisticDueDate(assignment, optimisticDueDates))
     .filter((assignment) => assignment.dueDate !== null)
-    .map(assignmentToCalendarTask)
+    .map((assignment) => assignmentToCalendarTask(assignment, project?.hexColor))
   const noDeadlineTasks = useMemo(() => {
     if (noPeopleSelected || noPrioritiesSelected) return []
 
@@ -155,8 +155,10 @@ const ProjectCalendarPage: React.FC = () => {
 
         return dueDate === null && matchesProject && matchesPerson && matchesPriority
       })
-      .map(assignmentToNoDeadlineTask) ?? []
+      .map((assignment) => assignmentToNoDeadlineTask(assignment, project?.hexColor))
+      ?? []
   }, [
+    project?.hexColor,
     noDeadlineAssignmentsResponse?.items,
     noPeopleSelected,
     noPrioritiesSelected,

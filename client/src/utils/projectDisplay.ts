@@ -12,6 +12,7 @@ const emptyToNull = (value: string): string | null => {
 export type ProjectCardViewModel = {
   id: string;
   name: string;
+  hexColor: string;
   clientName: string;
   description: string;
   startDate: string;
@@ -109,6 +110,8 @@ export const toProjectUpdateDto = (draft: ProjectEditDraft): ProjectUpdateDto | 
     description: draft.description.trim() || null,
     startDate: parseDisplayDateToIso(draft.startDate),
     expectedFinishDate: parseDisplayDateToIso(draft.endDate),
+    // backend odrzuca pusty kolor, więc null = bez zmiany koloru
+    ...(draft.hexColor ? { hexColor: draft.hexColor } : {}),
   };
 };
 
@@ -160,6 +163,11 @@ export const toProjectCreateDto = (draft: EditProjectDraft): ProjectCreateDto | 
     isSetToScrum: draft.workMode === 'scrum',
   };
 
+  // Brak wybranego koloru = pole pominięte, backend dobierze kolor automatycznie
+  if (draft.hexColor) {
+    dto.hexColor = draft.hexColor;
+  }
+
   const description = draft.description.trim();
   if (description) {
     dto.description = description;
@@ -199,11 +207,13 @@ export const mapProjectDetailToEditDraft = (project: ProjectDetail): ProjectEdit
   startDate: toEditDateValue(project.startDate),
   endDate: toEditDateValue(project.expectedFinishDate),
   memberIds: project.teamMembers.map((member) => member.id),
+  hexColor: project.hexColor ?? null,
 });
 
 export const mapProjectListItemToCard = (project: ProjectListItem): ProjectCardViewModel => ({
   id: project.id,
   name: project.name,
+  hexColor: project.hexColor,
   clientName: project.companyName?.trim() || '—',
   description: project.description?.trim() || '—',
   startDate: formatProjectDateForDisplay(project.startDate),

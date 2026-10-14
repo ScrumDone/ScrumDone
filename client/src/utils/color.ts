@@ -12,3 +12,19 @@ export const hexToRgba = (hexColor: string, alpha: number) => {
 
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }
+
+// Akcent kafelka zadania w kalendarzu: pasek i tło w kolorze projektu (gdy znany), w przeciwnym razie priorytetu
+export const getCalendarTaskAccentStyle = (
+    projectHexColor: string | null | undefined,
+    priorityHexColor: string | null | undefined,
+) => {
+    const accentColor = projectHexColor ?? priorityHexColor
+    if (!accentColor) {
+        return undefined
+    }
+
+    return {
+        borderLeftColor: accentColor,
+        backgroundColor: hexToRgba(accentColor, 0.1),
+    }
+}

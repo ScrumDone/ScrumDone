@@ -6,6 +6,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import Avatar from '../common/Avatar';
+import ProjectColorPicker from './ProjectColorPicker';
 
 export type TeamMemberOption = {
   id: string;
@@ -20,6 +21,7 @@ export type EditProjectDraft = {
   startDate: string;
   endDate: string;
   memberIds: string[];
+  hexColor: string | null;
 };
 
 type ProjectEditModalProps = {
@@ -150,6 +152,12 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
               />
             </div>
           </div>
+
+          <ProjectColorPicker
+            value={draft.hexColor}
+            onChange={(hexColor) => onDraftChange((prev) => ({ ...prev, hexColor }))}
+            disabled={isBusy}
+          />
 
           <div>
             <h3 className="mb-2 block font-segoe-ui text-sm leading-3.5 tracking-[-0.15px] font-medium text-slate-800">Członkowie zespołu</h3>

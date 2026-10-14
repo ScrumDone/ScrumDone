@@ -9,4 +9,5 @@ export type CalendarTask = {
     colorVariant: TaskColor
     date: string // yyyy-MM-dd w strefie lokalnej, patrz toDayKey
     priorityHexColor?: string | null | undefined
+    projectHexColor?: string | null | undefined
 }

@@ -43,7 +43,8 @@ export const assignmentToKanbanCard = (a: Assignment) => {
   };
 };
 
-export const assignmentToCalendarTask = (a: Assignment) => {
+// Lista zadań nie zwraca koloru projektu, więc wywołujący podaje go z mapy projectId -> hexColor
+export const assignmentToCalendarTask = (a: Assignment, projectHexColor: string | null = null) => {
   const date = a.dueDate ? format(new Date(a.dueDate), 'yyyy-MM-dd') : ''
   return {
     id: a.id,
@@ -51,10 +52,11 @@ export const assignmentToCalendarTask = (a: Assignment) => {
     date,
     colorVariant: 'blue' as const,
     priorityHexColor: a.priority?.hexColor ?? null,
+    projectHexColor,
   }
 };
 
-export const assignmentToNoDeadlineTask = (a: Assignment) => {
+export const assignmentToNoDeadlineTask = (a: Assignment, projectHexColor: string | null = null) => {
   // Kolor zapasowy, gdy priorytet nie ma hexColor
   const fallbackColor = a.priority?.name === 'High' ? 'red' as const : 'blue' as const
 
@@ -66,6 +68,7 @@ export const assignmentToNoDeadlineTask = (a: Assignment) => {
     accentColor: fallbackColor,
     dotColor: fallbackColor,
     priorityHexColor: a.priority?.hexColor ?? null,
+    projectHexColor,
   }
 };
 

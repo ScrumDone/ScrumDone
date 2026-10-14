@@ -6,7 +6,7 @@ import type { Assignment } from '../../types/assignment'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
-import { hexToRgba } from '../../utils/color'
+import { getCalendarTaskAccentStyle } from '../../utils/color'
 
 type TaskAccentColor = 'blue' | 'orange' | 'red' | 'green' | 'yellow'
 
@@ -20,6 +20,7 @@ export interface CalendarNoDeadlineTask {
     accentColor: TaskAccentColor
     dotColor: TaskDotColor
     priorityHexColor?: string | null
+    projectHexColor?: string | null
 }
 
 export interface CalendarNoDeadlineTaskCardProps {
@@ -63,12 +64,7 @@ export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProp
     const navigate = useNavigate()
     const normalizedInitials = task.assigneeInitials.trim().slice(0, 2).toUpperCase()
     const backgroundClass = backgroundClassMap[task.accentColor]
-    const priorityStyles = task.priorityHexColor
-        ? {
-            borderLeftColor: task.priorityHexColor,
-            backgroundColor: hexToRgba(task.priorityHexColor, 0.1),
-        }
-        : undefined
+    const accentStyles = getCalendarTaskAccentStyle(task.projectHexColor, task.priorityHexColor)
 
     return (
         <article
@@ -82,7 +78,7 @@ export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProp
                 }
             }}
             className={`flex-none w-full max-w-75 cursor-pointer rounded-xl border border-l-4 p-3 transition-colors hover:opacity-90 ${accentClassMap[task.accentColor]} ${backgroundClass}`}
-            style={priorityStyles}
+            style={accentStyles}
         >
             <div className="mb-3 flex items-center gap-3">
                 <span

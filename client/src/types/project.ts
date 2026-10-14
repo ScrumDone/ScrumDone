@@ -12,6 +12,7 @@ export type ProjectListItem = {
   id: string;
   name: string;
   description: string;
+  hexColor: string;
   isActive: boolean;
   isSetToScrum: boolean;
   createdAt: string;
@@ -29,6 +30,7 @@ export type ProjectDetail = {
   id: string;
   name: string;
   description: string;
+  hexColor: string;
   isActive: boolean;
   isSetToScrum: boolean;
   createdAt: string;
@@ -47,6 +49,8 @@ export type ProjectDetail = {
 export type ProjectCreateDto = {
   name: string;
   description?: string;
+  /** Brak wartości = backend dobiera pierwszy nieużyty kolor z palety. */
+  hexColor?: string | null;
   isSetToScrum?: boolean;
   startDate?: string | null;
   expectedFinishDate?: string | null;
@@ -57,6 +61,7 @@ export type ProjectCreateDto = {
 export type ProjectUpdateDto = {
   name?: string | null;
   description?: string | null;
+  hexColor?: string | null;
   isActive?: boolean | null;
   isSetToScrum?: boolean | null;
   startDate?: string | null;

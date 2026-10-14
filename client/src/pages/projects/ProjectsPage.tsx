@@ -20,6 +20,7 @@ const emptyDraft = (): EditProjectDraft => ({
   endDate: '',
   memberIds: [],
   workMode: 'kanban',
+  hexColor: null,
 });
 
 const ProjectsPage: React.FC = () => {

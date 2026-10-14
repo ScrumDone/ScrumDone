@@ -1,13 +1,14 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { TaskColor } from '../../types/calendar'
-import { hexToRgba } from '../../utils/color'
+import { getCalendarTaskAccentStyle } from '../../utils/color'
 
 interface CalendarTaskItemProps {
     id: string
     title: string
     colorVariant: TaskColor
     priorityHexColor?: string | null | undefined
+    projectHexColor?: string | null | undefined
 }
 
 const colorVariantMap: Record<TaskColor, { dot: string; border: string; bg: string }> = {
@@ -38,15 +39,10 @@ const colorVariantMap: Record<TaskColor, { dot: string; border: string; bg: stri
     },
 }
 
-const CalendarTaskItem: React.FC<CalendarTaskItemProps> = ({ id, title, colorVariant, priorityHexColor }) => {
+const CalendarTaskItem: React.FC<CalendarTaskItemProps> = ({ id, title, colorVariant, priorityHexColor, projectHexColor }) => {
     const colors = colorVariantMap[colorVariant]
     const navigate = useNavigate()
-    const priorityStyles = priorityHexColor
-        ? {
-            borderLeftColor: priorityHexColor,
-            backgroundColor: hexToRgba(priorityHexColor, 0.1),
-        }
-        : undefined
+    const accentStyles = getCalendarTaskAccentStyle(projectHexColor, priorityHexColor)
 
     const handleClick = () => {
         navigate(`/task/${id}`)
@@ -64,7 +60,7 @@ const CalendarTaskItem: React.FC<CalendarTaskItemProps> = ({ id, title, colorVar
                 }
             }}
             className={`flex cursor-pointer items-center gap-2 rounded-lg border-l-[3px] px-2 py-2 transition-colors hover:opacity-90 ${colors.border} ${colors.bg}`}
-            style={priorityStyles}
+            style={accentStyles}
         >
             <span
                 className={`inline-block h-2 w-2 shrink-0 rounded-full ${colors.dot}`}

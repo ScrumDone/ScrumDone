@@ -34,6 +34,7 @@ const emptyDraft = (): EditProjectDraft => ({
   startDate: '',
   endDate: '',
   memberIds: [],
+  hexColor: null,
 });
 
 const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {

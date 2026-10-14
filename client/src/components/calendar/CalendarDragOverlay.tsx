@@ -19,7 +19,7 @@ const CalendarDragOverlay: React.FC<CalendarDragOverlayProps> = ({ activeId, cal
         <DragOverlay dropAnimation={null}>
             {activeTask ? (
                 <div className="cursor-grabbing">
-                    <CalendarTaskItem id={activeTask.id} title={activeTask.title} colorVariant={activeTask.colorVariant} priorityHexColor={activeTask.priorityHexColor} />
+                    <CalendarTaskItem id={activeTask.id} title={activeTask.title} colorVariant={activeTask.colorVariant} priorityHexColor={activeTask.priorityHexColor} projectHexColor={activeTask.projectHexColor} />
                 </div>
             ) : activeNoDeadlineTask ? (
                 <div className="cursor-grabbing">
