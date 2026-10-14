@@ -7,8 +7,7 @@ namespace ScrumDone.Api.Data
     {
         public Guid Id { get; set; } = Guid.NewGuid();
         public string UserName { get; set; }
-        public string Email { get; set; }
-        public Guid RoleId { get; set; }
+        public string NormalizedEmail { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }

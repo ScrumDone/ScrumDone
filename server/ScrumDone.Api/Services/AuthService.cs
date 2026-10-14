@@ -1,4 +1,5 @@
 ﻿using Bogus.DataSets;
+using Bogus.Extensions.UnitedKingdom;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -33,32 +34,66 @@ namespace ScrumDone.Api.Services
 
         public async Task InviteUser(UserInvitationDto dto)
         {
-            if (_context.Users.Any(u => u.Email == dto.Email))
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var normalizedEmail = dto.Email.Trim().ToUpper();
+
+            if (await _context.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail))
             {
                 throw new ConflictException($"Some user already uses this email address: {dto.Email}");
             }
 
-            if (_context.Invitations.Any(i => i.Email == dto.Email)){
+            if (await _context.Invitations.AnyAsync(i => i.NormalizedEmail == normalizedEmail)){
                 throw new ConflictException($"Invitation for this email address already exists: {dto.Email}");
             }
 
-            var invitation = new UserInvitation{
+            var normalizedUserName = dto.UserName.Trim().ToUpper();
+
+            if (await _context.Users.AnyAsync(u => u.NormalizedUserName == normalizedUserName))
+            {
+                throw new ConflictException($"Some user already uses this username: {dto.UserName}");
+            }
+
+            if (await _context.Invitations.AnyAsync(i => i.UserName.Trim().ToUpper() == normalizedUserName))
+            {
+                throw new ConflictException($"Invitation for this username already exists: {dto.UserName}");
+            }
+
+            var user = new User
+            {
+                UserName = dto.UserName,
                 Email = dto.Email,
-                UserName = dto.Name,
-                RoleId = dto.RoleId
+                EmailConfirmed = false,
+                UserPermissionsTypeId = dto.RoleId
+            };
+
+            var userCreationResult = await _userManager.CreateAsync(user);
+            if (!userCreationResult.Succeeded)
+            {
+                var errors = string.Join("; ", userCreationResult.Errors.Select(e => e.Description));
+                throw new BadRequestException($"Could not create user: {errors}");
+            }
+
+            // może invitation powinno mieć id usera
+            var invitation = new UserInvitation{
+                UserName = dto.UserName,
+                NormalizedEmail = normalizedEmail
             };
 
             _context.Invitations.Add(invitation);
+            await _context.SaveChangesAsync();
 
             Console.WriteLine($"This invitation ID is: {invitation.Id}");
 
-            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             return;
         }
 
         public async Task RegisterUser(Guid id, UserRegistrationDto dto)
         {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
             var invitation = await _context.Invitations.FirstOrDefaultAsync(i => i.Id == id);
 
             if (invitation is null)
@@ -66,24 +101,32 @@ namespace ScrumDone.Api.Services
                 throw new BadRequestException("There is no invitation for this id.");
             }
 
-            var user = new User
+            var user = await _userManager.FindByNameAsync(invitation.UserName);
+            if (user is null)
             {
-                UserName = invitation.UserName,
-                Name = invitation.UserName,
-                Email = invitation.Email,
-                UserPermissionsTypeId = invitation.RoleId
-            };
+                _context.Invitations.Remove(invitation);
+                await _context.SaveChangesAsync();
+                throw new BadRequestException("There is no user for which this inviation was created.");
+            }
 
-            var result = await _userManager.CreateAsync(user, dto.Password);
+            user.Name = dto.DisplayName;
+
+            var result = await _userManager.AddPasswordAsync(user, dto.Password);
             if (!result.Succeeded)
             {
-                throw new BadRequestException("Password is too weak.");
+                var errors = string.Join(" ", result.Errors.Select(e => e.Description));
+                throw new BadRequestException($"Password does not meet expectations: {errors}");
             }
+
+            user.EmailConfirmed = true;
+            await _userManager.UpdateAsync(user);
+
 
             _context.Invitations.Remove(invitation);
 
+            await _context.SaveChangesAsync();     
 
-            await _context.SaveChangesAsync();            
+            await transaction.CommitAsync();       
 
             return;
         }

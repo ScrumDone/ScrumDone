@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Diagnostics.Eventing.Reader;
+using Microsoft.AspNetCore.Identity;
 using ScrumDone.Api.Data.Common;
 
 namespace ScrumDone.Api.Data
