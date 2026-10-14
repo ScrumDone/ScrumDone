@@ -10,6 +10,7 @@ import CompanyContactEditModal from '../../components/companies/CompanyContactEd
 import CompanyLogEditModal from '../../components/companies/CompanyLogEditModal';
 import CompanyRowActionMenu from '../../components/companies/CompanyRowActionMenu';
 import CompanyAttachProjectModal from '../../components/companies/CompanyAttachProjectModal';
+import CompanyDetachProjectModal from '../../components/companies/CompanyDetachProjectModal';
 import CompanyProjectListItem from '../../components/companies/CompanyProjectListItem';
 import { useUpdateCompany } from '../../hooks/companies/useUpdateCompany';
 import { useCompany } from '../../hooks/companies/useCompany';
@@ -213,6 +214,7 @@ const CompanyDetailsPage: React.FC = () => {
   });
   const [isAttachProjectModalOpen, setIsAttachProjectModalOpen] = useState(false);
   const [selectedAttachProjectId, setSelectedAttachProjectId] = useState<string | null>(null);
+  const [detachingProjectId, setDetachingProjectId] = useState<string | null>(null);
   const [draft, setDraft] = useState<CompanyEditDraft>({
     name: '',
     nip: '',
@@ -275,6 +277,13 @@ const CompanyDetailsPage: React.FC = () => {
     isError: isAttachProjectError,
     error: attachProjectError,
     reset: resetAttachProject,
+  } = useUpdateProject();
+  const {
+    mutate: detachProject,
+    isPending: isDetachingProject,
+    isError: isDetachProjectError,
+    error: detachProjectError,
+    reset: resetDetachProject,
   } = useUpdateProject();
   const {
     data: attachProjectsData,
@@ -596,6 +605,36 @@ const CompanyDetailsPage: React.FC = () => {
     );
   };
 
+  const openDetachProjectModal = (projectId: string) => {
+    resetDetachProject();
+    setDetachingProjectId(projectId);
+  };
+
+  const closeDetachProjectModal = () => {
+    resetDetachProject();
+    setDetachingProjectId(null);
+  };
+
+  const saveDetachProject = () => {
+    if (!detachingProjectId || !displayedCompany) {
+      return;
+    }
+
+    detachProject(
+      {
+        id: detachingProjectId,
+        data: { companyId: null },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['companies', displayedCompany.id] });
+          queryClient.invalidateQueries({ queryKey: ['companies'] });
+          closeDetachProjectModal();
+        },
+      },
+    );
+  };
+
   const toggleNoteMenu = (noteId: string) => {
     setOpenNoteMenuId((current) => (current === noteId ? null : noteId));
   };
@@ -911,7 +950,7 @@ const CompanyDetailsPage: React.FC = () => {
 
                 {!isCompanyProjectsLoading && !isCompanyProjectsError && companyProjectCards.length > 0 &&
                   companyProjectCards.map((project) => (
-                    <CompanyProjectListItem key={project.id} {...project} />
+                    <CompanyProjectListItem key={project.id} {...project} onDetach={openDetachProjectModal} />
                   ))}
 
                 {!isCompanyProjectsLoading && !isCompanyProjectsError && companyProjectCards.length === 0 && (
@@ -1187,6 +1226,16 @@ const CompanyDetailsPage: React.FC = () => {
         onClose={closeAttachProjectModal}
         onSave={saveAttachProject}
         onProjectSelect={setSelectedAttachProjectId}
+      />
+
+      <CompanyDetachProjectModal
+        isOpen={detachingProjectId !== null}
+        projectName={companyProjectCards.find((project) => project.id === detachingProjectId)?.name ?? ''}
+        companyName={displayedCompany.name}
+        isSaving={isDetachingProject}
+        errorMessage={isDetachProjectError ? detachProjectError?.message : null}
+        onClose={closeDetachProjectModal}
+        onConfirm={saveDetachProject}
       />
 
     </div>
