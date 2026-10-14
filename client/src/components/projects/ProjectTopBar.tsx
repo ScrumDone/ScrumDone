@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { formatCount, PLURALS } from '../../utils/plural';
 import { ArrowLeftIcon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useProject } from '../../hooks/projects/useProject';
@@ -306,7 +307,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
                 </div>
                 <div className="inline-flex items-center gap-2 text-sm leading-5 tracking-[-0.15]">
                   <UserGroupIcon className="h-4 w-4" />
-                  {displayedProject.membersCount} członków zespołu
+                  {formatCount(displayedProject.membersCount, PLURALS.teamMembers)}
                 </div>
               </div>
             </div>

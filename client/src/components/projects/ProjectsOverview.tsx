@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { useProjects } from '../../hooks/projects/useProjects'
 import type { ProjectListItem } from '../../types/project'
 import { formatProjectDateForDisplay, getProjectStageCounts } from '../../utils/projectDisplay'
+import { formatCount, PLURALS } from '../../utils/plural'
 
 const ProjectsOverview: React.FC = () => {
     const { data, isLoading, isError, error } = useProjects({ page: 1, limit: 3 })
@@ -61,12 +62,12 @@ const ProjectOverviewCard: React.FC<{ project: ProjectListItem }> = ({ project }
                 <ClockIcon className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
                 <span>{dueDate}</span>
                 <span>•</span>
-                <span>{project.assignmentCount} issues</span>
+                <span>{formatCount(project.assignmentCount, PLURALS.tasks)}</span>
             </div>
 
             <div className="mb-4 flex items-center gap-1.5 font-segoe-ui text-[12px] leading-4 font-normal text-slate-500 antialiased">
                 <UsersIcon className="h-3.5 w-3.5 text-slate-500" aria-hidden="true" />
-                <span>{project.teamMemberCount} członków</span>
+                <span>{formatCount(project.teamMemberCount, PLURALS.members)}</span>
             </div>
 
             <div className="flex h-2 w-full overflow-hidden rounded-full bg-gray-100">

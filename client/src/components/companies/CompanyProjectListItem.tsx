@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatCount, PLURALS } from '../../utils/plural';
 import { Link } from 'react-router-dom';
 import { Unlink } from 'lucide-react';
 import type { ProjectCardViewModel } from '../../utils/projectDisplay';
@@ -53,7 +54,7 @@ const CompanyProjectListItem: React.FC<CompanyProjectListItemProps> = ({
           {startDate} - {endDate}
         </span>
         <span className="text-gray-400">•</span>
-        <span>{membersCount} członków</span>
+        <span>{formatCount(membersCount, PLURALS.members)}</span>
       </div>
 
       <div className="mt-2">

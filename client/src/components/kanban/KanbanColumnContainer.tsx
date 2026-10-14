@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { formatCount, PLURALS } from '../../utils/plural';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { KANBAN_COLUMN_PAGE_SIZE, useKanbanColumnAssignments } from '../../hooks/assignments/useAssignments';
@@ -95,7 +96,7 @@ const KanbanColumnContainer: React.FC<KanbanColumnContainerProps> = ({
         </h3>
         <span
           className="ml-1 inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 px-2 text-[12px] font-medium text-slate-600 antialiased"
-          title={showPagedCount ? `Wyświetlono ${tasks.length} z ${totalCount} zadań` : undefined}
+          title={showPagedCount ? `Wyświetlono ${tasks.length} z ${formatCount(totalCount, PLURALS.tasksGenitive)}` : undefined}
         >
           {countLabel}
         </span>
