@@ -6,6 +6,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import Avatar from '../common/Avatar';
+import ProjectColorPicker from './ProjectColorPicker';
 import type { CompanyListItem } from '../../types/company';
 
 export type TeamMemberOption = {
@@ -24,6 +25,8 @@ export type EditProjectDraft = {
   endDate: string;
   memberIds: string[];
   workMode?: 'kanban' | 'scrum';
+  /** null = kolor dobierze backend */
+  hexColor: string | null;
 };
 
 type ProjectCreateModalProps = {
@@ -197,6 +200,13 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
               </div>
             </div>
           </div>
+
+          <ProjectColorPicker
+            value={draft.hexColor}
+            onChange={(hexColor) => onDraftChange((prev) => ({ ...prev, hexColor }))}
+            allowAuto
+            disabled={isSaving}
+          />
 
           <div>
             <div className="mb-2 text-sm font-medium text-slate-700">Tryb pracy</div>

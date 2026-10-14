@@ -70,7 +70,8 @@ const CalendarFilters: React.FC<CalendarFiltersProps> = ({
     const projectOptions: FilterOption[] = projects.map(p => ({
         id: p.id,
         label: p.name,
-        colorClass: 'bg-slate-400'
+        colorClass: 'bg-slate-400',
+        hexColor: p.hexColor
     }))
 
     const priorityOptions: FilterOption[] = priorities.map(p => ({

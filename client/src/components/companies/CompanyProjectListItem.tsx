@@ -11,6 +11,7 @@ type CompanyProjectListItemProps = ProjectCardViewModel & {
 const CompanyProjectListItem: React.FC<CompanyProjectListItemProps> = ({
   id,
   name,
+  hexColor,
   description,
   startDate,
   endDate,
@@ -28,10 +29,14 @@ const CompanyProjectListItem: React.FC<CompanyProjectListItemProps> = ({
   return (
     <Link
       to={`/projects/${id}/tablica-kanban`}
-      className="flex w-full flex-col gap-2 rounded-[14px] border border-gray-100 bg-white p-6 transition-shadow duration-300 hover:shadow-lg"
+      className="flex w-full flex-col gap-2 rounded-[14px] border border-l-4 border-gray-100 bg-white p-6 transition-shadow duration-300 hover:shadow-lg"
+      style={{ borderLeftColor: hexColor }}
     >
       <div className="flex items-start justify-between">
-        <h3 className="text-xl font-medium text-gray-900">{name}</h3>
+        <h3 className="flex items-center gap-2 text-xl font-medium text-gray-900">
+          <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: hexColor }} aria-hidden="true" />
+          {name}
+        </h3>
         <div className="flex items-center gap-2">
           <span className="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg bg-scrumdone-blue-main px-2 py-0.5 text-[12px] font-medium leading-4 text-white">
             {status}
