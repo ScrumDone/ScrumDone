@@ -35,9 +35,4 @@ export const PLURALS = {
   tasks: { one: 'zadanie', few: 'zadania', many: 'zadań' },
   tasksGenitive: { one: 'zadania', few: 'zadań', many: 'zadań' },
   completed: { one: 'ukończone', few: 'ukończone', many: 'ukończonych' },
-  assignedPeople: {
-    one: 'więcej przypisana osoba',
-    few: 'więcej przypisane osoby',
-    many: 'więcej przypisanych osób',
-  },
 } satisfies Record<string, PluralForms>;
