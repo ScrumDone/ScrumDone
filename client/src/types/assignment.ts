@@ -27,7 +27,7 @@ export type Assignment = {
   createdAt: string;
   updatedAt: string;
   dueDate: string | null;
-  timeEstimate: string;
+  timeEstimate: number | null;
   status: AssignmentStatus;
   priority: AssignmentPriority | null;
   assignees: UserSummary[];
@@ -36,6 +36,7 @@ export type Assignment = {
   projectId: string;
   projectName: string;
   sprintId: string | null;
+  sprintName: string | null;
   parentAssignmentId: string | null;
 };
 
@@ -44,9 +45,9 @@ export type CreateAssignmentDto = {
   name: string;
   description?: string;
   dueDate?: string | null;
-  timeEstimate?: string;
+  timeEstimate?: number | null;
   statusId: string;
-  priorityId: string;
+  priorityId: string | null;
   assigneeIds?: string[];
   labelIds?: string[];
   projectId: string;
