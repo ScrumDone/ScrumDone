@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { formatCount, PLURALS } from '../../utils/plural';
 import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 export type Sprint = {
@@ -74,10 +75,10 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({
           <div className="mt-0.5 flex flex-wrap items-center gap-3 font-segoe-ui text-[12px] leading-4 font-medium text-slate-700 antialiased">
             <span>{currentSprint?.dateRange}</span>
             <span>•</span>
-            <span>{currentSprint?.totalTasks} zadań</span>
+            <span>{formatCount(currentSprint?.totalTasks, PLURALS.tasks)}</span>
             <span>•</span>
             <span className="text-scrumdone-green-500 font-medium">
-              {currentSprint?.completedTasks} ukończonych ({completionPercentage}%)
+              {formatCount(currentSprint?.completedTasks, PLURALS.completed)} ({completionPercentage}%)
             </span>
           </div>
         </div>
@@ -127,9 +128,9 @@ const SprintSelector: React.FC<SprintSelectorProps> = ({
                       <div className="mt-0.5 flex flex-wrap items-center gap-3 font-segoe-ui text-[12px] leading-4 font-medium text-slate-600 antialiased">
                         <span>{sprint.dateRange}</span>
                         <span>•</span>
-                        <span>{sprint.totalTasks} zadań</span>
+                        <span>{formatCount(sprint.totalTasks, PLURALS.tasks)}</span>
                         <span>•</span>
-                        <span className="text-scrumdone-green-500">{sprint.completedTasks} ukończonych ({sprintCompletionPercentage}%)</span>
+                        <span className="text-scrumdone-green-500">{formatCount(sprint.completedTasks, PLURALS.completed)} ({sprintCompletionPercentage}%)</span>
                       </div>
                     </div>
 

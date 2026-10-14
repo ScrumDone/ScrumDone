@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatCount, PLURALS } from '../../utils/plural';
 import { CalendarIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 
@@ -47,7 +48,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
         <div className="flex items-center gap-2 text-gray-700 text-sm">
           <UsersIcon className="w-4 h-4" />
-          <span>{membersCount} członków</span>
+          <span>{formatCount(membersCount, PLURALS.members)}</span>
         </div>
       </div>
 

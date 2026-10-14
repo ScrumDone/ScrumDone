@@ -122,7 +122,7 @@ export const KanbanTaskCard: React.FC<{
             {task.assigneesInitials.length > 2 && (
               <div
                 className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 font-segoe-ui text-[10px] font-medium text-slate-600 ring-2 ring-white"
-                aria-label={`+${task.assigneesInitials.length - 2} więcej przypisanych osób`}
+                aria-label={`+${task.assigneesInitials.length - 2}`}
               >
                 +{task.assigneesInitials.length - 2}
               </div>

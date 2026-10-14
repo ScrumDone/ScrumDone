@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { formatCount, PLURALS } from '../../utils/plural';
 import { useParams, useNavigate } from 'react-router-dom';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon, PlusIcon } from '@heroicons/react/24/outline';
 import {
@@ -762,9 +763,9 @@ const ProjectSprintsPage: React.FC = () => {
                         <div className="text-left">
                           <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
                           <p className="font-segoe-ui text-sm text-slate-500">
-                            {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań •{' '}
+                            {getSprintDateRange(sprint)} • {formatCount(sprint.totalTasks, PLURALS.tasks)} •{' '}
                             <span className="font-medium text-green-600">
-                              {sprint.completedTasks} ukończonych ({getSprintCompletionPercent(sprint)}%)
+                              {formatCount(sprint.completedTasks, PLURALS.completed)} ({getSprintCompletionPercent(sprint)}%)
                             </span>
                           </p>
                         </div>
@@ -840,7 +841,7 @@ const ProjectSprintsPage: React.FC = () => {
                         <div className="text-left">
                           <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
                           <p className="font-segoe-ui text-sm text-slate-500">
-                            {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań
+                            {getSprintDateRange(sprint)} • {formatCount(sprint.totalTasks, PLURALS.tasks)}
                           </p>
                         </div>
                       </button>
@@ -915,9 +916,9 @@ const ProjectSprintsPage: React.FC = () => {
                         <div className="text-left">
                           <h4 className="font-segoe-ui text-base font-medium text-slate-900">{sprint.title}</h4>
                           <p className="font-segoe-ui text-sm text-slate-500">
-                            {getSprintDateRange(sprint)} • {sprint.totalTasks} zadań •{' '}
+                            {getSprintDateRange(sprint)} • {formatCount(sprint.totalTasks, PLURALS.tasks)} •{' '}
                             <span className="font-medium text-green-600">
-                              {sprint.completedTasks} ukończonych ({getSprintCompletionPercent(sprint)}%)
+                              {formatCount(sprint.completedTasks, PLURALS.completed)} ({getSprintCompletionPercent(sprint)}%)
                             </span>
                           </p>
                         </div>
