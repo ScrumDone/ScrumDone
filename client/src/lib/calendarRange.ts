@@ -1,4 +1,4 @@
-import { addDays, endOfDay, format, startOfMonth, startOfWeek } from 'date-fns';
+import { addDays, endOfDay, format, parseISO, startOfDay, startOfMonth, startOfWeek } from 'date-fns';
 
 export type CalendarView = 'week' | 'month';
 
@@ -21,3 +21,13 @@ export const getCalendarRange = (view: CalendarView, anchorDate: Date) => {
 
 // Klucz dnia w strefie lokalnej - ten sam format co CalendarTask.date
 export const toDayKey = (date: Date) => format(date, 'yyyy-MM-dd');
+
+// Granice jednego dnia (klucz yyyy-MM-dd w strefie lokalnej) w formacie dla API
+export const getDayRange = (dayKey: string) => {
+  const day = parseISO(dayKey);
+
+  return {
+    dueFrom: startOfDay(day).toISOString(),
+    dueTo: endOfDay(day).toISOString(),
+  };
+};

@@ -14,6 +14,7 @@ import MonthCalendar from '../../components/calendar/MonthCalendar'
 import CalendarFilters from '../../components/calendar/CalendarFilters'
 import CalendarNoDeadlineTasks from '../../components/calendar/CalendarNoDeadlineTasks'
 import CalendarDragOverlay from '../../components/calendar/CalendarDragOverlay'
+import CalendarDayTasksModal from '../../components/calendar/CalendarDayTasksModal'
 import { useProjects } from '../../hooks/projects/useProjects'
 import { useAssignmentPriorities } from '../../hooks/assignments/useAssignmentPriorities'
 import { useAssignments } from '../../hooks/assignments/useAssignments'
@@ -65,7 +66,9 @@ const CalendarPage: React.FC = () => {
         ...(selectedMode === 'Personal' && selectedUserId ? { AssigneeIds: [selectedUserId] } : {}),
     }), [selectedProjectIds, selectedPriorityIds, selectedMode, selectedUserId])
 
-    const { data: calendarAssignments, range } = useCalendarAssignments(viewMode, currentDate, assignmentFilters, !hasEmptyFilter)
+    const { data: calendarAssignments, dayTotals, range } = useCalendarAssignments(viewMode, currentDate, assignmentFilters, !hasEmptyFilter)
+    // Dzień otwarty w oknie "+N więcej"
+    const [moreTasksDayKey, setMoreTasksDayKey] = useState<string | null>(null)
     const startDate = range.start
     const endDate = addDays(range.start, 6)
 
@@ -262,11 +265,15 @@ const CalendarPage: React.FC = () => {
                                         <WeekCalendar
                                             startDate={startDate}
                                             tasks={calendarTasks}
+                                            dayTotals={dayTotals}
+                                            onShowMore={setMoreTasksDayKey}
                                         />
                                     ) : (
                                         <MonthCalendar
                                             currentDate={currentDate}
                                             tasks={calendarTasks}
+                                            dayTotals={dayTotals}
+                                            onShowMore={setMoreTasksDayKey}
                                         />
                                     )}
                                 </div>
@@ -287,6 +294,11 @@ const CalendarPage: React.FC = () => {
                 </div>
                 <CalendarDragOverlay activeId={activeId} calendarTasks={calendarTasks} noDeadlineTasks={noDeadlineTasks} />
                 </DndContext>
+                <CalendarDayTasksModal
+                    dayKey={moreTasksDayKey}
+                    filters={assignmentFilters}
+                    onClose={() => setMoreTasksDayKey(null)}
+                />
             </main>
         </div>
     )
