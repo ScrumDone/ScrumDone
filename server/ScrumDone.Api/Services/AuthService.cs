@@ -43,10 +43,6 @@ namespace ScrumDone.Api.Services
                 throw new ConflictException($"Some user already uses this email address: {dto.Email}");
             }
 
-            if (await _context.Invitations.AnyAsync(i => i.NormalizedEmail == normalizedEmail)){
-                throw new ConflictException($"Invitation for this email address already exists: {dto.Email}");
-            }
-
             var normalizedUserName = dto.UserName.Trim().ToUpper();
 
             if (await _context.Users.AnyAsync(u => u.NormalizedUserName == normalizedUserName))
@@ -54,9 +50,9 @@ namespace ScrumDone.Api.Services
                 throw new ConflictException($"Some user already uses this username: {dto.UserName}");
             }
 
-            if (await _context.Invitations.AnyAsync(i => i.UserName.Trim().ToUpper() == normalizedUserName))
+            if (!await _context.UserPermissionsTypes.AnyAsync(p => p.Id == dto.RoleId))
             {
-                throw new ConflictException($"Invitation for this username already exists: {dto.UserName}");
+                throw new ConflictException($"There is no role with this id: {dto.RoleId}");
             }
 
             var user = new User
@@ -76,8 +72,7 @@ namespace ScrumDone.Api.Services
 
             // może invitation powinno mieć id usera
             var invitation = new UserInvitation{
-                UserName = dto.UserName,
-                NormalizedEmail = normalizedEmail
+                UserId = user.Id
             };
 
             _context.Invitations.Add(invitation);
@@ -101,7 +96,7 @@ namespace ScrumDone.Api.Services
                 throw new BadRequestException("There is no invitation for this id.");
             }
 
-            var user = await _userManager.FindByNameAsync(invitation.UserName);
+            var user = await _userManager.FindByIdAsync(invitation.UserId.ToString());
             if (user is null)
             {
                 _context.Invitations.Remove(invitation);
