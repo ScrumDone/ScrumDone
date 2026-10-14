@@ -21,12 +21,14 @@ namespace ScrumDone.Api.Services
     public class AuthService : IAuthService
     {
         private readonly AppDbContext _context;
+        private SignInManager<User> _signInManager;
         private UserManager<User> _userManager;
 
-        public AuthService(AppDbContext context, UserManager<User> userManager)
+        public AuthService(AppDbContext context, UserManager<User> userManager, SignInManager<User> signInManager)
         {
             _context = context;
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         public async Task InviteUser(UserInvitationDto dto)
@@ -66,7 +68,7 @@ namespace ScrumDone.Api.Services
 
             var user = new User
             {
-                UserName = invitation.Email,
+                UserName = invitation.UserName,
                 Name = invitation.UserName,
                 Email = invitation.Email,
                 UserPermissionsTypeId = invitation.RoleId
@@ -85,5 +87,30 @@ namespace ScrumDone.Api.Services
 
             return;
         }
+
+        public async Task Login(LoginDto dto)
+        {
+            var result = await _signInManager.PasswordSignInAsync(
+                userName: dto.UserName,
+                password: dto.Password,
+                isPersistent: dto.RememberMe,
+                lockoutOnFailure: false);        
+
+            if (!result.Succeeded)
+            {
+                throw new BadRequestException("Incorrect username or password.");
+            }
+
+            return;
+        }
+
+        public async Task Logout()
+        {
+            await _signInManager.SignOutAsync();      
+
+            return;
+        }
     }
+
+    
 }
