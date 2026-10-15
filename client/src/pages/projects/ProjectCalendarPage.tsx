@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { addDays, format, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns'
+import { addDays, format, addMonths, subMonths, addWeeks, subWeeks, isSameMonth } from 'date-fns'
 import { pl } from 'date-fns/locale'
 import { useParams } from 'react-router-dom'
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
@@ -10,11 +10,14 @@ import WeekCalendar from '../../components/calendar/WeekCalendar'
 import MonthCalendar from '../../components/calendar/MonthCalendar'
 import CalendarPeopleFilter, { type PersonFilter } from '../../components/common/PeopleFilter'
 import CalendarNoDeadlineTasks from '../../components/calendar/CalendarNoDeadlineTasks'
+import CalendarNoDeadlineDrawer from '../../components/calendar/CalendarNoDeadlineDrawer'
+import CalendarDayList from '../../components/calendar/CalendarDayList'
 import CalendarDragOverlay from '../../components/calendar/CalendarDragOverlay'
 import CalendarDayTasksModal from '../../components/calendar/CalendarDayTasksModal'
 import { useProject } from '../../hooks/projects/useProject'
 import { useAssignmentPriorities } from '../../hooks/assignments/useAssignmentPriorities'
 import { getInitialsFromName } from '../../hooks/users/useCurrentUser'
+import { DESKTOP_CALENDAR_QUERY, useMediaQuery } from '../../hooks/utils/useMediaQuery'
 import { DndContext } from '@dnd-kit/core'
 import { useAssignments } from '../../hooks/assignments/useAssignments'
 import { useCalendarAssignments } from '../../hooks/calendar/useCalendarAssignments'
@@ -28,6 +31,8 @@ const ProjectCalendarPage: React.FC = () => {
 
   const [displayMode, setDisplayMode] = useState<CalendarView>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
+  // Na telefonie zamiast siatki lista dni, a panel bez terminu jako szuflada
+  const isDesktop = useMediaQuery(DESKTOP_CALENDAR_QUERY)
 
   const { data: project } = useProject(projectId)
   const { data: priorities = [] } = useAssignmentPriorities()
@@ -209,7 +214,7 @@ const ProjectCalendarPage: React.FC = () => {
     <div className="min-h-screen w-full bg-[#F9FAFB]">
       <SideBar />
       <TopBar />
-      <main className="ml-64 pt-(--app-header-h)">
+      <main className="pt-(--app-header-h) lg:ml-64">
         <DndContext
           sensors={sensors}
           onDragStart={handleDragStart}
@@ -218,14 +223,14 @@ const ProjectCalendarPage: React.FC = () => {
         >
           <div className="flex w-full flex-col">
             <ProjectTopBar projectId={projectId} />
-            <section className="mx-6 mt-6 pb-8">
+            <section className="mx-4 mt-6 pb-24 sm:mx-6 md:pb-8">
                   <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                     <div className="min-w-0 space-y-4">
                       <div className="flex flex-col gap-4 p-0">
                         <div className="flex flex-wrap items-center justify-between gap-4">
                           <div className="flex items-center gap-2">
                             <button type="button" onClick={handlePrev} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 cursor-pointer"><ChevronLeftIcon className="h-4 w-4" /></button>
-                            <span className="font-segoe-ui text-[14px] text-slate-900 mx-1 min-w-[180px] text-center capitalize">{dateLabel}</span>
+                            <span className="font-segoe-ui text-[14px] text-slate-900 mx-1 min-w-0 text-center capitalize sm:min-w-[180px]">{dateLabel}</span>
                             <button type="button" onClick={handleNext} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 cursor-pointer"><ChevronRightIcon className="h-4 w-4" /></button>
                           </div>
                           <div className="inline-flex rounded-xl bg-slate-100/50 p-1">
@@ -233,13 +238,25 @@ const ProjectCalendarPage: React.FC = () => {
                             <button onClick={() => setDisplayMode('month')} className={monthButtonClass('month')}>Miesiąc</button>
                           </div>
                         </div>
-                        <div className={displayMode === 'week' ? 'mt-2 h-[calc(100vh-22rem)] min-h-96' : 'mt-2'}>
-                          {displayMode === 'week'
-                            ? <WeekCalendar startDate={range.start} tasks={calendarTasks} dayTotals={dayTotals} onShowMore={setMoreTasksDayKey} />
-                            : <MonthCalendar currentDate={currentDate} tasks={calendarTasks} compact dayTotals={dayTotals} onShowMore={setMoreTasksDayKey} />}
-                        </div>
+                        {!isDesktop ? (
+                          <div className="mt-2">
+                            <CalendarDayList
+                              days={displayMode === 'week' ? range.days : range.days.filter((day) => isSameMonth(day, currentDate))}
+                              tasks={calendarTasks}
+                              dayTotals={dayTotals}
+                              onShowMore={setMoreTasksDayKey}
+                              hideEmptyDays={displayMode === 'month'}
+                            />
+                          </div>
+                        ) : (
+                          <div className={displayMode === 'week' ? 'mt-2 h-[calc(100vh-22rem)] min-h-96' : 'mt-2'}>
+                            {displayMode === 'week'
+                              ? <WeekCalendar startDate={range.start} tasks={calendarTasks} dayTotals={dayTotals} onShowMore={setMoreTasksDayKey} />
+                              : <MonthCalendar currentDate={currentDate} tasks={calendarTasks} compact dayTotals={dayTotals} onShowMore={setMoreTasksDayKey} />}
+                          </div>
+                        )}
                       </div>
-                      <CalendarNoDeadlineTasks tasks={noDeadlineTasks} draggable droppable />
+                      {isDesktop ? <CalendarNoDeadlineTasks tasks={noDeadlineTasks} draggable droppable /> : null}
                     </div>
                     <aside className="flex flex-col gap-4">
                       <CalendarPeopleFilter
@@ -272,6 +289,7 @@ const ProjectCalendarPage: React.FC = () => {
                   </div>
             </section>
           </div>
+          {!isDesktop ? <CalendarNoDeadlineDrawer tasks={noDeadlineTasks} /> : null}
           <CalendarDragOverlay activeId={activeId} calendarTasks={calendarTasks} noDeadlineTasks={noDeadlineTasks} />
         </DndContext>
         <CalendarDayTasksModal

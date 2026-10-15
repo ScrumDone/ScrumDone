@@ -1,6 +1,7 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { CompanyEditDraft } from './CompanyEditModal';
+import { companyModalOverlayClass } from './companyModalClasses';
 
 type CompanyCreateModalProps = {
   isOpen: boolean;
@@ -31,9 +32,9 @@ const CompanyCreateModal: React.FC<CompanyCreateModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4" onClick={onClose}>
+    <div className={`${companyModalOverlayClass} z-50`} onClick={onClose}>
       <div
-        className="box-border flex h-[402px] w-[600px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-[12px] bg-white shadow-[0_8px_32px_rgba(15,23,42,0.12)]"
+        className="box-border flex h-full w-full flex-col overflow-hidden bg-white sm:h-[402px] sm:w-[600px] sm:max-h-[calc(100vh-2rem)] sm:max-w-[calc(100vw-2rem)] sm:rounded-[12px] sm:shadow-[0_8px_32px_rgba(15,23,42,0.12)]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between px-6 pb-2 pt-4">
@@ -65,7 +66,7 @@ const CompanyCreateModal: React.FC<CompanyCreateModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label className="mb-1.5 block font-segoe-ui text-sm font-medium text-slate-700" htmlFor="nip">
                 NIP

@@ -63,7 +63,7 @@ const WelcomePageTask: React.FC<WelcomePageTaskProps> = ({
                     onClick()
                 }
             }}
-            className={`rounded-lg p-4 ${
+            className={`rounded-lg p-3 sm:p-4 ${
                 isBlocked
                     ? 'border border-scrumdone-red-300 bg-scrumdone-red-100'
                     : 'border border-gray-200 bg-white'

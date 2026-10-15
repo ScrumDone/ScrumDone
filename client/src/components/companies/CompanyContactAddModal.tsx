@@ -1,5 +1,6 @@
 import React from 'react';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { companyModalOverlayClass, companyModalPanelClass } from './companyModalClasses';
 
 export type CompanyContactDraft = {
   name: string;
@@ -33,9 +34,9 @@ const CompanyContactAddModal: React.FC<CompanyContactAddModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4" onClick={onClose}>
+    <div className={`${companyModalOverlayClass} z-50`} onClick={onClose}>
       <div
-        className="flex max-h-[86vh] w-full max-w-130 flex-col overflow-hidden rounded-[10px] border border-slate-200 bg-white shadow-lg"
+        className={`${companyModalPanelClass} overflow-hidden`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between px-6 pb-4 pt-8">

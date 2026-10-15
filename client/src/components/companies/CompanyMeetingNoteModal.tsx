@@ -3,6 +3,7 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { ContactPerson } from '../../types/contact';
 import type { UserSummary } from '../../types/user';
 import { DEFAULT_MEETING_TITLE, type MeetingNoteDraft } from '../../utils/meetingNote';
+import { companyModalOverlayClass, companyModalPanelClass } from './companyModalClasses';
 
 type CompanyMeetingNoteModalProps = {
   isOpen: boolean;
@@ -109,9 +110,9 @@ const CompanyMeetingNoteModal: React.FC<CompanyMeetingNoteModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4" onClick={handleClose}>
+    <div className={`${companyModalOverlayClass} z-50`} onClick={handleClose}>
       <div
-        className="flex max-h-[86vh] w-full max-w-130 flex-col overflow-hidden rounded-[10px] border border-slate-200 bg-white shadow-lg"
+        className={`${companyModalPanelClass} overflow-hidden`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between px-6 pb-4 pt-8">

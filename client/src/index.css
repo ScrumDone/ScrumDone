@@ -29,6 +29,16 @@
   --color-scrumdone-purple-600: #AD46FF;
   --color-scrumdone-purple-100: #FAF5FF;
 
+  /* Wysuwanie szuflady od dołu ekranu (panel "bez deadline" na telefonie) */
+  --animate-drawer-up: drawer-up 200ms ease-out;
+  @keyframes drawer-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
 }
 
 

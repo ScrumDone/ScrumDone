@@ -1,5 +1,6 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { companyModalOverlayClass, companyModalPanelClass } from './companyModalClasses';
 
 type CompanyDetachProjectModalProps = {
   isOpen: boolean;
@@ -25,9 +26,9 @@ const CompanyDetachProjectModal: React.FC<CompanyDetachProjectModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4" onClick={onClose}>
+    <div className={`${companyModalOverlayClass} z-50`} onClick={onClose}>
       <div
-        className="flex w-full max-w-130 flex-col gap-4 rounded-[10px] border border-slate-200 bg-white px-6 pb-6 pt-8 shadow-lg"
+        className={`${companyModalPanelClass} gap-4 px-6 pb-6 pt-8`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between pb-4">

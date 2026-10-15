@@ -77,7 +77,7 @@ export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProp
                     navigate(`/task/${task.id}`)
                 }
             }}
-            className={`flex-none w-full max-w-75 cursor-pointer rounded-xl border border-l-4 p-3 transition-colors hover:opacity-90 ${accentClassMap[task.accentColor]} ${backgroundClass}`}
+            className={`flex-none w-full md:max-w-75 cursor-pointer rounded-xl border border-l-4 p-3 transition-colors hover:opacity-90 ${accentClassMap[task.accentColor]} ${backgroundClass}`}
             style={accentStyles}
         >
             <div className="mb-3 flex items-center gap-3">
@@ -124,7 +124,7 @@ const DraggableCalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardPr
     }
 
     return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-none">
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-manipulation">
             <CalendarNoDeadlineTaskCard task={task} />
         </div>
     )
@@ -176,7 +176,7 @@ const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
 
     const content = (
         <>
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="font-segoe-ui text-[18px] leading-7 font-medium text-slate-900 antialiased">
                     {title} ({processedTasks.length})
                 </h2>
@@ -205,7 +205,7 @@ const CalendarNoDeadlineTasks: React.FC<CalendarNoDeadlineTasksProps> = ({
             {!tasks && isLoading ? (
                 <div className="p-4 text-center text-slate-500">Ładowanie...</div>
             ) : (
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {paginatedTasks.map((task) => (
                         draggable
                             ? <DraggableCalendarNoDeadlineTaskCard key={task.id} task={task} />

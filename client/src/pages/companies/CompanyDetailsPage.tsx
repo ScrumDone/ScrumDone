@@ -432,8 +432,8 @@ const CompanyDetailsPage: React.FC = () => {
       <div className="min-h-screen w-full bg-[#F9FAFB]">
         <SideBar />
         <TopBar />
-        <main className="ml-64 pt-(--app-header-h)">
-          <section className="mx-8 mt-6 rounded-[14px] border border-gray-200 bg-white p-6 text-sm text-slate-500">
+        <main className="pt-(--app-header-h) lg:ml-64">
+          <section className="mx-4 sm:mx-8 mt-6 rounded-[14px] border border-gray-200 bg-white p-6 text-sm text-slate-500">
             Ładowanie...
           </section>
         </main>
@@ -446,8 +446,8 @@ const CompanyDetailsPage: React.FC = () => {
       <div className="min-h-screen w-full bg-[#F9FAFB]">
         <SideBar />
         <TopBar />
-        <main className="ml-64 pt-(--app-header-h)">
-          <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
+        <main className="pt-(--app-header-h) lg:ml-64">
+          <section className="mx-4 sm:mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
             Błąd: {error.message}
           </section>
         </main>
@@ -461,8 +461,8 @@ const CompanyDetailsPage: React.FC = () => {
         <SideBar />
         <TopBar />
 
-        <main className="ml-64 pt-(--app-header-h)">
-          <section className="mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
+        <main className="pt-(--app-header-h) lg:ml-64">
+          <section className="mx-4 sm:mx-8 mt-6 rounded-[14px] border border-red-200 bg-white p-6 text-red-700">
             Nie znaleziono firmy o podanym adresie.
           </section>
         </main>
@@ -864,26 +864,26 @@ const CompanyDetailsPage: React.FC = () => {
       <SideBar />
       <TopBar />
 
-      <main className="ml-64 pt-(--app-header-h)">
+      <main className="pt-(--app-header-h) lg:ml-64">
         <div className="flex w-full flex-col">
           <>
-            <div className="mx-8 mt-6">
+            <div className="mx-4 sm:mx-8 mt-6">
               <button className="flex items-center text-gray-500 hover:text-gray-900 text-sm font-medium" onClick={() => window.history.back()}>
                 <span>← Powrót do firm</span>
               </button>
             </div>
 
-            <div className="mx-8 mt-6 rounded-[14px] border border-gray-200 bg-white p-6">
-              <div className="flex items-start justify-between pb-8">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-16 w-16 mr-1 items-center justify-center rounded-lg bg-blue-100">
+            <div className="mx-4 mt-6 rounded-[14px] border border-gray-200 bg-white p-4 sm:mx-8 sm:p-6">
+              <div className="flex flex-col gap-4 pb-8 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 items-start gap-4">
+                  <div className="flex h-16 w-16 mr-1 shrink-0 items-center justify-center rounded-lg bg-blue-100">
                     <span className="text-2xl font-bold text-blue-600">
                       {displayedCompany.name.charAt(0)}
                     </span>
                   </div>
-                  <div>
-                    <h1 className="text-2xl font-medium leading-8 text-gray-900">{displayedCompany.name}</h1>
-                    <div className="mt-3 grid grid-cols-3 gap-6">
+                  <div className="min-w-0">
+                    <h1 className="break-words text-2xl font-medium leading-8 text-gray-900">{displayedCompany.name}</h1>
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-6">
                       <div>
                         <p className="text-xs font-regular leading-4 text-gray-500 uppercase">NIP</p>
                         <p className="text-sm font-medium leading-5 text-gray-900">{displayedCompany.nip}</p>
@@ -899,7 +899,7 @@ const CompanyDetailsPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={openContactAddModal}
@@ -919,7 +919,7 @@ const CompanyDetailsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-12 mb-6 pb-6 border-b border-gray-200">
+              <div className="grid grid-cols-1 gap-6 mb-6 pb-6 border-b border-gray-200 sm:grid-cols-2 sm:gap-12">
                 <div>
                   <div className="mb-1 flex items-center gap-3">
                     <MapPin className="w-5 h-5 text-gray-400" />
@@ -936,7 +936,7 @@ const CompanyDetailsPage: React.FC = () => {
                   <div className="space-y-1">
                     {displayedCompany.emails.length > 0 ? (
                       displayedCompany.emails.map((email, index) => (
-                        <p key={index} className="text-sm text-gray-800">
+                        <p key={index} className="break-all text-sm text-gray-800">
                           {email}
                         </p>
                       ))
@@ -955,8 +955,8 @@ const CompanyDetailsPage: React.FC = () => {
                       key={contact.id}
                       className="flex items-start justify-between bg-[#F9FAFB] border border-gray-200 rounded-[10px] p-4"
                     >
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-3">
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                           <h4 className="font-medium text-gray-900">{contact.name ?? '—'}</h4>
                           {mainContactId != null && contact.id === mainContactId && (
                             <span className="rounded-full bg-scrumdone-blue-main px-2 py-1 text-xs font-medium text-white">
@@ -965,10 +965,10 @@ const CompanyDetailsPage: React.FC = () => {
                           )}
                         </div>
                         <p className="text-sm text-gray-500 mt-1">{contact.role ?? '—'}</p>
-                        <div className="mt-3 mx-auto flex max-w-180 items-center justify-center gap-6 text-sm text-gray-600">
+                        <div className="mt-3 flex flex-col gap-1 text-sm text-gray-600 sm:mx-auto sm:max-w-180 sm:flex-row sm:items-center sm:justify-center sm:gap-6">
                           <div className="flex items-center gap-3">
                             <Mail className="w-4 h-4 text-gray-400" />
-                            <span>{contact.email ?? '—'}</span>
+                            <span className="break-all">{contact.email ?? '—'}</span>
                           </div>
 
                           <div className="flex items-center gap-3 text-sm text-gray-600">
@@ -988,8 +988,8 @@ const CompanyDetailsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-between p-6 items-center">
-              <div className="relative inline-grid h-9 w-fit grid-cols-3 rounded-[14px] bg-[#E5E7EB] p-0.75 ml-3">
+            <div className="flex flex-col gap-3 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div className="relative inline-grid h-9 w-full grid-cols-3 rounded-[14px] bg-[#E5E7EB] p-0.75 sm:ml-3 sm:w-fit">
                 <span
                   aria-hidden="true"
                   className="pointer-events-none absolute top-0.75 bottom-0.75 rounded-[14px] bg-[#F8FAFC]  transition-all duration-300 ease-out"
@@ -1007,14 +1007,15 @@ const CompanyDetailsPage: React.FC = () => {
                   onClick={() => setActiveTab('projects')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'projects' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Aktywne projekty ({isCompanyProjectsLoading ? '...' : companyProjectsCount})
+                  {/* Na telefonie krótsze etykiety, żeby trzy zakładki zmieściły się w 375 px */}
+                  <span className="hidden sm:inline">Aktywne projekty</span><span className="sm:hidden">Projekty</span> ({isCompanyProjectsLoading ? '...' : companyProjectsCount})
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('history')}
                   className={`relative z-10 rounded-[14px] px-3 text-sm font-medium transition-colors ${activeTab === 'history' ? 'text-[#0F172A]' : 'text-[#111827] hover:text-[#0F172A]'}`}
                 >
-                  Historia współpracy ({isLogsLoading ? '...' : logsData?.totalCount ?? 0})
+                  <span className="hidden sm:inline">Historia współpracy</span><span className="sm:hidden">Historia</span> ({isLogsLoading ? '...' : logsData?.totalCount ?? 0})
                 </button>
                 <button
                   type="button"
@@ -1028,7 +1029,7 @@ const CompanyDetailsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={openAttachProjectModal}
-                className="mr-3 inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium leading-2.5 text-white transition-all hover:bg-[#00A0DD] active:scale-95"
+                className="self-start inline-flex h-9 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-scrumdone-blue-main sm:mr-3 sm:self-auto px-4 text-sm font-medium leading-2.5 text-white transition-all hover:bg-[#00A0DD] active:scale-95"
               >
                 <PlusIcon className="h-4 w-4 stroke-2" />
                 Podepnij projekt
@@ -1036,7 +1037,7 @@ const CompanyDetailsPage: React.FC = () => {
             </div>
 
             {activeTab === 'projects' && (
-              <section className="mx-8 mb-8 space-y-6">
+              <section className="mx-4 sm:mx-8 mb-8 space-y-6">
                 {isCompanyProjectsLoading && (
                   <p className="text-sm text-slate-500 animate-pulse">Ładowanie projektów...</p>
                 )}
@@ -1062,7 +1063,7 @@ const CompanyDetailsPage: React.FC = () => {
 
             {activeTab === 'history' && (
               <section
-                className="mx-8 mb-8 rounded-[14px] border border-gray-200 bg-white p-6"
+                className="mx-4 mb-8 rounded-[14px] border border-gray-200 bg-white p-4 sm:mx-8 sm:p-6"
                 style={{
                   ['--history-col-width' as string]: '56px',
                   ['--history-icon-size' as string]: '40px',
@@ -1143,7 +1144,7 @@ const CompanyDetailsPage: React.FC = () => {
                         <p className="mt-2 font-segoe-ui text-[12px] leading-5 text-slate-500 antialiased">Dodane przez: {item.author}</p>
                       </div>
 
-                      <div className="flex items-start justify-end gap-3 lg:flex-col lg:items-end">
+                      <div className="col-start-2 flex items-start gap-3 lg:col-start-auto lg:flex-col lg:items-end lg:justify-end">
                         <div className="flex items-center gap-3">
                           <p className="font-segoe-ui text-[14px] leading-6 text-slate-500 antialiased lg:text-right">
                             {item.dateLabel}
@@ -1162,7 +1163,7 @@ const CompanyDetailsPage: React.FC = () => {
             )}
 
             {activeTab === 'notes' && (
-              <section className="mx-8 mb-8 rounded-[14px] border border-gray-200 bg-white p-6 flex flex-col gap-6">
+              <section className="mx-4 mb-8 flex flex-col gap-6 rounded-[14px] border border-gray-200 bg-white p-4 sm:mx-8 sm:p-6">
                 <div>
                   <h3 className="text-sm text-gray-900 mb-3">Dodaj nową notatkę</h3>
                   {isAddNoteError && (

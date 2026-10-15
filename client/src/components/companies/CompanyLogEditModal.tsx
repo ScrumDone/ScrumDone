@@ -2,6 +2,7 @@ import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { COOPERATION_EVENT_TYPES } from '../../constants/cooperationEventTypes';
 import type { CompanyLogEditDraft } from '../../utils/cooperationLogDisplay';
+import { companyModalOverlayClass, companyModalPanelClass } from './companyModalClasses';
 
 type CompanyLogEditModalProps = {
   isOpen: boolean;
@@ -27,9 +28,9 @@ const CompanyLogEditModal: React.FC<CompanyLogEditModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4" onClick={onClose}>
+    <div className={`${companyModalOverlayClass} z-50`} onClick={onClose}>
       <div
-        className="flex max-h-[86vh] w-full max-w-130 flex-col overflow-hidden rounded-[10px] border border-slate-200 bg-white shadow-lg"
+        className={`${companyModalPanelClass} overflow-hidden`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between px-6 pb-4 pt-8">

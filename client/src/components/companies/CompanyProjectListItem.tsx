@@ -29,11 +29,11 @@ const CompanyProjectListItem: React.FC<CompanyProjectListItemProps> = ({
   return (
     <Link
       to={`/projects/${id}/tablica-kanban`}
-      className="flex w-full flex-col gap-2 rounded-[14px] border border-l-4 border-gray-100 bg-white p-6 transition-shadow duration-300 hover:shadow-lg"
+      className="flex w-full flex-col gap-2 rounded-[14px] border border-l-4 border-gray-100 bg-white p-4 transition-shadow sm:p-6 duration-300 hover:shadow-lg"
       style={{ borderLeftColor: hexColor }}
     >
-      <div className="flex items-start justify-between">
-        <h3 className="flex items-center gap-2 text-xl font-medium text-gray-900">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <h3 className="flex min-w-0 items-center gap-2 break-words text-xl font-medium text-gray-900">
           <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: hexColor }} aria-hidden="true" />
           {name}
         </h3>
@@ -54,7 +54,7 @@ const CompanyProjectListItem: React.FC<CompanyProjectListItemProps> = ({
 
       <p className="min-h-0 text-sm leading-relaxed text-gray-700">{description}</p>
 
-      <div className="mt-1 flex items-center gap-2 text-sm text-gray-700">
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-gray-700">
         <span>
           {startDate} - {endDate}
         </span>
