@@ -32,7 +32,7 @@ const CalendarDayColumn: React.FC<{
     return (
         <article
             ref={setNodeRef}
-            className="flex flex-col border-r border-b border-slate-200 min-h-[350px]"
+            className="flex min-h-0 flex-col border-r border-b border-slate-200"
         >
             <header className={`flex flex-col items-center justify-center gap-1 py-4 border-b border-slate-200 ${isToday ? 'bg-[#eef9ff]' : 'bg-white'}`}>
                 <p className="text-[14px] text-slate-400 font-normal">{shortName}</p>
@@ -41,18 +41,20 @@ const CalendarDayColumn: React.FC<{
                 </p>
             </header>
 
-            <div className={`flex-1 p-2 ${bodyBgClass}`}>
-                <div className="flex flex-col gap-2">
+            <div className={`flex min-h-0 flex-1 flex-col p-2 ${bodyBgClass}`}>
+                {/* Kolumna ma stałą wysokość - nadmiar zadań przewija się w środku */}
+                <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto [scrollbar-width:thin]">
                     {tasks.map((task) => (
                         <DraggableCalendarTask key={task.id} task={task} />
                     ))}
-                    <CalendarShowMoreButton
-                        dayKey={dateString}
-                        dayTotal={dayTotal}
-                        shownCount={tasks.length}
-                        onShowMore={onShowMore}
-                    />
                 </div>
+                <CalendarShowMoreButton
+                    dayKey={dateString}
+                    dayTotal={dayTotal}
+                    shownCount={tasks.length}
+                    onShowMore={onShowMore}
+                    className="mt-1 shrink-0"
+                />
             </div>
         </article>
     )
@@ -62,7 +64,7 @@ const WeekCalendar: React.FC<WeekCalendarProps> = ({ startDate, tasks, dayTotals
     const dayNames = ['pon.', 'wt.', 'śr.', 'czw.', 'pt.', 'sob.', 'niedz.']
 
     return (
-        <div className="grid grid-cols-7 overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50">
+        <div className="grid h-full grid-cols-7 grid-rows-1 overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50">
             {dayNames.map((shortName, index) => {
                 const columnDate = addDays(startDate, index)
                 const isToday = isSameDay(columnDate, new Date())
