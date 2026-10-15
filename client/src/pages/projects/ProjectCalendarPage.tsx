@@ -233,7 +233,7 @@ const ProjectCalendarPage: React.FC = () => {
                             <button onClick={() => setDisplayMode('month')} className={monthButtonClass('month')}>Miesiąc</button>
                           </div>
                         </div>
-                        <div className="mt-2">
+                        <div className={displayMode === 'week' ? 'mt-2 h-[calc(100vh-22rem)] min-h-96' : 'mt-2'}>
                           {displayMode === 'week'
                             ? <WeekCalendar startDate={range.start} tasks={calendarTasks} dayTotals={dayTotals} onShowMore={setMoreTasksDayKey} />
                             : <MonthCalendar currentDate={currentDate} tasks={calendarTasks} compact dayTotals={dayTotals} onShowMore={setMoreTasksDayKey} />}
