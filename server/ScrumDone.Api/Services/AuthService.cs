@@ -23,12 +23,14 @@ namespace ScrumDone.Api.Services
     {
         private readonly AppDbContext _context;
         private SignInManager<User> _signInManager;
+        private RoleManager<IdentityRole<Guid>> _roleManager;
         private UserManager<User> _userManager;
 
-        public AuthService(AppDbContext context, UserManager<User> userManager, SignInManager<User> signInManager)
+        public AuthService(AppDbContext context, UserManager<User> userManager, RoleManager<IdentityRole<Guid>> roleManager, SignInManager<User> signInManager)
         {
             _context = context;
             _userManager = userManager;
+            _roleManager = roleManager;
             _signInManager = signInManager;
         }
 
@@ -50,9 +52,14 @@ namespace ScrumDone.Api.Services
                 throw new ConflictException($"Some user already uses this username: {dto.UserName}");
             }
 
-            if (!await _context.UserPermissionsTypes.AnyAsync(p => p.Id == dto.RoleId))
+            foreach (var role in dto.Roles)
             {
-                throw new ConflictException($"There is no role with this id: {dto.RoleId}");
+                var roleResult = await _roleManager.FindByNameAsync(role);
+
+                if (roleResult is null)
+                {
+                    throw new BadRequestException($"Role {role} has not been found.");
+                }
             }
 
             var user = new User
@@ -60,13 +67,19 @@ namespace ScrumDone.Api.Services
                 UserName = dto.UserName,
                 Email = dto.Email,
                 EmailConfirmed = false,
-                UserPermissionsTypeId = dto.RoleId
             };
 
             var userCreationResult = await _userManager.CreateAsync(user);
             if (!userCreationResult.Succeeded)
             {
                 var errors = string.Join("; ", userCreationResult.Errors.Select(e => e.Description));
+                throw new BadRequestException($"Could not create user: {errors}");
+            }
+                        
+            var result = await _userManager.AddToRolesAsync(user, dto.Roles);
+            if (!userCreationResult.Succeeded)
+            {
+                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
                 throw new BadRequestException($"Could not create user: {errors}");
             }
 
@@ -115,7 +128,6 @@ namespace ScrumDone.Api.Services
 
             user.EmailConfirmed = true;
             await _userManager.UpdateAsync(user);
-
 
             _context.Invitations.Remove(invitation);
 

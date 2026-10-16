@@ -11,11 +11,11 @@ using ScrumDone.Api.Utilities;
 using Microsoft.AspNetCore.Identity;
 public class DatabaseSeeder
 {
-    public static void Seed(AppDbContext context)
+    public static async Task Seed(AppDbContext context, UserManager<User> userManager, RoleManager<IdentityRole<Guid>> roleManager)
     {
         var hasher = new PasswordHasher<User>();
 
-        if(context.UserPermissionsTypes.Any())
+        if(context.AssignmentStatuses.Any())
         {
             return;
         }
@@ -24,14 +24,18 @@ public class DatabaseSeeder
         Random rnd = new Random(123);
         var now = DateTimeOffset.UtcNow;
 
-        var permissions = new List<UserPermissionsType>
+        var roles = new List<IdentityRole<Guid>>
         {
-            new UserPermissionsType { Id = Guid.NewGuid(), Name = "Admin", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new UserPermissionsType { Id = Guid.NewGuid(), Name = "ProjectManager", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now },
-            new UserPermissionsType { Id = Guid.NewGuid(), Name = "StandardUser", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now }
+            new IdentityRole<Guid>{ Name = "Admin"},
+            new IdentityRole<Guid>{ Name = "ProjectManager"},
+            new IdentityRole<Guid>{ Name = "StandardUser"}
         };
-        context.UserPermissionsTypes.AddRange(permissions);
 
+        foreach (var role in roles)
+        {
+            await roleManager.CreateAsync(role);
+        }
+        
         var statuses = new List<AssignmentStatus>
         {
             new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#D1D5DB", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 0 },
@@ -114,7 +118,6 @@ public class DatabaseSeeder
             .RuleFor(u => u.Name, f => f.Name.FullName())
             .RuleFor(u => u.Email, f => f.Internet.Email())
             .RuleFor(u => u.ProfilePictureUrl, f => f.Internet.Avatar())
-            .RuleFor(u => u.UserPermissionsTypeId, f => f.PickRandom(permissions).Id)
             .RuleFor(u => u.UserName, (f, u) => u.Email)
             .RuleFor(u => u.NormalizedUserName, (f, u) => u.Email.ToUpper())
             .RuleFor(u => u.NormalizedEmail, (f, u) => u.Email.ToUpper())
@@ -130,7 +133,16 @@ public class DatabaseSeeder
             });
 
         var users = userFaker.Generate(20);
+
         context.Users.AddRange(users);
+        await context.SaveChangesAsync();
+
+        foreach (var user in users)
+        {
+            var randomRoleIndex = rnd.Next(roles.Count);
+            var randomRole = roles[randomRoleIndex];
+            await userManager.AddToRoleAsync(user, randomRole.Name);
+        }
 
         var projectFaker = new Faker<Project>("pl")
             .RuleFor(p => p.Id, f => f.Random.Guid())

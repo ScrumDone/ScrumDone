@@ -45,6 +45,7 @@ builder.Services.AddIdentityCore<User>(options =>
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
 })
+.AddRoles<IdentityRole<Guid>>()
 .AddEntityFrameworkStores<AppDbContext>()
 .AddSignInManager<SignInManager<User>>()
 .AddApiEndpoints();
@@ -101,7 +102,10 @@ if (!app.Environment.IsEnvironment("Testing"))
         db.Database.Migrate();
         if (app.Environment.IsDevelopment())
         {
-            DatabaseSeeder.Seed(db);
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+
+            await DatabaseSeeder.Seed(db, userManager, roleManager);
         }
     }
 }

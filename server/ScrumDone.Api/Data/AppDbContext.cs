@@ -28,7 +28,6 @@ namespace ScrumDone.Api.Data
         public DbSet<FileLabel> FileLabels { get; set; }
         public DbSet<AssignmentStatus> AssignmentStatuses { get; set; }
         public DbSet<AssignmentPriority> AssignmentPriorities { get; set; }
-        public DbSet<UserPermissionsType> UserPermissionsTypes { get; set; }
         public DbSet<AssignmentLabel> AssignmentLabels { get; set; }
         public DbSet<Sprint> Sprints { get; set; }
         public DbSet<Reaction> Reactions { get; set; }

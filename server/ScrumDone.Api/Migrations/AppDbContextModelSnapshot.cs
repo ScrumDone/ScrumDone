@@ -1101,9 +1101,6 @@ namespace ScrumDone.Api.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<Guid>("UserPermissionsTypeId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedEmail")
@@ -1112,8 +1109,6 @@ namespace ScrumDone.Api.Migrations
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
-
-                    b.HasIndex("UserPermissionsTypeId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -1142,33 +1137,6 @@ namespace ScrumDone.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Invitations");
-                });
-
-            modelBuilder.Entity("ScrumDone.Api.Data.UserPermissionsType", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UserPermissionsTypes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -1532,17 +1500,6 @@ namespace ScrumDone.Api.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("ScrumDone.Api.Data.User", b =>
-                {
-                    b.HasOne("ScrumDone.Api.Data.UserPermissionsType", "PermissionsType")
-                        .WithMany("Users")
-                        .HasForeignKey("UserPermissionsTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("PermissionsType");
-                });
-
             modelBuilder.Entity("ScrumDone.Api.Data.Assignment", b =>
                 {
                     b.Navigation("Assignees");
@@ -1645,11 +1602,6 @@ namespace ScrumDone.Api.Migrations
                     b.Navigation("Reactions");
 
                     b.Navigation("ReceivedNotifications");
-                });
-
-            modelBuilder.Entity("ScrumDone.Api.Data.UserPermissionsType", b =>
-                {
-                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }
