@@ -13,5 +13,9 @@ namespace ScrumDone.Api.Services
         Task InviteUser(UserInvitationDto dto);
 
         Task RegisterUser(Guid id, UserRegistrationDto dto);
+
+        Task Login(LoginDto dto);
+
+        Task Logout();
     }
 }

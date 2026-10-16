@@ -5,6 +5,7 @@ using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Auth;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 
 namespace ScrumDone.Api.Controllers
 {
@@ -36,6 +37,25 @@ namespace ScrumDone.Api.Controllers
             [FromBody] UserRegistrationDto dto)
         {
             await _authService.RegisterUser(id, dto);
+
+            return Ok();
+        } 
+
+        [HttpPost("login")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> Login(
+            [FromBody] LoginDto dto)
+        {
+            await _authService.Login(dto);
+
+            return Ok();
+        }  
+
+        [HttpPost("logout")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> Logout()
+        {
+            await _authService.Logout();
 
             return Ok();
         }    
