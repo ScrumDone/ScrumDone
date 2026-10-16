@@ -27,7 +27,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            db.Users.Add(new User { Id = userId, Name = "Test User", Email = "test2@example.com", UserName = "test2example.com" });
             return Task.CompletedTask;
         });
 
@@ -64,7 +64,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            db.Users.Add(new User { Id = userId, Name = "Test User", Email = "test2@example.com", UserName = "test2example.com" });
             return Task.CompletedTask;
         });
 
@@ -112,7 +112,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            db.Users.Add(new User { Id = userId, Name = "Test User", Email = "test2@example.com", UserName = "test2example.com" });
             return Task.CompletedTask;
         });
 
@@ -135,7 +135,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            db.Users.Add(new User { Id = userId, Name = "Test User", Email = "test2@example.com", UserName = "test2example.com" });
             return Task.CompletedTask;
         });
 
@@ -174,7 +174,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "User" });
+            db.Users.Add(new User { Id = userId, Name = "User", Email = "test2@example.com", UserName = "test2example.com" });
             return Task.CompletedTask;
         });
 
@@ -203,7 +203,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            db.Users.Add(new User { Id = userId, Name = "Test User", Email = "test2@example.com", UserName = "test2example.com" });
             return Task.CompletedTask;
         });
 
@@ -226,7 +226,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            db.Users.Add(new User { Id = userId, Name = "Test User", Email = "test2@example.com", UserName = "test2example.com" });
             foreach (var color in ColorHelper.HighlyDistinctColors)
             {
                 db.Projects.Add(new Project
@@ -618,12 +618,14 @@ public class ProjectsEndpointTests
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        var userName = "Test User";
+        var name = "Test User";
+        var Email = "test2@example.com";
+        var userName = "test2example.com";
 
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.Add(new Project { Id = projectId, Name = "Test Project", Description = "", HexColor = "#0072B2" });
-            db.Users.Add(new User { Id = userId, Name = userName });
+            db.Users.Add(new User { Id = userId, Name = name, Email = Email, UserName = userName });
             return Task.CompletedTask;
         });
 
@@ -637,7 +639,7 @@ public class ProjectsEndpointTests
 
         Assert.NotNull(returnedUser);
         Assert.Equal(userId, returnedUser.Id);
-        Assert.Equal(userName, returnedUser.Name);
+        Assert.Equal(name, returnedUser.Name);
     }
 
     [Fact]
@@ -648,7 +650,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "User" });
+            db.Users.Add(new User { Id = userId, Name = "User", Email = "test2@example.com", UserName = "test2example.com" });
             return Task.CompletedTask;
         });
 
@@ -687,7 +689,7 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "User" });
+            db.Users.Add(new User { Id = userId, Name = "User", Email = "test1@example.com", UserName = "test1example.com" });
             db.Projects.Add(new Project
             {
                 Id = projectId,
@@ -736,8 +738,8 @@ public class ProjectsEndpointTests
             });
 
             db.Users.AddRange(
-                new User { Id = userToRemoveId, Name = "Alice (To Remove)" },
-                new User { Id = userToKeepId, Name = "Bob (To Keep)" }
+                new User { Id = userToRemoveId, Name = "Alice (To Remove)", Email = "test1@example.com", UserName = "test1example.com" },
+                new User { Id = userToKeepId, Name = "Bob (To Keep)", Email = "test2@example.com", UserName = "test2example.com" }
             );
 
             var statusId = Guid.NewGuid();
@@ -801,8 +803,8 @@ public class ProjectsEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "User" });
-            db.Users.Add(new User { Id = userId2, Name = "User2" });
+            db.Users.Add(new User { Id = userId, Name = "User", Email = "test1@example.com", UserName = "test1example.com" });
+            db.Users.Add(new User { Id = userId2, Name = "User2", Email = "test2@example.com", UserName = "test2example.com" });
             db.Projects.Add(new Project
             {
                 Id = projectId,
@@ -1637,7 +1639,7 @@ public class ProjectsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
-            db.Users.Add(new User { Id = userId, Name = "Alice" });
+            db.Users.Add(new User { Id = userId, Name = "Alice", Email = "test1@example.com", UserName = "test1example.com" });
             return Task.CompletedTask;
         });
 
@@ -1660,7 +1662,7 @@ public class ProjectsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Projects.Add(new Project { Id = projectId, Name = "Project", Description = "", HexColor = "#0072B2" });
-            db.Users.Add(new User { Id = userId, Name = "Alice" });
+            db.Users.Add(new User { Id = userId, Name = "Alice", Email = "test1@example.com", UserName = "test1example.com" });
             return Task.CompletedTask;
         });
 

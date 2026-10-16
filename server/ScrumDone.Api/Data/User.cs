@@ -1,11 +1,14 @@
-﻿using ScrumDone.Api.Data.Common;
+﻿using System.Diagnostics.Eventing.Reader;
+using Microsoft.AspNetCore.Identity;
+using ScrumDone.Api.Data.Common;
 
 namespace ScrumDone.Api.Data
 {
-    public class User : IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
+    public class User : IdentityUser<Guid>, IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
     {
-        public Guid Id { get; set; }
-        public string Name { get; set; }
+        // public Guid Id { get; set; }
+        public string Name { get; set; } = "Adam";
+        // public string Email { get; set; }
         public string? ProfilePictureUrl { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
@@ -13,12 +16,10 @@ namespace ScrumDone.Api.Data
         public bool IsDeleted { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
 
-        public Guid UserPermissionsTypeId { get; set; }
         public List<ProjectUserMTMRelation> Projects { get; set; } = new();
         public List<Message> Comments { get; set; } = new();
         public List<AssignmentUserMTMRelation> Assignments { get; set; } = new();
         public List<Raport> CreatedRaports { get; set; } = new();
-        public UserPermissionsType PermissionsType { get; set; }
         public List<CompanyNote> CreatedCompanyNotes { get; set; } = new();
         public List<CooperationLog> CreatedCooperationLogs { get; set; } = new();
         public List<Notification> AuthoredNotifications { get; set; } = new();

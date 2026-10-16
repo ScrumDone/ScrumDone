@@ -24,7 +24,7 @@ public class CompanyLogsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Companies.Add(new Company { Id = companyId, Name = "Test Company" });
-            db.Users.Add(new User { Id = authorId, Name = "Log Author" });
+            db.Users.Add(new User { Id = authorId, Name = "Log Author", Email = "test1@example.com", UserName = "test1example.com" });
             return Task.CompletedTask;
         });
 
@@ -82,7 +82,7 @@ public class CompanyLogsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Companies.Add(new Company { Id = companyId, Name = "Company" });
-            db.Users.Add(new User { Id = authorId, Name = "Author" });
+            db.Users.Add(new User { Id = authorId, Name = "Author", Email = "test1@example.com", UserName = "test1example.com" });
 
             db.CooperationLogs.AddRange(
                 new CooperationLog { Id = Guid.NewGuid(), CompanyId = companyId, AuthorId = authorId, Title = "Log 1" },
@@ -115,7 +115,7 @@ public class CompanyLogsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Companies.Add(new Company { Id = companyId, Name = "C" });
-            db.Users.Add(new User { Id = authorId, Name = "A" });
+            db.Users.Add(new User { Id = authorId, Name = "A", Email = "test1@example.com", UserName = "test1example.com" });
             db.CooperationLogs.Add(new CooperationLog
             {
                 Id = logId,
@@ -153,7 +153,7 @@ public class CompanyLogsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Companies.Add(new Company { Id = companyId, Name = "C" });
-            db.Users.Add(new User { Id = authorId, Name = "A" });
+            db.Users.Add(new User { Id = authorId, Name = "A", Email = "test1@example.com", UserName = "test1example.com" });
             db.CooperationLogs.Add(new CooperationLog
             {
                 Id = logId,
@@ -191,7 +191,7 @@ public class CompanyLogsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Companies.Add(new Company { Id = companyId, Name = "C" });
-            db.Users.Add(new User { Id = authorId, Name = "A" });
+            db.Users.Add(new User { Id = authorId, Name = "A", Email = "test1@example.com", UserName = "test1example.com" });
             db.CooperationLogs.Add(new CooperationLog { Id = logId, CompanyId = companyId, AuthorId = authorId, Title = "To Delete" });
             return Task.CompletedTask;
         });
@@ -217,7 +217,7 @@ public class CompanyLogsEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Companies.Add(new Company { Id = companyId, Name = "C" });
-            db.Users.Add(new User { Id = authorId, Name = "A" });
+            db.Users.Add(new User { Id = authorId, Name = "A", Email = "test1@example.com", UserName = "test1example.com" });
             db.CooperationLogs.Add(new CooperationLog
             {
                 Id = logId,

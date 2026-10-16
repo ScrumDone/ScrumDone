@@ -39,8 +39,8 @@ public class UsersEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Users.AddRange(
-                new User { Id = user1Id, Name = "Alice Developer" },
-                new User { Id = user2Id, Name = "Bob ScrumMaster" }
+                new User { Id = user1Id, Name = "Alice Developer", Email = "test1@example.com", UserName = "test1@example.com"},
+                new User { Id = user2Id, Name = "Bob ScrumMaster", Email = "test2@example.com", UserName = "test2example.com" }
             );
             return Task.CompletedTask;
         });
@@ -74,8 +74,8 @@ public class UsersEndpointTests
         await app.SeedDatabaseAsync(db =>
         {
             db.Users.AddRange(
-                new User { Id = Guid.NewGuid(), Name = "Alice Developer" },
-                new User { Id = Guid.NewGuid(), Name = "Bob ScrumMaster" }
+                new User { Id = Guid.NewGuid(), Name = "Alice Developer", Email = "test1@example.com", UserName = "test1@example.com" },
+                new User { Id = Guid.NewGuid(), Name = "Bob ScrumMaster", Email = "test2@example.com", UserName = "test2example.com" }
             );
             return Task.CompletedTask;
         });
