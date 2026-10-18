@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDaysIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, PlusIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { deriveSprintStatusFromDisplayDates } from '../../utils/sprintDisplay';
 
 export type SprintEditDraft = {
@@ -28,6 +28,7 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
   onClose,
   onSave,
   onDraftChange,
+  onStartNextSprint,
   onExtendSprint,
   onDeleteSprint,
   isSaving = false,
@@ -151,7 +152,7 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
             <h3 className="mb-3 block font-segoe-ui text-[15px] font-medium text-slate-800">Akcje sprintu</h3>
 
             <div className="space-y-2">
-              {/*<button
+              <button
                 type="button"
                 onClick={onStartNextSprint}
                 disabled={isSaving}
@@ -159,7 +160,7 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
               >
                 <PlusIcon className="h-4 w-4" />
                 <span className="text-sm leading-5 tracking-[-0.15px]">Zamknij i rozpocznij nowy sprint</span>
-              </button>*/}
+              </button>
 
               <button
                 type="button"

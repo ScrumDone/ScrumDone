@@ -29,6 +29,7 @@ import Avatar from '../../components/common/Avatar';
 import CalendarPeopleFilter from '../../components/common/PeopleFilter';
 import SprintEditModal, { type SprintEditDraft } from '../../components/sprints/SprintEditModal';
 import SprintCreateModal from '../../components/sprints/SprintCreateModal';
+import CloseAndStartSprintDialog from '../../components/sprints/CloseAndStartSprintDialog';
 import TaskCreateModal from '../../components/tasks/TaskCreateModal';
 import { useCreateSprint } from '../../hooks/sprints/useCreateSprint';
 import { useDeleteSprint } from '../../hooks/sprints/useDeleteSprint';
@@ -411,6 +412,12 @@ const ProjectSprintsPage: React.FC = () => {
   const [dragOverSprintId, setDragOverSprintId] = useState<string | null>(null);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(() => new Set());
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
+  const [closeSprintTarget, setCloseSprintTarget] = useState<{
+    sprintId: string;
+    sprintName: string;
+    startDate: string | null;
+    endDate: string | null;
+  } | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [createDraft, setCreateDraft] = useState<SprintEditDraft | null>(null);
@@ -602,7 +609,17 @@ const ProjectSprintsPage: React.FC = () => {
   };
 
   const handleStartNextSprint = () => {
-    setSprintModalMessage('Ta akcja nie jest jeszcze dostępna przez API.');
+    if (!editingSprintId) {
+      return;
+    }
+
+    const summary = sprintsQueryData?.items.find((item) => item.id === editingSprintId);
+    setCloseSprintTarget({
+      sprintId: editingSprintId,
+      sprintName: summary?.name?.trim() || sprintDraft?.title || 'Sprint',
+      startDate: summary?.startDate ?? null,
+      endDate: summary?.endDate ?? null,
+    });
   };
 
   const handleExtendSprint = () => {
@@ -1279,6 +1296,21 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
         onDeleteSprint={handleDeleteSprint}
         isSaving={isSavingSprint}
         errorMessage={sprintModalErrorMessage}
+      />
+
+      <CloseAndStartSprintDialog
+        isOpen={closeSprintTarget !== null}
+        projectId={projectId}
+        sprintId={closeSprintTarget?.sprintId ?? ''}
+        sprintName={closeSprintTarget?.sprintName ?? ''}
+        startDate={closeSprintTarget?.startDate ?? null}
+        endDate={closeSprintTarget?.endDate ?? null}
+        nextSprintName={`Sprint ${sprintCount + 1}`}
+        onClose={() => setCloseSprintTarget(null)}
+        onFinished={() => {
+          setCloseSprintTarget(null);
+          closeSprintEditModal();
+        }}
       />
     </div>
   );
