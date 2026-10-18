@@ -119,7 +119,7 @@ const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay =
           className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-slate-300"
           style={task.priorityHexColor ? { backgroundColor: task.priorityHexColor } : undefined}
         />
-        <p className="flex-1 min-w-0 truncate font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
+        <p title={task.name} className="min-w-0 flex-1 break-words line-clamp-2 font-segoe-ui text-[12px] leading-4 text-slate-900">{task.name}</p>
       </div>
       <div className="flex items-center gap-2">
         <Avatar initials={task.assigneeInitials} size="xs" />
@@ -157,18 +157,21 @@ const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = fal
           onClick();
         }
       }}
-      className={`flex w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3 box-border cursor-grab active:cursor-grabbing ${onClick && !isDragOverlay ? 'cursor-pointer' : ''} ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      className={`flex w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 box-border cursor-grab active:cursor-grabbing ${onClick && !isDragOverlay ? 'cursor-pointer' : ''} ${isDragOverlay ? 'cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <span
-          className="h-2 w-2 rounded-full bg-slate-300"
+          className="h-2 w-2 shrink-0 rounded-full bg-slate-300"
           style={task.priorityHexColor ? { backgroundColor: task.priorityHexColor } : undefined}
         />
-        <p className={`font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}>
+        <p
+          title={task.name}
+          className={`min-w-0 truncate font-segoe-ui text-sm ${task.status === 'Ukończone' ? 'line-through text-slate-500' : 'text-slate-900'}`}
+        >
           {task.name}
         </p>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         <Avatar initials={task.assigneeInitials} size="xs" />
         <span className="font-segoe-ui text-xs text-slate-700">{task.assigneeName}</span>
         <span

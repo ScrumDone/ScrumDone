@@ -59,14 +59,14 @@ const CalendarTaskItem: React.FC<CalendarTaskItemProps> = ({ id, title, colorVar
                     handleClick()
                 }
             }}
-            className={`flex cursor-pointer items-center gap-2 rounded-lg border-l-[3px] px-2 py-2 transition-colors hover:opacity-90 ${colors.border} ${colors.bg}`}
+            className={`flex min-w-0 cursor-pointer items-center gap-2 rounded-lg border-l-[3px] px-2 py-2 transition-colors hover:opacity-90 ${colors.border} ${colors.bg}`}
             style={accentStyles}
         >
             <span
                 className={`inline-block h-2 w-2 shrink-0 rounded-full ${colors.dot}`}
                 style={priorityHexColor ? { backgroundColor: priorityHexColor } : undefined}
             />
-            <p className="truncate font-segoe-ui text-[12px] leading-4 font-medium text-slate-700 antialiased">
+            <p title={title} className="min-w-0 flex-1 truncate font-segoe-ui text-[12px] leading-4 font-medium text-slate-700 antialiased">
                 {title}
             </p>
         </div>
