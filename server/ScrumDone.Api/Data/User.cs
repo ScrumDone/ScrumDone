@@ -7,7 +7,7 @@ namespace ScrumDone.Api.Data
     public class User : IdentityUser<Guid>, IHasCreatedAt, IHasUpdatedAt, IHasSoftDelete
     {
         // public Guid Id { get; set; }
-        public string Name { get; set; } = "Adam";
+        public string Name { get; set; }
         // public string Email { get; set; }
         public string? ProfilePictureUrl { get; set; }
 

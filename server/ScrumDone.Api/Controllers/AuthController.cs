@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using ScrumDone.Api.Services;
-using ScrumDone.Api.DTOs.Common;
-using ScrumDone.Api.DTOs.Auth;
-using FluentValidation;
+﻿using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using ScrumDone.Api.DTOs.Assignments;
+using ScrumDone.Api.DTOs.Auth;
+using ScrumDone.Api.DTOs.Common;
+using ScrumDone.Api.Services;
 
 namespace ScrumDone.Api.Controllers
 {
@@ -20,13 +21,16 @@ namespace ScrumDone.Api.Controllers
         }
 
         [HttpPost("invite")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Create(
-            [FromBody] UserInvitationDto dto)
+            [FromBody] UserInvitationDto dto,
+            [FromServices] IValidator<UserInvitationDto> validator)
         {
-            await _authService.InviteUser(dto);
-            return NoContent();
+            await validator.ValidateAndThrowAsync(dto);
+            var results = await _authService.InviteUser(dto);
+            // Adding return until email is implemented
+            return Ok(results);
         }
 
         // register actually
@@ -34,8 +38,10 @@ namespace ScrumDone.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> Register(
             [FromRoute] Guid id,
-            [FromBody] UserRegistrationDto dto)
+            [FromBody] UserRegistrationDto dto,
+            [FromServices] IValidator<UserRegistrationDto> validator)
         {
+            await validator.ValidateAndThrowAsync(dto);
             await _authService.RegisterUser(id, dto);
 
             return Ok();
@@ -58,6 +64,14 @@ namespace ScrumDone.Api.Controllers
             await _authService.Logout();
 
             return Ok();
-        }    
+        }
+
+        [HttpGet("roles")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetRoles()
+        {
+            var roles = await _authService.GetRoles();
+            return Ok(roles);
+        }
     }
 }

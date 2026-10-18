@@ -10,12 +10,14 @@ namespace ScrumDone.Api.Services
     public interface IAuthService
     {
         //Auth
-        Task InviteUser(UserInvitationDto dto);
+        Task<Guid> InviteUser(UserInvitationDto dto);
 
         Task RegisterUser(Guid id, UserRegistrationDto dto);
 
         Task Login(LoginDto dto);
 
         Task Logout();
+
+        Task<IEnumerable<RoleDto>> GetRoles();
     }
 }

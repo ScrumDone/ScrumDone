@@ -34,10 +34,8 @@ namespace ScrumDone.Api.Services
             _signInManager = signInManager;
         }
 
-        public async Task InviteUser(UserInvitationDto dto)
+        public async Task<Guid> InviteUser(UserInvitationDto dto)
         {
-            await using var transaction = await _context.Database.BeginTransactionAsync();
-
             var normalizedEmail = dto.Email.Trim().ToUpper();
 
             if (await _context.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail))
@@ -45,47 +43,19 @@ namespace ScrumDone.Api.Services
                 throw new ConflictException($"Some user already uses this email address: {dto.Email}");
             }
 
-            var normalizedUserName = dto.UserName.Trim().ToUpper();
+            var roleIds = dto.Roles.Distinct().ToList();
+            if (roleIds.Count == 0)
+                throw new BadRequestException("At least one role is required.");
 
-            if (await _context.Users.AnyAsync(u => u.NormalizedUserName == normalizedUserName))
-            {
-                throw new ConflictException($"Some user already uses this username: {dto.UserName}");
-            }
+            var found = await _roleManager.Roles.Where(r => roleIds.Contains(r.Id)).CountAsync();
+            if (found != roleIds.Count)
+                throw new BadRequestException("One or more roles were not found.");
 
-            foreach (var role in dto.Roles)
-            {
-                var roleResult = await _roleManager.FindByNameAsync(role);
-
-                if (roleResult is null)
-                {
-                    throw new BadRequestException($"Role {role} has not been found.");
-                }
-            }
-
-            var user = new User
+            var invitation = new UserInvitation
             {
                 UserName = dto.UserName,
                 Email = dto.Email,
-                EmailConfirmed = false,
-            };
-
-            var userCreationResult = await _userManager.CreateAsync(user);
-            if (!userCreationResult.Succeeded)
-            {
-                var errors = string.Join("; ", userCreationResult.Errors.Select(e => e.Description));
-                throw new BadRequestException($"Could not create user: {errors}");
-            }
-                        
-            var result = await _userManager.AddToRolesAsync(user, dto.Roles);
-            if (!userCreationResult.Succeeded)
-            {
-                var errors = string.Join("; ", result.Errors.Select(e => e.Description));
-                throw new BadRequestException($"Could not create user: {errors}");
-            }
-
-            // może invitation powinno mieć id usera
-            var invitation = new UserInvitation{
-                UserId = user.Id
+                RoleIds = roleIds,
             };
 
             _context.Invitations.Add(invitation);
@@ -93,47 +63,56 @@ namespace ScrumDone.Api.Services
 
             Console.WriteLine($"This invitation ID is: {invitation.Id}");
 
-            await transaction.CommitAsync();
-
-            return;
+            // Return the invitation ID unit Email Service is implemented
+            return invitation.Id;
         }
 
         public async Task RegisterUser(Guid id, UserRegistrationDto dto)
         {
             await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            var invitation = await _context.Invitations.FirstOrDefaultAsync(i => i.Id == id);
+            var invitation = await _context.Invitations.FirstOrDefaultAsync(i => i.Id == id)
+                ?? throw new BadRequestException("There is no invitation for this id.");
+
+            if (invitation.CreatedAt < DateTimeOffset.UtcNow.AddDays(-14))
+            {
+                throw new BadRequestException("This invitation has expired.");
+            }
+
+            var roleNames = await _roleManager.Roles
+                .Where(r => invitation.RoleIds.Contains(r.Id))
+                .Select(r => r.Name!)
+                .ToListAsync();
 
             if (invitation is null)
             {
                 throw new BadRequestException("There is no invitation for this id.");
             }
 
-            var user = await _userManager.FindByIdAsync(invitation.UserId.ToString());
-            if (user is null)
+            var user = new User
             {
-                _context.Invitations.Remove(invitation);
-                await _context.SaveChangesAsync();
-                throw new BadRequestException("There is no user for which this inviation was created.");
-            }
+                Name = dto.Name,
+                Email = invitation.Email,
+                UserName = invitation.UserName,
+                EmailConfirmed = true
+            };
 
-            user.Name = dto.DisplayName;
-
-            var result = await _userManager.AddPasswordAsync(user, dto.Password);
+            var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
             {
                 var errors = string.Join(" ", result.Errors.Select(e => e.Description));
-                throw new BadRequestException($"Password does not meet expectations: {errors}");
+                throw new BadRequestException(errors);
             }
 
-            user.EmailConfirmed = true;
-            await _userManager.UpdateAsync(user);
+            var roles = await _userManager.AddToRolesAsync(user, roleNames);
+            if (!roles.Succeeded)
+                throw new BadRequestException(string.Join(" ", roles.Errors.Select(e => e.Description)));
 
             _context.Invitations.Remove(invitation);
 
-            await _context.SaveChangesAsync();     
+            await _context.SaveChangesAsync();
 
-            await transaction.CommitAsync();       
+            await transaction.CommitAsync();
 
             return;
         }
@@ -144,7 +123,7 @@ namespace ScrumDone.Api.Services
                 userName: dto.UserName,
                 password: dto.Password,
                 isPersistent: dto.RememberMe,
-                lockoutOnFailure: false);        
+                lockoutOnFailure: false);
 
             if (!result.Succeeded)
             {
@@ -156,11 +135,23 @@ namespace ScrumDone.Api.Services
 
         public async Task Logout()
         {
-            await _signInManager.SignOutAsync();      
+            await _signInManager.SignOutAsync();
 
             return;
         }
-    }
 
+        public async Task<IEnumerable<RoleDto>> GetRoles()
+        {
+            var roles = await _roleManager.Roles.ToListAsync();
+            List<RoleDto> results = new List<RoleDto>();
+
+            foreach (var role in roles)
+            {
+                results.Add(new RoleDto(role.Id, role.Name));
+            }
+
+            return results;
+        }
+    }
     
 }

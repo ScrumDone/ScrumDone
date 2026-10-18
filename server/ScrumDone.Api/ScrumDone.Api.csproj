@@ -7,7 +7,6 @@
     <UserSecretsId>8638b2d3-3de7-47a1-98e0-a26c8818853b</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
 
-    <OpenApiGenerateXmlDocumentation>false</OpenApiGenerateXmlDocumentation>
   </PropertyGroup>
 
   <ItemGroup>

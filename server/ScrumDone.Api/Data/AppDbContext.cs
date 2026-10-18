@@ -67,7 +67,13 @@ namespace ScrumDone.Api.Data
                 .HasForeignKey(f => f.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<UserInvitation>();
+            modelBuilder.Entity<User>(e =>
+            {
+                e.HasIndex(u => u.NormalizedUserName).HasDatabaseName("UserNameIndex")
+                 .IsUnique().HasFilter("\"IsDeleted\" = false");
+                e.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex")
+                 .IsUnique().HasFilter("\"IsDeleted\" = false");
+            });
 
             modelBuilder.Entity<Assignment>(entity =>
                 {

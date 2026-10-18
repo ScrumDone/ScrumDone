@@ -122,7 +122,7 @@ public class DatabaseSeeder
             .RuleFor(u => u.NormalizedUserName, (f, u) => u.Email.ToUpper())
             .RuleFor(u => u.NormalizedEmail, (f, u) => u.Email.ToUpper())
             .RuleFor(u => u.SecurityStamp, f => Guid.NewGuid().ToString())
-            .RuleFor(u => u.PasswordHash, (f, u) => hasher.HashPassword(u, "Haslo123"))
+            .RuleFor(u => u.PasswordHash, (f, u) => hasher.HashPassword(u, "Haslo_123"))
             .RuleFor(u => u.CreatedAt, f => now.AddDays(-rnd.Next(14)))
             .RuleFor(l => l.UpdatedAt, (f, currentUser) => 
             {

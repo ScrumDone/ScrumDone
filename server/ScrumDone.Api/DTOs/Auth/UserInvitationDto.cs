@@ -6,7 +6,7 @@ namespace ScrumDone.Api.DTOs.Auth
     {
         public required string UserName { get; set; }
         public required string Email { get; set; }
-        public required List<string> Roles { get; set; }
+        public required List<Guid> Roles { get; set; }
     }
 
 }
