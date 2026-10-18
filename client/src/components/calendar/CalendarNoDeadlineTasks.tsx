@@ -80,13 +80,13 @@ export const CalendarNoDeadlineTaskCard: React.FC<CalendarNoDeadlineTaskCardProp
             className={`flex-none w-full max-w-75 cursor-pointer rounded-xl border border-l-4 p-3 transition-colors hover:opacity-90 ${accentClassMap[task.accentColor]} ${backgroundClass}`}
             style={accentStyles}
         >
-            <div className="mb-3 flex items-center gap-3">
+            <div className="mb-3 flex min-w-0 items-start gap-3">
                 <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${dotClassMap[task.dotColor]}`}
+                    className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${dotClassMap[task.dotColor]}`}
                     style={task.priorityHexColor ? { backgroundColor: task.priorityHexColor } : undefined}
                     aria-hidden="true"
                 />
-                <h2 className="font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">
+                <h2 title={task.title} className="min-w-0 break-words line-clamp-2 font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">
                     {task.title}
                 </h2>
             </div>

@@ -349,7 +349,7 @@ const CloseAndStartSprintDialog: React.FC<CloseAndStartSprintDialogProps> = ({
                   <>
                     <div className="mb-4 max-h-40 space-y-2 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-3">
                       {tasks.map((task) => (
-                        <p key={task.id} className="truncate font-segoe-ui text-sm text-slate-800">
+                        <p key={task.id} title={task.name} className="truncate font-segoe-ui text-sm text-slate-800">
                           {task.name}
                         </p>
                       ))}
@@ -458,9 +458,9 @@ const CloseAndStartSprintDialog: React.FC<CloseAndStartSprintDialogProps> = ({
               {runView.failure.failedTasks.length > 0 ? (
                 <ul className="max-h-32 space-y-2 overflow-y-auto rounded-lg border border-slate-200 px-3 py-2">
                   {runView.failure.failedTasks.map((task) => (
-                    <li key={task.id} className="font-segoe-ui text-sm text-slate-800">
-                      <span className="font-medium">{task.name}</span>
-                      <span className="text-slate-500"> — {task.message}</span>
+                    <li key={task.id} title={`${task.name} — ${task.message}`} className="flex min-w-0 items-baseline gap-1 font-segoe-ui text-sm text-slate-800">
+                      <span className="min-w-0 truncate font-medium">{task.name}</span>
+                      <span className="shrink-0 text-slate-500">— {task.message}</span>
                     </li>
                   ))}
                 </ul>

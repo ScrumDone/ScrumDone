@@ -70,7 +70,7 @@ const WelcomePageTask: React.FC<WelcomePageTaskProps> = ({
             } ${onClick ? 'cursor-pointer transition-colors hover:bg-slate-50' : ''}`}
         >
             <div className="mb-2 flex items-start justify-between gap-2">
-                <div className="flex min-w-0 items-start gap-2">
+                <div className="flex min-w-0 flex-1 items-start gap-2">
                     {isBlocked && (
                         <LockClosedIcon
                             className="mt-0.5 h-4 w-4 shrink-0 text-scrumdone-red-500"
@@ -78,7 +78,8 @@ const WelcomePageTask: React.FC<WelcomePageTaskProps> = ({
                         />
                     )}
                     <h1
-                        className={`font-segoe-ui text-[0.875rem] leading-6 font-normal tracking-[0em] antialiased ${
+                        title={taskName}
+                        className={`min-w-0 break-words line-clamp-2 font-segoe-ui text-[0.875rem] leading-6 font-normal tracking-[0em] antialiased ${
                             isBlocked ? 'text-scrumdone-red-600' : 'text-slate-800'
                         }`}
                     >
