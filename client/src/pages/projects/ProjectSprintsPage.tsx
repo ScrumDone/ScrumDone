@@ -39,6 +39,8 @@ import { useUpdateSprint } from '../../hooks/sprints/useUpdateSprint';
 import {
   adjustSprintDraftEndDate,
   createEmptySprintDraft,
+  formatSprintDisplayName,
+  isGeneratedSprintDisplayName,
   mapSprintSummaryToEditDraft,
   mapSprintSummaryToSprintCard,
   toSprintCreateDto,
@@ -597,7 +599,7 @@ const ProjectSprintsPage: React.FC = () => {
       summary
         ? mapSprintSummaryToEditDraft(summary)
         : {
-            title: sprint.title === '—' ? '' : sprint.title,
+            title: sprint.title === '—' || isGeneratedSprintDisplayName(sprint.title) ? '' : sprint.title,
             startDate: sprint.startDate === '—' ? '' : sprint.startDate,
             endDate: sprint.endDate === '—' ? '' : sprint.endDate,
           },
@@ -635,7 +637,11 @@ const ProjectSprintsPage: React.FC = () => {
     const summary = sprintsQueryData?.items.find((item) => item.id === editingSprintId);
     setCloseSprintTarget({
       sprintId: editingSprintId,
-      sprintName: summary?.name?.trim() || sprintDraft?.title || 'Sprint',
+      sprintName: formatSprintDisplayName({
+        name: summary?.name?.trim() || sprintDraft?.title,
+        startDate: summary?.startDate,
+        endDate: summary?.endDate,
+      }),
       startDate: summary?.startDate ?? null,
       endDate: summary?.endDate ?? null,
     });

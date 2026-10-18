@@ -5,7 +5,8 @@ import { type PersonFilter } from '../common/PeopleFilter';
 import { useStatuses, usePriorities, useCreateAssignment } from '../../hooks/assignments/useAssignments';
 import { useQueryClient } from '@tanstack/react-query';
 import type { CreateAssignmentDto } from '../../types/assignment';
-import { useSprints } from '../../hooks/sprints/useSprints'; 
+import { useSprints } from '../../hooks/sprints/useSprints';
+import { formatSprintDisplayName } from '../../utils/sprintDisplay'; 
 
 //NOTE: Priorytety i statusy są pobierane dynamicznie z API bez mocku!!!!
 
@@ -255,12 +256,16 @@ const TaskCreateModal: React.FC<TaskCreateModalProps> = ({
                 className="w-full appearance-none rounded-[8px] border-none bg-[#F5F6F8] px-4 py-2.5 text-[14px] text-slate-700 outline-none focus:ring-2 focus:ring-scrumdone-blue-main">
                 <option value="">Wybierz sprint</option>
                 {sprints.map((sprint, index) => {
-                  const nameWithCounter = `${index + 1}. ${sprint.name}`; 
-                  
-                  const dates = `${sprint.startDate?.split('T')[0]?.replaceAll("-", "/")}-${sprint.endDate?.split('T')[0]?.replaceAll("-", "/")}`;
-                  
-                  const rowLength = 68; 
-                  const paddedName = nameWithCounter.padEnd(rowLength - dates.length, '\u00A0'); 
+                  const label = formatSprintDisplayName(sprint);
+                  const hasName = Boolean(sprint.name?.trim());
+                  const start = sprint.startDate?.split('T')[0]?.replaceAll('-', '/');
+                  const end = sprint.endDate?.split('T')[0]?.replaceAll('-', '/');
+                  const dates = hasName && start && end ? `${start}-${end}` : '';
+                  const nameWithCounter = `${index + 1}. ${label}`;
+                  const rowLength = 68;
+                  const paddedName = dates
+                    ? nameWithCounter.padEnd(rowLength - dates.length, '\u00A0')
+                    : nameWithCounter;
 
                   return (
                     <option key={sprint.id} value={sprint.id}>
