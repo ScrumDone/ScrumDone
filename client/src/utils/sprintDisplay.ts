@@ -278,16 +278,59 @@ export const addDaysToDisplayDate = (displayDate: string, days: number): string 
   return formatSprintDateForDisplay(date.toISOString());
 };
 
+const toCalendarDay = (value: string): Date | null => {
+  const iso = parseDisplayDateToIso(value);
+  if (!iso) {
+    return null;
+  }
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return startOfDay(date);
+};
+
+export const isDisplayEndBeforeStart = (startDate: string, endDate: string): boolean => {
+  const start = toCalendarDay(startDate);
+  const end = toCalendarDay(endDate);
+
+  if (!start || !end) {
+    return false;
+  }
+
+  return end < start;
+};
+
 export const deriveSprintStatusFromDisplayDates = (startDate: string, endDate: string): SprintStatus =>
   deriveSprintStatus(parseDisplayDateToIso(startDate), parseDisplayDateToIso(endDate));
 
-export const mapSprintDetailToSprintStatus = (sprint: SprintDetail): SprintStatus =>
-  resolveSprintStatus(sprint.state, sprint.startDate, sprint.endDate);
+export const adjustSprintDraftEndDate = (
+  draft: SprintEditDraft,
+  days: number,
+): { draft: SprintEditDraft } | { message: string } => {
+  if (!draft.endDate.trim()) {
+    return { message: 'Ustaw datę zakończenia, aby zmienić długość sprintu.' };
+  }
 
-export const toSprintEndDateUpdateDto = (displayEndDate: string, extraDays = 0): SprintUpdateDto => {
-  const targetDate = extraDays > 0 ? addDaysToDisplayDate(displayEndDate, extraDays) : displayEndDate;
+  const endDate = addDaysToDisplayDate(draft.endDate, days);
+  if (endDate === draft.endDate) {
+    return { message: 'Nie udało się zmienić daty zakończenia.' };
+  }
+
+  if (isDisplayEndBeforeStart(draft.startDate, endDate)) {
+    return { message: 'Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.' };
+  }
 
   return {
-    endDate: parseDisplayDateToIso(targetDate),
+    draft: {
+      ...draft,
+      endDate,
+      status: deriveSprintStatusFromDisplayDates(draft.startDate, endDate),
+    },
   };
 };
+
+export const mapSprintDetailToSprintStatus = (sprint: SprintDetail): SprintStatus =>
+  resolveSprintStatus(sprint.state, sprint.startDate, sprint.endDate);
