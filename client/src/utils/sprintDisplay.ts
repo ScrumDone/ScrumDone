@@ -135,12 +135,52 @@ export const formatSprintDateRangeForDisplay = (
   return `${start} - ${end}`;
 };
 
+const NAMELESS_SPRINT_LABEL = '---';
+const namelessSprintRangePattern = /^\d{2}\.\d{2} – \d{2}\.\d{2}$/;
+
+const formatSprintDayMonth = (dateValue: string | null | undefined): string | null => {
+  if (!dateValue) {
+    return null;
+  }
+
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${day}.${month}`;
+};
+
+export const formatSprintDisplayName = (sprint: {
+  name?: string | null | undefined;
+  startDate?: string | null | undefined;
+  endDate?: string | null | undefined;
+}): string => {
+  const name = sprint.name?.trim();
+  if (name) {
+    return name;
+  }
+
+  const start = formatSprintDayMonth(sprint.startDate);
+  const end = formatSprintDayMonth(sprint.endDate);
+  if (!start || !end) {
+    return NAMELESS_SPRINT_LABEL;
+  }
+
+  return `${start} – ${end}`;
+};
+
+export const isGeneratedSprintDisplayName = (label: string): boolean =>
+  label === NAMELESS_SPRINT_LABEL || namelessSprintRangePattern.test(label);
+
 export const mapSprintSummaryToSelectorSprint = (summary: SprintSummary): SprintSelectorViewModel => {
   const status = resolveSprintStatus(summary.state, summary.startDate, summary.endDate);
 
   return {
     id: summary.id,
-    title: summary.name?.trim() || '—',
+    title: formatSprintDisplayName(summary),
     dateRange: formatSprintDateRangeForDisplay(summary.startDate, summary.endDate),
     totalTasks: summary.assignmentCount,
     completedTasks: summary.completedCount,
@@ -167,7 +207,7 @@ export const getDefaultSelectedSprintId = (sprints: SprintSelectorViewModel[]): 
 
 export const mapSprintSummaryToSprintCard = (summary: SprintSummary): SprintCardViewModel => ({
   id: summary.id,
-  title: summary.name?.trim() || '—',
+  title: formatSprintDisplayName(summary),
   startDate: formatSprintDateForDisplay(summary.startDate),
   endDate: formatSprintDateForDisplay(summary.endDate),
   totalTasks: summary.assignmentCount,

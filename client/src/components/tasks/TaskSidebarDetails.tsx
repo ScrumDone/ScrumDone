@@ -16,6 +16,7 @@ import { useProject } from '../../hooks/projects/useProject';
 import { useSprints } from '../../hooks/sprints/useSprints';
 import { useUpdateAssignment } from '../../hooks/assignments/useUpdateAssignment';
 import { useUpdateAssignees } from '../../hooks/assignments/useUpdateAssignees';
+import { formatSprintDisplayName } from '../../utils/sprintDisplay';
 
 interface TaskSidebarDetailsProps {
   assignmentId: string;
@@ -62,6 +63,12 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
   const { data: sprintsData } = useSprints(assignment.projectId);
   const sprints = sprintsData?.items ?? [];
   const isCurrentSprintListed = !assignment.sprintId || sprints.some((s) => s.id === assignment.sprintId);
+  const assignedSprint = assignment.sprintId
+    ? sprints.find((sprint) => sprint.id === assignment.sprintId)
+    : undefined;
+  const assignedSprintLabel = !assignment.sprintId
+    ? 'Brak (backlog)'
+    : formatSprintDisplayName(assignedSprint ?? { name: assignment.sprintName });
 
   const { mutate: updateAssignment, isPending: isSaving } = useUpdateAssignment();
 
@@ -320,11 +327,11 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
                 >
                   <option value="">Brak (backlog)</option>
                   {!isCurrentSprintListed && assignment.sprintId ? (
-                    <option value={assignment.sprintId}>{assignment.sprintName ?? 'Bez nazwy'}</option>
+                    <option value={assignment.sprintId}>{assignedSprintLabel}</option>
                   ) : null}
                   {sprints.map((sprint) => (
                     <option key={sprint.id} value={sprint.id}>
-                      {sprint.name ?? 'Bez nazwy'}
+                      {formatSprintDisplayName(sprint)}
                     </option>
                   ))}
                 </select>
@@ -360,7 +367,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
             <>
               <DetailRow label="Termin" value={formatDate(assignment.dueDate)} isPlaceholder={!assignment.dueDate} />
               <DetailRow label="Priorytet" value={assignment.priority?.name ?? 'Brak'} isPlaceholder={!assignment.priority} />
-              <DetailRow label="Sprint" value={assignment.sprintName ?? 'Brak (backlog)'} isPlaceholder={!assignment.sprintId} />
+              <DetailRow label="Sprint" value={assignedSprintLabel} isPlaceholder={!assignment.sprintId} />
               <DetailRow
                 label="Czas estimacji"
                 value={formatTimeEstimate(assignment.timeEstimate) || 'Brak'}
