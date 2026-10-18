@@ -10,6 +10,7 @@ import type {
   AssignmentPriority,
   AssignmentQueryParams
 } from '../types/assignment';
+import type { UserSummary } from '../types/user';
 
 function assignmentQueryToParams(params: AssignmentQueryParams): Record<string, QueryParamValue> {
   const result: Record<string, QueryParamValue> = {};
@@ -56,7 +57,7 @@ export const deleteAssignment = (id: string) => {
 };
 
 export const updateAssignees = (id: string, data: AssignmentAssigneesUpdateDto) => {
-  return apiPut<any, AssignmentAssigneesUpdateDto>(`/api/assignments/${id}/assignees`, data);
+  return apiPut<UserSummary[], AssignmentAssigneesUpdateDto>(`/api/assignments/${id}/assignees`, data);
 };
 
 export const updateLabels = (id: string, data: AssignmentLabelsUpdateDto) => {

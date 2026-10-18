@@ -7,12 +7,15 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { TaskStatusDropdown } from './TaskStatusDropdown';
+import { TaskAssigneesRow } from './TaskAssigneesRow';
 import type { Assignment, UpdateAssignmentDto } from '../types/assignment';
-import { updateAssignees } from '../api/assignments';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { UserSummary } from '../types/user';
+import { useQueryClient } from '@tanstack/react-query';
 import { usePriorities } from '../hooks/useAssignments';
+import { useProject } from '../hooks/useProject';
 import { useSprints } from '../hooks/useSprints';
 import { useUpdateAssignment } from '../hooks/useUpdateAssignment';
+import { useUpdateAssignees } from '../hooks/useUpdateAssignees';
 
 interface TaskSidebarDetailsProps {
   assignmentId: string;
@@ -41,16 +44,9 @@ const inputClassName =
 
 export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignmentId, assignment }) => {
   const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: (assigneeIds: string[]) => updateAssignees(assignmentId, { userIds: assigneeIds }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assignment', assignmentId] });
-    },
-  });
-  void mutation;
-
-  // TODO: Podpiąć wywołanie mutation.mutate(noewAssigneeIds) pod UI
+  const { mutate: updateAssigneesMutation, isPending: isUpdatingAssignees } = useUpdateAssignees();
+  const { data: project } = useProject(assignment.projectId);
+  const teamMembers = project?.teamMembers ?? [];
 
   const menuRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -68,6 +64,35 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
   const isCurrentSprintListed = !assignment.sprintId || sprints.some((s) => s.id === assignment.sprintId);
 
   const { mutate: updateAssignment, isPending: isSaving } = useUpdateAssignment();
+
+  const persistAssignees = (userIds: string[]) => {
+    const peopleById = new Map<string, UserSummary>();
+    for (const member of teamMembers) {
+      peopleById.set(member.id, member);
+    }
+    for (const assignee of assignment.assignees) {
+      peopleById.set(assignee.id, assignee);
+    }
+
+    const nextAssignees = userIds
+      .map((id) => peopleById.get(id))
+      .filter((person): person is UserSummary => Boolean(person));
+
+    queryClient.setQueryData(['assignment', assignmentId], (old: Assignment | undefined) =>
+      old ? { ...old, assignees: nextAssignees } : old,
+    );
+
+    updateAssigneesMutation(
+      { id: assignmentId, data: { userIds } },
+      {
+        onSuccess: () => setSaveError(null),
+        onError: () => {
+          queryClient.invalidateQueries({ queryKey: ['assignment', assignmentId] });
+          setSaveError('Nie udało się zaktualizować osób. Spróbuj ponownie.');
+        },
+      },
+    );
+  };
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -176,6 +201,9 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
 
             <h2 className="text-[20px] leading-[30px] font-medium text-black">Szczegóły</h2>
 
+            {isEditing ? (
+              <span className="text-sm font-medium text-scrumdone-blue-main">— tryb edycji</span>
+            ) : null}
           </div>
 
           {isEditing ? (
@@ -237,7 +265,12 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
         </div>
 
         <div className="space-y-4 text-[14px]">
-          <DetailRow label="Osoba" value={assignment.assignees?.[0]?.name ?? 'Brak'} />
+          <TaskAssigneesRow
+            assignees={assignment.assignees ?? []}
+            teamMembers={teamMembers}
+            disabled={isUpdatingAssignees}
+            onAssigneesChange={persistAssignees}
+          />
           <DetailRow label="Projekt" value={assignment.projectName} />
           <DetailRow label="Utworzono" value={formatDate(assignment.createdAt)} />
 
