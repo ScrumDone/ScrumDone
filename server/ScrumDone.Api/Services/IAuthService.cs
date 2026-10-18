@@ -16,6 +16,8 @@ namespace ScrumDone.Api.Services
 
         Task ForgotPassword(ForgotPasswordDto dto);
 
+        Task ResetPassword(ResetPasswordDto dto);
+
         Task Login(LoginDto dto);
 
         Task Logout();
