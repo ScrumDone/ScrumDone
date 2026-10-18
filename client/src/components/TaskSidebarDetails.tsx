@@ -268,6 +268,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
           <TaskAssigneesRow
             assignees={assignment.assignees ?? []}
             teamMembers={teamMembers}
+            isEditing={isEditing}
             disabled={isUpdatingAssignees}
             onAssigneesChange={persistAssignees}
           />

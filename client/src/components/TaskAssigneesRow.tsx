@@ -9,6 +9,7 @@ const MAX_VISIBLE_AVATARS = 3;
 type TaskAssigneesRowProps = {
   assignees: UserSummary[];
   teamMembers: UserSummary[];
+  isEditing: boolean;
   disabled?: boolean;
   onAssigneesChange: (userIds: string[]) => void;
 };
@@ -16,6 +17,7 @@ type TaskAssigneesRowProps = {
 export const TaskAssigneesRow: React.FC<TaskAssigneesRowProps> = ({
   assignees,
   teamMembers,
+  isEditing,
   disabled = false,
   onAssigneesChange,
 }) => {
@@ -37,9 +39,15 @@ export const TaskAssigneesRow: React.FC<TaskAssigneesRowProps> = ({
 
   const selectedIds = useMemo(() => assignees.map((assignee) => assignee.id), [assignees]);
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const visibleAssignees = assignees.slice(0, MAX_VISIBLE_AVATARS);
-  const overflowCount = Math.max(0, assignees.length - MAX_VISIBLE_AVATARS);
+  const visibleAssignees = isEditing ? assignees : assignees.slice(0, MAX_VISIBLE_AVATARS);
+  const overflowCount = isEditing ? 0 : Math.max(0, assignees.length - MAX_VISIBLE_AVATARS);
   const overflowNames = assignees.slice(MAX_VISIBLE_AVATARS).map((person) => person.name).join(', ');
+
+  useEffect(() => {
+    if (!isEditing) {
+      setIsPickerOpen(false);
+    }
+  }, [isEditing]);
 
   useEffect(() => {
     if (!isPickerOpen) {
@@ -87,16 +95,18 @@ export const TaskAssigneesRow: React.FC<TaskAssigneesRowProps> = ({
                     textClassName="text-white"
                   />
                   <span className="sr-only">{person.name}</span>
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    aria-label={`Usuń ${person.name}`}
-                    title={`Usuń ${person.name}`}
-                    onClick={() => removeAssignee(person.id)}
-                    className="absolute -right-0.5 -top-0.5 hidden h-3.5 w-3.5 items-center justify-center rounded-full bg-scrumdone-red-500 text-white shadow-sm group-hover:flex group-focus-within:flex disabled:cursor-not-allowed"
-                  >
-                    <XMarkIcon className="h-2.5 w-2.5 stroke-[3]" />
-                  </button>
+                  {isEditing ? (
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      aria-label={`Usuń ${person.name}`}
+                      title={`Usuń ${person.name}`}
+                      onClick={() => removeAssignee(person.id)}
+                      className="absolute -right-0.5 -top-0.5 hidden h-3.5 w-3.5 items-center justify-center rounded-full bg-scrumdone-red-500 text-white shadow-sm group-hover:flex group-focus-within:flex disabled:cursor-not-allowed"
+                    >
+                      <XMarkIcon className="h-2.5 w-2.5 stroke-[3]" />
+                    </button>
+                  ) : null}
                 </div>
               ))}
 
@@ -112,24 +122,26 @@ export const TaskAssigneesRow: React.FC<TaskAssigneesRowProps> = ({
             </div>
           )}
 
-          <button
-            type="button"
-            disabled={disabled}
-            aria-label="Dodaj osoby"
-            aria-expanded={isPickerOpen}
-            aria-haspopup="listbox"
-            onClick={() => setIsPickerOpen((open) => !open)}
-            className={`ml-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-white transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-              isPickerOpen
-                ? 'border-scrumdone-blue-main text-scrumdone-blue-main'
-                : 'border-slate-300 text-slate-400 hover:border-scrumdone-blue-main hover:text-scrumdone-blue-main'
-            }`}
-          >
-            <PlusIcon className="h-3.5 w-3.5 stroke-[2.5]" />
-          </button>
+          {isEditing ? (
+            <button
+              type="button"
+              disabled={disabled}
+              aria-label="Dodaj osoby"
+              aria-expanded={isPickerOpen}
+              aria-haspopup="listbox"
+              onClick={() => setIsPickerOpen((open) => !open)}
+              className={`ml-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-white transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                isPickerOpen
+                  ? 'border-scrumdone-blue-main text-scrumdone-blue-main'
+                  : 'border-slate-300 text-slate-400 hover:border-scrumdone-blue-main hover:text-scrumdone-blue-main'
+              }`}
+            >
+              <PlusIcon className="h-3.5 w-3.5 stroke-[2.5]" />
+            </button>
+          ) : null}
         </div>
 
-        {isPickerOpen ? (
+        {isEditing && isPickerOpen ? (
           <div
             role="listbox"
             aria-multiselectable="true"
