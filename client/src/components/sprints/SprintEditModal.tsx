@@ -1,12 +1,10 @@
 import React from 'react';
 import { CalendarDaysIcon, PlusIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { deriveSprintStatusFromDisplayDates } from '../../utils/sprintDisplay';
 
 export type SprintEditDraft = {
   title: string;
   startDate: string;
   endDate: string;
-  status: 'Aktywny' | 'Zaplanowany' | 'Ukończony';
 };
 
 type SprintEditModalProps = {
@@ -40,17 +38,10 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
     return null;
   }
 
-  const displayedStatus = deriveSprintStatusFromDisplayDates(draft.startDate, draft.endDate);
-
   const updateDraft = (partialDraft: Partial<SprintEditDraft>) => {
-    const nextDraft = {
+    onDraftChange({
       ...draft,
       ...partialDraft,
-    };
-
-    onDraftChange({
-      ...nextDraft,
-      status: deriveSprintStatusFromDisplayDates(nextDraft.startDate, nextDraft.endDate),
     });
   };
   
@@ -131,16 +122,6 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
                 className="w-full rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-scrumdone-blue-main disabled:opacity-60"
               />
             </div>
-          </div>
-
-          <div>
-            <p className="mb-2 block font-segoe-ui text-sm font-medium leading-3.5 tracking-[-0.15px] text-slate-700">
-              Status sprintu
-            </p>
-            <p className="rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700">
-              {displayedStatus}
-            </p>
-            <p className="mt-1 font-segoe-ui text-xs text-slate-500">Wyliczany automatycznie na podstawie dat sprintu.</p>
           </div>
 
           <div className="border-t border-slate-200 pt-5">

@@ -1,7 +1,7 @@
 import type { SprintEditDraft } from '../components/sprints/SprintEditModal';
 import type { SprintCreateDto, SprintDetail, SprintSummary, SprintUpdateDto, SprintApiState } from '../types/sprint';
 
-export type SprintStatus = SprintEditDraft['status'];
+export type SprintStatus = 'Aktywny' | 'Zaplanowany' | 'Ukończony';
 
 export type SprintCardViewModel = {
   id: string;
@@ -179,14 +179,12 @@ export const mapSprintSummaryToEditDraft = (summary: SprintSummary): SprintEditD
   title: summary.name?.trim() || '',
   startDate: toEditDateValue(summary.startDate),
   endDate: toEditDateValue(summary.endDate),
-  status: resolveSprintStatus(summary.state, summary.startDate, summary.endDate),
 });
 
 export const mapSprintDetailToEditDraft = (sprint: SprintDetail): SprintEditDraft => ({
   title: sprint.name?.trim() || '',
   startDate: toEditDateValue(sprint.startDate),
   endDate: toEditDateValue(sprint.endDate),
-  status: resolveSprintStatus(sprint.state, sprint.startDate, sprint.endDate),
 });
 
 export const toSprintUpdateDto = (draft: SprintEditDraft): SprintUpdateDto | null => {
@@ -241,7 +239,6 @@ export const createEmptySprintDraft = (defaultTitle: string): SprintEditDraft =>
     title: defaultTitle,
     startDate: dates.startDate,
     endDate: dates.endDate,
-    status: 'Zaplanowany',
   };
 };
 
@@ -303,9 +300,6 @@ export const isDisplayEndBeforeStart = (startDate: string, endDate: string): boo
   return end < start;
 };
 
-export const deriveSprintStatusFromDisplayDates = (startDate: string, endDate: string): SprintStatus =>
-  deriveSprintStatus(parseDisplayDateToIso(startDate), parseDisplayDateToIso(endDate));
-
 export const adjustSprintDraftEndDate = (
   draft: SprintEditDraft,
   days: number,
@@ -327,7 +321,6 @@ export const adjustSprintDraftEndDate = (
     draft: {
       ...draft,
       endDate,
-      status: deriveSprintStatusFromDisplayDates(draft.startDate, endDate),
     },
   };
 };

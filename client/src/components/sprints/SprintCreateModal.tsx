@@ -1,9 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { SprintEditDraft } from './SprintEditModal';
-import {
-  deriveSprintStatusFromDisplayDates,
-} from '../../utils/sprintDisplay';
 
 type SprintCreateModalProps = {
   isOpen: boolean;
@@ -24,42 +21,14 @@ const SprintCreateModal: React.FC<SprintCreateModalProps> = ({
   isSaving = false,
   errorMessage = null,
 }) => {
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const statusDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
-        setIsStatusOpen(false);
-      }
-    };
-
-    if (isStatusOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isStatusOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setIsStatusOpen(false);
-    }
-  }, [isOpen]);
-
   if (!isOpen || !draft) {
     return null;
   }
 
   const updateDraft = (partialDraft: Partial<SprintEditDraft>) => {
-    const nextDraft = {
+    onDraftChange({
       ...draft,
       ...partialDraft,
-    };
-
-    onDraftChange({
-      ...nextDraft,
-      status: deriveSprintStatusFromDisplayDates(nextDraft.startDate, nextDraft.endDate),
     });
   };
 
@@ -139,41 +108,6 @@ const SprintCreateModal: React.FC<SprintCreateModalProps> = ({
               />
             </div>
           </div>
-
-          {/* <div ref={statusDropdownRef} className="relative">
-            <label className="mb-2 block font-segoe-ui text-sm font-medium leading-3.5 tracking-[-0.15px] text-slate-700">
-              Status
-            </label>
-            <button
-              type="button"
-              onClick={() => setIsStatusOpen((open) => !open)}
-              disabled={isSaving}
-              className="flex w-full items-center justify-between rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm tracking-[-0.15px] text-slate-700 outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
-            >
-              <span>{draft.status}</span>
-              <ChevronDownIcon className={`h-4 w-4 text-slate-500 transition-transform ${isStatusOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isStatusOpen && (
-              <div className="absolute left-0 top-full z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-                {statusOptions.map((status) => {
-                  const isSelected = draft.status === status;
-
-                  return (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => handleStatusSelect(status)}
-                      className="flex w-full items-center justify-between px-3 py-2.5 text-left font-segoe-ui text-sm text-slate-700 hover:bg-slate-50"
-                    >
-                      <span>{status}</span>
-                      {isSelected ? <CheckIcon className="h-4 w-4 text-slate-900" strokeWidth={2.5} /> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div> */}
         </div>
 
         <div className="relative z-0 flex items-center justify-end gap-3 border-t border-slate-100 px-8 py-4">
