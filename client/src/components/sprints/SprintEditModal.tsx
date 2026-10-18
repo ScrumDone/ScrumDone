@@ -17,6 +17,7 @@ type SprintEditModalProps = {
   onDraftChange: (draft: SprintEditDraft | null) => void;
   onStartNextSprint: () => void;
   onExtendSprint: () => void;
+  onShortenSprint: () => void;
   onDeleteSprint: () => void;
   isSaving?: boolean;
   errorMessage?: string | null;
@@ -30,6 +31,7 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
   onDraftChange,
   onStartNextSprint,
   onExtendSprint,
+  onShortenSprint,
   onDeleteSprint,
   isSaving = false,
   errorMessage = null,
@@ -52,13 +54,6 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
     });
   };
   
-  const handleExtendClick = () => {
-    const isConfirmed = window.confirm('Czy na pewno chcesz przedłużyć ten sprint o tydzień?');
-    if (isConfirmed) {
-      onExtendSprint();
-    }
-  };
-
   const handleDeleteClick = () => {
     const isConfirmed = window.confirm('Czy na pewno chcesz usunąć ten sprint? Tej operacji nie można cofnąć.');
     if (isConfirmed) {
@@ -164,12 +159,22 @@ const SprintEditModal: React.FC<SprintEditModalProps> = ({
 
               <button
                 type="button"
-                onClick={handleExtendClick}
+                onClick={onExtendSprint}
                 disabled={isSaving}
                 className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50 disabled:opacity-60"
               >
                 <CalendarDaysIcon className="h-4 w-4" />
                 <span className="text-sm leading-5 tracking-[-0.15px]">Przedłuż sprint o tydzień</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onShortenSprint}
+                disabled={isSaving}
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5 font-segoe-ui text-lg font-medium text-[#7C3AED] transition-colors hover:bg-slate-50 disabled:opacity-60"
+              >
+                <CalendarDaysIcon className="h-4 w-4" />
+                <span className="text-sm leading-5 tracking-[-0.15px]">Skróć sprint o tydzień</span>
               </button> 
 
               <button

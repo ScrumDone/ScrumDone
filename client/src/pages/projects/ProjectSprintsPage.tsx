@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { formatCount, PLURALS } from '../../utils/plural';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ApiError } from '../../api/client';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon, PlusIcon } from '@heroicons/react/24/outline';
 import {
   DndContext,
@@ -36,13 +37,11 @@ import { useDeleteSprint } from '../../hooks/sprints/useDeleteSprint';
 import { useProjectSprints } from '../../hooks/sprints/useProjectSprints';
 import { useUpdateSprint } from '../../hooks/sprints/useUpdateSprint';
 import {
-  addDaysToDisplayDate,
+  adjustSprintDraftEndDate,
   createEmptySprintDraft,
-  mapSprintDetailToSprintStatus,
   mapSprintSummaryToEditDraft,
   mapSprintSummaryToSprintCard,
   toSprintCreateDto,
-  toSprintEndDateUpdateDto,
   toSprintUpdateDto,
 } from '../../utils/sprintDisplay';
 import { useAssignments } from '../../hooks/assignments/useAssignments';
@@ -231,6 +230,24 @@ const BacklogDropZone: React.FC<BacklogDropZoneProps> = ({ children }) => {
 type ActiveDragItem =
   | { source: 'backlog'; task: SprintBacklogTask }
   | { source: 'sprint'; task: SprintTaskItem; sprintId: string };
+
+const SPRINT_DATES_TAKEN_MESSAGE = 'Te daty są już zajęte przez inny sprint.';
+
+const formatSprintWriteError = (error: unknown, fallback: string): string => {
+  if (
+    error instanceof ApiError
+    && error.status === 409
+    && (/already taken/i.test(error.message) || error.message.trim() === 'Conflict')
+  ) {
+    return SPRINT_DATES_TAKEN_MESSAGE;
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+};
 
 const getSprintDateRange = (sprint: SprintData) => `${sprint.startDate} - ${sprint.endDate}`;
 
@@ -515,7 +532,7 @@ const ProjectSprintsPage: React.FC = () => {
 
   const isSavingSprint = isUpdatingSprint || isDeletingSprint;
   const sprintModalErrorMessage = isUpdateSprintError
-    ? updateSprintError?.message
+    ? formatSprintWriteError(updateSprintError, 'Nie udało się zapisać sprintu.')
     : isDeleteSprintError
       ? deleteSprintError?.message
       : sprintModalMessage;
@@ -625,30 +642,21 @@ const ProjectSprintsPage: React.FC = () => {
     });
   };
 
-  const handleExtendSprint = () => {
-    if (!editingSprintId || !sprintDraft) {
+  const adjustEditingSprintEndDate = (days: number) => {
+    if (!sprintDraft) {
       return;
     }
 
-    const updatedEndDate = addDaysToDisplayDate(sprintDraft.endDate, 7);
+    resetUpdateSprint();
+    const result = adjustSprintDraftEndDate(sprintDraft, days);
+
+    if ('message' in result) {
+      setSprintModalMessage(result.message);
+      return;
+    }
 
     setSprintModalMessage(null);
-    updateSprint(
-      { id: editingSprintId, projectId, data: toSprintEndDateUpdateDto(sprintDraft.endDate, 7) },
-      {
-        onSuccess: (updatedSprint) => {
-          setSprintDraft((currentDraft) =>
-            currentDraft
-              ? {
-                  ...currentDraft,
-                  endDate: updatedEndDate,
-                  status: mapSprintDetailToSprintStatus(updatedSprint),
-                }
-              : currentDraft,
-          );
-        },
-      },
-    );
+    setSprintDraft(result.draft);
   };
 
   const handleDeleteSprint = () => {
@@ -685,7 +693,9 @@ const ProjectSprintsPage: React.FC = () => {
 
   const sprintCount = sprintsQueryData?.totalCount ?? baseSprints.length;
 
-  const createSprintErrorMessage = isCreateSprintError ? createSprintError?.message : null;
+  const createSprintErrorMessage = isCreateSprintError
+    ? formatSprintWriteError(createSprintError, 'Nie udało się utworzyć sprintu.')
+    : null;
 
   const openCreateModal = () => {
     resetCreateSprint();
@@ -1293,9 +1303,14 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
         draft={sprintDraft}
         onClose={closeSprintEditModal}
         onSave={handleSprintDraftSave}
-        onDraftChange={setSprintDraft}
+        onDraftChange={(nextDraft) => {
+          resetUpdateSprint();
+          setSprintModalMessage(null);
+          setSprintDraft(nextDraft);
+        }}
         onStartNextSprint={handleStartNextSprint}
-        onExtendSprint={handleExtendSprint}
+        onExtendSprint={() => adjustEditingSprintEndDate(7)}
+        onShortenSprint={() => adjustEditingSprintEndDate(-7)}
         onDeleteSprint={handleDeleteSprint}
         isSaving={isSavingSprint}
         errorMessage={sprintModalErrorMessage}
