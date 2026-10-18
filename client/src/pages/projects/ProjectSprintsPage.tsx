@@ -600,7 +600,6 @@ const ProjectSprintsPage: React.FC = () => {
             title: sprint.title === '—' ? '' : sprint.title,
             startDate: sprint.startDate === '—' ? '' : sprint.startDate,
             endDate: sprint.endDate === '—' ? '' : sprint.endDate,
-            status: sprint.status,
           },
     );
     setIsSprintEditOpen(true);
