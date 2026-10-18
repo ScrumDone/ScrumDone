@@ -8,6 +8,7 @@ import type {
   AssignmentLabelsUpdateDto,
   AssignmentStatus,
   AssignmentPriority,
+  AssignmentLabel,
   AssignmentQueryParams
 } from '../types/assignment';
 import type { UserSummary } from '../types/user';
@@ -61,7 +62,7 @@ export const updateAssignees = (id: string, data: AssignmentAssigneesUpdateDto) 
 };
 
 export const updateLabels = (id: string, data: AssignmentLabelsUpdateDto) => {
-  return apiPut<any, AssignmentLabelsUpdateDto>(`/api/assignments/${id}/labels`, data);
+  return apiPut<AssignmentLabel[], AssignmentLabelsUpdateDto>(`/api/assignments/${id}/labels`, data);
 };
 
 export const getStatuses = () => {

@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import type { Assignment } from '../types/assignment';
-import { getInitialsFromName } from '../hooks/useCurrentUser';
+import { getInitialsFromName } from '../hooks/users/useCurrentUser';
 
 export type SprintTaskItem = {
   id: string;

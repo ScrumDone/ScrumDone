@@ -1,5 +1,5 @@
-import type { PersonFilter } from '../components/calendarPeopleFilter';
-import { getInitialsFromName } from '../hooks/useCurrentUser';
+import type { PersonFilter } from '../components/common/PeopleFilter';
+import { getInitialsFromName } from '../hooks/users/useCurrentUser';
 
 export const mapTeamMembersToPersonFilters = (members: { id: string; name: string }[]): PersonFilter[] =>
   members.map((member) => ({

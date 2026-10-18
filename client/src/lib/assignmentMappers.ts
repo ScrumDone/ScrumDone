@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import type { Assignment } from '../types/assignment';
-import { getInitialsFromName } from '../hooks/useCurrentUser';
+import { getInitialsFromName } from '../hooks/users/useCurrentUser';
 
 export type AssignmentVM = {
   id: string;
@@ -43,26 +43,33 @@ export const assignmentToKanbanCard = (a: Assignment) => {
   };
 };
 
-export const assignmentToCalendarTask = (a: Assignment) => {
-  const normalizedDate = a.dueDate ?? ''
-  const [date = ''] = normalizedDate.split('T')
+// Lista zadań nie zwraca koloru projektu, więc wywołujący podaje go z mapy projectId -> hexColor
+export const assignmentToCalendarTask = (a: Assignment, projectHexColor: string | null = null) => {
+  const date = a.dueDate ? format(new Date(a.dueDate), 'yyyy-MM-dd') : ''
   return {
     id: a.id,
     title: a.name,
     date,
     colorVariant: 'blue' as const,
     priorityHexColor: a.priority?.hexColor ?? null,
+    projectHexColor,
   }
 };
 
-export const assignmentToNoDeadlineTask = (a: Assignment) => ({
-  id: a.id,
-  title: a.name,
-  assigneeInitials: a.assignees[0]?.name ? getInitialsFromName(a.assignees[0].name) : '??',
-  assigneeName: a.assignees[0]?.name ?? 'Unassigned',
-  accentColor: a.priority?.name === 'High' ? 'red' as const : 'blue' as const,
-  dotColor: a.priority?.name === 'High' ? 'red' as const : 'blue' as const,
-  priorityHexColor: a.priority?.hexColor ?? null,
-});
+export const assignmentToNoDeadlineTask = (a: Assignment, projectHexColor: string | null = null) => {
+  // Kolor zapasowy, gdy priorytet nie ma hexColor
+  const fallbackColor = a.priority?.name === 'High' ? 'red' as const : 'blue' as const
+
+  return {
+    id: a.id,
+    title: a.name,
+    assigneeInitials: a.assignees[0]?.name ? getInitialsFromName(a.assignees[0].name) : '??',
+    assigneeName: a.assignees[0]?.name ?? 'Unassigned',
+    accentColor: fallbackColor,
+    dotColor: fallbackColor,
+    priorityHexColor: a.priority?.hexColor ?? null,
+    projectHexColor,
+  }
+};
 
 
