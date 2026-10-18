@@ -49,7 +49,6 @@ import {
 import { useAssignments } from '../../hooks/assignments/useAssignments';
 import { useAssignmentPriorities } from '../../hooks/assignments/useAssignmentPriorities';
 import { useProject } from '../../hooks/projects/useProject';
-import { useUpdateProject } from '../../hooks/projects/useUpdateProject';
 import {
   buildPeopleFilterOptions,
   mapTeamMembersToPersonFilters,
@@ -234,14 +233,18 @@ type ActiveDragItem =
   | { source: 'sprint'; task: SprintTaskItem; sprintId: string };
 
 const SPRINT_DATES_TAKEN_MESSAGE = 'Te daty są już zajęte przez inny sprint.';
+const SPRINT_KANBAN_CREATE_MESSAGE =
+  'Nie można tworzyć sprintów w trybie Kanban. Przełącz projekt na Scrum.';
 
 const formatSprintWriteError = (error: unknown, fallback: string): string => {
-  if (
-    error instanceof ApiError
-    && error.status === 409
-    && (/already taken/i.test(error.message) || error.message.trim() === 'Conflict')
-  ) {
-    return SPRINT_DATES_TAKEN_MESSAGE;
+  if (error instanceof ApiError && error.status === 409) {
+    if (/not in Scrum mode|cannot add new sprints/i.test(error.message)) {
+      return SPRINT_KANBAN_CREATE_MESSAGE;
+    }
+
+    if (/already taken/i.test(error.message) || error.message.trim() === 'Conflict') {
+      return SPRINT_DATES_TAKEN_MESSAGE;
+    }
   }
 
   if (error instanceof Error && error.message.trim()) {
@@ -301,7 +304,7 @@ const ProjectSprintsPage: React.FC = () => {
   const { projectId = '' } = useParams();
   const navigate = useNavigate();
   const { data: project } = useProject(projectId);
-  const { mutate: updateProject } = useUpdateProject();
+  const isScrumProject = Boolean(project?.isSetToScrum);
 
   const { mutate: updateAssignmentSprint } = useUpdateAssignmentSprint();
 
@@ -703,6 +706,10 @@ const ProjectSprintsPage: React.FC = () => {
     : null;
 
   const openCreateModal = () => {
+    if (!isScrumProject) {
+      return;
+    }
+
     resetCreateSprint();
     setCreateDraft(createEmptySprintDraft(`Sprint ${sprintCount + 1}`));
     setIsCreateModalOpen(true);
@@ -715,7 +722,7 @@ const ProjectSprintsPage: React.FC = () => {
   };
 
   const handleCreateSprint = () => {
-    if (!createDraft) {
+    if (!createDraft || !isScrumProject) {
       return;
     }
 
@@ -724,26 +731,14 @@ const ProjectSprintsPage: React.FC = () => {
       return;
     }
 
-    const submitCreate = () => {
-      createSprint(
-        { projectId, data: dto },
-        {
-          onSuccess: () => {
-            closeCreateModal();
-          },
+    createSprint(
+      { projectId, data: dto },
+      {
+        onSuccess: () => {
+          closeCreateModal();
         },
-      );
-    };
-
-    if (project && !project.isSetToScrum) {
-      updateProject(
-        { id: projectId, data: { isSetToScrum: true } },
-        { onSuccess: submitCreate },
-      );
-      return;
-    }
-
-    submitCreate();
+      },
+    );
   };
 
   const renderSprintList = () => {
@@ -1152,15 +1147,17 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
                 <h2 className="font-segoe-ui text-[18px] leading-7 font-medium tracking-[-0.44px] text-slate-900 antialiased">
                   Wszystkie sprinty ({sprintCount})
                 </h2>
-                <button
-                  type="button"
-                  onClick={openCreateModal}
-                  disabled={!projectId}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-scrumdone-blue-main px-4 py-2.5 font-segoe-ui text-[14px] leading-5 font-medium text-white transition-colors hover:bg-[#00A0DD] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <PlusIcon className="h-4 w-4 stroke-2" />
-                  Dodaj sprint
-                </button>
+                {isScrumProject ? (
+                  <button
+                    type="button"
+                    onClick={openCreateModal}
+                    disabled={!projectId}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-scrumdone-blue-main px-4 py-2.5 font-segoe-ui text-[14px] leading-5 font-medium text-white transition-colors hover:bg-[#00A0DD] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <PlusIcon className="h-4 w-4 stroke-2" />
+                    Dodaj sprint
+                  </button>
+                ) : null}
               </div>
               {renderSprintList()}
             </div>
