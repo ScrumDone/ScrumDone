@@ -1,6 +1,7 @@
 using FluentValidation;
 using MicroElements.AspNetCore.OpenApi.FluentValidation;
 using MicroElements.OpenApi.FluentValidation;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Scrumdone.Api.Services;
@@ -36,6 +37,36 @@ builder.Services.Configure<SchemaGenerationOptions>(o =>
     //o.RuleFilter = rule => !rule.HasCondition; // <- uncomment this
 });
 
+builder.Services.AddIdentityCore<User>(options =>
+{
+    options.User.RequireUniqueEmail = true;
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
+})
+.AddRoles<IdentityRole<Guid>>()
+.AddEntityFrameworkStores<AppDbContext>()
+.AddSignInManager<SignInManager<User>>()
+.AddApiEndpoints();
+
+builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
+    .AddCookie(IdentityConstants.ApplicationScheme, options =>
+    {
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddValidatorsFromAssemblyContaining<ValidatorAssemblyMarker>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
@@ -56,6 +87,7 @@ builder.Services.AddTransient<IProjectsService, ProjectsService>();
 builder.Services.AddTransient<IAssignmentsService, AssignmentsService>();
 builder.Services.AddTransient<ISprintsService, SprintsService>();
 builder.Services.AddTransient<IUsersService, UsersService>();
+builder.Services.AddTransient<IAuthService, AuthService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -70,7 +102,10 @@ if (!app.Environment.IsEnvironment("Testing"))
         db.Database.Migrate();
         if (app.Environment.IsDevelopment())
         {
-            DatabaseSeeder.Seed(db);
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+
+            await DatabaseSeeder.Seed(db, userManager, roleManager);
         }
     }
 }
@@ -93,6 +128,7 @@ if (!app.Environment.IsEnvironment("Testing"))
 
 app.UseCors("AllowFrontend");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -22,7 +22,7 @@ public class CompanyNotesEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            db.Users.Add(new User { Id = userId, Name = "Test User", Email = "test1@example.com", UserName = "test1example.com" });
             db.Companies.Add(new Company { Id = companyId, Name = "Target Company" });
             return Task.CompletedTask;
         });
@@ -84,7 +84,7 @@ public class CompanyNotesEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "Test User" });
+            db.Users.Add(new User { Id = userId, Name = "Test User", Email = "test1@example.com", UserName = "test1example.com" });
             db.Companies.Add(new Company { Id = companyId, Name = "Company" });
 
             db.CompanyNotes.AddRange(
@@ -117,7 +117,7 @@ public class CompanyNotesEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "User" });
+            db.Users.Add(new User { Id = userId, Name = "User", Email = "test1@example.com", UserName = "test1example.com" });
             db.Companies.Add(new Company { Id = companyId, Name = "C" });
             db.CompanyNotes.Add(new CompanyNote { Id = noteId, CompanyId = companyId, UserId = userId, Content = "Old Content" });
             return Task.CompletedTask;
@@ -146,7 +146,7 @@ public class CompanyNotesEndpointTests
 
         await app.SeedDatabaseAsync(db =>
         {
-            db.Users.Add(new User { Id = userId, Name = "User" });
+            db.Users.Add(new User { Id = userId, Name = "User", Email = "test1@example.com", UserName = "test1example.com" });
             db.Companies.Add(new Company { Id = companyId, Name = "C" });
             db.CompanyNotes.Add(new CompanyNote { Id = noteId, CompanyId = companyId, UserId = userId, Content = "To Delete" });
             return Task.CompletedTask;

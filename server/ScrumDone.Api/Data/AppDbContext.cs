@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ScrumDone.Api.Data.Common;
 using System.Linq.Expressions;
 
 namespace ScrumDone.Api.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
@@ -12,6 +14,7 @@ namespace ScrumDone.Api.Data
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<UserInvitation> Invitations { get; set; }
         public DbSet<Company> Companies { get; set; }
         public DbSet<CooperationLog> CooperationLogs { get; set; }
         public DbSet<Project> Projects { get; set; }
@@ -25,7 +28,6 @@ namespace ScrumDone.Api.Data
         public DbSet<FileLabel> FileLabels { get; set; }
         public DbSet<AssignmentStatus> AssignmentStatuses { get; set; }
         public DbSet<AssignmentPriority> AssignmentPriorities { get; set; }
-        public DbSet<UserPermissionsType> UserPermissionsTypes { get; set; }
         public DbSet<AssignmentLabel> AssignmentLabels { get; set; }
         public DbSet<Sprint> Sprints { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
@@ -64,6 +66,14 @@ namespace ScrumDone.Api.Data
                 .WithMany(u => u.AuthoredFiles)
                 .HasForeignKey(f => f.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<User>(e =>
+            {
+                e.HasIndex(u => u.NormalizedUserName).HasDatabaseName("UserNameIndex")
+                 .IsUnique().HasFilter("\"IsDeleted\" = false");
+                e.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex")
+                 .IsUnique().HasFilter("\"IsDeleted\" = false");
+            });
 
             modelBuilder.Entity<Assignment>(entity =>
                 {
