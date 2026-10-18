@@ -48,6 +48,7 @@ builder.Services.AddIdentityCore<User>(options =>
 .AddRoles<IdentityRole<Guid>>()
 .AddEntityFrameworkStores<AppDbContext>()
 .AddSignInManager<SignInManager<User>>()
+.AddDefaultTokenProviders()
 .AddApiEndpoints();
 
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
@@ -64,6 +65,11 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
             return Task.CompletedTask;
         };
     });
+
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromHours(2);
+});
 
 builder.Services.AddAuthorization();
 

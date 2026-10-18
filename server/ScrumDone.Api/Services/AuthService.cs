@@ -3,6 +3,7 @@ using Bogus.Extensions.UnitedKingdom;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
 using ScrumDone.Api.Data;
@@ -15,6 +16,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Net.NetworkInformation;
 using System.Reflection.Emit;
+using System.Text;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace ScrumDone.Api.Services
@@ -113,6 +115,47 @@ namespace ScrumDone.Api.Services
             await _context.SaveChangesAsync();
 
             await transaction.CommitAsync();
+
+            return;
+        }
+
+        public async Task ForgotPassword(ForgotPasswordDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+
+            if (user is null)
+            {
+                return;
+            }
+
+            var rawToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
+
+            var resetLink = $"http://localhost:3000/auth/reset-password?email={Uri.EscapeDataString(user.Email!)}&token={encodedToken}";
+
+            Console.WriteLine(resetLink);
+
+            return;
+        }
+
+        public async Task ResetPassword(ResetPasswordDto dto)
+        {
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+
+            if (user is null)
+            {
+                throw new BadRequestException("Incorrect request.");
+            }
+
+            var tokenBytes = WebEncoders.Base64UrlDecode(dto.Token);
+            var decodedToken = Encoding.UTF8.GetString(tokenBytes);
+
+            var result = await _userManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(" ", result.Errors.Select(e => e.Description));
+                throw new BadRequestException(errors);
+            }
 
             return;
         }
