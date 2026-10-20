@@ -14,6 +14,10 @@ namespace ScrumDone.Api.Services
 
         Task RegisterUser(Guid id, UserRegistrationDto dto);
 
+        Task ForgotPassword(ForgotPasswordDto dto);
+
+        Task ResetPassword(ResetPasswordDto dto);
+
         Task Login(LoginDto dto);
 
         Task Logout();

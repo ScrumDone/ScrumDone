@@ -47,6 +47,30 @@ namespace ScrumDone.Api.Controllers
             return Ok();
         } 
 
+        [HttpPost("forgot-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> ForgotPassword(
+            [FromBody] ForgotPasswordDto dto,
+            [FromServices] IValidator<ForgotPasswordDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            await _authService.ForgotPassword(dto);
+
+            return Ok();
+        }
+
+        [HttpPost("reset-password")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> ResetPassword(
+            [FromBody] ResetPasswordDto dto,
+            [FromServices] IValidator<ResetPasswordDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            await _authService.ResetPassword(dto);
+
+            return Ok();
+        } 
+
         [HttpPost("login")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> Login(

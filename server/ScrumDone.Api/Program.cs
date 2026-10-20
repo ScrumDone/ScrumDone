@@ -3,6 +3,7 @@ using MicroElements.AspNetCore.OpenApi.FluentValidation;
 using MicroElements.OpenApi.FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Scalar.AspNetCore;
 using Scrumdone.Api.Services;
 using ScrumDone.Api.Data;
@@ -19,7 +20,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000")
+            policy.WithOrigins(builder.Configuration["Frontend:BaseUrl"]!)
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -48,11 +49,14 @@ builder.Services.AddIdentityCore<User>(options =>
 .AddRoles<IdentityRole<Guid>>()
 .AddEntityFrameworkStores<AppDbContext>()
 .AddSignInManager<SignInManager<User>>()
+.AddDefaultTokenProviders()
 .AddApiEndpoints();
 
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddCookie(IdentityConstants.ApplicationScheme, options =>
     {
+        options.Events.OnValidatePrincipal = SecurityStampValidator.ValidatePrincipalAsync;
+
         options.Events.OnRedirectToLogin = context =>
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -64,6 +68,15 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
             return Task.CompletedTask;
         };
     });
+
+builder.Services.TryAddScoped<ISecurityStampValidator, SecurityStampValidator<User>>();
+builder.Services.Configure<SecurityStampValidatorOptions>(o =>
+    o.ValidationInterval = TimeSpan.Zero);
+
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromHours(2);
+});
 
 builder.Services.AddAuthorization();
 
