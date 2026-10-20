@@ -117,7 +117,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
   const viewMode: 'kanban' | 'scrum' = projectData?.isSetToScrum ? 'scrum' : 'kanban';
 
   const handleViewModeChange = (mode: 'kanban' | 'scrum') => {
-    if (!projectData) return;
+    if (!projectData || isSavingProject) return;
     const nextIsScrum = mode === 'scrum';
     if (projectData.isSetToScrum === nextIsScrum) return;
     updateProject({ id: projectId, data: { isSetToScrum: nextIsScrum } });
