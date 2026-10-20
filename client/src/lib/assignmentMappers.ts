@@ -40,6 +40,11 @@ export const assignmentToKanbanCard = (a: Assignment) => {
     priorityId: a.priority?.id ?? '',
     dueDate,
     shortDescription: (vm.description ?? '').slice(0, 50) + '...',
+    labels: (a.labels ?? []).map((label) => ({
+      id: label.id,
+      name: label.name,
+      hexColor: label.hexColor,
+    })),
   };
 };
 

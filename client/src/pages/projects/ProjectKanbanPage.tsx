@@ -32,6 +32,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useAssignmentStatuses } from '../../hooks/assignments/useAssignmentStatuses';
 import { useAssignmentPriorities } from '../../hooks/assignments/useAssignmentPriorities';
+import { useProjectLabels } from '../../hooks/projects/useProjectLabels';
 import { useAssignments } from '../../hooks/assignments/useAssignments';
 import { useUpdateAssignmentStatus } from '../../hooks/assignments/useUpdateAssignmentStatus';
 import { useAssignmentMoveNotice } from '../../hooks/assignments/useOptimisticAssignmentUpdate';
@@ -40,6 +41,7 @@ import { assignmentToKanbanCard } from '../../lib/assignmentMappers';
 import { taskDropAnimation } from '../../lib/dndDropAnimation';
 import { findKanbanAssignment, findKanbanStatusIdForTask } from '../../utils/kanbanAssignmentCache';
 import type { Assignment, AssignmentPriority } from '../../types/assignment';
+import type { ProjectAssignmentLabel } from '../../types/project';
 
 // --- Typy i Dane pomocnicze ---
 
@@ -115,6 +117,48 @@ const PriorityFilterCard: React.FC<{
   </section>
 );
 
+const NO_PROJECT_LABELS: ProjectAssignmentLabel[] = [];
+
+const LabelFilterCard: React.FC<{
+  labels: ProjectAssignmentLabel[];
+  selectedLabels: Record<string, boolean>;
+  onToggle: (labelId: string) => void;
+  isLoading?: boolean;
+}> = ({ labels, selectedLabels, onToggle, isLoading = false }) => (
+  <section className="rounded-[10px] border border-gray-200 bg-white p-4">
+    <h3 className="mb-3 font-segoe-ui text-[18px] leading-7 font-normal text-slate-900 antialiased">Etykiety</h3>
+    {isLoading ? (
+      <p className="font-segoe-ui text-[14px] leading-5 text-slate-500 antialiased animate-pulse">Ładowanie etykiet...</p>
+    ) : labels.length === 0 ? (
+      <p className="font-segoe-ui text-[14px] leading-5 text-slate-500 antialiased">Brak etykiet.</p>
+    ) : (
+      <div className="flex flex-col gap-3">
+        {labels.map((label) => {
+          const isSelected = selectedLabels[label.id] !== false;
+
+          return (
+            <label key={label.id} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => onToggle(label.id)}
+                className="h-4 w-4 rounded border-slate-300 text-slate-900 accent-slate-900"
+                aria-label={label.name}
+              />
+              <span
+                className="h-2 w-2 rounded-full bg-slate-300"
+                style={label.hexColor ? { backgroundColor: label.hexColor } : undefined}
+                aria-hidden="true"
+              />
+              <span className="font-segoe-ui text-[14px] leading-5 text-black antialiased">{label.name}</span>
+            </label>
+          );
+        })}
+      </div>
+    )}
+  </section>
+);
+
 // --- Komponent Główny ---
 
 const ProjectKanbanPage: React.FC = () => {
@@ -174,6 +218,7 @@ const ProjectKanbanPage: React.FC = () => {
 
   const { data: statuses } = useAssignmentStatuses();
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
+  const { data: projectLabels, isLoading: isLabelsLoading } = useProjectLabels(projectId);
   const moveError = useAssignmentMoveNotice();
 
   const teamMembers = useMemo(
@@ -182,6 +227,7 @@ const ProjectKanbanPage: React.FC = () => {
   );
 
   const [selectedPriorities, setSelectedPriorities] = useState<Record<string, boolean>>({});
+  const [selectedLabels, setSelectedLabels] = useState<Record<string, boolean>>({});
   const [selectedPeople, setSelectedPeople] = useState<Record<string, boolean>>({});
 
   const handleTaskClick = (task: KanbanCardVM) => {
@@ -203,6 +249,14 @@ const ProjectKanbanPage: React.FC = () => {
   const selectedPriorityIds = useMemo(
     () => priorities?.filter((priority) => selectedPriorities[priority.id]).map((priority) => priority.id) ?? [],
     [priorities, selectedPriorities],
+  );
+
+  const labelList = projectLabels ?? NO_PROJECT_LABELS;
+  const allLabelsSelected = labelList.every((label) => selectedLabels[label.id] !== false);
+  const noLabelsSelected = labelList.length > 0 && labelList.every((label) => selectedLabels[label.id] === false);
+  const selectedLabelIds = useMemo(
+    () => labelList.filter((label) => selectedLabels[label.id] !== false).map((label) => label.id),
+    [labelList, selectedLabels],
   );
 
   const priorityList = priorities ?? [];
@@ -264,6 +318,7 @@ const ProjectKanbanPage: React.FC = () => {
     ProjectIds: [projectId],
     ...(boardSprintId ? { SprintIds: [boardSprintId] } : {}),
     ...(!allPrioritiesSelected && !noPrioritiesSelected ? { PriorityIds: selectedPriorityIds } : {}),
+    ...(!allLabelsSelected && !noLabelsSelected ? { LabelIds: selectedLabelIds } : {}),
     ...(!allPeopleSelected && !noPeopleSelected ? { AssigneeIds: selectedAssigneeIds } : {}),
   }), [
     projectId,
@@ -271,6 +326,9 @@ const ProjectKanbanPage: React.FC = () => {
     allPrioritiesSelected,
     noPrioritiesSelected,
     selectedPriorityIds,
+    allLabelsSelected,
+    noLabelsSelected,
+    selectedLabelIds,
     allPeopleSelected,
     noPeopleSelected,
     selectedAssigneeIds,
@@ -279,6 +337,7 @@ const ProjectKanbanPage: React.FC = () => {
   const kanbanColumnsEnabled = Boolean(projectId)
     && isBoardSprintReady
     && !noPrioritiesSelected
+    && !noLabelsSelected
     && !noPeopleSelected;
 
   const handleSelectedPeopleChange = (next: Record<string, boolean>) => {
@@ -398,6 +457,13 @@ const ProjectKanbanPage: React.FC = () => {
     setSelectedPriorities((current) => ({
       ...current,
       [priorityId]: !current[priorityId],
+    }));
+  };
+
+  const toggleLabel = (labelId: string) => {
+    setSelectedLabels((current) => ({
+      ...current,
+      [labelId]: current[labelId] === false,
     }));
   };
 
@@ -527,6 +593,12 @@ const ProjectKanbanPage: React.FC = () => {
                       selectedPriorities={selectedPriorities}
                       onToggle={togglePriority}
                       isLoading={isPrioritiesLoading}
+                    />
+                    <LabelFilterCard
+                      labels={projectLabels ?? []}
+                      selectedLabels={selectedLabels}
+                      onToggle={toggleLabel}
+                      isLoading={isLabelsLoading}
                     />
                     <CalendarPeopleFilter
                       people={peopleFilterOptions}
