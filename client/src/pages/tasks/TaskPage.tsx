@@ -220,7 +220,11 @@ const TaskPage: React.FC = () => {
 
                                 <aside className="w-96 shrink-0 space-y-6 pt-21">
                                     <TaskSidebarDetails assignmentId={assignment.id} assignment={assignment} />
-                                    <TaskLabels assignmentId={assignment.id} labels={assignment.labels} />
+                                    <TaskLabels
+                                        assignmentId={assignment.id}
+                                        projectId={assignment.projectId}
+                                        labels={assignment.labels ?? []}
+                                    />
                                 </aside>
                             </div>
                         </>

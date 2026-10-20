@@ -17,6 +17,8 @@ export function useUpdateProjectLabel() {
       updateProjectAssignmentLabel(projectId, labelId, data),
     onSuccess: (_updatedLabel, { projectId }) => {
       queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'assignment-labels'] });
+      queryClient.invalidateQueries({ queryKey: ['assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['assignment'] });
     },
   });
 }

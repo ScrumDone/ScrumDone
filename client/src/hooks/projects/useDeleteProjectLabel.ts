@@ -15,6 +15,8 @@ export function useDeleteProjectLabel() {
       deleteProjectAssignmentLabel(projectId, labelId),
     onSuccess: (_result, { projectId }) => {
       queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'assignment-labels'] });
+      queryClient.invalidateQueries({ queryKey: ['assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['assignment'] });
     },
   });
 }

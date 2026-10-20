@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import Avatar from '../common/Avatar';
 import { assignmentToKanbanCard } from '../../lib/assignmentMappers';
 import { ASSIGNMENT_CARD_ATTRIBUTE } from '../../utils/kanbanAssignmentCache';
+import { LabelChip } from '../tasks/LabelChip';
 
 export type KanbanCardVM = ReturnType<typeof assignmentToKanbanCard>;
 
@@ -102,6 +103,21 @@ export const KanbanTaskCard: React.FC<{
           )}
         </div>
       </div>
+      {task.labels.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {task.labels.slice(0, 2).map((label) => (
+            <LabelChip key={label.id} name={label.name} hexColor={label.hexColor} size="sm" />
+          ))}
+          {task.labels.length > 2 && (
+            <span
+              className="inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-500"
+              title={task.labels.slice(2).map((label) => label.name).join(', ')}
+            >
+              +{task.labels.length - 2}
+            </span>
+          )}
+        </div>
+      )}
       <div className="mt-3 flex items-center justify-between">
         <span
           className="h-2 w-2 rounded-full bg-slate-300"
