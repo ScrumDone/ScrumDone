@@ -5,12 +5,14 @@ export type AssignmentStatus = {
   id: string;
   name: string;
   hexColor: string;
+  order?: number;
 };
 
 export type AssignmentPriority = {
   id: string;
   name: string;
   hexColor: string;
+  order?: number;
 };
 
 export type AssignmentLabel = {
