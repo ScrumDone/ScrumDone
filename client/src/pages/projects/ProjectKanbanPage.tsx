@@ -11,6 +11,7 @@ import TaskCreateModal from '../../components/tasks/TaskCreateModal';
 import TaskEditModal, { type TaskEditDraft } from '../../components/tasks/TaskEditModal';
 import KanbanColumnContainer from '../../components/kanban/KanbanColumnContainer';
 import { KanbanTaskCard, type KanbanCardVM } from '../../components/kanban/KanbanTaskCard';
+import AssignmentMoveErrorBanner from '../../components/tasks/AssignmentMoveErrorBanner';
 import { useProjectSprints } from '../../hooks/sprints/useProjectSprints';
 import { useCurrentProjectSprint } from '../../hooks/sprints/useCurrentProjectSprint';
 import { useProjectBoardSprint } from '../../hooks/sprints/useProjectBoardSprint';
@@ -33,8 +34,10 @@ import { useAssignmentStatuses } from '../../hooks/assignments/useAssignmentStat
 import { useAssignmentPriorities } from '../../hooks/assignments/useAssignmentPriorities';
 import { useAssignments } from '../../hooks/assignments/useAssignments';
 import { useUpdateAssignmentStatus } from '../../hooks/assignments/useUpdateAssignmentStatus';
+import { useAssignmentMoveNotice } from '../../hooks/assignments/useOptimisticAssignmentUpdate';
 import { useDeleteAssignment } from '../../hooks/assignments/useDeleteAssignment';
 import { assignmentToKanbanCard } from '../../lib/assignmentMappers';
+import { taskDropAnimation } from '../../lib/dndDropAnimation';
 import { findKanbanAssignment, findKanbanStatusIdForTask } from '../../utils/kanbanAssignmentCache';
 import type { Assignment, AssignmentPriority } from '../../types/assignment';
 
@@ -144,12 +147,9 @@ const ProjectKanbanPage: React.FC = () => {
 
   const { data: statuses } = useAssignmentStatuses();
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
-  const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, string>>({});
-  const [optimisticSnapshots, setOptimisticSnapshots] = useState<Record<string, Assignment>>({});
+  const moveError = useAssignmentMoveNotice();
 
   useEffect(() => {
-    setOptimisticStatuses({});
-    setOptimisticSnapshots({});
     queryClient.removeQueries({ queryKey: ['assignments'] });
   }, [isScrumProject, projectId, queryClient]);
 
@@ -351,20 +351,12 @@ const ProjectKanbanPage: React.FC = () => {
       return overId;
     }
 
-    return findKanbanStatusIdForTask(queryClient, overId, optimisticStatuses);
+    return findKanbanStatusIdForTask(queryClient, overId);
   };
 
   const handleDragStart = ({ active }: DragStartEvent) => {
-    const activeId = String(active.id);
-    const assignment = findKanbanAssignment(queryClient, activeId) ?? optimisticSnapshots[activeId];
-
-    if (assignment) {
-      setOptimisticSnapshots((current) => ({ ...current, [activeId]: assignment }));
-      setActiveTask(assignmentToKanbanCard(assignment));
-      return;
-    }
-
-    setActiveTask(null);
+    const assignment = findKanbanAssignment(queryClient, String(active.id));
+    setActiveTask(assignment ? assignmentToKanbanCard(assignment) : null);
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -372,42 +364,12 @@ const ProjectKanbanPage: React.FC = () => {
     if (!over) return;
 
     const activeId = String(active.id);
-    const overId = String(over.id);
-    const sourceStatusId = findKanbanStatusIdForTask(queryClient, activeId, optimisticStatuses);
-    const targetStatusId = resolveTargetStatusId(overId);
+    const sourceStatusId = findKanbanStatusIdForTask(queryClient, activeId);
+    const targetStatusId = resolveTargetStatusId(String(over.id));
 
     if (!sourceStatusId || !targetStatusId || sourceStatusId === targetStatusId) return;
 
-    const snapshot = optimisticSnapshots[activeId] ?? findKanbanAssignment(queryClient, activeId);
-    if (snapshot) {
-      setOptimisticSnapshots((current) => ({ ...current, [activeId]: snapshot }));
-    }
-
-    setOptimisticStatuses((prev) => ({ ...prev, [activeId]: targetStatusId }));
-
-    updateStatus(
-      { id: activeId, statusId: targetStatusId },
-      {
-        onSuccess: async () => {
-          await queryClient.invalidateQueries({ queryKey: ['assignments'] });
-
-          setOptimisticStatuses((prev) => {
-            const next = { ...prev };
-            delete next[activeId];
-            return next;
-          });
-        },
-        onError: (error) => {
-          setOptimisticStatuses((prev) => {
-            const next = { ...prev };
-            delete next[activeId];
-            return next;
-          });
-          console.error('Błąd przenoszenia zadania:', error);
-          alert('Nie udało się przenieść zadania na serwerze. Karta wróci na swoje miejsce.');
-        },
-      }
-    );
+    updateStatus({ id: activeId, statusId: targetStatusId });
   };
 
   const togglePriority = (priorityId: string) => {
@@ -497,6 +459,8 @@ const ProjectKanbanPage: React.FC = () => {
                       </button>
                     </div>
 
+                    <AssignmentMoveErrorBanner message={moveError} />
+
                     {!isBoardSprintReady ? (
                       <p className="py-12 text-center font-segoe-ui text-sm text-slate-500 animate-pulse">
                         Ładowanie sprintu...
@@ -518,8 +482,6 @@ const ProjectKanbanPage: React.FC = () => {
                             accentColor={status.hexColor}
                             baseQuery={kanbanBaseQuery}
                             enabled={kanbanColumnsEnabled}
-                            optimisticStatuses={optimisticStatuses}
-                            optimisticSnapshots={optimisticSnapshots}
                             openMenuTaskId={openMenuTaskId}
                             menuRef={taskMenuRef}
                             onMenuToggle={handleMenuToggle}
@@ -530,7 +492,7 @@ const ProjectKanbanPage: React.FC = () => {
                         ))}
                       </div>
 
-                      <DragOverlay dropAnimation={null}>
+                      <DragOverlay dropAnimation={taskDropAnimation}>
                         {activeTask ? <KanbanTaskCard task={activeTask} isDragOverlay /> : null}
                       </DragOverlay>
                     </DndContext>

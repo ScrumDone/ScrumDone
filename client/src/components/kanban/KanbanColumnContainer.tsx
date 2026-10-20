@@ -5,6 +5,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { KANBAN_COLUMN_PAGE_SIZE, useKanbanColumnAssignments } from '../../hooks/assignments/useAssignments';
 import { assignmentToKanbanCard } from '../../lib/assignmentMappers';
 import type { Assignment, AssignmentQueryParams } from '../../types/assignment';
+import { compareAssignments } from '../../utils/assignmentOrder';
 import { KanbanTaskCard } from './KanbanTaskCard';
 
 type KanbanCardVM = ReturnType<typeof assignmentToKanbanCard>;
@@ -15,8 +16,6 @@ type KanbanColumnContainerProps = {
   accentColor: string;
   baseQuery: AssignmentQueryParams;
   enabled: boolean;
-  optimisticStatuses: Record<string, string>;
-  optimisticSnapshots: Record<string, Assignment>;
   openMenuTaskId: string | null;
   menuRef: React.RefObject<HTMLDivElement | null>;
   onMenuToggle: (taskId: string) => void;
@@ -31,8 +30,6 @@ const KanbanColumnContainer: React.FC<KanbanColumnContainerProps> = ({
   accentColor,
   baseQuery,
   enabled,
-  optimisticStatuses,
-  optimisticSnapshots,
   openMenuTaskId,
   menuRef,
   onMenuToggle,
@@ -56,29 +53,10 @@ const KanbanColumnContainer: React.FC<KanbanColumnContainerProps> = ({
 
   const totalCount = Number(data?.pages[0]?.totalCount ?? 0);
 
-  const tasks = useMemo(() => {
-    const byId = new Map<string, Assignment>();
-
-    for (const assignment of loadedAssignments) {
-      const effectiveStatusId = optimisticStatuses[assignment.id] ?? assignment.status.id;
-      if (effectiveStatusId === statusId) {
-        byId.set(assignment.id, assignment);
-      }
-    }
-
-    for (const [assignmentId, targetStatusId] of Object.entries(optimisticStatuses)) {
-      if (targetStatusId !== statusId || byId.has(assignmentId)) {
-        continue;
-      }
-
-      const snapshot = optimisticSnapshots[assignmentId];
-      if (snapshot) {
-        byId.set(assignmentId, snapshot);
-      }
-    }
-
-    return Array.from(byId.values()).map(assignmentToKanbanCard);
-  }, [loadedAssignments, optimisticSnapshots, optimisticStatuses, statusId]);
+  const tasks = useMemo(
+    () => [...loadedAssignments].sort(compareAssignments).map(assignmentToKanbanCard),
+    [loadedAssignments],
+  );
 
   const showPagedCount = hasNextPage || totalCount > KANBAN_COLUMN_PAGE_SIZE;
   const countLabel = showPagedCount ? `${tasks.length}/${totalCount}` : String(tasks.length);
@@ -114,8 +92,7 @@ const KanbanColumnContainer: React.FC<KanbanColumnContainerProps> = ({
           )}
 
           {!isLoading && tasks.map((task) => {
-            const assignment = optimisticSnapshots[task.id]
-              ?? loadedAssignments.find((item) => item.id === task.id);
+            const assignment = loadedAssignments.find((item) => item.id === task.id);
 
             return (
               <KanbanTaskCard

@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Avatar from '../common/Avatar';
 import { assignmentToKanbanCard } from '../../lib/assignmentMappers';
+import { ASSIGNMENT_CARD_ATTRIBUTE } from '../../utils/kanbanAssignmentCache';
 
 export type KanbanCardVM = ReturnType<typeof assignmentToKanbanCard>;
 
@@ -32,6 +33,7 @@ export const KanbanTaskCard: React.FC<{
   return (
     <article
       ref={isDragOverlay ? undefined : sortable.setNodeRef}
+      {...(isDragOverlay ? {} : { [ASSIGNMENT_CARD_ATTRIBUTE]: task.id })}
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}

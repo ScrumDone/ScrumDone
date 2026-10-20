@@ -32,6 +32,7 @@ import SprintEditModal, { type SprintEditDraft } from '../../components/sprints/
 import SprintCreateModal from '../../components/sprints/SprintCreateModal';
 import CloseAndStartSprintDialog from '../../components/sprints/CloseAndStartSprintDialog';
 import TaskCreateModal from '../../components/tasks/TaskCreateModal';
+import AssignmentMoveErrorBanner from '../../components/tasks/AssignmentMoveErrorBanner';
 import { useCreateSprint } from '../../hooks/sprints/useCreateSprint';
 import { useDeleteSprint } from '../../hooks/sprints/useDeleteSprint';
 import { useProjectSprints } from '../../hooks/sprints/useProjectSprints';
@@ -62,8 +63,11 @@ import {
   type SprintTaskItem,
 } from '../../utils/sprintTaskMappers';
 import { useUpdateAssignmentSprint } from '../../hooks/assignments/useUpdateAssignmentSprint';
+import { useAssignmentMoveNotice } from '../../hooks/assignments/useOptimisticAssignmentUpdate';
 import type { AssignmentPriority } from '../../types/assignment';
 import { taskDropAnimation } from '../../lib/dndDropAnimation';
+import { compareAssignments } from '../../utils/assignmentOrder';
+import { ASSIGNMENT_CARD_ATTRIBUTE } from '../../utils/kanbanAssignmentCache';
 
 const BACKLOG_ID = 'backlog';
 
@@ -99,6 +103,7 @@ const BacklogTaskCard: React.FC<BacklogTaskCardProps> = ({ task, isDragOverlay =
   return (
     <div
       ref={isDragOverlay ? undefined : sortable.setNodeRef}
+      {...(isDragOverlay ? {} : { [ASSIGNMENT_CARD_ATTRIBUTE]: task.id })}
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
@@ -144,6 +149,7 @@ const SprintTaskRow: React.FC<SprintTaskRowProps> = ({ task, isDragOverlay = fal
   return (
     <div
       ref={isDragOverlay ? undefined : sortable.setNodeRef}
+      {...(isDragOverlay ? {} : { [ASSIGNMENT_CARD_ATTRIBUTE]: task.id })}
       style={style}
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
@@ -307,6 +313,7 @@ const ProjectSprintsPage: React.FC = () => {
   const isScrumProject = Boolean(project?.isSetToScrum);
 
   const { mutate: updateAssignmentSprint } = useUpdateAssignmentSprint();
+  const moveError = useAssignmentMoveNotice();
 
   const {
     data: sprintsQueryData,
@@ -455,7 +462,6 @@ const ProjectSprintsPage: React.FC = () => {
     ukonczne: true,
     nieukonczne: true,
   });
-  const [optimisticSprints, setOptimisticSprints] = useState<Record<string, string | null>>({});
 
   const visibleAssignments = useMemo(() => {
     if (!assignmentsData?.items) {
@@ -466,17 +472,9 @@ const ProjectSprintsPage: React.FC = () => {
       return [];
     }
 
-    let items = assignmentsData.items.map((assignment) => {
-      const optimisticSprintId = optimisticSprints[assignment.id];
-      
-      if (optimisticSprintId !== undefined) {
-        return { ...assignment, sprintId: optimisticSprintId };
-      }
-      
-      return assignment;
-    }).filter((assignment) =>
-      matchesSprintCompletionFilter(assignment, selectedStatuses),
-    );
+    let items = [...assignmentsData.items]
+      .sort(compareAssignments)
+      .filter((assignment) => matchesSprintCompletionFilter(assignment, selectedStatuses));
 
     if (!allPeopleSelected) {
       items = items.filter((assignment) =>
@@ -492,7 +490,6 @@ const ProjectSprintsPage: React.FC = () => {
     noPrioritiesSelected,
     selectedAssigneeIds,
     selectedStatuses,
-    optimisticSprints,
   ]);
 
   const backlogTasks = useMemo(
@@ -1056,7 +1053,7 @@ const ProjectSprintsPage: React.FC = () => {
     setDragOverSprintId(targetSprint?.id ?? null);
   };
 
-const handleDragEnd = ({ active, over }: DragEndEvent) => {
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setActiveDragItem(null);
     setDragOverSprintId(null);
     if (!over) {
@@ -1068,35 +1065,12 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
     const sourceSprint = findSprintWithTask(activeId);
     const backlogTask = backlogTasks.find((task) => task.id === activeId);
 
-    const handleMoveSuccess = () => {
-      setOptimisticSprints((prev) => {
-        const next = { ...prev };
-        delete next[activeId];
-        return next;
-      });
-    };
-
-    const handleMoveError = (error: any) => {
-      setOptimisticSprints((prev) => {
-        const next = { ...prev };
-        delete next[activeId];
-        return next;
-      });
-      console.error('Błąd przenoszenia zadania:', error);
-      alert('Nie udało się przenieść zadania. Spróbuj ponownie.');
-    };
-
     if (isBacklogDropTarget(overId)) {
       if (!sourceSprint) {
         return;
       }
 
-      setOptimisticSprints((prev) => ({ ...prev, [activeId]: null }));
-
-      updateAssignmentSprint(
-        { id: activeId, sprintId: null }, 
-        { onSuccess: handleMoveSuccess, onError: handleMoveError }
-      );
+      updateAssignmentSprint({ id: activeId, sprintId: null });
       return;
     }
 
@@ -1111,12 +1085,7 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
     }
 
     if (backlogTask || sourceSprint) {
-      setOptimisticSprints((prev) => ({ ...prev, [activeId]: targetSprint.id }));
-
-      updateAssignmentSprint(
-        { id: activeId, sprintId: targetSprint.id }, 
-        { onSuccess: handleMoveSuccess, onError: handleMoveError }
-      );
+      updateAssignmentSprint({ id: activeId, sprintId: targetSprint.id });
     }
   };
 
@@ -1129,6 +1098,7 @@ const handleDragEnd = ({ active, over }: DragEndEvent) => {
         <ProjectTopBar projectId={projectId} />
 
         <section className="mx-6 mt-6 mb-6 flex min-h-0 flex-1 flex-col overflow-y-auto xl:overflow-hidden">
+          <AssignmentMoveErrorBanner message={moveError} />
           <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
