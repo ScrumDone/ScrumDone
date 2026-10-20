@@ -125,10 +125,14 @@ const ProjectKanbanPage: React.FC = () => {
   const isScrumProject = project?.isSetToScrum ?? false;
   const {
     data: currentSprint,
+    dataUpdatedAt: currentSprintUpdatedAt,
+    isFetching: isCurrentSprintFetching,
   } = useCurrentProjectSprint(projectId);
   const {
     data: sprintsData,
+    dataUpdatedAt: sprintsUpdatedAt,
     isLoading: isSprintsLoading,
+    isFetching: isSprintsFetching,
     isError: isSprintsError,
     error: sprintsError,
   } = useProjectSprints(projectId, 1, 50);
@@ -136,10 +140,33 @@ const ProjectKanbanPage: React.FC = () => {
     () => mapSprintSummariesToSelectorSprints(sprintsData?.items ?? []),
     [sprintsData?.items],
   );
+  const sprintIds = useMemo(
+    () => (sprintsData?.items ?? []).map((sprint) => sprint.id),
+    [sprintsData?.items],
+  );
+  const isScrumMode = project ? project.isSetToScrum : undefined;
+  const boardSprintList = useMemo(() => ({
+    isScrum: isScrumMode,
+    sprintIds,
+    updatedAt: sprintsUpdatedAt,
+    isFetching: isSprintsFetching,
+    hasData: sprintsData !== undefined,
+    currentUpdatedAt: currentSprintUpdatedAt,
+    isCurrentFetching: isCurrentSprintFetching,
+  }), [
+    isScrumMode,
+    sprintIds,
+    sprintsUpdatedAt,
+    isSprintsFetching,
+    sprintsData,
+    currentSprintUpdatedAt,
+    isCurrentSprintFetching,
+  ]);
 
   const { selectedSprintId, setSelectedSprintId } = useProjectBoardSprint(
     projectId,
     currentSprint?.id,
+    boardSprintList,
   );
 
   const boardSprintId = selectedSprintId;
@@ -148,11 +175,6 @@ const ProjectKanbanPage: React.FC = () => {
   const { data: statuses } = useAssignmentStatuses();
   const { data: priorities, isLoading: isPrioritiesLoading } = useAssignmentPriorities();
   const moveError = useAssignmentMoveNotice();
-
-  useEffect(() => {
-    queryClient.removeQueries({ queryKey: ['assignments'] });
-  }, [isScrumProject, projectId, queryClient]);
-
 
   const teamMembers = useMemo(
     () => mapTeamMembersToPersonFilters(project?.teamMembers ?? []),
