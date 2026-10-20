@@ -10,11 +10,15 @@ namespace ScrumDone.Api.Validators.Auth
             RuleFor(c => c.Email)
                 .NotEmpty()
                 .EmailAddress()
-                .MaximumLength(50);
+                .MaximumLength(128);
 
             RuleFor(c => c.NewPassword)
                 .NotEmpty()
-                .MinimumLength(8);
+                .MaximumLength(128);
+
+            RuleFor(c => c.Token)
+                .NotEmpty()
+                .MaximumLength(1024);
         }
     }
 }

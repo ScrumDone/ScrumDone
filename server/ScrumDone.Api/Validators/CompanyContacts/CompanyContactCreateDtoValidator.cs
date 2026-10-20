@@ -23,8 +23,9 @@ namespace ScrumDone.Api.Validators.Companies
                 .MaximumLength(20);
 
             RuleFor(c => c.Email)
-                .Matches("""^(?(")(".+?(?<!\\)"@)|(([0-9a-z]((\.(?!\.))|[-!#\$%&'\*\+/=\?\^`\{\}\|~\w])*)(?<=[0-9a-z])@))(?(\[)(\[(\d{1,3}\.){3}\d{1,3}\])|(([0-9a-z][-\w]*[0-9a-z]*\.)+[a-z0-9][\-a-z0-9]{0,22}[a-z0-9]))$""")
-                .MaximumLength(50);
+                .EmailAddress()
+                .MaximumLength(128)
+                .When(x => x.Email != null);
         }
 
         // Don't want tu accept empty person only with IsPrimary = true

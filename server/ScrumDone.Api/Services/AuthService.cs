@@ -27,13 +27,17 @@ namespace ScrumDone.Api.Services
         private SignInManager<User> _signInManager;
         private RoleManager<IdentityRole<Guid>> _roleManager;
         private UserManager<User> _userManager;
+        private readonly IConfiguration _configuration;
 
-        public AuthService(AppDbContext context, UserManager<User> userManager, RoleManager<IdentityRole<Guid>> roleManager, SignInManager<User> signInManager)
+        public AuthService(AppDbContext context, UserManager<User> userManager, 
+            RoleManager<IdentityRole<Guid>> roleManager, SignInManager<User> signInManager, 
+            IConfiguration configuration)
         {
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
             _signInManager = signInManager;
+            _configuration = configuration;
         }
 
         public async Task<Guid> InviteUser(UserInvitationDto dto)
@@ -131,7 +135,8 @@ namespace ScrumDone.Api.Services
             var rawToken = await _userManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(rawToken));
 
-            var resetLink = $"http://localhost:3000/auth/reset-password?email={Uri.EscapeDataString(user.Email!)}&token={encodedToken}";
+            var baseUrl = _configuration["Frontend:BaseUrl"]!.TrimEnd('/');
+            var resetLink = $"{baseUrl}/auth/reset-password?email={Uri.EscapeDataString(user.Email!)}&token={encodedToken}";
 
             Console.WriteLine(resetLink);
 
@@ -140,24 +145,30 @@ namespace ScrumDone.Api.Services
 
         public async Task ResetPassword(ResetPasswordDto dto)
         {
-            var user = await _userManager.FindByEmailAsync(dto.Email);
+            const string invalidLink = "This reset link is invalid or has expired.";
 
-            if (user is null)
+            var user = await _userManager.FindByEmailAsync(dto.Email)
+                ?? throw new BadRequestException(invalidLink);
+
+            string decodedToken;
+            try
             {
-                throw new BadRequestException("Incorrect request.");
+                var tokenBytes = WebEncoders.Base64UrlDecode(dto.Token);
+                decodedToken = Encoding.UTF8.GetString(tokenBytes);
             }
-
-            var tokenBytes = WebEncoders.Base64UrlDecode(dto.Token);
-            var decodedToken = Encoding.UTF8.GetString(tokenBytes);
+            catch (FormatException)
+            {
+                throw new BadRequestException(invalidLink);
+            }
 
             var result = await _userManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
             if (!result.Succeeded)
             {
-                var errors = string.Join(" ", result.Errors.Select(e => e.Description));
-                throw new BadRequestException(errors);
-            }
+                if (result.Errors.Any(e => e.Code == nameof(IdentityErrorDescriber.InvalidToken)))
+                    throw new BadRequestException(invalidLink);
 
-            return;
+                throw new BadRequestException(string.Join(" ", result.Errors.Select(e => e.Description)));
+            }
         }
 
         public async Task Login(LoginDto dto)

@@ -19,7 +19,7 @@ namespace ScrumDone.Api.Validators.Companies
 
             RuleFor(c => c.Email)
                 .EmailAddress()
-                .MaximumLength(50)
+                .MaximumLength(128)
                 .When(x => x.Email != null);
         }
 

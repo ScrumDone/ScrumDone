@@ -68,7 +68,7 @@ namespace ScrumDone.Api.Controllers
             await validator.ValidateAndThrowAsync(dto);
             await _authService.ResetPassword(dto);
 
-            return Ok("Password has been reset successfully.");
+            return Ok();
         } 
 
         [HttpPost("login")]
