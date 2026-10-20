@@ -277,7 +277,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
 
   return (
     <section className="bg-white border-b border-slate-200">
-      <div className="border-b border-slate-200 px-6 py-5">
+      <div className="border-b border-slate-200 px-4 py-5 sm:px-6">
         <div className="mb-4">
           <Link
             to="/projects"
@@ -289,7 +289,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
         </div>
 
         <div className="flex flex-wrap items-start justify-between gap-6">
-          <div className="flex min-w-88 flex-1 gap-4">
+          <div className="flex min-w-0 flex-1 gap-4 sm:min-w-88">
             <div className="flex flex-col gap-2">
               <h1 className="text-2xl leading-8 text-slate-900 tracking-[0.07]">
                 {displayedProject.name}
@@ -314,7 +314,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
             </div>
           </div>
 
-          <div className="flex min-w-56 flex-col items-stretch gap-3">
+          <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:min-w-56">
             <div className="inline-flex w-full gap-2 rounded-[10px] bg-slate-50 p-1">
               <button
                 type="button"
@@ -348,7 +348,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-8 px-6 py-3">
+      <div className="flex flex-wrap gap-x-8 gap-y-2 px-4 py-3 sm:px-6">
         {projectTabs.map((tab) => (
           <NavLink
             key={tab.label}

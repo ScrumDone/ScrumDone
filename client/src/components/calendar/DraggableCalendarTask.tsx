@@ -23,7 +23,7 @@ const DraggableCalendarTask: React.FC<{ task: CalendarTask }> = ({ task }) => {
     }
 
     return (
-        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-none">
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes} className="touch-manipulation">
             <CalendarTaskItem id={task.id} title={task.title} colorVariant={task.colorVariant} priorityHexColor={task.priorityHexColor} projectHexColor={task.projectHexColor} />
         </div>
     )

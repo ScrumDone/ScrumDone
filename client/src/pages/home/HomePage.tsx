@@ -46,13 +46,13 @@ const HomePage: React.FC = () => {
             <SideBar />
             <TopBar />
 
-            <main className="ml-64 pt-(--app-header-h)">
-                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-8 py-6">
-                    <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-[0em] antialiased mb-6">Strona Główna</h1>
+            <main className="pt-(--app-header-h) lg:ml-64">
+                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-4 py-4 sm:px-8 sm:py-6">
+                    <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-[0em] antialiased mb-4 sm:mb-6">Strona Główna</h1>
 
-                    <div className="grid grid-cols-3 gap-6">
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-6">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+                            <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-4 sm:mb-6">
                                 Dzisiaj
                             </h1>
                             <div className="flex flex-col gap-3">
@@ -83,7 +83,7 @@ const HomePage: React.FC = () => {
                                                 />
                                             );
                                         }) : (
-                                            <p className="text-sm text-slate-500">Brak zadaĹ„ na dzisiaj!</p>
+                                            <p className="text-sm text-slate-500">Brak zadań na dzisiaj!</p>
                                         )}
 
                                         {/* Paginacja */}
@@ -114,14 +114,14 @@ const HomePage: React.FC = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-6">
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+                            <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-4 sm:mb-6">
                                 Aktualności
                             </h1>
                             <NewsFeed />
                         </div>
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                            <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-6">
+                        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+                            <h1 className="font-segoe-ui text-slate-800 text-[1.125rem] leading-7 font-normal tracking-[0em] antialiased mb-4 sm:mb-6">
                                 Projekty
                             </h1>
                             <ProjectsOverview />

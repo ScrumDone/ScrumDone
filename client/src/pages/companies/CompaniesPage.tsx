@@ -87,9 +87,9 @@ const CompaniesPage: React.FC = () => {
                 errorMessage={isCreateCompanyError ? createCompanyError?.message : null}
             />
 
-            <main className="ml-64 pt-(--app-header-h)">
-                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-8 py-6">
-                    <div className="flex items-center justify-between mb-8">
+            <main className="pt-(--app-header-h) lg:ml-64">
+                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-4 py-6 sm:px-8">
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
                         <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal antialiased">
                             Firmy
                         </h1>
@@ -121,7 +121,7 @@ const CompaniesPage: React.FC = () => {
                     )}
 
                     {!isLoading && !isError && companyCards.length > 0 && (
-                        <div className="grid grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3 xl:gap-8">
                             {companyCards.map((company) => (
                                 <CompanyCard
                                     key={company.id}

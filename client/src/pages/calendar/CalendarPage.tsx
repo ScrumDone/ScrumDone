@@ -5,7 +5,7 @@ import {
     ChevronDownIcon,
     CheckIcon,
 } from '@heroicons/react/24/outline'
-import { format, addWeeks, subWeeks, addMonths, subMonths, addDays } from 'date-fns'
+import { format, addWeeks, subWeeks, addMonths, subMonths, addDays, isSameMonth } from 'date-fns'
 import { pl } from 'date-fns/locale' 
 import SideBar from '../../components/layout/SideBar'
 import TopBar from '../../components/layout/TopBar'
@@ -13,6 +13,8 @@ import WeekCalendar from '../../components/calendar/WeekCalendar'
 import MonthCalendar from '../../components/calendar/MonthCalendar'
 import CalendarFilters from '../../components/calendar/CalendarFilters'
 import CalendarNoDeadlineTasks from '../../components/calendar/CalendarNoDeadlineTasks'
+import CalendarNoDeadlineDrawer from '../../components/calendar/CalendarNoDeadlineDrawer'
+import CalendarDayList from '../../components/calendar/CalendarDayList'
 import CalendarDragOverlay from '../../components/calendar/CalendarDragOverlay'
 import CalendarDayTasksModal from '../../components/calendar/CalendarDayTasksModal'
 import { useProjects } from '../../hooks/projects/useProjects'
@@ -21,6 +23,7 @@ import { useAssignments } from '../../hooks/assignments/useAssignments'
 import { useCalendarAssignments } from '../../hooks/calendar/useCalendarAssignments'
 import { applyOptimisticDueDate, useCalendarDueDateDrag } from '../../hooks/calendar/useCalendarDueDateDrag'
 import { useCurrentUser } from '../../hooks/users/useCurrentUser'
+import { DESKTOP_CALENDAR_QUERY, useMediaQuery } from '../../hooks/utils/useMediaQuery'
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../../lib/assignmentMappers'
 import type { CalendarView } from '../../lib/calendarRange'
 import type { CalendarMode, CalendarTask } from '../../types/calendar'
@@ -43,6 +46,8 @@ const CalendarPage: React.FC = () => {
     const hasInitializedPrioritiesRef = useRef(false)
 
     const { selectedUserId } = useCurrentUser()
+    // Na telefonie zamiast siatki lista dni, a panel bez terminu jako szuflada
+    const isDesktop = useMediaQuery(DESKTOP_CALENDAR_QUERY)
 
     const projects = useMemo(() => projectsResponse?.items ?? [], [projectsResponse?.items])
     // Lista zadań nie zwraca koloru projektu – dobieramy go po projectId
@@ -171,18 +176,18 @@ const CalendarPage: React.FC = () => {
             <SideBar />
             <TopBar />
 
-            <main className="ml-64 pt-(--app-header-h)">
+            <main className="pt-(--app-header-h) lg:ml-64">
                 <DndContext
                     sensors={sensors}
                     onDragStart={handleDragStart}
                     onDragEnd={(event) => handleDragEnd(event, calendarTasks, noDeadlineTasks)}
                     onDragCancel={handleDragCancel}
                 >
-                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-8 py-6">
-                    <div className="flex flex-1 items-stretch gap-3">
+                <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-4 pt-6 pb-24 sm:px-8 md:pb-6">
+                    <div className="flex flex-1 flex-col items-stretch gap-6 md:flex-row md:gap-3">
                         <div className="min-w-0 flex flex-1 flex-col">
-                            <div className="mb-6 flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
+                            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                                     <h1 className="font-segoe-ui text-[24px] leading-8 font-normal text-slate-900 antialiased">Kalendarz</h1>
 
                                     <div className="flex items-center gap-2">
@@ -195,7 +200,7 @@ const CalendarPage: React.FC = () => {
                                             <ChevronLeftIcon className="h-2.5 w-2.5" />
                                         </button>
 
-                                        <p className="font-segoe-ui text-[14px] leading-5 font-normal text-slate-900 antialiased min-w-[200px] text-center capitalize-first">
+                                        <p className="font-segoe-ui text-[14px] leading-5 font-normal text-slate-900 antialiased min-w-0 text-center capitalize-first sm:min-w-[200px]">
                                             {dateRangeText}
                                         </p>
 
@@ -210,7 +215,7 @@ const CalendarPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     <div className="flex items-center rounded-[10px] bg-[#F3F3F5] p-1">
                                         <button 
                                             onClick={() => setViewMode('week')}
@@ -260,24 +265,34 @@ const CalendarPage: React.FC = () => {
                             </div>
 
                             <div className="flex flex-1 flex-col gap-6">
-                                <div className={viewMode === 'week' ? "h-[calc(100vh-22rem)] min-h-96" : "w-full"}>
-                                    {viewMode === 'week' ? (
-                                        <WeekCalendar
-                                            startDate={startDate}
-                                            tasks={calendarTasks}
-                                            dayTotals={dayTotals}
-                                            onShowMore={setMoreTasksDayKey}
-                                        />
-                                    ) : (
-                                        <MonthCalendar
-                                            currentDate={currentDate}
-                                            tasks={calendarTasks}
-                                            dayTotals={dayTotals}
-                                            onShowMore={setMoreTasksDayKey}
-                                        />
-                                    )}
-                                </div>
-                                <CalendarNoDeadlineTasks tasks={noDeadlineTasks} draggable droppable />
+                                {!isDesktop ? (
+                                    <CalendarDayList
+                                        days={viewMode === 'week' ? range.days : range.days.filter((day) => isSameMonth(day, currentDate))}
+                                        tasks={calendarTasks}
+                                        dayTotals={dayTotals}
+                                        onShowMore={setMoreTasksDayKey}
+                                        hideEmptyDays={viewMode === 'month'}
+                                    />
+                                ) : (
+                                    <div className={viewMode === 'week' ? "h-[calc(100vh-22rem)] min-h-96" : "w-full"}>
+                                        {viewMode === 'week' ? (
+                                            <WeekCalendar
+                                                startDate={startDate}
+                                                tasks={calendarTasks}
+                                                dayTotals={dayTotals}
+                                                onShowMore={setMoreTasksDayKey}
+                                            />
+                                        ) : (
+                                            <MonthCalendar
+                                                currentDate={currentDate}
+                                                tasks={calendarTasks}
+                                                dayTotals={dayTotals}
+                                                onShowMore={setMoreTasksDayKey}
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                                {isDesktop ? <CalendarNoDeadlineTasks tasks={noDeadlineTasks} draggable droppable /> : null}
                             </div>
                         </div>
                         <CalendarFilters
@@ -292,6 +307,7 @@ const CalendarPage: React.FC = () => {
                         />
                     </div>
                 </div>
+                {!isDesktop ? <CalendarNoDeadlineDrawer tasks={noDeadlineTasks} /> : null}
                 <CalendarDragOverlay activeId={activeId} calendarTasks={calendarTasks} noDeadlineTasks={noDeadlineTasks} />
                 </DndContext>
                 <CalendarDayTasksModal

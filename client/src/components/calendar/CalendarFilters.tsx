@@ -82,7 +82,7 @@ const CalendarFilters: React.FC<CalendarFiltersProps> = ({
     }))
 
     return (
-        <aside className="flex w-44 flex-col gap-3 pr-1">
+        <aside className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:flex md:w-44 md:flex-col md:pr-1">
             {/*
             {mode === 'Team' ? <CalendarPeopleFilter people={people} /> : null}
             */}

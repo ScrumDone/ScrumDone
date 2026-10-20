@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { CooperationLogCreateDto } from '../../types/company';
 import { COOPERATION_EVENT_TYPES } from '../../constants/cooperationEventTypes';
+import { companyModalOverlayClass, companyModalPanelClass } from './companyModalClasses';
 
 export type CompanyEditDraft = {
   name: string;
@@ -58,9 +59,9 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
   return (
     <>
       {/* GŁÓWNY MODAL EDYCJI */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 px-4" onClick={onClose}>
+      <div className={`${companyModalOverlayClass} z-50`} onClick={onClose}>
         <div
-          className="flex max-h-[86vh] w-full max-w-130 flex-col overflow-hidden rounded-[10px] border border-slate-200 bg-white shadow-lg"
+          className={`${companyModalPanelClass} overflow-hidden`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-start justify-between px-6 pb-4 pt-8">
@@ -102,7 +103,7 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 px-6 py-4">
+          <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-4">
             <button 
               onClick={() => {
                 if (window.confirm('Czy na pewno chcesz usunąć tę firmę? Ta akcja jest nieodwracalna.')) {
@@ -125,8 +126,8 @@ const CompanyEditModal: React.FC<CompanyEditModalProps> = ({
 
       {/* MODAL DODAWANIA WYDARZENIA */}
       {isEventModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/35 px-4" onClick={() => setIsEventModalOpen(false)}>
-          <div className="flex w-full max-w-130 flex-col rounded-[10px] border border-slate-200 bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className={`${companyModalOverlayClass} z-[60]`} onClick={() => setIsEventModalOpen(false)}>
+          <div className={`${companyModalPanelClass} overflow-y-auto`} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between px-6 pb-4 pt-8">
               <div>
                 <h2 className="mb-1 text-[18px] font-semibold text-slate-900">Dodaj wydarzenie do historii</h2>

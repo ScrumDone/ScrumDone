@@ -33,7 +33,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({
   return (
     <div 
       onClick={handleCardClick}
-      className="bg-white p-6 rounded-xl border border-gray-200 flex flex-col hover:shadow-lg transition-shadow h-full cursor-pointer hover:border-scrumdone-blue-main/50"
+      className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 flex flex-col hover:shadow-lg transition-shadow h-full cursor-pointer hover:border-scrumdone-blue-main/50"
     >
       
       {/* NAGŁÓWEK */}
@@ -41,8 +41,8 @@ const CompanyCard: React.FC<CompanyCardProps> = ({
         <div className="w-12 h-12 bg-scrumdone-blue-main/15 rounded-[10px] flex items-center justify-center shrink-0">
           <Building2 className="w-7 h-7 text-scrumdone-blue-main stroke-2" />
         </div>
-        <div>
-          <h3 className="text-[18px] leading-7 text-gray-900 font-normal">{name}</h3>
+        <div className="min-w-0">
+          <h3 className="break-words text-[18px] leading-7 text-gray-900 font-normal">{name}</h3>
           <p className="text-[12px] leading-4 text-gray-500 font-normal">NIP: {nip}</p>
         </div>
       </div>

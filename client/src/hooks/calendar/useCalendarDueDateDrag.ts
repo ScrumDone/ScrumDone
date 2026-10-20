@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PointerSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
+import { MouseSensor, TouchSensor, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { useUpdateAssignmentDueDate } from '../assignments/useAssignments'
 import type { Assignment } from '../../types/assignment'
 import type { CalendarTask } from '../../types/calendar'
@@ -31,7 +31,11 @@ const getDropDueDate = (over: DragEndEvent['over']) => {
 export function useCalendarDueDateDrag() {
     const [activeId, setActiveId] = useState<string | null>(null)
     const [optimisticDueDates, setOptimisticDueDates] = useState<OptimisticDueDates>({})
-    const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+    // Myszą przeciąganie startuje po 8 px; palcem po przytrzymaniu 250 ms, więc zwykły gest przewija stronę
+    const sensors = useSensors(
+        useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    )
     const { mutate: updateDueDate } = useUpdateAssignmentDueDate()
 
     const handleDragStart = ({ active }: DragStartEvent) => {
