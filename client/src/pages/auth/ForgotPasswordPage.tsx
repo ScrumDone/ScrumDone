@@ -30,7 +30,7 @@ const ForgotPasswordPage: React.FC = () => {
                 <button type="button" className={authPrimaryButtonClassName}>
                     Wyślij link
                 </button>
-                <Link to="/logowanie" className={`${authTextLinkClassName} text-center`}>
+                <Link to="/login" className={`${authTextLinkClassName} text-center`}>
                     Wróć do logowania
                 </Link>
             </form>

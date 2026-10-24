@@ -36,8 +36,8 @@ const App: React.FC = () => {
       <Route path="/reports" element={<ReportsPage />} />
       <Route path="/task/:assignmentId" element={<TaskPage />} />
       <Route path="/files" element={<FilesPage />} />
-      <Route path="/logowanie" element={<LoginPage />} />
-      <Route path="/zapomnialem-hasla" element={<ForgotPasswordPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
     </Routes>
     {/* <ReactQueryDevtools initialIsOpen={true} /> */}

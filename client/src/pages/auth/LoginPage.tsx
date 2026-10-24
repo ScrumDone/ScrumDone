@@ -54,7 +54,7 @@ const LoginPage: React.FC = () => {
                             Zapamiętaj mnie
                         </span>
                     </label>
-                    <Link to="/zapomnialem-hasla" className={authTextLinkClassName}>
+                    <Link to="/forgot-password" className={authTextLinkClassName}>
                         Nie pamiętasz hasła?
                     </Link>
                 </div>

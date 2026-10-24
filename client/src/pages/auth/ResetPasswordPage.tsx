@@ -17,7 +17,7 @@ const ResetPasswordPage: React.FC = () => {
             <AuthLayout title="Ustaw nowe hasło">
                 <div className="flex w-full flex-col gap-5">
                     <p className="text-[14px] leading-[21px] font-normal text-[#64748B]">Link jest niekompletny.</p>
-                    <Link to="/logowanie" className={authTextLinkClassName}>
+                    <Link to="/login" className={authTextLinkClassName}>
                         Wróć do logowania
                     </Link>
                 </div>
@@ -32,7 +32,7 @@ const ResetPasswordPage: React.FC = () => {
                 noValidate
                 onSubmit={(event) => {
                     event.preventDefault();
-                    navigate('/logowanie');
+                    navigate('/login');
                 }}
             >
                 <AuthPasswordField
