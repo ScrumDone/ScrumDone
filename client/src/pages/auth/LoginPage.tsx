@@ -9,10 +9,11 @@ import {
 } from '../../components/auth/AuthFields';
 import { ApiError } from '../../api/client';
 import { login } from '../../api/auth';
+import { setAuthSession } from '../../lib/authSession';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
+    const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,18 +29,30 @@ const LoginPage: React.FC = () => {
                     if (isSubmitting) return;
 
                     setErrorMessage(null);
+
+                    const trimmedUserName = userName.trim();
+                    if (!trimmedUserName || !password) {
+                        setErrorMessage('Podaj login i hasło.');
+                        return;
+                    }
+
                     setIsSubmitting(true);
 
                     try {
                         await login({
-                            userName: email,
+                            userName: trimmedUserName,
                             password,
                             rememberMe,
                         });
+                        setAuthSession({ userName: trimmedUserName });
                         navigate('/');
                     } catch (error) {
+                        const message =
+                            error instanceof ApiError ? error.message : 'Nie udało się zalogować.';
                         setErrorMessage(
-                            error instanceof ApiError ? error.message : 'Nie udało się zalogować.',
+                            /incorrect username or password/i.test(message)
+                                ? 'Nieprawidłowy login lub hasło.'
+                                : message,
                         );
                     } finally {
                         setIsSubmitting(false);
@@ -47,13 +60,13 @@ const LoginPage: React.FC = () => {
                 }}
             >
                 <AuthTextField
-                    label="E-mail"
-                    type="email"
-                    name="email"
-                    autoComplete="email"
-                    placeholder="nina.kowalczyk@firma.pl"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    label="Login"
+                    type="text"
+                    name="userName"
+                    autoComplete="username"
+                    placeholder="nina.kowalska"
+                    value={userName}
+                    onChange={(event) => setUserName(event.target.value)}
                 />
                 <AuthPasswordField
                     label="Hasło"

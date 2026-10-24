@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import SideBar from '../../components/layout/SideBar'
 import TopBar from '../../components/layout/TopBar'
 import { ApiError, type ApiValidationErrors } from '../../api/client'
@@ -21,6 +21,11 @@ type FieldErrors = {
     userName?: string
     email?: string
 }
+
+/** Zgodne z domyślnym Identity AllowedUserNameCharacters. */
+const IDENTITY_USERNAME_PATTERN = /^[a-zA-Z0-9._@+-]+$/
+const USERNAME_MAX_LENGTH = 50
+const EMAIL_MAX_LENGTH = 128
 
 function messagesFor(errors: ApiValidationErrors | undefined, names: string[]) {
     if (!errors) return []
@@ -47,6 +52,9 @@ function fieldMessage(messages: string[], field: 'userName' | 'email') {
     if (/not a valid email/i.test(message)) return 'Podaj poprawny adres e-mail.'
     if (/50 characters or fewer/i.test(message)) return 'Login może mieć najwyżej 50 znaków.'
     if (/128 characters or fewer/i.test(message)) return 'E-mail może mieć najwyżej 128 znaków.'
+    if (/is invalid, can only contain letters or digits/i.test(message)) {
+        return 'Login może zawierać tylko litery, cyfry oraz znaki - . _ @ +'
+    }
 
     return message
 }
@@ -58,8 +66,37 @@ function validationFieldErrors(errors: ApiValidationErrors | undefined): FieldEr
     }
 }
 
+function isValidEmail(value: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+function validateInviteLocal(userName: string, email: string): FieldErrors {
+    const errors: FieldErrors = {}
+
+    if (userName.length < 1) {
+        errors.userName = 'Login jest wymagany.'
+    } else if (userName.length > USERNAME_MAX_LENGTH) {
+        errors.userName = 'Login może mieć najwyżej 50 znaków.'
+    } else if (!IDENTITY_USERNAME_PATTERN.test(userName)) {
+        errors.userName = 'Login może zawierać tylko litery, cyfry oraz znaki - . _ @ +'
+    }
+
+    if (email.length < 1) {
+        errors.email = 'E-mail jest wymagany.'
+    } else if (email.length > EMAIL_MAX_LENGTH) {
+        errors.email = 'E-mail może mieć najwyżej 128 znaków.'
+    } else if (!isValidEmail(email)) {
+        errors.email = 'Podaj poprawny adres e-mail.'
+    }
+
+    return errors
+}
+
 const primaryButtonClassName =
     'inline-flex h-10 shrink-0 items-center justify-center rounded-[10px] bg-[#00BFFF] px-4 font-segoe-ui text-[14px] leading-5 font-semibold text-white transition-colors hover:bg-[#00A8E0] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#00BFFF]'
+
+const copiedButtonClassName =
+    'inline-flex h-10 min-w-[96px] shrink-0 items-center justify-center rounded-[10px] bg-[#16A34A] px-4 font-segoe-ui text-[14px] leading-5 font-semibold text-white transition-colors hover:bg-[#15803D]'
 
 function roleLabel(name: string) {
     return ROLE_LABELS[name] ?? name
@@ -90,6 +127,8 @@ const AdminPanelPage: React.FC = () => {
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
     const [formError, setFormError] = useState<string | null>(null)
     const [invitationId, setInvitationId] = useState<string | null>(null)
+    const [linkCopied, setLinkCopied] = useState(false)
+    const copyResetTimeoutRef = useRef<number | null>(null)
 
     useEffect(() => {
         let cancelled = false
@@ -113,6 +152,9 @@ const AdminPanelPage: React.FC = () => {
 
         return () => {
             cancelled = true
+            if (copyResetTimeoutRef.current !== null) {
+                window.clearTimeout(copyResetTimeoutRef.current)
+            }
         }
     }, [])
 
@@ -120,6 +162,19 @@ const AdminPanelPage: React.FC = () => {
 
     const handleGenerateLink = async () => {
         if (isSubmitting || !rolesReady) return
+
+        const localErrors = validateInviteLocal(userName, email)
+        if (localErrors.userName || localErrors.email) {
+            setFieldErrors(localErrors)
+            setFormError(null)
+            return
+        }
+
+        if (!selectedRoleId) {
+            setFieldErrors({})
+            setFormError('Wybierz rolę.')
+            return
+        }
 
         setFieldErrors({})
         setFormError(null)
@@ -129,7 +184,7 @@ const AdminPanelPage: React.FC = () => {
             const id = await invite({
                 userName,
                 email,
-                roles: selectedRoleId ? [selectedRoleId] : [],
+                roles: [selectedRoleId],
             })
             const admin = roles.find((role) => role.name === 'Admin')
 
@@ -139,6 +194,11 @@ const AdminPanelPage: React.FC = () => {
             setSelectedRoleId(admin?.id ?? roles[0]?.id ?? null)
             setFieldErrors({})
             setFormError(null)
+            setLinkCopied(false)
+            if (copyResetTimeoutRef.current !== null) {
+                window.clearTimeout(copyResetTimeoutRef.current)
+                copyResetTimeoutRef.current = null
+            }
         } catch (error) {
             if (error instanceof ApiError && error.status === 409) {
                 setFieldErrors({ email: error.message })
@@ -157,9 +217,22 @@ const AdminPanelPage: React.FC = () => {
         }
     }
 
-    const handleCopy = () => {
+    const handleCopy = async () => {
         if (!invitationUrl) return
-        void navigator.clipboard.writeText(invitationUrl).catch(() => undefined)
+
+        try {
+            await navigator.clipboard.writeText(invitationUrl)
+            setLinkCopied(true)
+            if (copyResetTimeoutRef.current !== null) {
+                window.clearTimeout(copyResetTimeoutRef.current)
+            }
+            copyResetTimeoutRef.current = window.setTimeout(() => {
+                setLinkCopied(false)
+                copyResetTimeoutRef.current = null
+            }, 2000)
+        } catch {
+            setFormError('Nie udało się skopiować linku.')
+        }
     }
 
     return (
@@ -200,17 +273,25 @@ const AdminPanelPage: React.FC = () => {
                                     type="text"
                                     placeholder="nina.kowalska"
                                     value={userName}
+                                    autoComplete="off"
+                                    maxLength={USERNAME_MAX_LENGTH}
                                     aria-invalid={Boolean(fieldErrors.userName)}
-                                    aria-describedby={fieldErrors.userName ? 'admin-login-error' : undefined}
+                                    aria-describedby={
+                                        fieldErrors.userName ? 'admin-login-error' : 'admin-login-hint'
+                                    }
                                     onChange={(event) => {
                                         setUserName(event.target.value)
                                         setFieldErrors((current) => ({ ...current, userName: undefined }))
                                     }}
                                     className={fieldClassName(Boolean(fieldErrors.userName))}
                                 />
-                                {fieldErrors.userName && (
+                                {fieldErrors.userName ? (
                                     <p id="admin-login-error" className="font-segoe-ui text-[13px] leading-5 text-[#e7000b]" role="alert">
                                         {fieldErrors.userName}
+                                    </p>
+                                ) : (
+                                    <p id="admin-login-hint" className="font-segoe-ui text-[12px] leading-[18px] text-[#94A3B8]">
+                                        Litery, cyfry oraz znaki - . _ @ + (bez spacji)
                                     </p>
                                 )}
                             </div>
@@ -279,8 +360,15 @@ const AdminPanelPage: React.FC = () => {
                                 <p className="min-w-0 break-all font-segoe-ui text-[14px] leading-5 text-[#0A0A0A]">
                                     {invitationUrl}
                                 </p>
-                                <button type="button" className={primaryButtonClassName} onClick={handleCopy}>
-                                    Kopiuj
+                                <button
+                                    type="button"
+                                    className={linkCopied ? copiedButtonClassName : primaryButtonClassName}
+                                    onClick={() => {
+                                        void handleCopy()
+                                    }}
+                                    aria-live="polite"
+                                >
+                                    {linkCopied ? 'Skopiowano!' : 'Kopiuj'}
                                 </button>
                             </div>
                         </section>

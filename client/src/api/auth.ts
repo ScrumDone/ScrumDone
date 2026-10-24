@@ -17,8 +17,17 @@ export type InviteRequest = {
   roles: string[];
 };
 
+export type RegisterRequest = {
+  name: string;
+  password: string;
+};
+
 export function login(body: LoginRequest) {
   return apiPost<void, LoginRequest>('/api/auth/login', body);
+}
+
+export function register(invitationId: string, body: RegisterRequest) {
+  return apiPost<void, RegisterRequest>(`/api/auth/register/${invitationId}`, body);
 }
 
 export function logout() {

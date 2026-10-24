@@ -6,6 +6,7 @@ import { STRINGS } from '../../constants/strings';
 import { getInitialsFromName, useCurrentUser } from '../../hooks/users/useCurrentUser';
 import { ApiError } from '../../api/client';
 import { logout } from '../../api/auth';
+import { clearAuthSession } from '../../lib/authSession';
 import logoutIcon from '../../assets/auth/logout.svg';
 
 const TopBar: React.FC = () => {
@@ -42,9 +43,13 @@ const TopBar: React.FC = () => {
 
     try {
       await logout();
+      clearAuthSession();
       navigate('/login');
     } catch (error) {
+      // Sesja UI i tak czyścimy — cookie mogło paść, a TopBar nie powinien pokazywać starego loginu.
+      clearAuthSession();
       setLogoutError(error instanceof ApiError ? error.message : 'Nie udało się wylogować.');
+      navigate('/login');
     } finally {
       setIsLoggingOut(false);
     }
