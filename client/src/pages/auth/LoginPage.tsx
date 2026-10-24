@@ -9,6 +9,7 @@ import {
 } from '../../components/auth/AuthFields';
 import { ApiError } from '../../api/client';
 import { login } from '../../api/auth';
+import { setAuthSession } from '../../lib/authSession';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -36,6 +37,7 @@ const LoginPage: React.FC = () => {
                             password,
                             rememberMe,
                         });
+                        setAuthSession({ userName });
                         navigate('/');
                     } catch (error) {
                         const message =
