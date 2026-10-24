@@ -14,6 +14,9 @@ import ProjectKanbanPage from './pages/projects/ProjectKanbanPage'
 import ProjectCalendarPage from './pages/projects/ProjectCalendarPage'
 import ProjectSprintsPage from './pages/projects/ProjectSprintsPage'
 import ManagerHomePage from './pages/home/ManagerHomePage'
+import LoginPage from './pages/auth/LoginPage'
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
+import ResetPasswordPage from './pages/auth/ResetPasswordPage'
 
 const App: React.FC = () => {
   return (
@@ -33,6 +36,9 @@ const App: React.FC = () => {
       <Route path="/reports" element={<ReportsPage />} />
       <Route path="/task/:assignmentId" element={<TaskPage />} />
       <Route path="/files" element={<FilesPage />} />
+      <Route path="/logowanie" element={<LoginPage />} />
+      <Route path="/zapomnialem-hasla" element={<ForgotPasswordPage />} />
+      <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
     </Routes>
     {/* <ReactQueryDevtools initialIsOpen={true} /> */}
     </>
