@@ -1,39 +1,61 @@
 import React, { useId, useState } from 'react';
 import eyeIcon from '../../assets/auth/password-eye.svg';
 
-const fieldClassName =
-    'h-11 w-full rounded-[10px] border border-[#E2E8F0] bg-white px-3 text-[14px] text-[#0F172A] outline-none placeholder:text-[#94A3B8] focus:border-[#00BFFF] focus:shadow-[0_0_0_4px_rgba(0,191,255,0.18)]';
+const fieldClassName = (invalid: boolean) =>
+    `h-11 w-full rounded-[10px] border bg-white px-3 text-[14px] text-[#0F172A] outline-none placeholder:text-[#94A3B8] ${
+        invalid
+            ? 'border-[#e7000b] focus:border-[#e7000b] focus:shadow-[0_0_0_4px_rgba(231,0,11,0.12)]'
+            : 'border-[#E2E8F0] focus:border-[#00BFFF] focus:shadow-[0_0_0_4px_rgba(0,191,255,0.18)]'
+    }`;
 
 type AuthTextFieldProps = {
     label: string;
+    error?: string;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'className'>;
 
-export const AuthTextField: React.FC<AuthTextFieldProps> = ({ label, id, ...inputProps }) => {
+export const AuthTextField: React.FC<AuthTextFieldProps> = ({ label, id, error, ...inputProps }) => {
     const generatedId = useId();
     const fieldId = id ?? generatedId;
+    const errorId = `${fieldId}-error`;
+    const invalid = Boolean(error);
 
     return (
         <div className="flex w-full flex-col gap-1.5">
             <label htmlFor={fieldId} className="text-[13px] leading-[19.5px] font-medium text-[#334155]">
                 {label}
             </label>
-            <input id={fieldId} className={fieldClassName} {...inputProps} />
+            <input
+                id={fieldId}
+                className={fieldClassName(invalid)}
+                {...inputProps}
+                aria-invalid={invalid}
+                aria-describedby={invalid ? errorId : undefined}
+            />
+            {error ? (
+                <p id={errorId} className="text-[13px] leading-[19.5px] text-[#e7000b]" role="alert">
+                    {error}
+                </p>
+            ) : null}
         </div>
     );
 };
 
 type AuthPasswordFieldProps = {
     label: string;
+    error?: string;
 } & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'className' | 'type'>;
 
 export const AuthPasswordField: React.FC<AuthPasswordFieldProps> = ({
     label,
     id,
+    error,
     placeholder = '••••••••',
     ...inputProps
 }) => {
     const generatedId = useId();
     const fieldId = id ?? generatedId;
+    const errorId = `${fieldId}-error`;
+    const invalid = Boolean(error);
     const [visible, setVisible] = useState(false);
 
     return (
@@ -46,8 +68,10 @@ export const AuthPasswordField: React.FC<AuthPasswordFieldProps> = ({
                     id={fieldId}
                     type={visible ? 'text' : 'password'}
                     placeholder={placeholder}
-                    className={`${fieldClassName} pr-10`}
+                    className={`${fieldClassName(invalid)} pr-10`}
                     {...inputProps}
+                    aria-invalid={invalid}
+                    aria-describedby={invalid ? errorId : undefined}
                 />
                 <button
                     type="button"
@@ -67,6 +91,11 @@ export const AuthPasswordField: React.FC<AuthPasswordFieldProps> = ({
                     </span>
                 </button>
             </div>
+            {error ? (
+                <p id={errorId} className="text-[13px] leading-[19.5px] text-[#e7000b]" role="alert">
+                    {error}
+                </p>
+            ) : null}
         </div>
     );
 };
