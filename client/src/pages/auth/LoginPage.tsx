@@ -29,15 +29,22 @@ const LoginPage: React.FC = () => {
                     if (isSubmitting) return;
 
                     setErrorMessage(null);
+
+                    const trimmedUserName = userName.trim();
+                    if (!trimmedUserName || !password) {
+                        setErrorMessage('Podaj login i hasło.');
+                        return;
+                    }
+
                     setIsSubmitting(true);
 
                     try {
                         await login({
-                            userName,
+                            userName: trimmedUserName,
                             password,
                             rememberMe,
                         });
-                        setAuthSession({ userName });
+                        setAuthSession({ userName: trimmedUserName });
                         navigate('/');
                     } catch (error) {
                         const message =

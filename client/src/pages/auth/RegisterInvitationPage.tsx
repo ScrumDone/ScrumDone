@@ -84,8 +84,15 @@ function mapInvitationFormError(detail: string) {
         return 'To zaproszenie wygasło.';
     }
 
+    if (/is invalid, can only contain letters or digits/i.test(detail) || /Username '.+' is invalid/i.test(detail)) {
+        return 'Login z zaproszenia jest nieprawidłowy. Poproś administratora o nowy link.';
+    }
+
     return detail;
 }
+
+const INVITATION_ID_PATTERN =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function validateName(name: string): string | undefined {
     if (name.length < 1) return 'Imię i nazwisko jest wymagane.';
@@ -140,6 +147,7 @@ const RegisterInvitationPage: React.FC = () => {
     const navigate = useNavigate();
     const { invitationId: invitationIdParam } = useParams<{ invitationId: string }>();
     const invitationId = invitationIdParam?.trim() ?? '';
+    const invitationIdValid = INVITATION_ID_PATTERN.test(invitationId);
     const [fullName, setFullName] = useState('');
     const [password, setPassword] = useState('');
     const [passwordRepeat, setPasswordRepeat] = useState('');
@@ -147,7 +155,7 @@ const RegisterInvitationPage: React.FC = () => {
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
     const [formError, setFormError] = useState<string | null>(null);
 
-    if (!invitationId) {
+    if (!invitationIdValid) {
         return (
             <AuthLayout title="Utwórz konto">
                 <div className="flex w-full flex-col gap-5">

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { UserSummary } from '../../types/user';
-import { useAuthSession } from '../../lib/authSession';
+import { useAuthUserName } from '../../lib/authSession';
 
 export function getInitialsFromName(name: string): string {
     const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -8,11 +8,11 @@ export function getInitialsFromName(name: string): string {
 }
 
 export function useCurrentUser() {
-    const session = useAuthSession();
+    const userName = useAuthUserName();
 
     const currentUser = useMemo<UserSummary | null>(
-        () => (session ? { id: '', name: session.userName } : null),
-        [session],
+        () => (userName ? { id: '', name: userName } : null),
+        [userName],
     );
 
     return {

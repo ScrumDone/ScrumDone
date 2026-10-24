@@ -7,23 +7,33 @@ export type AuthSessionUser = {
     userName: string;
 };
 
-export function getAuthSession(): AuthSessionUser | null {
+/** Snapshot to string|null — Object.is jest stabilne, w przeciwieństwie do nowego obiektu przy każdym odczycie. */
+export function getAuthUserName(): string | null {
     try {
         const raw = localStorage.getItem(AUTH_USER_KEY);
         if (!raw) return null;
 
         const parsed = JSON.parse(raw) as AuthSessionUser;
         const userName = parsed?.userName?.trim();
-        if (!userName) return null;
-
-        return { userName };
+        return userName || null;
     } catch {
         return null;
     }
 }
 
+export function getAuthSession(): AuthSessionUser | null {
+    const userName = getAuthUserName();
+    return userName ? { userName } : null;
+}
+
 export function setAuthSession(user: AuthSessionUser) {
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify({ userName: user.userName.trim() }));
+    const userName = user.userName.trim();
+    if (!userName) {
+        clearAuthSession();
+        return;
+    }
+
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify({ userName }));
     window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
 }
 
@@ -42,6 +52,6 @@ function subscribe(onStoreChange: () => void) {
     };
 }
 
-export function useAuthSession() {
-    return useSyncExternalStore(subscribe, getAuthSession, () => null);
+export function useAuthUserName() {
+    return useSyncExternalStore(subscribe, getAuthUserName, () => null);
 }
