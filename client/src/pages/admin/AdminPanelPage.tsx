@@ -22,6 +22,11 @@ type FieldErrors = {
     email?: string
 }
 
+/** Zgodne z domyślnym Identity AllowedUserNameCharacters. */
+const IDENTITY_USERNAME_PATTERN = /^[a-zA-Z0-9._@+-]+$/
+const USERNAME_MAX_LENGTH = 50
+const EMAIL_MAX_LENGTH = 128
+
 function messagesFor(errors: ApiValidationErrors | undefined, names: string[]) {
     if (!errors) return []
 
@@ -47,6 +52,9 @@ function fieldMessage(messages: string[], field: 'userName' | 'email') {
     if (/not a valid email/i.test(message)) return 'Podaj poprawny adres e-mail.'
     if (/50 characters or fewer/i.test(message)) return 'Login może mieć najwyżej 50 znaków.'
     if (/128 characters or fewer/i.test(message)) return 'E-mail może mieć najwyżej 128 znaków.'
+    if (/is invalid, can only contain letters or digits/i.test(message)) {
+        return 'Login może zawierać tylko litery, cyfry oraz znaki - . _ @ +'
+    }
 
     return message
 }
@@ -56,6 +64,32 @@ function validationFieldErrors(errors: ApiValidationErrors | undefined): FieldEr
         userName: fieldMessage(messagesFor(errors, ['UserName', 'userName']), 'userName'),
         email: fieldMessage(messagesFor(errors, ['Email', 'email']), 'email'),
     }
+}
+
+function isValidEmail(value: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+function validateInviteLocal(userName: string, email: string): FieldErrors {
+    const errors: FieldErrors = {}
+
+    if (userName.length < 1) {
+        errors.userName = 'Login jest wymagany.'
+    } else if (userName.length > USERNAME_MAX_LENGTH) {
+        errors.userName = 'Login może mieć najwyżej 50 znaków.'
+    } else if (!IDENTITY_USERNAME_PATTERN.test(userName)) {
+        errors.userName = 'Login może zawierać tylko litery, cyfry oraz znaki - . _ @ +'
+    }
+
+    if (email.length < 1) {
+        errors.email = 'E-mail jest wymagany.'
+    } else if (email.length > EMAIL_MAX_LENGTH) {
+        errors.email = 'E-mail może mieć najwyżej 128 znaków.'
+    } else if (!isValidEmail(email)) {
+        errors.email = 'Podaj poprawny adres e-mail.'
+    }
+
+    return errors
 }
 
 const primaryButtonClassName =
@@ -121,6 +155,19 @@ const AdminPanelPage: React.FC = () => {
     const handleGenerateLink = async () => {
         if (isSubmitting || !rolesReady) return
 
+        const localErrors = validateInviteLocal(userName, email)
+        if (localErrors.userName || localErrors.email) {
+            setFieldErrors(localErrors)
+            setFormError(null)
+            return
+        }
+
+        if (!selectedRoleId) {
+            setFieldErrors({})
+            setFormError('Wybierz rolę.')
+            return
+        }
+
         setFieldErrors({})
         setFormError(null)
         setIsSubmitting(true)
@@ -129,7 +176,7 @@ const AdminPanelPage: React.FC = () => {
             const id = await invite({
                 userName,
                 email,
-                roles: selectedRoleId ? [selectedRoleId] : [],
+                roles: [selectedRoleId],
             })
             const admin = roles.find((role) => role.name === 'Admin')
 
@@ -200,17 +247,25 @@ const AdminPanelPage: React.FC = () => {
                                     type="text"
                                     placeholder="nina.kowalska"
                                     value={userName}
+                                    autoComplete="off"
+                                    maxLength={USERNAME_MAX_LENGTH}
                                     aria-invalid={Boolean(fieldErrors.userName)}
-                                    aria-describedby={fieldErrors.userName ? 'admin-login-error' : undefined}
+                                    aria-describedby={
+                                        fieldErrors.userName ? 'admin-login-error' : 'admin-login-hint'
+                                    }
                                     onChange={(event) => {
                                         setUserName(event.target.value)
                                         setFieldErrors((current) => ({ ...current, userName: undefined }))
                                     }}
                                     className={fieldClassName(Boolean(fieldErrors.userName))}
                                 />
-                                {fieldErrors.userName && (
+                                {fieldErrors.userName ? (
                                     <p id="admin-login-error" className="font-segoe-ui text-[13px] leading-5 text-[#e7000b]" role="alert">
                                         {fieldErrors.userName}
+                                    </p>
+                                ) : (
+                                    <p id="admin-login-hint" className="font-segoe-ui text-[12px] leading-[18px] text-[#94A3B8]">
+                                        Litery, cyfry oraz znaki - . _ @ + (bez spacji)
                                     </p>
                                 )}
                             </div>
