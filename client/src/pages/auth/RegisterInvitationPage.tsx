@@ -7,24 +7,62 @@ import {
     authPrimaryButtonClassName,
     authTextLinkClassName,
 } from '../../components/auth/AuthFields';
+import { ApiError } from '../../api/client';
+import { register } from '../../api/auth';
 
 const RegisterInvitationPage: React.FC = () => {
     const navigate = useNavigate();
-    const { invitationId = '' } = useParams<{ invitationId: string }>();
+    const { invitationId: invitationIdParam } = useParams<{ invitationId: string }>();
+    const invitationId = invitationIdParam?.trim() ?? '';
     const [fullName, setFullName] = useState('');
     const [password, setPassword] = useState('');
     const [passwordRepeat, setPasswordRepeat] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-    void invitationId;
+    if (!invitationId) {
+        return (
+            <AuthLayout title="Utwórz konto">
+                <div className="flex w-full flex-col gap-5">
+                    <p className="text-[14px] leading-[21px] font-normal text-[#64748B]">Link jest niekompletny.</p>
+                    <Link to="/login" className={authTextLinkClassName}>
+                        Wróć do logowania
+                    </Link>
+                </div>
+            </AuthLayout>
+        );
+    }
 
     return (
         <AuthLayout title="Utwórz konto" subtitle="Uzupełnij dane, żeby dołączyć do workspace">
             <form
                 className="flex w-full flex-col gap-5"
                 noValidate
-                onSubmit={(event) => {
+                onSubmit={async (event) => {
                     event.preventDefault();
-                    navigate('/login');
+                    if (isSubmitting) return;
+
+                    if (password !== passwordRepeat) {
+                        setErrorMessage('Hasła nie są takie same.');
+                        return;
+                    }
+
+                    setErrorMessage(null);
+                    setIsSubmitting(true);
+
+                    try {
+                        await register(invitationId, {
+                            name: fullName,
+                            password,
+                        });
+                        navigate('/login');
+                    } catch (error) {
+                        setErrorMessage(
+                            error instanceof ApiError ? error.message : 'Nie udało się utworzyć konta.',
+                        );
+                    } finally {
+                        setIsSubmitting(false);
+                    }
                 }}
             >
                 <AuthTextField
@@ -51,7 +89,16 @@ const RegisterInvitationPage: React.FC = () => {
                     value={passwordRepeat}
                     onChange={(event) => setPasswordRepeat(event.target.value)}
                 />
-                <button type="submit" className={authPrimaryButtonClassName}>
+                {errorMessage && (
+                    <p className="text-[13px] leading-[19.5px] text-[#e7000b]" role="alert">
+                        {errorMessage}
+                    </p>
+                )}
+                <button
+                    type="submit"
+                    className={`${authPrimaryButtonClassName} disabled:cursor-not-allowed disabled:opacity-60`}
+                    disabled={isSubmitting}
+                >
                     Utwórz konto
                 </button>
             </form>
