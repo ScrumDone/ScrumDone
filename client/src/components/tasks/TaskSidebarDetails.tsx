@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -10,7 +10,6 @@ import { TaskStatusDropdown } from './TaskStatusDropdown';
 import { TaskAssigneesRow } from './TaskAssigneesRow';
 import type { Assignment, UpdateAssignmentDto } from '../../types/assignment';
 import type { UserSummary } from '../../types/user';
-import { useQueryClient } from '@tanstack/react-query';
 import { usePriorities } from '../../hooks/assignments/useAssignments';
 import { useProject } from '../../hooks/projects/useProject';
 import { useSprints } from '../../hooks/sprints/useSprints';
@@ -40,14 +39,31 @@ const parseTimeEstimate = (raw: string): number | null | 'invalid' => {
   return Number.isFinite(value) && value >= 0 ? value : 'invalid';
 };
 
+const sameAssigneeIds = (left: readonly { id: string }[], right: readonly { id: string }[]) => {
+  if (left.length !== right.length) return false;
+  const rightIds = new Set(right.map((person) => person.id));
+  return left.every((person) => rightIds.has(person.id));
+};
+
 const inputClassName =
   'w-36 rounded-lg border border-slate-200 bg-[#F9FAFB] px-3 py-1.5 text-[13px] text-slate-800 outline-none focus:border-scrumdone-blue-main focus:bg-white disabled:opacity-60';
 
 export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignmentId, assignment }) => {
-  const queryClient = useQueryClient();
-  const { mutate: updateAssigneesMutation, isPending: isUpdatingAssignees } = useUpdateAssignees();
+  const { mutateAsync: updateAssignees, isPending: isUpdatingAssignees } = useUpdateAssignees();
   const { data: project } = useProject(assignment.projectId);
   const teamMembers = project?.teamMembers ?? [];
+  const assigneeOptions = useMemo(() => {
+    const byId = new Map<string, UserSummary>();
+    for (const member of teamMembers) {
+      byId.set(member.id, member);
+    }
+    for (const assignee of assignment.assignees ?? []) {
+      if (!byId.has(assignee.id)) {
+        byId.set(assignee.id, assignee);
+      }
+    }
+    return [...byId.values()];
+  }, [teamMembers, assignment.assignees]);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,6 +72,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
   const [priorityDraft, setPriorityDraft] = useState('');
   const [sprintDraft, setSprintDraft] = useState('');
   const [timeEstimateDraft, setTimeEstimateDraft] = useState('');
+  const [assigneesDraft, setAssigneesDraft] = useState<UserSummary[]>([]);
   const [timeEstimateError, setTimeEstimateError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -70,34 +87,25 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
     ? 'Brak (backlog)'
     : formatSprintDisplayName(assignedSprint ?? { name: assignment.sprintName });
 
-  const { mutate: updateAssignment, isPending: isSaving } = useUpdateAssignment();
+  const { mutateAsync: updateAssignment, isPending: isSaving } = useUpdateAssignment();
+  const isPersisting = isSaving || isUpdatingAssignees;
 
-  const persistAssignees = (userIds: string[]) => {
+  const updateAssigneesDraft = (userIds: string[]) => {
     const peopleById = new Map<string, UserSummary>();
     for (const member of teamMembers) {
       peopleById.set(member.id, member);
     }
-    for (const assignee of assignment.assignees) {
+    for (const assignee of assignment.assignees ?? []) {
+      peopleById.set(assignee.id, assignee);
+    }
+    for (const assignee of assigneesDraft) {
       peopleById.set(assignee.id, assignee);
     }
 
-    const nextAssignees = userIds
-      .map((id) => peopleById.get(id))
-      .filter((person): person is UserSummary => Boolean(person));
-
-    queryClient.setQueryData(['assignment', assignmentId], (old: Assignment | undefined) =>
-      old ? { ...old, assignees: nextAssignees } : old,
-    );
-
-    updateAssigneesMutation(
-      { id: assignmentId, data: { userIds } },
-      {
-        onSuccess: () => setSaveError(null),
-        onError: () => {
-          queryClient.invalidateQueries({ queryKey: ['assignment', assignmentId] });
-          setSaveError('Nie udało się zaktualizować osób. Spróbuj ponownie.');
-        },
-      },
+    setAssigneesDraft(
+      userIds
+        .map((id) => peopleById.get(id))
+        .filter((person): person is UserSummary => Boolean(person)),
     );
   };
 
@@ -121,6 +129,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
     setPriorityDraft(assignment.priority?.id ?? '');
     setSprintDraft(assignment.sprintId ?? '');
     setTimeEstimateDraft(formatTimeEstimate(assignment.timeEstimate));
+    setAssigneesDraft([...(assignment.assignees ?? [])]);
     setTimeEstimateError(null);
     setSaveError(null);
   };
@@ -136,7 +145,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
     setIsEditing(false);
   };
 
-  const save = () => {
+  const save = async () => {
     const timeEstimate = parseTimeEstimate(timeEstimateDraft);
     if (timeEstimate === 'invalid') {
       setTimeEstimateError('Podaj liczbę godzin, np. 4 lub 4h.');
@@ -162,20 +171,37 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
       data.timeEstimate = timeEstimate;
     }
 
-    if (Object.keys(data).length === 0) {
+    const originalAssignees = assignment.assignees ?? [];
+    const assigneesChanged = !sameAssigneeIds(assigneesDraft, originalAssignees);
+    const hasFieldChanges = Object.keys(data).length > 0;
+
+    if (!hasFieldChanges && !assigneesChanged) {
       setIsEditing(false);
       setSaveError(null);
       return;
     }
 
     setSaveError(null);
-    updateAssignment(
-      { id: assignment.id, data },
-      {
-        onSuccess: () => setIsEditing(false),
-        onError: () => setSaveError('Nie udało się zapisać zmian. Spróbuj ponownie.'),
-      },
-    );
+    const requests: Promise<unknown>[] = [];
+    if (hasFieldChanges) {
+      requests.push(updateAssignment({ id: assignment.id, data }));
+    }
+    if (assigneesChanged) {
+      requests.push(
+        updateAssignees({
+          id: assignmentId,
+          data: { userIds: assigneesDraft.map((person) => person.id) },
+        }),
+      );
+    }
+
+    const results = await Promise.allSettled(requests);
+    if (results.every((result) => result.status === 'fulfilled')) {
+      setIsEditing(false);
+      return;
+    }
+
+    setSaveError('Nie udało się zapisać zmian. Spróbuj ponownie.');
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
@@ -208,9 +234,9 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
 
             <h2 className="text-[20px] leading-[30px] font-medium text-black">Szczegóły</h2>
 
-            {isEditing ? (
+            {/* {isEditing ? (
               <span className="text-sm font-medium text-scrumdone-blue-main">— tryb edycji</span>
-            ) : null}
+            ) : null} */}
           </div>
 
           {isEditing ? (
@@ -218,7 +244,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
               <button
                 type="button"
                 onClick={cancelEditing}
-                disabled={isSaving}
+                disabled={isPersisting}
                 className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <XMarkIcon className="h-4 w-4" />
@@ -227,7 +253,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
               <button
                 type="button"
                 onClick={save}
-                disabled={isSaving}
+                disabled={isPersisting}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-scrumdone-blue-main px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[#00A0DD] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <CheckIcon className="h-4 w-4" />
@@ -273,11 +299,11 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
 
         <div className="space-y-4 text-[14px]">
           <TaskAssigneesRow
-            assignees={assignment.assignees ?? []}
-            teamMembers={teamMembers}
+            assignees={isEditing ? assigneesDraft : (assignment.assignees ?? [])}
+            teamMembers={assigneeOptions}
             isEditing={isEditing}
-            disabled={isUpdatingAssignees}
-            onAssigneesChange={persistAssignees}
+            disabled={isPersisting}
+            onAssigneesChange={updateAssigneesDraft}
           />
           <DetailRow label="Projekt" value={assignment.projectName} />
           <DetailRow label="Utworzono" value={formatDate(assignment.createdAt)} />
@@ -291,7 +317,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
                   id="assignment-due-date"
                   type="date"
                   value={dueDateDraft}
-                  disabled={isSaving}
+                  disabled={isPersisting}
                   onChange={(event) => setDueDateDraft(event.target.value)}
                   onKeyDown={handleKeyDown}
                   className={inputClassName}
@@ -302,7 +328,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
                 <select
                   id="assignment-priority"
                   value={priorityDraft}
-                  disabled={isSaving}
+                  disabled={isPersisting}
                   onChange={(event) => setPriorityDraft(event.target.value)}
                   onKeyDown={handleKeyDown}
                   className={inputClassName}
@@ -320,7 +346,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
                 <select
                   id="assignment-sprint"
                   value={sprintDraft}
-                  disabled={isSaving}
+                  disabled={isPersisting}
                   onChange={(event) => setSprintDraft(event.target.value)}
                   onKeyDown={handleKeyDown}
                   className={inputClassName}
@@ -345,7 +371,7 @@ export const TaskSidebarDetails: React.FC<TaskSidebarDetailsProps> = ({ assignme
                     inputMode="decimal"
                     placeholder="np. 4h"
                     value={timeEstimateDraft}
-                    disabled={isSaving}
+                    disabled={isPersisting}
                     onChange={(event) => {
                       setTimeEstimateDraft(event.target.value);
                       setTimeEstimateError(null);
