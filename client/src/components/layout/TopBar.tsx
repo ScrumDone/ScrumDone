@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BellIcon } from '@heroicons/react/24/outline';
+import { BellIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import Avatar from '../common/Avatar';
 import { STRINGS } from '../../constants/strings';
 import { getInitialsFromName, useCurrentUser } from '../../hooks/users/useCurrentUser';
@@ -87,7 +87,19 @@ const TopBar: React.FC = () => {
           </button>
 
           {isOpen && (
-            <div className="absolute right-0 top-full z-50 mt-2 w-40 rounded-[10px] border border-[#e5e7eb] bg-white py-1 shadow-[0px_10px_7.5px_rgba(0,0,0,0.1),0px_4px_3px_rgba(0,0,0,0.1)]">
+            <div className="absolute right-0 top-full z-50 mt-2 w-[240px] rounded-[10px] border border-[#e5e7eb] bg-white py-1 shadow-[0px_10px_7.5px_rgba(0,0,0,0.1),0px_4px_3px_rgba(0,0,0,0.1)]">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setLogoutError(null);
+                  navigate('/panel-administratora');
+                }}
+                className="flex h-10 w-full items-center gap-2 whitespace-nowrap px-4 text-left font-segoe-ui text-sm text-[#334155]"
+              >
+                <UserPlusIcon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                Panel administratora
+              </button>
               <button
                 type="button"
                 onClick={handleLogout}
