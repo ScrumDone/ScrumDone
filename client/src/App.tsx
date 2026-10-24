@@ -17,6 +17,7 @@ import ManagerHomePage from './pages/home/ManagerHomePage'
 import LoginPage from './pages/auth/LoginPage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/auth/ResetPasswordPage'
+import AdminPanelPage from './pages/admin/AdminPanelPage'
 
 const App: React.FC = () => {
   return (
@@ -36,6 +37,7 @@ const App: React.FC = () => {
       <Route path="/reports" element={<ReportsPage />} />
       <Route path="/task/:assignmentId" element={<TaskPage />} />
       <Route path="/files" element={<FilesPage />} />
+      <Route path="/panel-administratora" element={<AdminPanelPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
