@@ -1,9 +1,20 @@
-import { apiPost } from './client';
+import { apiGet, apiPost } from './client';
 
 export type LoginRequest = {
   userName: string;
   password: string;
   rememberMe: boolean;
+};
+
+export type AuthRole = {
+  id: string;
+  name: string;
+};
+
+export type InviteRequest = {
+  userName: string;
+  email: string;
+  roles: string[];
 };
 
 export function login(body: LoginRequest) {
@@ -12,4 +23,12 @@ export function login(body: LoginRequest) {
 
 export function logout() {
   return apiPost<void>('/api/auth/logout');
+}
+
+export function getRoles() {
+  return apiGet<AuthRole[]>('/api/auth/roles');
+}
+
+export function invite(body: InviteRequest) {
+  return apiPost<string, InviteRequest>('/api/auth/invite', body);
 }

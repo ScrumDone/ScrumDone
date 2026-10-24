@@ -15,6 +15,14 @@ public class DatabaseSeeder
     {
         var hasher = new PasswordHasher<User>();
 
+        foreach (var roleName in new[] { "Admin", "ProjectManager", "StandardUser" })
+        {
+            if (!await roleManager.RoleExistsAsync(roleName))
+            {
+                await roleManager.CreateAsync(new IdentityRole<Guid> { Name = roleName });
+            }
+        }
+
         if(context.AssignmentStatuses.Any())
         {
             return;
@@ -23,18 +31,6 @@ public class DatabaseSeeder
         Randomizer.Seed = new Random(123);
         Random rnd = new Random(123);
         var now = DateTimeOffset.UtcNow;
-
-        var roles = new List<IdentityRole<Guid>>
-        {
-            new IdentityRole<Guid>{ Name = "Admin"},
-            new IdentityRole<Guid>{ Name = "ProjectManager"},
-            new IdentityRole<Guid>{ Name = "StandardUser"}
-        };
-
-        foreach (var role in roles)
-        {
-            await roleManager.CreateAsync(role);
-        }
         
         var statuses = new List<AssignmentStatus>
         {
@@ -137,11 +133,12 @@ public class DatabaseSeeder
         context.Users.AddRange(users);
         await context.SaveChangesAsync();
 
+        var roles = roleManager.Roles.ToList();
+
         foreach (var user in users)
         {
-            var randomRoleIndex = rnd.Next(roles.Count);
-            var randomRole = roles[randomRoleIndex];
-            await userManager.AddToRoleAsync(user, randomRole.Name);
+            var randomRole = roles[rnd.Next(roles.Count)];
+            await userManager.AddToRoleAsync(user, randomRole.Name!);
         }
 
         var projectFaker = new Faker<Project>("pl")
