@@ -1,22 +1,29 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BellIcon, CheckIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { useNavigate } from 'react-router-dom';
+import { BellIcon } from '@heroicons/react/24/outline';
 import Avatar from '../common/Avatar';
 import { STRINGS } from '../../constants/strings';
 import { getInitialsFromName, useCurrentUser } from '../../hooks/users/useCurrentUser';
+import { ApiError } from '../../api/client';
+import { logout } from '../../api/auth';
+import logoutIcon from '../../assets/auth/logout.svg';
 
 const TopBar: React.FC = () => {
-  const { users, selectedUser, setSelectedUserId, isLoading } = useCurrentUser();
+  const navigate = useNavigate();
+  const { currentUser, isLoading } = useCurrentUser();
   const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const displayName = selectedUser?.name ?? STRINGS.navigation.topBar.user.name;
-  const displayInitials = selectedUser ? getInitialsFromName(selectedUser.name) : 'AN';
-  const canSwitchUser = users.length > 1;
+  const displayName = currentUser?.name ?? STRINGS.navigation.topBar.user.name;
+  const displayInitials = currentUser ? getInitialsFromName(currentUser.name) : 'AN';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setLogoutError(null);
       }
     };
 
@@ -29,9 +36,18 @@ const TopBar: React.FC = () => {
     };
   }, [isOpen]);
 
-  const handleUserSelect = (userId: string) => {
-    setSelectedUserId(userId);
-    setIsOpen(false);
+  const handleLogout = async () => {
+    setLogoutError(null);
+    setIsLoggingOut(true);
+
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      setLogoutError(error instanceof ApiError ? error.message : 'Nie udało się wylogować.');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -48,14 +64,16 @@ const TopBar: React.FC = () => {
           </span>
         </button>
 
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative" ref={menuRef}>
           <button
             type="button"
-            onClick={() => canSwitchUser && setIsOpen((open) => !open)}
-            disabled={!canSwitchUser}
-            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors enabled:hover:bg-slate-100 enabled:focus-visible:outline-none enabled:focus-visible:ring-2 enabled:focus-visible:ring-scrumdone-blue-main/30 disabled:cursor-default"
-            aria-label="Wybierz użytkownika"
-            aria-haspopup="listbox"
+            onClick={() => {
+              setLogoutError(null);
+              setIsOpen((open) => !open);
+            }}
+            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-scrumdone-blue-main/30"
+            aria-label="Konto"
+            aria-haspopup="menu"
             aria-expanded={isOpen}
           >
             <Avatar initials={displayInitials} size="md" />
@@ -66,38 +84,24 @@ const TopBar: React.FC = () => {
               </p>
               <p className="font-segoe-ui text-xs text-slate-500">{STRINGS.navigation.topBar.user.org}</p>
             </div>
-
-            {canSwitchUser && (
-              <ChevronDownIcon
-                className={`h-4 w-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                aria-hidden="true"
-              />
-            )}
           </button>
 
           {isOpen && (
-            <div
-              className="absolute right-0 top-full z-50 mt-2 min-w-56 rounded-lg border border-slate-200 bg-white py-1 shadow-xl"
-              role="listbox"
-            >
-              {users.map((user) => {
-                const isSelected = user.id === selectedUser?.id;
-
-                return (
-                  <button
-                    key={user.id}
-                    type="button"
-                    role="option"
-                    aria-selected={isSelected}
-                    onClick={() => handleUserSelect(user.id)}
-                    className="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-slate-50"
-                  >
-                    <Avatar initials={getInitialsFromName(user.name)} size="sm" />
-                    <span className="min-w-0 flex-1 truncate font-segoe-ui text-sm text-slate-800">{user.name}</span>
-                    {isSelected && <CheckIcon className="h-4 w-4 shrink-0 text-scrumdone-blue-main" aria-hidden="true" />}
-                  </button>
-                );
-              })}
+            <div className="absolute right-0 top-full z-50 mt-2 w-40 rounded-[10px] border border-[#e5e7eb] bg-white py-1 shadow-[0px_10px_7.5px_rgba(0,0,0,0.1),0px_4px_3px_rgba(0,0,0,0.1)]">
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex h-10 w-full items-center gap-2 px-4 text-left font-segoe-ui text-sm font-medium tracking-[-0.1504px] text-[#e7000b] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <img src={logoutIcon} alt="" width={16} height={16} />
+                Wyloguj
+              </button>
+              {logoutError && (
+                <p className="px-4 pb-2 font-segoe-ui text-xs leading-4 text-[#e7000b]" role="alert">
+                  {logoutError}
+                </p>
+              )}
             </div>
           )}
         </div>

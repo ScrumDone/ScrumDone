@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import {
   HomeIcon,
   CalendarIcon,
@@ -24,10 +24,10 @@ const SideBar: React.FC = () => {
         <aside className="fixed inset-y-0 left-0 h-screen w-64 overflow-hidden border-r border-slate-200 bg-white">
             <div className="h-full flex flex-col">
                 <div className="flex h-(--app-header-h) items-center border-b border-slate-200 px-6">
-                    <div className='flex gap-2'>
+                    <Link to="/login" className="flex gap-2">
                         <h1 className="font-segoe-ui text-scrumdone-blue-main text-[1rem] leading-6 font-normal tracking-[0em] antialiased">scrum</h1>
                         <h1 className="font-segoe-ui text-black text-[1rem] leading-6 font-normal tracking-[0em] antialiased">done</h1>
-                    </div>
+                    </Link>
                 </div>
 
                 <nav className="flex-1 px-4 py-6 flex flex-col gap-1">
