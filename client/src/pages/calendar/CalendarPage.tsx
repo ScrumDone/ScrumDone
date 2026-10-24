@@ -45,7 +45,7 @@ const CalendarPage: React.FC = () => {
     const hasInitializedProjectsRef = useRef(false)
     const hasInitializedPrioritiesRef = useRef(false)
 
-    const { selectedUserId } = useCurrentUser()
+    const { currentUserId } = useCurrentUser()
     // Na telefonie zamiast siatki lista dni, a panel bez terminu jako szuflada
     const isDesktop = useMediaQuery(DESKTOP_CALENDAR_QUERY)
 
@@ -68,8 +68,8 @@ const CalendarPage: React.FC = () => {
     const assignmentFilters = useMemo(() => ({
         ProjectIds: selectedProjectIds,
         PriorityIds: selectedPriorityIds,
-        ...(selectedMode === 'Personal' && selectedUserId ? { AssigneeIds: [selectedUserId] } : {}),
-    }), [selectedProjectIds, selectedPriorityIds, selectedMode, selectedUserId])
+        ...(selectedMode === 'Personal' && currentUserId ? { AssigneeIds: [currentUserId] } : {}),
+    }), [selectedProjectIds, selectedPriorityIds, selectedMode, currentUserId])
 
     const { data: calendarAssignments, dayTotals, range } = useCalendarAssignments(viewMode, currentDate, assignmentFilters, !hasEmptyFilter)
     // Dzień otwarty w oknie "+N więcej"
