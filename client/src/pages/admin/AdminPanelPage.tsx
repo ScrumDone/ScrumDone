@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import SideBar from '../../components/layout/SideBar'
 import TopBar from '../../components/layout/TopBar'
 import { ApiError, type ApiValidationErrors } from '../../api/client'
@@ -95,6 +95,9 @@ function validateInviteLocal(userName: string, email: string): FieldErrors {
 const primaryButtonClassName =
     'inline-flex h-10 shrink-0 items-center justify-center rounded-[10px] bg-[#00BFFF] px-4 font-segoe-ui text-[14px] leading-5 font-semibold text-white transition-colors hover:bg-[#00A8E0] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#00BFFF]'
 
+const copiedButtonClassName =
+    'inline-flex h-10 min-w-[96px] shrink-0 items-center justify-center rounded-[10px] bg-[#16A34A] px-4 font-segoe-ui text-[14px] leading-5 font-semibold text-white transition-colors hover:bg-[#15803D]'
+
 function roleLabel(name: string) {
     return ROLE_LABELS[name] ?? name
 }
@@ -124,6 +127,8 @@ const AdminPanelPage: React.FC = () => {
     const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
     const [formError, setFormError] = useState<string | null>(null)
     const [invitationId, setInvitationId] = useState<string | null>(null)
+    const [linkCopied, setLinkCopied] = useState(false)
+    const copyResetTimeoutRef = useRef<number | null>(null)
 
     useEffect(() => {
         let cancelled = false
@@ -147,6 +152,9 @@ const AdminPanelPage: React.FC = () => {
 
         return () => {
             cancelled = true
+            if (copyResetTimeoutRef.current !== null) {
+                window.clearTimeout(copyResetTimeoutRef.current)
+            }
         }
     }, [])
 
@@ -186,6 +194,11 @@ const AdminPanelPage: React.FC = () => {
             setSelectedRoleId(admin?.id ?? roles[0]?.id ?? null)
             setFieldErrors({})
             setFormError(null)
+            setLinkCopied(false)
+            if (copyResetTimeoutRef.current !== null) {
+                window.clearTimeout(copyResetTimeoutRef.current)
+                copyResetTimeoutRef.current = null
+            }
         } catch (error) {
             if (error instanceof ApiError && error.status === 409) {
                 setFieldErrors({ email: error.message })
@@ -204,9 +217,22 @@ const AdminPanelPage: React.FC = () => {
         }
     }
 
-    const handleCopy = () => {
+    const handleCopy = async () => {
         if (!invitationUrl) return
-        void navigator.clipboard.writeText(invitationUrl).catch(() => undefined)
+
+        try {
+            await navigator.clipboard.writeText(invitationUrl)
+            setLinkCopied(true)
+            if (copyResetTimeoutRef.current !== null) {
+                window.clearTimeout(copyResetTimeoutRef.current)
+            }
+            copyResetTimeoutRef.current = window.setTimeout(() => {
+                setLinkCopied(false)
+                copyResetTimeoutRef.current = null
+            }, 2000)
+        } catch {
+            setFormError('Nie udało się skopiować linku.')
+        }
     }
 
     return (
@@ -334,8 +360,15 @@ const AdminPanelPage: React.FC = () => {
                                 <p className="min-w-0 break-all font-segoe-ui text-[14px] leading-5 text-[#0A0A0A]">
                                     {invitationUrl}
                                 </p>
-                                <button type="button" className={primaryButtonClassName} onClick={handleCopy}>
-                                    Kopiuj
+                                <button
+                                    type="button"
+                                    className={linkCopied ? copiedButtonClassName : primaryButtonClassName}
+                                    onClick={() => {
+                                        void handleCopy()
+                                    }}
+                                    aria-live="polite"
+                                >
+                                    {linkCopied ? 'Skopiowano!' : 'Kopiuj'}
                                 </button>
                             </div>
                         </section>
