@@ -17,6 +17,7 @@ import ManagerHomePage from './pages/home/ManagerHomePage'
 import LoginPage from './pages/auth/LoginPage'
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from './pages/auth/ResetPasswordPage'
+import RegisterInvitationPage from './pages/auth/RegisterInvitationPage'
 import AdminPanelPage from './pages/admin/AdminPanelPage'
 
 const App: React.FC = () => {
@@ -41,6 +42,7 @@ const App: React.FC = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/rejestracja/:invitationId" element={<RegisterInvitationPage />} />
     </Routes>
     {/* <ReactQueryDevtools initialIsOpen={true} /> */}
     </>
