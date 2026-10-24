@@ -7,21 +7,43 @@ import {
     authPrimaryButtonClassName,
     authTextLinkClassName,
 } from '../../components/auth/AuthFields';
+import { ApiError } from '../../api/client';
+import { login } from '../../api/auth';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     return (
         <AuthLayout title="Zaloguj się" subtitle="Wróć do swojego workspace">
             <form
                 className="flex w-full flex-col gap-5"
                 noValidate
-                onSubmit={(event) => {
+                onSubmit={async (event) => {
                     event.preventDefault();
-                    navigate('/');
+                    if (isSubmitting) return;
+
+                    setErrorMessage(null);
+                    setIsSubmitting(true);
+
+                    try {
+                        await login({
+                            userName: email,
+                            password,
+                            rememberMe,
+                        });
+                        navigate('/');
+                    } catch (error) {
+                        setErrorMessage(
+                            error instanceof ApiError ? error.message : 'Nie udało się zalogować.',
+                        );
+                    } finally {
+                        setIsSubmitting(false);
+                    }
                 }}
             >
                 <AuthTextField
@@ -58,7 +80,16 @@ const LoginPage: React.FC = () => {
                         Nie pamiętasz hasła?
                     </Link>
                 </div>
-                <button type="submit" className={authPrimaryButtonClassName}>
+                {errorMessage && (
+                    <p className="text-[13px] leading-[19.5px] text-[#e7000b]" role="alert">
+                        {errorMessage}
+                    </p>
+                )}
+                <button
+                    type="submit"
+                    className={`${authPrimaryButtonClassName} disabled:cursor-not-allowed disabled:opacity-60`}
+                    disabled={isSubmitting}
+                >
                     Zaloguj się
                 </button>
             </form>

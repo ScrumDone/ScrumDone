@@ -111,8 +111,13 @@ function formatValidationMessage(errors: ApiValidationErrors): string {
     if (response.status === 204) {
       return undefined as T;
     }
-  
-    return response.json() as Promise<T>;
+
+    const text = await response.text();
+    if (text.length === 0) {
+      return undefined as T;
+    }
+
+    return JSON.parse(text) as T;
   }
   
   export async function apiGet<T>(
@@ -121,6 +126,7 @@ function formatValidationMessage(errors: ApiValidationErrors): string {
   ): Promise<T> {
     const response = await fetch(buildUrl(path, params), {
       method: 'GET',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -131,12 +137,13 @@ function formatValidationMessage(errors: ApiValidationErrors): string {
   
   export async function apiPost<T, B = unknown>(
     path: string,
-    body: B,
+    body?: B,
   ): Promise<T> {
     const response = await fetch(buildUrl(path), {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
     return parseResponse<T>(response);
   }
@@ -147,6 +154,7 @@ function formatValidationMessage(errors: ApiValidationErrors): string {
   ): Promise<T> {
     const response = await fetch(buildUrl(path), {
       method: 'PATCH',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
@@ -159,6 +167,7 @@ function formatValidationMessage(errors: ApiValidationErrors): string {
   ): Promise<T> {
     const response = await fetch(buildUrl(path), {
       method: 'PUT',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
@@ -166,6 +175,9 @@ function formatValidationMessage(errors: ApiValidationErrors): string {
   }
   
   export async function apiDelete(path: string): Promise<void> {
-    const response = await fetch(buildUrl(path), { method: 'DELETE' });
+    const response = await fetch(buildUrl(path), {
+      method: 'DELETE',
+      credentials: 'include',
+    });
     return parseResponse<void>(response);
   }
