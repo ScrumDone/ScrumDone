@@ -12,7 +12,7 @@ import { login } from '../../api/auth';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
+    const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,14 +32,18 @@ const LoginPage: React.FC = () => {
 
                     try {
                         await login({
-                            userName: email,
+                            userName,
                             password,
                             rememberMe,
                         });
                         navigate('/');
                     } catch (error) {
+                        const message =
+                            error instanceof ApiError ? error.message : 'Nie udało się zalogować.';
                         setErrorMessage(
-                            error instanceof ApiError ? error.message : 'Nie udało się zalogować.',
+                            /incorrect username or password/i.test(message)
+                                ? 'Nieprawidłowy login lub hasło.'
+                                : message,
                         );
                     } finally {
                         setIsSubmitting(false);
@@ -47,13 +51,13 @@ const LoginPage: React.FC = () => {
                 }}
             >
                 <AuthTextField
-                    label="E-mail"
-                    type="email"
-                    name="email"
-                    autoComplete="email"
-                    placeholder="nina.kowalczyk@firma.pl"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    label="Login"
+                    type="text"
+                    name="userName"
+                    autoComplete="username"
+                    placeholder="nina.kowalska"
+                    value={userName}
+                    onChange={(event) => setUserName(event.target.value)}
                 />
                 <AuthPasswordField
                     label="Hasło"
