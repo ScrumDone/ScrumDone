@@ -366,6 +366,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
 
       <ProjectEditModal
         isOpen={isEditModalOpen}
+        projectId={projectId}
         draft={draft}
         members={teamMembers}
         isActive={projectData?.isActive ?? true}

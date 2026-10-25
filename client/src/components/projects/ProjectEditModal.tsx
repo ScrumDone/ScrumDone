@@ -7,6 +7,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Avatar from '../common/Avatar';
 import ProjectColorPicker from './ProjectColorPicker';
+import ProjectLabelsEditor from './ProjectLabelsEditor';
 
 export type TeamMemberOption = {
   id: string;
@@ -26,6 +27,7 @@ export type EditProjectDraft = {
 
 type ProjectEditModalProps = {
   isOpen: boolean;
+  projectId: string;
   draft: EditProjectDraft;
   members: TeamMemberOption[];
   isActive: boolean;
@@ -44,6 +46,7 @@ type ProjectEditModalProps = {
 
 const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
   isOpen,
+  projectId,
   draft,
   members,
   isActive,
@@ -123,6 +126,14 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
             />
           </div>
 
+          <ProjectColorPicker
+            value={draft.hexColor}
+            onChange={(hexColor) => onDraftChange((prev) => ({ ...prev, hexColor }))}
+            disabled={isBusy}
+          />
+
+          <ProjectLabelsEditor projectId={projectId} disabled={isBusy} />
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-2 block font-segoe-ui text-sm leading-3.5 tracking-[-0.15px] font-medium text-slate-700" htmlFor="project-start-date-input">
@@ -152,12 +163,6 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
               />
             </div>
           </div>
-
-          <ProjectColorPicker
-            value={draft.hexColor}
-            onChange={(hexColor) => onDraftChange((prev) => ({ ...prev, hexColor }))}
-            disabled={isBusy}
-          />
 
           <div>
             <h3 className="mb-2 block font-segoe-ui text-sm leading-3.5 tracking-[-0.15px] font-medium text-slate-800">Członkowie zespołu</h3>
