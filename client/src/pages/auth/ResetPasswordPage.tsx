@@ -178,7 +178,7 @@ const ResetPasswordPage: React.FC = () => {
                             token,
                             newPassword: password,
                         });
-                        navigate('/login');
+                        navigate('/login', { replace: true, state: { passwordReset: true } });
                     } catch (error) {
                         if (error instanceof ApiError) {
                             const mapped = mapApiError(error);
@@ -232,6 +232,9 @@ const ResetPasswordPage: React.FC = () => {
                 >
                     Zapisz hasło
                 </button>
+                <Link to="/login" className={`${authTextLinkClassName} text-center`}>
+                    Wróć do logowania
+                </Link>
             </form>
         </AuthLayout>
     );
