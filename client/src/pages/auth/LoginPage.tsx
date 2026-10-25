@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthLayout from '../../components/auth/AuthLayout';
 import {
     AuthPasswordField,
@@ -11,13 +11,30 @@ import { ApiError } from '../../api/client';
 import { login } from '../../api/auth';
 import { setAuthSession } from '../../lib/authSession';
 
+type LoginLocationState = {
+    passwordReset?: boolean;
+};
+
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(() => {
+        const state = location.state as LoginLocationState | null;
+        return state?.passwordReset
+            ? 'Hasło zostało zmienione. Zaloguj się nowym hasłem.'
+            : null;
+    });
+
+    useEffect(() => {
+        const state = location.state as LoginLocationState | null;
+        if (!state?.passwordReset) return;
+        navigate(location.pathname, { replace: true, state: {} });
+    }, [location.pathname, location.state, navigate]);
 
     return (
         <AuthLayout title="Zaloguj się" subtitle="Wróć do swojego workspace">
@@ -29,6 +46,7 @@ const LoginPage: React.FC = () => {
                     if (isSubmitting) return;
 
                     setErrorMessage(null);
+                    setSuccessMessage(null);
 
                     const trimmedUserName = userName.trim();
                     if (!trimmedUserName || !password) {
@@ -93,6 +111,11 @@ const LoginPage: React.FC = () => {
                         Nie pamiętasz hasła?
                     </Link>
                 </div>
+                {successMessage && (
+                    <p className="text-[13px] leading-[19.5px] text-[#15803d]" role="status">
+                        {successMessage}
+                    </p>
+                )}
                 {errorMessage && (
                     <p className="text-[13px] leading-[19.5px] text-[#e7000b]" role="alert">
                         {errorMessage}

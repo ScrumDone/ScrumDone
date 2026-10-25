@@ -22,6 +22,16 @@ export type RegisterRequest = {
   password: string;
 };
 
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ResetPasswordRequest = {
+  email: string;
+  token: string;
+  newPassword: string;
+};
+
 export function login(body: LoginRequest) {
   return apiPost<void, LoginRequest>('/api/auth/login', body);
 }
@@ -32,6 +42,14 @@ export function register(invitationId: string, body: RegisterRequest) {
 
 export function logout() {
   return apiPost<void>('/api/auth/logout');
+}
+
+export function forgotPassword(body: ForgotPasswordRequest) {
+  return apiPost<void, ForgotPasswordRequest>('/api/auth/forgot-password', body);
+}
+
+export function resetPassword(body: ResetPasswordRequest) {
+  return apiPost<void, ResetPasswordRequest>('/api/auth/reset-password', body);
 }
 
 export function getRoles() {
