@@ -10,7 +10,7 @@ namespace ScrumDone.Api.Services
     public interface IAuthService
     {
         //Auth
-        Task<Guid> InviteUser(UserInvitationDto dto);
+        Task InviteUser(UserInvitationDto dto);
 
         Task RegisterUser(Guid id, UserRegistrationDto dto);
 
