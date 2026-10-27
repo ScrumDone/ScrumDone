@@ -16,6 +16,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Net.NetworkInformation;
 using System.Reflection.Emit;
+using System.Security.Cryptography;
 using System.Text;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -40,14 +41,24 @@ namespace ScrumDone.Api.Services
             _configuration = configuration;
         }
 
-        public async Task<Guid> InviteUser(UserInvitationDto dto)
+        private static byte[] HashToken(string token) =>
+            SHA256.HashData(Encoding.UTF8.GetBytes(token));
+
+        public async Task InviteUser(UserInvitationDto dto)
         {
-            var normalizedEmail = dto.Email.Trim().ToUpper();
+            var email = dto.Email.Trim().ToLowerInvariant();
+            var userName = dto.UserName.Trim();
+            var normalizedEmail = _userManager.NormalizeEmail(email);
+            var normalizedUserName = _userManager.NormalizeName(userName);
 
             if (await _context.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail))
-            {
-                throw new ConflictException($"Some user already uses this email address: {dto.Email}");
-            }
+                throw new ConflictException($"Some user already uses this email address: {email}");
+
+            if (await _context.Users.AnyAsync(u => u.NormalizedUserName == normalizedUserName))
+                throw new ConflictException($"Some user already uses this username: {userName}");
+
+            if (await _context.Invitations.AnyAsync(i => i.UserName.ToLower() == userName.ToLower() && i.Email != email))
+                throw new ConflictException($"This username is already reserved by a pending invitation: {userName}");
 
             var roleIds = dto.Roles.Distinct().ToList();
             if (roleIds.Count == 0)
@@ -57,20 +68,28 @@ namespace ScrumDone.Api.Services
             if (found != roleIds.Count)
                 throw new BadRequestException("One or more roles were not found.");
 
+            // in the future look out for expired invites
+            var previous = await _context.Invitations.Where(i => i.Email == email).ToListAsync();
+             _context.Invitations.RemoveRange(previous);
+
+            var token = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
+
             var invitation = new UserInvitation
             {
-                UserName = dto.UserName,
-                Email = dto.Email,
+                UserName = userName,
+                Email = email,
                 RoleIds = roleIds,
+                TokenHash = HashToken(token)
             };
 
             _context.Invitations.Add(invitation);
             await _context.SaveChangesAsync();
+            var baseUrl = _configuration["Frontend:BaseUrl"]!.TrimEnd('/');
+            var invitationLink = $"{baseUrl}/auth/invite?id={invitation.Id}&token={token}";
 
-            Console.WriteLine($"This invitation ID is: {invitation.Id}");
+            Console.WriteLine($"This invitation is: {invitationLink}");
 
-            // Return the invitation ID unit Email Service is implemented
-            return invitation.Id;
+            return;
         }
 
         public async Task RegisterUser(Guid id, UserRegistrationDto dto)
@@ -80,19 +99,25 @@ namespace ScrumDone.Api.Services
             var invitation = await _context.Invitations.FirstOrDefaultAsync(i => i.Id == id)
                 ?? throw new BadRequestException("There is no invitation for this id.");
 
-            if (invitation.CreatedAt < DateTimeOffset.UtcNow.AddDays(-14))
-            {
-                throw new BadRequestException("This invitation has expired.");
-            }
-
             var roleNames = await _roleManager.Roles
                 .Where(r => invitation.RoleIds.Contains(r.Id))
                 .Select(r => r.Name!)
                 .ToListAsync();
 
-            if (invitation is null)
+            // we use fixed time equals to prevent timing attacks
+            if (!CryptographicOperations.FixedTimeEquals(invitation.TokenHash, HashToken(dto.Token)))
             {
                 throw new BadRequestException("There is no invitation for this id.");
+            }
+
+            if (invitation.ExpiresAt < DateTimeOffset.UtcNow)
+            {
+                throw new BadRequestException("This invitation has expired.");
+            }
+
+            if (await _context.Users.AnyAsync(u => u.Name.ToLower() == dto.Name.ToLower()))
+            {
+                throw new ConflictException($"Some user already uses this username: {dto.Name}");
             }
 
             var user = new User
