@@ -6,8 +6,6 @@ public class DatabaseProdSeeder
 {
     public static async Task Seed(AppDbContext context, UserManager<User> userManager, RoleManager<IdentityRole<Guid>> roleManager)
     {
-        var hasher = new PasswordHasher<User>();
-
         foreach (var roleName in new[] { "Admin", "ProjectManager", "StandardUser" })
         {
             if (!await roleManager.RoleExistsAsync(roleName))

@@ -120,6 +120,13 @@ if (!app.Environment.IsEnvironment("Testing"))
 
             await DatabaseSeeder.Seed(db, userManager, roleManager);
         }
+        if (app.Environment.IsProduction())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+
+            await DatabaseProdSeeder.Seed(db, userManager, roleManager);
+        }
     }
 }
 
