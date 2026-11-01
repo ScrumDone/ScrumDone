@@ -28,9 +28,9 @@ namespace ScrumDone.Api.Controllers
             [FromServices] IValidator<UserInvitationDto> validator)
         {
             await validator.ValidateAndThrowAsync(dto);
-            var results = await _authService.InviteUser(dto);
+            await _authService.InviteUser(dto);
             // Adding return until email is implemented
-            return Ok(results);
+            return Ok("Link temporarily printed to console. Will be moved to mail");
         }
 
         // register actually
@@ -56,7 +56,7 @@ namespace ScrumDone.Api.Controllers
             await validator.ValidateAndThrowAsync(dto);
             await _authService.ForgotPassword(dto);
 
-            return Ok();
+            return Ok("Link temporarily printed to console. Will be moved to mail");
         }
 
         [HttpPost("reset-password")]

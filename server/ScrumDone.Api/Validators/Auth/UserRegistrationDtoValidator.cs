@@ -10,6 +10,13 @@ namespace ScrumDone.Api.Validators.Auth
             RuleFor(x => x.Name)
                 .MinimumLength(1)
                 .MaximumLength(50);
+
+            RuleFor(x => x.Password)
+                .MaximumLength(128);
+
+            RuleFor(x => x.Token)
+                .NotEmpty()
+                .MaximumLength(1024);
         }
     }
 }
