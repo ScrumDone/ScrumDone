@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using ScrumDone.Api.DTOs.Projects;
 using ScrumDone.Api.DTOs.Sprints;
 
 namespace ScrumDone.Api.Validators.Projects

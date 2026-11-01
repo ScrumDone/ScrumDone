@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using Microsoft.AspNetCore.Routing.Constraints;
 using ScrumDone.Api.DTOs.Companies;
 
 namespace ScrumDone.Api.Validators.Companies

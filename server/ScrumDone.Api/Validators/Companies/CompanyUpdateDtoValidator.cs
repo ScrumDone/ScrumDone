@@ -26,6 +26,7 @@ namespace ScrumDone.Api.Validators.Companies
                 .When(x => x.SetProperties.Contains(nameof(CompanyUpdateDto.Krs)));
 
             RuleFor(x => x.Regon)
+                .MaximumLength(14)
                 .Matches(@"^\d{9}(\d{5})?$")
                 .When(x => x.SetProperties.Contains(nameof(CompanyUpdateDto.Regon)));
 

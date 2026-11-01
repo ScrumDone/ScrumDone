@@ -23,6 +23,7 @@ namespace ScrumDone.Api.Validators.Companies
                 .When(x => x.Krs is not null);
 
             RuleFor(x => x.Regon)
+                .MaximumLength(14)
                 .Matches(@"^\d{9}(\d{5})?$")
                 .When(x => x.Regon is not null);
 
