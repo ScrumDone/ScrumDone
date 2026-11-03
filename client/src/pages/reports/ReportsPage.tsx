@@ -1,12 +1,15 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline'
 import SideBar from '../../components/layout/SideBar'
 import TopBar from '../../components/layout/TopBar'
+import ReportGenerateModal from '../../components/reports/ReportGenerateModal'
 import ReportQuickStats from '../../components/reports/ReportQuickStats'
 import ReportsTable from '../../components/reports/ReportsTable'
 import { generatedReports, reportsQuickStats } from '../../data/reports'
 
 const ReportsPage: React.FC = () => {
+    const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false)
+
     return (
         <div className="min-h-screen w-full bg-[#F9FAFB]">
             <SideBar />
@@ -21,6 +24,7 @@ const ReportsPage: React.FC = () => {
 
                         <button
                             type="button"
+                            onClick={() => setIsGenerateModalOpen(true)}
                             className="h-9 cursor-pointer whitespace-nowrap rounded-[8px] bg-scrumdone-blue-main px-4 text-sm font-medium leading-[10px] text-white transition-all hover:bg-[#00A0DD] active:scale-95"
                         >
                             <span className="inline-flex items-center justify-center gap-2">
@@ -58,6 +62,8 @@ const ReportsPage: React.FC = () => {
                     <ReportsTable reports={generatedReports} />
                 </div>
             </main>
+
+            {isGenerateModalOpen && <ReportGenerateModal onClose={() => setIsGenerateModalOpen(false)} />}
         </div>
     )
 }

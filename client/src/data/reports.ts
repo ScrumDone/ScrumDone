@@ -79,3 +79,70 @@ export const generatedReports: GeneratedReport[] = [
     createdAt: "01.10.2026",
   },
 ];
+
+export const reportTypeOptions: string[] = [
+  "Podsumowanie sprintu",
+  "Raport zadań",
+  "Obciążenie zespołu",
+  "Velocity i prognoza",
+  "Projekty zagrożone",
+];
+
+export const reportProjectOptions: string[] = [
+  "Adoddle",
+  "Portal klienta",
+  "Nexus",
+  "Projekt1",
+  "Wszystkie",
+];
+
+export const reportGenerateDefaults = {
+  namePlaceholder: "Sprint 8 – Adoddle",
+  type: "Podsumowanie sprintu",
+  project: "Adoddle",
+  dateFrom: "2026-10-20",
+  dateTo: "2026-11-02",
+};
+
+export type ReportPreviewTaskTone = "overdue" | "inProgress" | "inReview";
+
+export interface ReportPreviewSample {
+  title: string;
+  subtitle: string;
+  stats: { label: string; value: string }[];
+  taskCounts: { done: number; inProgress: number; inReview: number; todo: number };
+  burnup: {
+    /** Współrzędne punktów w układzie viewBox wykresu (270 × 115). */
+    scopeLine: string;
+    doneLine: string;
+    baselineY: number;
+    firstDayLabel: string;
+    lastDayLabel: string;
+  };
+  unfinishedCount: number;
+  unfinishedTasks: { title: string; status: string; tone: ReportPreviewTaskTone }[];
+}
+
+export const reportPreviewSample: ReportPreviewSample = {
+  title: "Podsumowanie sprintu – Sprint 8",
+  subtitle: "Adoddle • 20.10 – 02.11.2026",
+  stats: [
+    { label: "Zaplanowano", value: "22 zad. • 48 h" },
+    { label: "Zrobiono", value: "17 zad. • 39 h" },
+    { label: "Realizacja", value: "81%" },
+  ],
+  taskCounts: { done: 17, inProgress: 2, inReview: 2, todo: 1 },
+  burnup: {
+    scopeLine: "0,22 91,22 91,11 270,11",
+    doneLine: "0,114 33,107 68,93 103,80 137,63 172,52 206,41 241,34 270,29",
+    baselineY: 114,
+    firstDayLabel: "dz. 1",
+    lastDayLabel: "dz. 10",
+  },
+  unfinishedCount: 5,
+  unfinishedTasks: [
+    { title: "Integracja z płatnościami", status: "po terminie", tone: "overdue" },
+    { title: "Eksport faktur do CSV", status: "In Progress", tone: "inProgress" },
+    { title: "Testy formularza", status: "In Review", tone: "inReview" },
+  ],
+};
