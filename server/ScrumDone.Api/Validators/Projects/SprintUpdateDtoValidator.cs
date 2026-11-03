@@ -12,10 +12,6 @@ namespace ScrumDone.Api.Validators.Projects
                 .When(x =>
                     x.SetProperties.Contains(nameof(SprintUpdateDto.Name)));
 
-            RuleFor(x => x.EndDate)
-                .GreaterThanOrEqualTo(x => x.StartDate)
-                .When(x => x.StartDate.HasValue && x.EndDate.HasValue);
-
             RuleFor(x => x.StartDate)
                 .NotNull()
                 .When(x =>
