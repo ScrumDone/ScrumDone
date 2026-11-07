@@ -118,6 +118,7 @@ if (!app.Environment.IsEnvironment("Testing"))
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
+            await DatabaseProdSeeder.Seed(db, userManager, roleManager, builder.Configuration["AdminCredentials:Password"]);
             await DatabaseSeeder.Seed(db, userManager, roleManager);
         }
         if (app.Environment.IsProduction())
@@ -125,7 +126,7 @@ if (!app.Environment.IsEnvironment("Testing"))
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
-            await DatabaseProdSeeder.Seed(db, userManager, roleManager);
+            await DatabaseProdSeeder.Seed(db, userManager, roleManager, builder.Configuration["AdminCredentials:Password"]);
         }
     }
 }
