@@ -101,6 +101,7 @@ builder.Services.AddTransient<IAssignmentsService, AssignmentsService>();
 builder.Services.AddTransient<ISprintsService, SprintsService>();
 builder.Services.AddTransient<IUsersService, UsersService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
+builder.Services.AddTransient<IMessagesService, MessagesService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
