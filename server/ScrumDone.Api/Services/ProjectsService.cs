@@ -228,6 +228,13 @@ namespace ScrumDone.Api.Services
             if(dto.SetProperties.Contains(nameof(dto.StartDate))) projectToUpdate.StartDate = dto.StartDate;
             if(dto.SetProperties.Contains(nameof(dto.ExpectedFinishDate))) projectToUpdate.ExpectedFinishDate = dto.ExpectedFinishDate;
             
+            if(projectToUpdate.StartDate.HasValue 
+            && projectToUpdate.ExpectedFinishDate.HasValue 
+            && projectToUpdate.StartDate > projectToUpdate.ExpectedFinishDate)
+            {
+                throw new ConflictException("Start date cannot be after expected finish date");
+            }
+
             if(dto.SetProperties.Contains(nameof(dto.CompanyId)))
             {
                 if (! await _context.Companies.AnyAsync(c => c.Id == dto.CompanyId) && dto.CompanyId != null )

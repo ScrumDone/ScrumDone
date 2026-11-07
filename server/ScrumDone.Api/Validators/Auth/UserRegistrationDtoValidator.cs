@@ -8,10 +8,11 @@ namespace ScrumDone.Api.Validators.Auth
         public UserRegistrationDtoValidator()
         {
             RuleFor(x => x.Name)
-                .MinimumLength(1)
+                .NotEmpty()
                 .MaximumLength(50);
 
             RuleFor(x => x.Password)
+                .NotEmpty()
                 .MaximumLength(128);
 
             RuleFor(x => x.Token)

@@ -209,7 +209,7 @@ public class SprintsEndpointTests
     }
 
     [Fact]
-    public async Task UpdateSprint_WithEndDateBeforeStartDate_ReturnsBadRequestProblem()
+    public async Task UpdateSprint_WithEndDateBeforeStartDate_ReturnsConflictProblem()
     {
         using var app = new ScrumDoneApiFactory();
         var projectId = Guid.NewGuid();
@@ -234,10 +234,7 @@ public class SprintsEndpointTests
         var response = await client.PatchAsJsonAsync($"/api/sprints/{sprintId}",
             new { startDate = startDate, endDate = startDate.AddDays(-1) });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
-        var problem = await TestResponse.ReadJsonAsync<ValidationProblemDetails>(response);
-        Assert.True(TestResponse.HasValidationError(problem, "EndDate"));
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
     }
 
     // DELETE /api/sprints/{id}

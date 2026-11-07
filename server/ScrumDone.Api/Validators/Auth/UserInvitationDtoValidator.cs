@@ -8,7 +8,7 @@ namespace ScrumDone.Api.Validators.Auth
         public UserInvitationDtoValidator()
         {
             RuleFor(x => x.UserName)
-                .MinimumLength(1)
+                .NotEmpty()
                 .MaximumLength(50);
 
             RuleFor(c => c.Email)

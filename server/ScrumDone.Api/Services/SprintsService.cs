@@ -69,6 +69,11 @@ namespace Scrumdone.Api.Services
             if (dto.SetProperties.Contains(nameof(dto.StartDate))) sprint.StartDate = dto.StartDate.Value;
             if (dto.SetProperties.Contains(nameof(dto.EndDate))) sprint.EndDate = dto.EndDate.Value;
 
+            if (sprint.StartDate > sprint.EndDate)
+            {
+                throw new ConflictException("Start date cannot be after end date");
+            }
+
             await _context.SaveChangesAsync();
 
             sprint = await _context.Sprints
