@@ -32,11 +32,6 @@ namespace ScrumDone.Api.DTOs.Users
             get => field;
             set { field = value; _setProperties.Add(nameof(Name)); }
         }
-        public Guid? RoleId
-        {
-            get => field;
-            set { field = value; _setProperties.Add(nameof(RoleId)); }
-        }
         public string? ProfilePictureUrl
         {
             get => field;

@@ -11,6 +11,10 @@ namespace ScrumDone.Api.Services
     {
         Task<PagedResultDto<UserSummaryDto>> GetUsersAsync(UserQueryDto query);
 
+        Task<UserSummaryDto> GetUserAsync(Guid userId);
+        
+        Task<UserSummaryDto> EditUserAsync(Guid userId, UserUpdateDto dto);
+
         // Task<UserSummaryDto> GetUserByIdAsync(Guid id); 
         
         // Task<UserSummaryDto> CreateUserAsync(UserCreateDto dto);

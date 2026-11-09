@@ -4,6 +4,8 @@ using ScrumDone.Api.Services;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Users;
 using FluentValidation;
+using Microsoft.AspNetCore.Identity;
+using ScrumDone.Api.Data;
 
 
 
@@ -19,10 +21,12 @@ namespace ScrumDone.Api.Controllers
         // I would leave ony GET users for now
 
         private readonly IUsersService _usersService;
+        private readonly UserManager<User> _userManager;
 
-        public UsersController(IUsersService usersService)
+        public UsersController(IUsersService usersService, UserManager<User> userManager)
         {
             _usersService = usersService;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -33,6 +37,39 @@ namespace ScrumDone.Api.Controllers
         {
             await validator.ValidateAndThrowAsync(query);
             return Ok(await _usersService.GetUsersAsync(query));
+        }
+
+        [HttpGet("current")]
+        [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userIdString = _userManager.GetUserId(User);
+            if (!Guid.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            return Ok(await _usersService.GetUserAsync(userId));
+        }
+
+        [HttpPatch("current")]
+        [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> EditCurrentUser(
+            [FromBody] UserUpdateDto dto,
+            [FromServices] IValidator<UserUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+
+            var userIdString = _userManager.GetUserId(User);
+            if (!Guid.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            return Ok(await _usersService.EditUserAsync(userId, dto));
         }
         /*
         [HttpGet("{id}")]

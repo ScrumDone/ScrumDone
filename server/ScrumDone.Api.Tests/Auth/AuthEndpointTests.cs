@@ -694,4 +694,201 @@ public class AuthEndpointTests
         Assert.Contains(roles, r => r.Id == roleA);
         Assert.Contains(roles, r => r.Id == roleB);
     }
+
+    // ─────────────────────────────────────────────────────────
+    // PATCH /api/auth/roles/{id}
+    // ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task AddRoles_ValidUserAndRoles_AssignsRolesAndReturnsOk()
+    {
+        using var app = new ScrumDoneApiFactory();
+        Guid roleA = Guid.Empty;
+        Guid roleB = Guid.Empty;
+        Guid userId = Guid.Empty;
+
+        await app.SeedDatabaseAsync(async db =>
+        {
+            roleA = AddRole(db);
+            roleB = AddRole(db);
+            await db.SaveChangesAsync();
+        });
+
+        // Tworzymy użytkownika przez UserManager
+        using (var scope = app.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                UserName = "roletester",
+                Email = "roletester@example.com",
+                Name = "Role Tester",
+                EmailConfirmed = true
+            };
+            var createResult = await userManager.CreateAsync(user, ValidPassword);
+            Assert.True(createResult.Succeeded);
+            userId = user.Id;
+        }
+
+        using var client = app.CreateClient();
+
+        var dto = new UserAddRolesDto
+        {
+            RolesIds = new List<Guid> { roleA, roleB }
+        };
+
+        var response = await client.PatchAsJsonAsync($"/api/auth/roles/{userId}", dto);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Weryfikacja czy role faktycznie zostały przypisane w bazie
+        using (var scope = app.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var user = await userManager.FindByIdAsync(userId.ToString());
+            Assert.NotNull(user);
+
+            var roles = await userManager.GetRolesAsync(user!);
+            Assert.Equal(2, roles.Count);
+        }
+    }
+
+    [Fact]
+    public async Task AddRoles_AddingExistingRole_DoesNotDuplicateRole()
+    {
+        using var app = new ScrumDoneApiFactory();
+        Guid roleId = Guid.Empty;
+        Guid userId = Guid.Empty;
+
+        await app.SeedDatabaseAsync(async db =>
+        {
+            roleId = AddRole(db);
+            await db.SaveChangesAsync();
+        });
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                UserName = "singleuser",
+                Email = "single@example.com",
+                Name = "Single User",
+                EmailConfirmed = true
+            };
+            await userManager.CreateAsync(user, ValidPassword);
+            userId = user.Id;
+
+            // Przypisujemy rolę po raz pierwszy
+            var role = await scope.ServiceProvider.GetRequiredService<AppDbContext>().Roles.FindAsync(roleId);
+            await userManager.AddToRoleAsync(user, role!.Name!);
+        }
+
+        using var client = app.CreateClient();
+
+        // Ponowne wysłanie tej samej roli
+        var dto = new UserAddRolesDto
+        {
+            RolesIds = new List<Guid> { roleId }
+        };
+
+        var response = await client.PatchAsJsonAsync($"/api/auth/roles/{userId}", dto);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var user = await userManager.FindByIdAsync(userId.ToString());
+            var roles = await userManager.GetRolesAsync(user!);
+
+            Assert.Single(roles);
+        }
+    }
+
+    [Fact]
+    public async Task AddRoles_NonExistentUser_ReturnsNotFoundProblem()
+    {
+        using var app = new ScrumDoneApiFactory();
+        Guid roleId = Guid.Empty;
+
+        await app.SeedDatabaseAsync(async db =>
+        {
+            roleId = AddRole(db);
+            await db.SaveChangesAsync();
+        });
+
+        using var client = app.CreateClient();
+
+        var dto = new UserAddRolesDto
+        {
+            RolesIds = new List<Guid> { roleId }
+        };
+
+        var response = await client.PatchAsJsonAsync($"/api/auth/roles/{Guid.NewGuid()}", dto);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var problem = await TestResponse.ReadJsonAsync<ProblemDetails>(response);
+        Assert.Equal(404, problem.Status);
+    }
+
+    [Fact]
+    public async Task AddRoles_NonExistentRole_ReturnsNotFoundOrBadRequest()
+    {
+        using var app = new ScrumDoneApiFactory();
+        Guid userId = Guid.Empty;
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                UserName = "validuser",
+                Email = "validuser@example.com",
+                Name = "Valid User",
+                EmailConfirmed = true
+            };
+            await userManager.CreateAsync(user, ValidPassword);
+            userId = user.Id;
+        }
+
+        using var client = app.CreateClient();
+
+        var dto = new UserAddRolesDto
+        {
+            RolesIds = new List<Guid> { Guid.NewGuid() } // Rola, która nie istnieje
+        };
+
+        var response = await client.PatchAsJsonAsync($"/api/auth/roles/{userId}", dto);
+
+        // Zależnie od tego czy AuthService rzuca NotFoundException czy Validation/BadRequest
+        Assert.True(
+            response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.BadRequest,
+            $"Expected 404 or 400, but got {response.StatusCode}");
+    }
+
+    [Fact]
+    public async Task AddRoles_EmptyRolesList_ReturnsBadRequestProblem()
+    {
+        using var app = new ScrumDoneApiFactory();
+        using var client = app.CreateClient();
+
+        var dto = new UserAddRolesDto
+        {
+            RolesIds = new List<Guid>() // Pusta lista (jeśli walidator sprawdza .NotEmpty())
+        };
+
+        var response = await client.PatchAsJsonAsync($"/api/auth/roles/{Guid.NewGuid()}", dto);
+
+        // Sprawdzana przez FluentValidation
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var problem = await TestResponse.ReadJsonAsync<ValidationProblemDetails>(response);
+        Assert.Equal(400, problem.Status);
+        Assert.True(TestResponse.HasValidationError(problem, "RolesIds"));
+    }
 }

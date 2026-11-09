@@ -9,6 +9,7 @@ using ScrumDone.Api.DTOs.Users;
 using ScrumDone.Api.Mappers;
 using ScrumDone.Api.Exceptions;
 using Bogus.DataSets;
+using Bogus.Extensions.Extras;
 
 namespace ScrumDone.Api.Services
 {
@@ -35,6 +36,38 @@ namespace ScrumDone.Api.Services
                 .Select(u => u.ToSummaryDto());
 
             return new PagedResultDto<UserSummaryDto>(users, query.Page, query.Limit, total);
+        }
+
+        public async Task<UserSummaryDto> GetUserAsync(Guid userId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user is null)
+            {
+                throw new NotFoundException(nameof(User), userId);
+            }
+
+            var userDto = user.ToSummaryDto();
+
+            return userDto;
+        }
+
+        public async Task<UserSummaryDto> EditUserAsync(Guid userId, UserUpdateDto dto)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user is null)
+            {
+                throw new NotFoundException(nameof(User), userId);
+            }
+
+            if (dto.SetProperties.Contains(nameof(dto.Name))) user.Name = dto.Name;
+            if (dto.SetProperties.Contains(nameof(dto.ProfilePictureUrl))) user.ProfilePictureUrl = dto.ProfilePictureUrl;
+
+            await _context.SaveChangesAsync();
+            var userDto = user.ToSummaryDto();
+
+            return userDto;
         }
     }
 }

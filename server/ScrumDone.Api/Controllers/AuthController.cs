@@ -47,6 +47,20 @@ namespace ScrumDone.Api.Controllers
             return Ok();
         } 
 
+        [HttpPatch("roles/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> AddRoles(
+            [FromRoute] Guid id,
+            [FromBody] UserAddRolesDto dto,
+            [FromServices] IValidator<UserAddRolesDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            await _authService.AddRoles(id, dto);
+
+            return Ok();
+        } 
+
         [HttpPost("forgot-password")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> ForgotPassword(
