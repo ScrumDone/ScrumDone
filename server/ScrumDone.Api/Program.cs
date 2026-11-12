@@ -20,7 +20,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins(builder.Configuration["Frontend:BaseUrl"]!)
+            policy.WithOrigins(builder.Configuration["Frontend:BaseUrl"]
+                ?? throw new InvalidOperationException("Frontend:BaseUrl is not configured."))
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
@@ -107,26 +108,59 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+// for localhost development
+var isDevelopment = app.Environment.IsDevelopment();
+// for automated tests
+var isTesting = app.Environment.IsEnvironment("Testing");
+// for committee, usability testing and QA testing
+var isStaging = app.Environment.IsStaging();
+// for production deployment
+var isProduction = app.Environment.IsProduction();
+
 if (!app.Environment.IsEnvironment("Testing"))
 {
     using (var scope = app.Services.CreateScope())
     {
-        var db = scope.ServiceProvider.GetService<AppDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
-        if (app.Environment.IsDevelopment())
-        {
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+
+        var startAdmin = new User
+        {
+            UserName = builder.Configuration["AdminCredentials:Username"] 
+            ?? throw new InvalidOperationException("Missing initial admin username."),
+            Name = builder.Configuration["AdminCredentials:Name"] 
+            ?? throw new InvalidOperationException("Missing initial admin name."),
+            Email = builder.Configuration["AdminCredentials:Email"] 
+            ?? throw new InvalidOperationException("Missing initial admin email."),
+            EmailConfirmed = true
+        };
+
+        await DatabaseProdSeeder.Seed(
+            db, 
+            userManager, 
+            roleManager, 
+            startAdmin, 
+            builder.Configuration["AdminCredentials:Password"]
+            ?? throw new InvalidOperationException("Missing initial admin password.")
+        );
+
+        if (isDevelopment || isStaging)
+        {   
             await DatabaseSeeder.Seed(db, userManager, roleManager);
         }
     }
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (isDevelopment || isStaging)
 {
-    app.UseDeveloperExceptionPage();
+    if (isDevelopment)
+    {
+        app.UseDeveloperExceptionPage();
+    }
     app.MapOpenApi();
     app.MapScalarApiReference();
 }

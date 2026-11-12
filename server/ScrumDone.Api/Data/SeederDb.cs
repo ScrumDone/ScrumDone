@@ -15,15 +15,7 @@ public class DatabaseSeeder
     {
         var hasher = new PasswordHasher<User>();
 
-        foreach (var roleName in new[] { "Admin", "ProjectManager", "StandardUser" })
-        {
-            if (!await roleManager.RoleExistsAsync(roleName))
-            {
-                await roleManager.CreateAsync(new IdentityRole<Guid> { Name = roleName });
-            }
-        }
-
-        if(context.AssignmentStatuses.Any())
+        if(context.FileLabels.Any())
         {
             return;
         }
@@ -31,32 +23,10 @@ public class DatabaseSeeder
         Randomizer.Seed = new Random(123);
         Random rnd = new Random(123);
         var now = DateTimeOffset.UtcNow;
-        
-        var statuses = new List<AssignmentStatus>
-        {
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "To Do", HexColor = "#D1D5DB", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 0 },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Progress", HexColor = "#3B82F6", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 1 },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "In Review", HexColor = "#EAB308", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 2 },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Done", HexColor = "#22C55E", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 3 },
-            new AssignmentStatus { Id = Guid.NewGuid(), Name = "Blocked", HexColor = "#EF4444", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 4 }
-        };
-        context.AssignmentStatuses.AddRange(statuses);
 
-        var priorities = new List<AssignmentPriority>
-        {
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Low", HexColor = "#00C950", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 0 },
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "Medium", HexColor = "#F0B100", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 1 },
-            new AssignmentPriority { Id = Guid.NewGuid(), Name = "High", HexColor = "#FB2C36", CreatedAt = now.AddDays(-rnd.Next(14)), UpdatedAt = now, Order = 2 }
-        };
-        context.AssignmentPriorities.AddRange(priorities);
-
-        var notificationTypes = new List<NotificationType>
-        {
-            new NotificationType { Id = Guid.NewGuid(), Name = "Message", HexColor = "#2045ac", CreatedAt = now, IsDeleted=false, UpdatedAt = now },
-            new NotificationType { Id = Guid.NewGuid(), Name = "Assignment", HexColor = "#0b7880", CreatedAt = now, IsDeleted=false, UpdatedAt = now },
-            new NotificationType { Id = Guid.NewGuid(), Name = "Deadline", HexColor = "#2357b8", CreatedAt = now, IsDeleted=false, UpdatedAt = now }
-        };
-        context.NotificationTypes.AddRange(notificationTypes);
+        var statuses = context.AssignmentStatuses.ToList();
+        var priorities = context.AssignmentPriorities.ToList();
+        var notificationTypes = context.NotificationTypes.ToList();
 
         var fileLabels = new List<FileLabel>
         {
@@ -184,7 +154,6 @@ public class DatabaseSeeder
         }     
             context.AssignmentLabels.AddRange(labels);
 
-
         var assignmentFaker = new Faker<Assignment>("pl")
             .RuleFor(a => a.Id, f => f.Random.Guid())
             .RuleFor(a => a.ParentAssignmentId, f => null)
@@ -268,7 +237,6 @@ public class DatabaseSeeder
 
         var childAssignments = childAssignmentFaker.Generate(20);
         context.Assignment.AddRange(childAssignments);
-
 
         var companyNoteFaker = new Faker<CompanyNote>("pl")
             .RuleFor(n => n.Id, f => f.Random.Guid())

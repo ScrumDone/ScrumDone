@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,14 @@ internal sealed class ScrumDoneApiFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Frontend:BaseUrl"] = "http://localhost:3000"
+            });
+        });
 
         builder.ConfigureServices(services =>
         {
