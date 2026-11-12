@@ -15,7 +15,7 @@ public class DatabaseSeeder
     {
         var hasher = new PasswordHasher<User>();
 
-        if(context.AssignmentStatuses.Any())
+        if(context.FileLabels.Any())
         {
             return;
         }

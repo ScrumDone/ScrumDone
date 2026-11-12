@@ -4,7 +4,7 @@ using AssignmentStatus = ScrumDone.Api.Data.AssignmentStatus;
 using Microsoft.AspNetCore.Identity;
 public class DatabaseProdSeeder
 {
-    public static async Task Seed(AppDbContext context, UserManager<User> userManager, RoleManager<IdentityRole<Guid>> roleManager, string adminPassword)
+    public static async Task Seed(AppDbContext context, UserManager<User> userManager, RoleManager<IdentityRole<Guid>> roleManager, User startAdmin, string startAdminPassword)
     {
         foreach (var roleName in new[] { "Admin", "ProjectManager", "StandardUser" })
         {
@@ -51,15 +51,8 @@ public class DatabaseProdSeeder
 
         await context.SaveChangesAsync();
 
-        var user = new User{
-            UserName = "Admin",
-            Name = "Admin",
-            Email = "admin@admin.com",
-            EmailConfirmed = true
-        };
-
-        await userManager.CreateAsync(user, adminPassword);
-        await userManager.AddToRoleAsync(user, "Admin");
+        await userManager.CreateAsync(startAdmin, startAdminPassword);
+        await userManager.AddToRoleAsync(startAdmin, "Admin");
 
         context.SaveChanges();
     }

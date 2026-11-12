@@ -3,9 +3,9 @@ services:
     image: postgres:16
     container_name: scrumdone-postgres
     environment:
-      POSTGRES_USER: devuser
-      POSTGRES_PASSWORD: devpassword
-      POSTGRES_DB: scrumdone
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       PGOPTIONS: "-c tcp_keepalives_idle=30 -c tcp_keepalives_interval=10 -c tcp_keepalives_count=5"
     ports:
       - "5432:5432"
@@ -14,7 +14,7 @@ services:
     networks:
       - scrumdone-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U devuser -d scrumdone"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 3s
       retries: 5
 
@@ -28,12 +28,15 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: devuser
-      DB_PASSWORD: devpassword
-      DB_NAME: scrumdone
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ConnectionStrings__LocalConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+
+      Frontend__BaseUrl: ${FRONTEND_URL}
+
+      AdminCredentials__Password: ${INITIAL_ADMIN_PASSWORD}
+      AdminCredentials__Email: ${INITIAL_ADMIN_EMAIL}
+      AdminCredentials__Username: ${INITIAL_ADMIN_USERNAME}
+      AdminCredentials__Name: ${INITIAL_ADMIN_NAME}
     ports:
       - "8080:8080"
     networks:

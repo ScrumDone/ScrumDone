@@ -1,18 +1,36 @@
+## Environments:
+
+First ensure correct .env file is present, then:
+
+**Development** for localhost development \
+`docker compose --env-file .env.development up --build`
+
+**Testing** for automated tests \
+`docker compose --env-file .env.testing up --build`
+
+**Presentation** for committee, usability testing and QA testing\
+`docker compose --env-file .env.staging up --build`
+
+**Production** for production deployment \
+`docker compose --env-file .env.production up --build`
 
 ## Build:
+
+**The following instructions are for dev environment, adjust accordingly**
 
 - Install Docker https://docs.docker.com/desktop/setup/install/windows-install/
 - Run the docker engine (opening downloaded docker dektop should do it)
 - Open a terminal and navigate to the `/server` directory of the project.
-- `docker compose up --build`
+- Ensure filled in `.env.development` is present
+- `docker compose --env-file .env.development up --build`
 - access scalar api documentation at http://localhost:8080/scalar/v1
 - test connection with endpoints like http://localhost:8080/api/utils/health
 
 ## When you're done testing or want to rebuild the image from scratch:
-- `docker compose down -v`
+- `docker compose --env-file .env.development down -v`
 
 ## Rebuild api only for faster development:
-- `docker compose up --build scrumdone-api`
+- `docker compose --env-file .env.development up --build scrumdone-api`
 
 ## Run tests with:
 - `dotnet test ScrumDone.slnx --no-restore --verbosity minimal`
