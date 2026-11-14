@@ -6,6 +6,7 @@ using ScrumDone.Api.DTOs.Users;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using ScrumDone.Api.Data;
+using ScrumDone.Api.DTOs.Auth;
 
 
 
@@ -39,6 +40,14 @@ namespace ScrumDone.Api.Controllers
             return Ok(await _usersService.GetUsersAsync(query));
         }
 
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetUser(
+            [FromRoute] Guid id)
+        {
+            return Ok(await _usersService.GetUserAsync(id));
+        }
+
         [HttpGet("current")]
         [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -54,7 +63,7 @@ namespace ScrumDone.Api.Controllers
         }
 
         [HttpPatch("current")]
-        [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> EditCurrentUser(
@@ -71,6 +80,48 @@ namespace ScrumDone.Api.Controllers
 
             return Ok(await _usersService.EditUserAsync(userId, dto));
         }
+
+        // Admin
+        [HttpPatch("{id}/admin")]
+        [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> AdminEditUser(
+            [FromRoute] Guid id,
+            [FromBody] UserUpdateDto dto,
+            [FromServices] IValidator<UserUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+
+            return Ok(await _usersService.EditUserAsync(id, dto));
+        }
+
+        // Admin
+        [HttpPatch("remove/{id}")]
+        [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RemoveUser(
+            [FromRoute] Guid id)
+        {
+            await _usersService.RemoveUserAsync(id);
+            return Ok();
+        }
+
+        [HttpPut("{id}/roles")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> AddRoles(
+            [FromRoute] Guid id,
+            [FromBody] UserAddRolesDto dto,
+            [FromServices] IValidator<UserAddRolesDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            await _usersService.ModifyRolesAsync(id, dto);
+
+            return Ok();
+        }
+
         /*
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]

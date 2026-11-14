@@ -60,6 +60,19 @@ public class UsersEndpointTests
         return client;
     }
 
+    private static Guid AddRole(AppDbContext db)
+    {
+        var id = Guid.NewGuid();
+        var name = $"Role-{id:N}";
+        db.Roles.Add(new IdentityRole<Guid>
+        {
+            Id = id,
+            Name = name,
+            NormalizedName = name.ToUpperInvariant()
+        });
+        return id;
+    }
+
     // ─────────────────────────────────────────────────────────
     // GET /api/users
     // ─────────────────────────────────────────────────────────
@@ -110,7 +123,7 @@ public class UsersEndpointTests
         Assert.Equal(2, page.TotalPages);
         Assert.True(page.HasNextPage);
         Assert.False(page.HasPreviousPage);
-        
+
         var user = Assert.Single(page.Items);
         Assert.NotEqual(Guid.Empty, user.Id);
         Assert.False(string.IsNullOrEmpty(user.Name));
@@ -154,10 +167,45 @@ public class UsersEndpointTests
 
         var problem = await TestResponse.ReadJsonAsync<ValidationProblemDetails>(response);
         Assert.Equal(400, problem.Status);
-        
+
         Assert.True(
             TestResponse.HasValidationError(problem, "Page") ||
             TestResponse.HasValidationError(problem, "Limit"));
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // GET /api/users/{id}
+    // ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task GetUser_ExistingId_ReturnsUserSummaryDto()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var user = await SeedUser(app, userName: "targetuser", email: "target@example.com", name: "Target User");
+        using var client = app.CreateClient();
+
+        var response = await client.GetAsync($"/api/users/{user.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await TestResponse.ReadJsonAsync<UserSummaryDto>(response);
+        Assert.NotNull(result);
+        Assert.Equal(user.Id, result.Id);
+        Assert.Equal("Target User", result.Name);
+    }
+
+    [Fact]
+    public async Task GetUser_NonExistentId_ReturnsNotFoundProblem()
+    {
+        using var app = new ScrumDoneApiFactory();
+        using var client = app.CreateClient();
+
+        var response = await client.GetAsync($"/api/users/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var problem = await TestResponse.ReadJsonAsync<ProblemDetails>(response);
+        Assert.Equal(404, problem.Status);
     }
 
     // ─────────────────────────────────────────────────────────
@@ -238,8 +286,8 @@ public class UsersEndpointTests
         using var client = await CreateAuthenticatedClient(app, "charlie");
 
         var payload = new StringContent(
-            "{\"ProfilePictureUrl\":\"https://example.com/avatar.png\"}", 
-            Encoding.UTF8, 
+            "{\"ProfilePictureUrl\":\"https://example.com/avatar.png\"}",
+            Encoding.UTF8,
             "application/json");
 
         var response = await client.PatchAsync("/api/users/current", payload);
@@ -247,9 +295,8 @@ public class UsersEndpointTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var updated = await TestResponse.ReadJsonAsync<UserSummaryDto>(response);
-        Assert.Equal("Charlie Chaplin", updated.Name); // Imię pozostało bez zmian
+        Assert.Equal("Charlie Chaplin", updated.Name);
 
-        // Weryfikacja zmiany ProfilePictureUrl bezpośrednio na encji w bazie
         using var scope = app.Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var dbUser = await userManager.FindByIdAsync(user.Id.ToString());
@@ -279,7 +326,6 @@ public class UsersEndpointTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        // Weryfikacja wyczyszczenia URL w bazie
         using var scope = app.Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
         var dbUser = await userManager.FindByIdAsync(user.Id.ToString());
@@ -302,5 +348,241 @@ public class UsersEndpointTests
         var problem = await TestResponse.ReadJsonAsync<ValidationProblemDetails>(response);
         Assert.Equal(400, problem.Status);
         Assert.True(TestResponse.HasValidationError(problem, "Name"));
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // PATCH /api/users/{id}/admin
+    // ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task AdminEditUser_WithValidData_UpdatesSpecifiedUser()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var targetUser = await SeedUser(app, userName: "employee", email: "emp@example.com", name: "Old Name");
+        using var client = app.CreateClient();
+
+        var payload = new StringContent("{\"Name\":\"Admin Updated Name\"}", Encoding.UTF8, "application/json");
+        var response = await client.PatchAsync($"/api/users/{targetUser.Id}/admin", payload);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var updated = await TestResponse.ReadJsonAsync<UserSummaryDto>(response);
+        Assert.Equal(targetUser.Id, updated.Id);
+        Assert.Equal("Admin Updated Name", updated.Name);
+
+        using var scope = app.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var dbUser = await userManager.FindByIdAsync(targetUser.Id.ToString());
+        Assert.Equal("Admin Updated Name", dbUser!.Name);
+    }
+
+    [Fact]
+    public async Task AdminEditUser_WithEmptyName_ReturnsBadRequestProblem()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var targetUser = await SeedUser(app, userName: "employee2", email: "emp2@example.com", name: "Valid Name");
+        using var client = app.CreateClient();
+
+        var payload = new StringContent("{\"Name\":\"\"}", Encoding.UTF8, "application/json");
+        var response = await client.PatchAsync($"/api/users/{targetUser.Id}/admin", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        var problem = await TestResponse.ReadJsonAsync<ValidationProblemDetails>(response);
+        Assert.Equal(400, problem.Status);
+        Assert.True(TestResponse.HasValidationError(problem, "Name"));
+    }
+
+    [Fact]
+    public async Task AdminEditUser_NonExistentId_ReturnsNotFoundProblem()
+    {
+        using var app = new ScrumDoneApiFactory();
+        using var client = app.CreateClient();
+
+        var payload = new StringContent("{\"Name\":\"Ghost User\"}", Encoding.UTF8, "application/json");
+        var response = await client.PatchAsync($"/api/users/{Guid.NewGuid()}/admin", payload);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var problem = await TestResponse.ReadJsonAsync<ProblemDetails>(response);
+        Assert.Equal(404, problem.Status);
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // PATCH /api/users/remove/{id}
+    // ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task RemoveUser_ExistingId_RemovesUserAndReturnsOk()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var targetUser = await SeedUser(app, userName: "toremove", email: "remove@example.com", name: "To Remove");
+        using var client = app.CreateClient();
+
+        var response = await client.PatchAsync($"/api/users/remove/{targetUser.Id}", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var getResponse = await client.GetAsync($"/api/users/{targetUser.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task RemoveUser_NonExistentId_ReturnsNotFoundProblem()
+    {
+        using var app = new ScrumDoneApiFactory();
+        using var client = app.CreateClient();
+
+        var response = await client.PatchAsync($"/api/users/remove/{Guid.NewGuid()}", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var problem = await TestResponse.ReadJsonAsync<ProblemDetails>(response);
+        Assert.Equal(404, problem.Status);
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // PUT /api/users/{id}/roles
+    // ─────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task PutRoles_ValidRoles_AssignsRolesAndReturnsOk()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var targetUser = await SeedUser(app, userName: "roleuser", email: "roles@example.com");
+        Guid roleA = Guid.Empty;
+        Guid roleB = Guid.Empty;
+
+        await app.SeedDatabaseAsync(async db =>
+        {
+            roleA = AddRole(db);
+            roleB = AddRole(db);
+            await db.SaveChangesAsync();
+        });
+
+        using var client = app.CreateClient();
+        var dto = new UserAddRolesDto
+        {
+            RolesIds = new List<Guid> { roleA, roleB }
+        };
+
+        var response = await client.PutAsJsonAsync($"/api/users/{targetUser.Id}/roles", dto);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using var scope = app.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var dbUser = await userManager.FindByIdAsync(targetUser.Id.ToString());
+        var roles = await userManager.GetRolesAsync(dbUser!);
+
+        Assert.Equal(2, roles.Count);
+    }
+
+    [Fact]
+    public async Task PutRoles_TogglesRoles_AddsMissingAndRemovesExisting()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var targetUser = await SeedUser(app, userName: "toggleuser", email: "toggle@example.com");
+        Guid roleToKeepId = Guid.Empty;
+        Guid roleToRemoveId = Guid.Empty;
+        Guid roleToAddId = Guid.Empty;
+
+        await app.SeedDatabaseAsync(async db =>
+        {
+            roleToKeepId = AddRole(db);
+            roleToRemoveId = AddRole(db);
+            roleToAddId = AddRole(db);
+            await db.SaveChangesAsync();
+        });
+
+        string keepRoleName = "";
+        string addRoleName = "";
+
+        // Stan początkowy: użytkownik ma roleToKeep oraz roleToRemove
+        using (var scope = app.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var dbUser = await userManager.FindByIdAsync(targetUser.Id.ToString());
+
+            var roleKeep = await db.Roles.FindAsync(roleToKeepId);
+            var roleRemove = await db.Roles.FindAsync(roleToRemoveId);
+            var roleAdd = await db.Roles.FindAsync(roleToAddId);
+
+            keepRoleName = roleKeep!.Name!;
+            addRoleName = roleAdd!.Name!;
+
+            await userManager.AddToRolesAsync(dbUser!, new[] { keepRoleName, roleRemove!.Name! });
+        }
+
+        using var client = app.CreateClient();
+
+        // Wysyłamy roleToRemove (już ma -> zostanie usunięta) oraz roleToAdd (nie ma -> zostanie dodana)
+        // roleToKeep nie wysyłamy -> powinna pozostać nietknięta
+        var dto = new UserAddRolesDto
+        {
+            RolesIds = new List<Guid> { roleToRemoveId, roleToAddId }
+        };
+
+        var response = await client.PutAsJsonAsync($"/api/users/{targetUser.Id}/roles", dto);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Stan końcowy: użytkownik powinien mieć roleToKeep oraz roleToAdd (bez roleToRemove)
+        using (var scope = app.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var dbUser = await userManager.FindByIdAsync(targetUser.Id.ToString());
+            var currentRoles = await userManager.GetRolesAsync(dbUser!);
+
+            Assert.Equal(2, currentRoles.Count);
+            Assert.Contains(keepRoleName, currentRoles);
+            Assert.Contains(addRoleName, currentRoles);
+        }
+    }
+
+    [Fact]
+    public async Task PutRoles_NonExistentUser_ReturnsNotFoundProblem()
+    {
+        using var app = new ScrumDoneApiFactory();
+        Guid roleId = Guid.Empty;
+
+        await app.SeedDatabaseAsync(async db =>
+        {
+            roleId = AddRole(db);
+            await db.SaveChangesAsync();
+        });
+
+        using var client = app.CreateClient();
+        var dto = new UserAddRolesDto
+        {
+            RolesIds = new List<Guid> { roleId }
+        };
+
+        var response = await client.PutAsJsonAsync($"/api/users/{Guid.NewGuid()}/roles", dto);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        var problem = await TestResponse.ReadJsonAsync<ProblemDetails>(response);
+        Assert.Equal(404, problem.Status);
+    }
+
+    [Fact]
+    public async Task PutRoles_NonExistentRole_ReturnsNotFoundOrBadRequest()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var targetUser = await SeedUser(app, userName: "badroleuser", email: "badrole@example.com");
+        using var client = app.CreateClient();
+
+        var dto = new UserAddRolesDto
+        {
+            RolesIds = new List<Guid> { Guid.NewGuid() }
+        };
+
+        var response = await client.PutAsJsonAsync($"/api/users/{targetUser.Id}/roles", dto);
+
+        Assert.True(
+            response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.BadRequest,
+            $"Expected 404 or 400, but got {response.StatusCode}");
     }
 }

@@ -148,38 +148,6 @@ namespace ScrumDone.Api.Services
             return;
         }
 
-        public async Task AddRoles(Guid id, UserAddRolesDto dto)
-        {
-            if (dto.RolesIds.Count == 0)
-                throw new BadRequestException("At least one role is required.");
-
-            var roleIds = dto.RolesIds.Distinct().ToList();
-
-            var rolesNames = await _roleManager.Roles
-                .Where(r => dto.RolesIds.Contains(r.Id))
-                .Select(r => r.Name!)
-                .ToListAsync();
-
-            if (rolesNames.Count != roleIds.Count)
-                throw new BadRequestException("One or more roles were not found.");
-
-            var user = await _userManager.FindByIdAsync(id.ToString());
-            if (user is null)
-            {
-                throw new NotFoundException(nameof(User), id);
-            }
-
-            var existingRoles = await _userManager.GetRolesAsync(user);
-            var rolesToAdd = rolesNames.Except(existingRoles).ToList();
-
-            if (rolesToAdd.Count == 0)
-                return;
-
-            var roles = await _userManager.AddToRolesAsync(user, rolesToAdd);
-            if (!roles.Succeeded)
-                throw new BadRequestException(string.Join(" ", roles.Errors.Select(e => e.Description)));
-        }
-
         public async Task ForgotPassword(ForgotPasswordDto dto)
         {
             var user = await _userManager.FindByEmailAsync(dto.Email);

@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
-using ScrumDone.Api.DTOs.Auth;
+using ScrumDone.Api.DTOs.Users;
 
-namespace ScrumDone.Api.Validators.Auth
+namespace ScrumDone.Api.Validators.Users
 {
     public class UserAddRolesDtoValidator : AbstractValidator<UserAddRolesDto>
     {
