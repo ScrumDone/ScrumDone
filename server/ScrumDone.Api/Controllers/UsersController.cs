@@ -4,6 +4,9 @@ using ScrumDone.Api.Services;
 using ScrumDone.Api.DTOs.Common;
 using ScrumDone.Api.DTOs.Users;
 using FluentValidation;
+using Microsoft.AspNetCore.Identity;
+using ScrumDone.Api.Data;
+using ScrumDone.Api.DTOs.Auth;
 
 
 
@@ -19,10 +22,12 @@ namespace ScrumDone.Api.Controllers
         // I would leave ony GET users for now
 
         private readonly IUsersService _usersService;
+        private readonly UserManager<User> _userManager;
 
-        public UsersController(IUsersService usersService)
+        public UsersController(IUsersService usersService, UserManager<User> userManager)
         {
             _usersService = usersService;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -34,6 +39,89 @@ namespace ScrumDone.Api.Controllers
             await validator.ValidateAndThrowAsync(query);
             return Ok(await _usersService.GetUsersAsync(query));
         }
+
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetUser(
+            [FromRoute] Guid id)
+        {
+            return Ok(await _usersService.GetUserAsync(id));
+        }
+
+        [HttpGet("current")]
+        [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userIdString = _userManager.GetUserId(User);
+            if (!Guid.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            return Ok(await _usersService.GetUserAsync(userId));
+        }
+
+        [HttpPatch("current")]
+        [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> EditCurrentUser(
+            [FromBody] UserUpdateDto dto,
+            [FromServices] IValidator<UserUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+
+            var userIdString = _userManager.GetUserId(User);
+            if (!Guid.TryParse(userIdString, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            return Ok(await _usersService.EditUserAsync(userId, dto));
+        }
+
+        // Admin
+        [HttpPatch("{id}/admin")]
+        [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> AdminEditUser(
+            [FromRoute] Guid id,
+            [FromBody] UserUpdateDto dto,
+            [FromServices] IValidator<UserUpdateDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+
+            return Ok(await _usersService.EditUserAsync(id, dto));
+        }
+
+        // Admin
+        [HttpPatch("remove/{id}")]
+        [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RemoveUser(
+            [FromRoute] Guid id)
+        {
+            await _usersService.RemoveUserAsync(id);
+            return Ok();
+        }
+
+        [HttpPut("{id}/roles")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> AddRoles(
+            [FromRoute] Guid id,
+            [FromBody] UserAddRolesDto dto,
+            [FromServices] IValidator<UserAddRolesDto> validator)
+        {
+            await validator.ValidateAndThrowAsync(dto);
+            await _usersService.ModifyRolesAsync(id, dto);
+
+            return Ok();
+        }
+
         /*
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(UserSummaryDto), StatusCodes.Status200OK)]

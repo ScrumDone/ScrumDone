@@ -45,7 +45,7 @@ namespace ScrumDone.Api.Controllers
             await _authService.RegisterUser(id, dto);
 
             return Ok();
-        } 
+        }
 
         [HttpPost("forgot-password")]
         [ProducesResponseType(StatusCodes.Status200OK)]
