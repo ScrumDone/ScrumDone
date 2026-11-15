@@ -965,7 +965,7 @@ const CompanyDetailsPage: React.FC = () => {
                           )}
                         </div>
                         <p className="text-sm text-gray-500 mt-1">{contact.role ?? '—'}</p>
-                        <div className="mt-3 flex flex-col gap-1 text-sm text-gray-600 sm:mx-auto sm:max-w-180 sm:flex-row sm:items-center sm:justify-center sm:gap-6">
+                        <div className="mt-3 flex flex-col gap-1 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-start sm:gap-6">
                           <div className="flex items-center gap-3">
                             <Mail className="w-4 h-4 text-gray-400" />
                             <span className="break-all">{contact.email ?? '—'}</span>
