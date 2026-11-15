@@ -38,6 +38,25 @@ const emptyDraft = (): EditProjectDraft => ({
   hexColor: null,
 });
 
+type TopBarDensity = 'compact' | 'full';
+
+const TOPBAR_DENSITY_STORAGE_KEY = 'scrumdone.projectTopBar.density';
+
+const readStoredDensity = (): TopBarDensity => {
+  try {
+    const stored = localStorage.getItem(TOPBAR_DENSITY_STORAGE_KEY);
+    if (stored === 'compact' || stored === 'full') return stored;
+  } catch {
+    // ignore storage access errors
+  }
+  return 'full';
+};
+
+const segmentButtonClass = (isActive: boolean) =>
+  `flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+    isActive ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'
+  }`;
+
 const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
   const navigate = useNavigate();
   const { data: projectData, isLoading, isError, error } = useProject(projectId);
@@ -80,6 +99,17 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
   const [draft, setDraft] = useState<EditProjectDraft>(emptyDraft);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isChangingClient, setIsChangingClient] = useState(false);
+  const [density, setDensity] = useState<TopBarDensity>(readStoredDensity);
+  const isCompact = density === 'compact';
+
+  const handleDensityChange = (next: TopBarDensity) => {
+    setDensity(next);
+    try {
+      localStorage.setItem(TOPBAR_DENSITY_STORAGE_KEY, next);
+    } catch {
+      // ignore storage access errors
+    }
+  };
 
   const isSaving = isSavingProject || isSavingMembers;
   const saveErrorMessage = isUpdateProjectError && !isChangingClient && !isArchiving
@@ -277,8 +307,8 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
 
   return (
     <section className="bg-white border-b border-slate-200">
-      <div className="border-b border-slate-200 px-4 py-5 sm:px-6">
-        <div className="mb-4">
+      <div className={`border-b border-slate-200 px-4 sm:px-6 transition-[padding] duration-200 ${isCompact ? 'py-3' : 'py-5'}`}>
+        <div className={isCompact ? 'mb-2' : 'mb-4'}>
           <Link
             to="/projects"
             className="inline-flex items-center gap-2 leading-5 text-sm text-slate-600 hover:text-slate-900"
@@ -288,62 +318,108 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
           </Link>
         </div>
 
-        <div className="flex flex-wrap items-start justify-between gap-6">
+        <div className={`flex flex-wrap items-start justify-between ${isCompact ? 'gap-4' : 'gap-6'}`}>
           <div className="flex min-w-0 flex-1 gap-4 sm:min-w-88">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl leading-8 text-slate-900 tracking-[0.07]">
+            <div className={`flex min-w-0 flex-col ${isCompact ? 'gap-1' : 'gap-2'}`}>
+              <h1 className={`text-slate-900 tracking-[0.07] ${isCompact ? 'text-xl leading-7' : 'text-2xl leading-8'}`}>
                 {displayedProject.name}
               </h1>
-              <a className="w-fit text-sm leading-5 tracking-[-0.15] text-scrumdone-blue-main">
-                {displayedProject.clientName}
-              </a>
-              <p className="text-[16px] tracking-[-0.31px] text-slate-600">
-                {displayedProject.description}
-              </p>
 
-              <div className="mt-1 flex flex-wrap items-center gap-6 text-slate-600">
-                <div className="inline-flex items-center gap-2 text-sm leading-5 tracking-[-0.15]">
-                  <CalendarDaysIcon className="h-4 w-4" />
-                  {displayedProject.startDate} - {displayedProject.endDate}
+              {isCompact ? (
+                <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-1">
+                  <a className="w-fit shrink-0 text-sm leading-5 tracking-[-0.15] text-scrumdone-blue-main">
+                    {displayedProject.clientName}
+                  </a>
+                  <div className="flex flex-wrap items-center gap-4 text-slate-600 sm:gap-6">
+                    <div className="inline-flex items-center gap-2 text-sm leading-5 tracking-[-0.15]">
+                      <CalendarDaysIcon className="h-4 w-4" />
+                      {displayedProject.startDate} - {displayedProject.endDate}
+                    </div>
+                    <div className="inline-flex items-center gap-2 text-sm leading-5 tracking-[-0.15]">
+                      <UserGroupIcon className="h-4 w-4" />
+                      {formatCount(displayedProject.membersCount, PLURALS.teamMembers)}
+                    </div>
+                  </div>
                 </div>
-                <div className="inline-flex items-center gap-2 text-sm leading-5 tracking-[-0.15]">
-                  <UserGroupIcon className="h-4 w-4" />
-                  {formatCount(displayedProject.membersCount, PLURALS.teamMembers)}
-                </div>
-              </div>
+              ) : (
+                <>
+                  <a className="w-fit text-sm leading-5 tracking-[-0.15] text-scrumdone-blue-main">
+                    {displayedProject.clientName}
+                  </a>
+                  <p className="text-[16px] tracking-[-0.31px] text-slate-600">
+                    {displayedProject.description}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-6 text-slate-600">
+                    <div className="inline-flex items-center gap-2 text-sm leading-5 tracking-[-0.15]">
+                      <CalendarDaysIcon className="h-4 w-4" />
+                      {displayedProject.startDate} - {displayedProject.endDate}
+                    </div>
+                    <div className="inline-flex items-center gap-2 text-sm leading-5 tracking-[-0.15]">
+                      <UserGroupIcon className="h-4 w-4" />
+                      {formatCount(displayedProject.membersCount, PLURALS.teamMembers)}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
-          <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:min-w-56">
-            <div className="inline-flex w-full gap-2 rounded-[10px] bg-slate-50 p-1">
+          <div className={`flex w-full items-stretch sm:w-auto ${isCompact ? 'flex-col gap-2 sm:flex-row sm:items-center' : 'flex-col gap-3'}`}>
+            {isCompact ? (
+              <button
+                type="button"
+                onClick={openEditModal}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 sm:w-auto"
+              >
+                <PencilSquareIcon className="h-4 w-4" />
+                Edytuj projekt
+              </button>
+            ) : null}
+
+            <div className="inline-flex w-full gap-2 rounded-[10px] bg-slate-50 p-1 sm:w-auto sm:min-w-52">
+              <button
+                type="button"
+                onClick={() => handleDensityChange('compact')}
+                className={segmentButtonClass(isCompact)}
+              >
+                Kompaktowy
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDensityChange('full')}
+                className={segmentButtonClass(!isCompact)}
+              >
+                Pełny
+              </button>
+            </div>
+
+            <div className="inline-flex w-full gap-2 rounded-[10px] bg-slate-50 p-1 sm:w-auto sm:min-w-48">
               <button
                 type="button"
                 onClick={() => handleViewModeChange('kanban')}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  viewMode === 'kanban' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'
-                }`}
+                className={segmentButtonClass(viewMode === 'kanban')}
               >
                 Kanban
               </button>
               <button
                 type="button"
                 onClick={() => handleViewModeChange('scrum')}
-                className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  viewMode === 'scrum' ? 'bg-slate-100 text-slate-900' : 'text-slate-700 hover:text-slate-900'
-                }`}
+                className={segmentButtonClass(viewMode === 'scrum')}
               >
                 Scrum
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={openEditModal}
-              className="inline-flex w-full items-center justify-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-50"
-            >
-              <PencilSquareIcon className="h-4 w-4" />
-              Edytuj projekt
-            </button>
+            {!isCompact ? (
+              <button
+                type="button"
+                onClick={openEditModal}
+                className="inline-flex w-full items-center justify-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-900 hover:bg-slate-50 sm:self-end sm:w-auto"
+              >
+                <PencilSquareIcon className="h-4 w-4" />
+                Edytuj projekt
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
