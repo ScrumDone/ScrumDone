@@ -97,7 +97,7 @@ const CompaniesPage: React.FC = () => {
                         <button
                             type="button"
                             onClick={openCreateModal}
-                            className="bg-scrumdone-blue-main hover:opacity-90 text-white px-4 py-2 rounded-lg flex items-center gap-4 text-sm font-normal transition-all active:scale-95 cursor-pointer"
+                            className="bg-scrumdone-blue-main hover:opacity-90 text-white px-4 py-2 rounded-lg flex items-center gap-4 text-sm font-medium transition-all active:scale-95 cursor-pointer"
                         >
                             <PlusIcon className="w-4 h-4 stroke-2" />
                             Dodaj firmę
