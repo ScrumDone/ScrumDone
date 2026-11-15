@@ -111,7 +111,7 @@ const ProjectsPage: React.FC = () => {
     }
 
     return (
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3 xl:gap-8">
         {projectCards.map((project) => (
           <ProjectCard key={project.id} {...project} />
         ))}
@@ -124,9 +124,9 @@ const ProjectsPage: React.FC = () => {
       <SideBar />
       <TopBar />
 
-      <main className="ml-64 pt-(--app-header-h)">
-        <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-8 py-6">
-          <div className="flex items-center justify-between mb-10">
+      <main className="pt-(--app-header-h) lg:ml-64">
+        <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-4 py-6 sm:px-8">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
             <h1 className="font-segoe-ui text-black text-[1.5rem] leading-8 font-normal tracking-tight antialiased">
               Projekty
             </h1>

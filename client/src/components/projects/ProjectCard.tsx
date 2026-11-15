@@ -21,7 +21,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <Link
       to={`/projects/${id}/tablica-kanban`}
-      className="w-full bg-white p-6 rounded-[14px] border border-gray-100 flex flex-col gap-4 hover:shadow-lg transition-shadow duration-300"
+      className="flex h-full w-full cursor-pointer flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-shadow hover:border-scrumdone-blue-main/50 hover:shadow-lg sm:p-6"
     >
       
       {/* NAZWA I KLIENCI */}
