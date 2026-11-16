@@ -46,6 +46,17 @@ public class UsersEndpointTests
         return user;
     }
 
+    private static async Task SeedUserWithPassword(
+        ScrumDoneApiFactory app, string userName, string email, string password)
+    {
+        using var scope = app.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+        var result = await userManager.CreateAsync(
+            new User { Name = "Existing", UserName = userName, Email = email, EmailConfirmed = true },
+            password);
+        Assert.True(result.Succeeded, string.Join(" ", result.Errors.Select(e => e.Description)));
+    }
+
     private static async Task<HttpClient> CreateAuthenticatedClient(
         ScrumDoneApiFactory app,
         string userName = "johndoe",
@@ -413,18 +424,32 @@ public class UsersEndpointTests
     // ─────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task RemoveUser_ExistingId_RemovesUserAndReturnsOk()
+    public async Task BlockUser_ExistingId_BlocksUserAndReturnsConflictOnLogin()
     {
         using var app = new ScrumDoneApiFactory();
-        var targetUser = await SeedUser(app, userName: "toremove", email: "remove@example.com", name: "To Remove");
+        await SeedUserWithPassword(app, "toblock", "toblock@example.com", ValidPassword);
+
+        Guid targetUserId;
+        using (var scope = app.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+            var user = await userManager.FindByNameAsync("toblock");
+            targetUserId = user!.Id;
+        }
+
         using var client = app.CreateClient();
 
-        var response = await client.PatchAsync($"/api/users/remove/{targetUser.Id}", null);
+        // 1. Blokujemy użytkownika
+        var blockResponse = await client.PatchAsync($"/api/users/block/{targetUserId}", null);
+        Assert.Equal(HttpStatusCode.OK, blockResponse.StatusCode);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        // 2. Próbujemy zalogować się na zablokowane konto
+        var loginDto = new LoginDto { UserName = "toblock", Password = ValidPassword };
+        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", loginDto);
 
-        var getResponse = await client.GetAsync($"/api/users/{targetUser.Id}");
-        Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
+        // 3. Oczekujemy 409 Conflict i braku ciasteczka sesyjnego
+        Assert.Equal(HttpStatusCode.Conflict, loginResponse.StatusCode);
+        Assert.False(loginResponse.Headers.Contains("Set-Cookie"));
     }
 
     [Fact]
