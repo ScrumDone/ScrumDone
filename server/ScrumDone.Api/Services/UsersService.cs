@@ -75,7 +75,7 @@ namespace ScrumDone.Api.Services
             return userDto;
         }
 
-        public async Task RemoveUserAsync(Guid id)
+        public async Task BlockUserAsync(Guid id)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
@@ -84,7 +84,8 @@ namespace ScrumDone.Api.Services
                 throw new NotFoundException(nameof(User), id);
             }
 
-            _context.Users.Remove(user);
+            await _userManager.SetLockoutEnabledAsync(user, true);
+            await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
 
             await _context.SaveChangesAsync();
         } 

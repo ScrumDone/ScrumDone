@@ -97,14 +97,14 @@ namespace ScrumDone.Api.Controllers
         }
 
         // Admin
-        [HttpPatch("remove/{id}")]
+        [HttpPatch("block/{id}")]
         [ProducesResponseType(typeof(PagedResultDto<UserSummaryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> RemoveUser(
             [FromRoute] Guid id)
         {
-            await _usersService.RemoveUserAsync(id);
+            await _usersService.BlockUserAsync(id);
             return Ok();
         }
 

@@ -15,7 +15,7 @@ namespace ScrumDone.Api.Services
         
         Task<UserSummaryDto> EditUserAsync(Guid userId, UserUpdateDto dto);
 
-        Task RemoveUserAsync(Guid userId);
+        Task BlockUserAsync(Guid userId);
 
         Task ModifyRolesAsync(Guid id, UserAddRolesDto dto);
 
