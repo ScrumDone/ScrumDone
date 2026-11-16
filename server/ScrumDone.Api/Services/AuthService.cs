@@ -206,6 +206,10 @@ namespace ScrumDone.Api.Services
 
             if (!result.Succeeded)
             {
+                if (result.IsLockedOut)
+                {
+                    throw new ConflictException("User is blocked.");
+                }
                 throw new BadRequestException("Incorrect username or password.");
             }
 
