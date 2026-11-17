@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
-import ReportPreview from './ReportPreview'
+import ReportPreviewFrame from './previews/ReportPreviewFrame'
+import { REPORT_TYPES, getReportType, type ReportTypeId } from './previews/reportTypes'
 import {
+    ALL_PROJECTS_OPTION,
     reportGenerateDefaults,
-    reportPreviewSample,
     reportProjectOptions,
-    reportTypeOptions,
+    reportSprintOptions,
 } from '../../data/reports'
 
 interface ReportGenerateModalProps {
@@ -21,10 +22,25 @@ const DATE_CLASS = `${FIELD_CLASS} relative [&::-webkit-calendar-picker-indicato
 
 const ReportGenerateModal: React.FC<ReportGenerateModalProps> = ({ onClose }) => {
     const [name, setName] = useState('')
-    const [type, setType] = useState(reportGenerateDefaults.type)
+    const [type, setType] = useState<ReportTypeId>('SprintSummary')
     const [project, setProject] = useState(reportGenerateDefaults.project)
+    const [sprint, setSprint] = useState(reportGenerateDefaults.sprint)
+    const [onlyMine, setOnlyMine] = useState(reportGenerateDefaults.onlyMine)
     const [dateFrom, setDateFrom] = useState(reportGenerateDefaults.dateFrom)
     const [dateTo, setDateTo] = useState(reportGenerateDefaults.dateTo)
+
+    const selected = getReportType(type)
+    const showProject = selected.params.includes('project')
+    const showPeriod = selected.params.includes('period')
+    const showSprint = selected.params.includes('sprint')
+    const showOnlyMine = selected.params.includes('onlyMine')
+    // „Wszystkie” ma sens tylko dla raportów z samym projektem (Zaangażowanie zespołu, Terminy);
+    // Status projektu i Podsumowanie sprintu dotyczą jednego projektu.
+    const allowAllProjects = showProject && !showPeriod && !showSprint
+    const projectOptions = allowAllProjects
+        ? reportProjectOptions
+        : reportProjectOptions.filter((option) => option !== ALL_PROJECTS_OPTION)
+    const projectValue = projectOptions.includes(project) ? project : (projectOptions[0] ?? '')
 
     return (
         <div
@@ -35,7 +51,7 @@ const ReportGenerateModal: React.FC<ReportGenerateModalProps> = ({ onClose }) =>
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="report-generate-title"
-                className="flex h-full w-full max-w-[1092px] flex-col bg-white sm:h-auto sm:max-h-[90vh] sm:rounded-[14px] sm:shadow-lg"
+                className="flex h-full w-full max-w-[1480px] flex-col bg-white sm:h-auto sm:max-h-[94vh] sm:rounded-[14px] sm:shadow-lg"
                 onClick={(event) => event.stopPropagation()}
             >
                 <div className="flex items-start justify-between gap-4 px-6 pt-[17px] pb-6">
@@ -60,7 +76,7 @@ const ReportGenerateModal: React.FC<ReportGenerateModalProps> = ({ onClose }) =>
                     </button>
                 </div>
 
-                <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-y-auto px-6 lg:grid-cols-[344px_minmax(0,1fr)]">
+                <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-y-auto px-6 lg:grid-cols-[320px_minmax(0,1fr)]">
                     <div className="space-y-[14px]">
                         <div>
                             <label className={LABEL_CLASS} htmlFor="report-name">
@@ -83,64 +99,113 @@ const ReportGenerateModal: React.FC<ReportGenerateModalProps> = ({ onClose }) =>
                             <select
                                 id="report-type"
                                 value={type}
-                                onChange={(event) => setType(event.target.value)}
+                                onChange={(event) => setType(event.target.value as ReportTypeId)}
                                 className={SELECT_CLASS}
                             >
-                                {reportTypeOptions.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
+                                {REPORT_TYPES.map((option) => (
+                                    <option key={option.id} value={option.id}>
+                                        {option.name}
                                     </option>
                                 ))}
                             </select>
+                            <p className="mt-1.5 font-segoe-ui text-xs leading-4 text-slate-500">{selected.question}</p>
                         </div>
 
-                        <div>
-                            <label className={LABEL_CLASS} htmlFor="report-project">
-                                Projekt
+                        {showProject && (
+                            <div>
+                                <label className={LABEL_CLASS} htmlFor="report-project">
+                                    Projekt
+                                </label>
+                                <select
+                                    id="report-project"
+                                    value={projectValue}
+                                    onChange={(event) => setProject(event.target.value)}
+                                    className={SELECT_CLASS}
+                                >
+                                    {projectOptions.map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {showSprint && (
+                            <div>
+                                <label className={LABEL_CLASS} htmlFor="report-sprint">
+                                    Sprint
+                                </label>
+                                <select
+                                    id="report-sprint"
+                                    value={sprint}
+                                    onChange={(event) => setSprint(event.target.value)}
+                                    className={SELECT_CLASS}
+                                >
+                                    {reportSprintOptions.map((option) => (
+                                        <option key={option} value={option}>
+                                            {option}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {showOnlyMine && (
+                            <label className="flex cursor-pointer items-center gap-2 font-segoe-ui text-sm leading-5 text-slate-700 antialiased">
+                                <input
+                                    type="checkbox"
+                                    checked={onlyMine}
+                                    onChange={(event) => setOnlyMine(event.target.checked)}
+                                    className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-scrumdone-blue-main"
+                                />
+                                Tylko moje zadania
                             </label>
-                            <select
-                                id="report-project"
-                                value={project}
-                                onChange={(event) => setProject(event.target.value)}
-                                className={SELECT_CLASS}
-                            >
-                                {reportProjectOptions.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        )}
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className={LABEL_CLASS} htmlFor="report-date-from">
-                                    Okres od
-                                </label>
-                                <input
-                                    id="report-date-from"
-                                    type="date"
-                                    value={dateFrom}
-                                    onChange={(event) => setDateFrom(event.target.value)}
-                                    className={DATE_CLASS}
-                                />
+                        {showPeriod && (
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className={LABEL_CLASS} htmlFor="report-date-from">
+                                        Okres od
+                                    </label>
+                                    <input
+                                        id="report-date-from"
+                                        type="date"
+                                        value={dateFrom}
+                                        onChange={(event) => setDateFrom(event.target.value)}
+                                        className={DATE_CLASS}
+                                    />
+                                </div>
+                                <div>
+                                    <label className={LABEL_CLASS} htmlFor="report-date-to">
+                                        Okres do
+                                    </label>
+                                    <input
+                                        id="report-date-to"
+                                        type="date"
+                                        value={dateTo}
+                                        onChange={(event) => setDateTo(event.target.value)}
+                                        className={DATE_CLASS}
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <label className={LABEL_CLASS} htmlFor="report-date-to">
-                                    Okres do
-                                </label>
-                                <input
-                                    id="report-date-to"
-                                    type="date"
-                                    value={dateTo}
-                                    onChange={(event) => setDateTo(event.target.value)}
-                                    className={DATE_CLASS}
-                                />
-                            </div>
-                        </div>
+                        )}
+
+                        {selected.params.length === 0 && (
+                            <p className="font-segoe-ui text-xs leading-4 text-slate-500">
+                                Ten raport obejmuje wszystkie projekty i nie wymaga dodatkowych parametrów.
+                            </p>
+                        )}
                     </div>
 
-                    <ReportPreview sample={reportPreviewSample} />
+                    <div className="flex h-full min-w-0 flex-col rounded-[14px] border border-slate-200 bg-slate-50 px-[15px] py-[14px]">
+                        <h3 className="mb-[9px] font-segoe-ui text-[13px] leading-5 font-normal text-slate-700 antialiased">Podgląd</h3>
+                        <ReportPreviewFrame key={selected.id}>
+                            <selected.Preview />
+                        </ReportPreviewFrame>
+                        <p className="mt-2 font-segoe-ui text-xs leading-4 text-slate-500">{selected.description}</p>
+                    </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-4 px-6 pt-5 pb-4">
