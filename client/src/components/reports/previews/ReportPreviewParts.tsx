@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useContext } from 'react'
+import { ReportBareContext } from './reportPreviewContext'
 type Tone = 'default' | 'red' | 'amber' | 'green'
 
 const toneBg: Record<Tone, string> = {
@@ -28,25 +29,29 @@ interface PreviewCardProps {
 }
 
 /** Zewnętrzna ramka podglądu: szare tło + biała karta z nagłówkiem i przyciskiem „Eksportuj”. */
-export const PreviewCard: React.FC<PreviewCardProps> = ({ title, subtitle, actions, children }) => (
-    <div className="w-[1080px] bg-slate-50 p-6 font-segoe-ui text-slate-900 antialiased">
-        <div className="flex flex-col gap-[18px] rounded-xl border border-slate-200 bg-white p-6">
-            <div className="flex items-start justify-between">
-                <div>
-                    <p className="m-0 text-[18px] leading-7 font-normal text-slate-800">{title}</p>
-                    <p className="m-0 text-[12px] text-slate-500">{subtitle}</p>
+export const PreviewCard: React.FC<PreviewCardProps> = ({ title, subtitle, actions, children }) => {
+    // W pełnym widoku raportu (bez szarego tła) karta ma te same 1032 px, tylko bez 24 px tła dookoła.
+    const bare = useContext(ReportBareContext)
+    return (
+        <div className={`${bare ? 'w-[1032px]' : 'w-[1080px] bg-slate-50 p-6'} font-segoe-ui text-slate-900 antialiased`}>
+            <div className="flex flex-col gap-[18px] rounded-xl border border-slate-200 bg-white p-6">
+                <div className="flex items-start justify-between">
+                    <div>
+                        <p className="m-0 text-[18px] leading-7 font-normal text-slate-800">{title}</p>
+                        <p className="m-0 text-[12px] text-slate-500">{subtitle}</p>
+                    </div>
+                    <div className="flex gap-2">
+                        {actions}
+                        <span className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-4 text-[14px] text-slate-700">
+                            Eksportuj
+                        </span>
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    {actions}
-                    <span className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-4 text-[14px] text-slate-700">
-                        Eksportuj
-                    </span>
-                </div>
+                {children}
             </div>
-            {children}
         </div>
-    </div>
-)
+    )
+}
 
 interface KpiProps {
     label: string
