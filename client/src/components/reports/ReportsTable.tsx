@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import type { GeneratedReport } from '../../data/reports'
 
 interface ReportsTableProps {
@@ -31,12 +32,13 @@ const ReportsTable: React.FC<ReportsTableProps> = ({ reports }) => {
                             <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{report.author}</td>
                             <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{report.createdAt}</td>
                             <td className="px-4 py-3.5 text-right">
-                                <button
-                                    type="button"
+                                <Link
+                                    to={`/reports/${report.id}`}
+                                    aria-label={`Otwórz raport ${report.name}`}
                                     className="cursor-pointer text-sky-600 underline underline-offset-2 transition-colors hover:text-sky-700"
                                 >
                                     Otwórz
-                                </button>
+                                </Link>
                             </td>
                         </tr>
                     ))}

@@ -1,3 +1,5 @@
+import type { ReportTypeId } from "../components/reports/previews/reportTypes";
+
 export interface ReportsQuickStats {
   activeProjectsCount: number;
   completedProjectsCount: number;
@@ -13,6 +15,8 @@ export interface ReportsQuickStats {
 export interface GeneratedReport {
   id: number;
   name: string;
+  /** Typ raportu – wybiera podgląd pokazywany po otwarciu raportu. */
+  typeId: ReportTypeId;
   type: string;
   project: string;
   period: string;
@@ -36,6 +40,7 @@ export const generatedReports: GeneratedReport[] = [
   {
     id: 1,
     name: "Status – Portal klienta",
+    typeId: "ProjectStatus",
     type: "Status projektu",
     project: "Portal klienta",
     period: "01.09.2026 – 20.01.2027",
@@ -45,6 +50,7 @@ export const generatedReports: GeneratedReport[] = [
   {
     id: 2,
     name: "Sprint 7 – Adoddle",
+    typeId: "SprintSummary",
     type: "Podsumowanie sprintu",
     project: "Adoddle",
     period: "06.10 – 20.10.2026",
@@ -54,6 +60,7 @@ export const generatedReports: GeneratedReport[] = [
   {
     id: 3,
     name: "Obciążenie – październik",
+    typeId: "TeamWorkload",
     type: "Zaangażowanie zespołu",
     project: "Wszystkie",
     period: "01.10 – 31.10.2026",
@@ -63,6 +70,7 @@ export const generatedReports: GeneratedReport[] = [
   {
     id: 4,
     name: "Terminy – Q4",
+    typeId: "Deadlines",
     type: "Terminy",
     project: "Wszystkie",
     period: "06.10 – 29.12.2026",
@@ -72,6 +80,7 @@ export const generatedReports: GeneratedReport[] = [
   {
     id: 5,
     name: "Portfel projektów – Q3",
+    typeId: "ProjectPortfolio",
     type: "Portfel projektów",
     project: "Wszystkie",
     period: "stan na 01.10.2026",

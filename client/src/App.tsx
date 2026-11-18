@@ -6,6 +6,7 @@ import CompaniesPage from './pages/companies/CompaniesPage'
 import CompanyDetailsPage from './pages/companies/CompanyDetailsPage'
 import CalendarPage from './pages/calendar/CalendarPage'
 import ReportsPage from './pages/reports/ReportsPage'
+import ReportDetailsPage from './pages/reports/ReportDetailsPage'
 import TaskPage from './pages/tasks/TaskPage'
 import FilesPage from './pages/files/FilesPage'
 import ProjectDetailsPage from './pages/projects/ProjectDetailsPage'
@@ -49,6 +50,7 @@ const App: React.FC = () => {
         <Route path="/companies/:companyId" element={<CompanyDetailsPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/reports/:reportId" element={<ReportDetailsPage />} />
         <Route path="/task/:assignmentId" element={<TaskPage />} />
         <Route path="/files" element={<FilesPage />} />
         <Route path="/panel-administratora" element={<AdminPanelPage />} />
