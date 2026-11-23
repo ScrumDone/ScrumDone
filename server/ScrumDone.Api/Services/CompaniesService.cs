@@ -26,6 +26,7 @@ namespace ScrumDone.Api.Services
             var total = await _context.Companies.CountAsync();
             var companies = await _context.Companies
                 .OrderByDescending(c => c.Name)
+                .ThenBy(c => c.Id)
                 .Skip((query.Page - 1) * (query.Limit))
                 .Take(query.Limit)
                 .Select(c => new CompanyListItemDto(
@@ -116,6 +117,7 @@ namespace ScrumDone.Api.Services
 
             var notesFromDb = await baseQuery
                 .OrderByDescending(n => n.CreatedAt)
+                .ThenBy(n => n.Id)
                 .Skip((query.Page - 1) * query.Limit) 
                 .Take(query.Limit)
                 .Include(n => n.User)
@@ -190,6 +192,7 @@ namespace ScrumDone.Api.Services
             var contactsFromDb = await baseQuery
                 .OrderByDescending(c => c.IsPrimary)
                     .ThenBy(n => n.CreatedAt)
+                    .ThenBy(n => n.Id)
                 .Skip((query.Page-1) * query.Limit)
                 .Take(query.Limit)
                 .ToListAsync();
@@ -266,6 +269,7 @@ namespace ScrumDone.Api.Services
             var logsFromDb = await baseQuery
                 .Include(l => l.Author)
                 .OrderByDescending(n => n.CreatedAt)
+                .ThenBy(n => n.Id)
                 .Skip((query.Page-1) * query.Limit)
                 .Take(query.Limit)
                 .ToListAsync();

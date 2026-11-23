@@ -58,6 +58,7 @@ namespace ScrumDone.Api.Services
 
             var ProjectsFromDb = await baseQuery
                 .OrderByDescending(p => p.Name)
+                .ThenBy(p => p.Id)
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
                 .ToArrayAsync();
@@ -276,6 +277,7 @@ namespace ScrumDone.Api.Services
 
             var team = project.TeamMembers
                 .OrderBy(tm => tm.User.Name)
+                .ThenBy(tm => tm.User.Id)
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
                 .Select(tm => tm.User.ToSummaryDto())
@@ -402,6 +404,7 @@ namespace ScrumDone.Api.Services
             var sprintsFromDb = await baseQuery
 
                 .OrderBy(s => s.StartDate) // maybe Abs(startDate - DateTimeOffset.UtcNow) would be better?
+                .ThenBy(s => s.Id)
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
                 .ToListAsync();
