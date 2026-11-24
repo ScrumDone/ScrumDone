@@ -25,6 +25,7 @@ namespace ScrumDone.Api.Services
         {
             var usersFromDb = await _context.Users
                 .OrderByDescending(u => u.Name)
+                .ThenBy(u => u.Id)
                 .ToListAsync();
             
             var total = usersFromDb.Count();

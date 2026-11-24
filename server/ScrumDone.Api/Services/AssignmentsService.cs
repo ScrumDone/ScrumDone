@@ -105,6 +105,7 @@ namespace ScrumDone.Api.Services
                 .OrderBy(t => t.DueDate == null)
                 .ThenBy(t => t.DueDate)
                 .ThenByDescending(t => t.Priority != null ? t.Priority.Order : 0)
+                .ThenBy(t => t.Id)
                 .Skip((dto.Page - 1) * dto.Limit)
                 .Take(dto.Limit)
                 .Select(t => new AssignmentListItemDto(
