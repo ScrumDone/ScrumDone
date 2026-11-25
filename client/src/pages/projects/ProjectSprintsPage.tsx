@@ -9,9 +9,11 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCorners,
+  pointerWithin,
   useSensor,
   useSensors,
   useDroppable,
+  type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
@@ -70,6 +72,18 @@ import { compareAssignments } from '../../utils/assignmentOrder';
 import { ASSIGNMENT_CARD_ATTRIBUTE } from '../../utils/kanbanAssignmentCache';
 
 const BACKLOG_ID = 'backlog';
+
+// Hitbox strefy zrzutu = obszar pod kursorem. closestCorners porównywał narożniki
+// wąskiej karty z backlogu z narożnikami szerokiej listy sprintu, przez co przy
+// prawej krawędzi listy wygrywał pobliski backlog. Klawiatura nie ma kursora,
+// więc wtedy zostajemy przy closestCorners.
+const sprintCollisionDetection: CollisionDetection = (args) => {
+  if (!args.pointerCoordinates) {
+    return closestCorners(args);
+  }
+
+  return pointerWithin(args);
+};
 
 type SprintData = {
   id: string;
@@ -219,18 +233,23 @@ const SprintDropZone: React.FC<SprintDropZoneProps> = ({
 
 type BacklogDropZoneProps = {
   children: React.ReactNode;
+  isHighlighted?: boolean;
 };
 
-const BacklogDropZone: React.FC<BacklogDropZoneProps> = ({ children }) => {
+// Droppable to cała sekcja backlogu (z nagłówkiem), żeby dało się upuścić zadanie
+// także wtedy, gdy backlog jest pusty i lista kart ma zerową wysokość.
+const BacklogDropZone: React.FC<BacklogDropZoneProps> = ({ children, isHighlighted = false }) => {
   const { setNodeRef, isOver } = useDroppable({ id: BACKLOG_ID });
+  const showHighlight = isOver || isHighlighted;
 
   return (
-    <div
+    <section
       ref={setNodeRef}
-      className={`rounded-lg transition-colors ${isOver ? 'bg-sky-50 ring-2 ring-inset ring-sky-400' : ''}`}
+      data-backlog-id={BACKLOG_ID}
+      className={`rounded-[10px] border border-gray-200 p-4 transition-colors ${showHighlight ? 'bg-sky-50 ring-2 ring-inset ring-sky-400' : 'bg-white'}`}
     >
       {children}
-    </div>
+    </section>
   );
 };
 
@@ -442,6 +461,7 @@ const ProjectSprintsPage: React.FC = () => {
   const [sprintModalMessage, setSprintModalMessage] = useState<string | null>(null);
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
   const [dragOverSprintId, setDragOverSprintId] = useState<string | null>(null);
+  const [isDragOverBacklog, setIsDragOverBacklog] = useState(false);
   const [expandedSprints, setExpandedSprints] = useState<Set<string>>(() => new Set());
   const [isSprintEditOpen, setIsSprintEditOpen] = useState(false);
   const [closeSprintTarget, setCloseSprintTarget] = useState<{
@@ -1039,6 +1059,7 @@ const ProjectSprintsPage: React.FC = () => {
   const handleDragOver = ({ over }: DragOverEvent) => {
     if (!over) {
       setDragOverSprintId(null);
+      setIsDragOverBacklog(false);
       return;
     }
 
@@ -1046,9 +1067,11 @@ const ProjectSprintsPage: React.FC = () => {
 
     if (isBacklogDropTarget(overId)) {
       setDragOverSprintId(null);
+      setIsDragOverBacklog(true);
       return;
     }
 
+    setIsDragOverBacklog(false);
     const targetSprint = findSprintByDropTarget(overId);
     setDragOverSprintId(targetSprint?.id ?? null);
   };
@@ -1056,6 +1079,7 @@ const ProjectSprintsPage: React.FC = () => {
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setActiveDragItem(null);
     setDragOverSprintId(null);
+    setIsDragOverBacklog(false);
     if (!over) {
       return;
     }
@@ -1101,12 +1125,13 @@ const ProjectSprintsPage: React.FC = () => {
           <AssignmentMoveErrorBanner message={moveError} />
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCorners}
+            collisionDetection={sprintCollisionDetection}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragCancel={() => {
               setActiveDragItem(null);
               setDragOverSprintId(null);
+              setIsDragOverBacklog(false);
             }}
             onDragEnd={handleDragEnd}
           >
@@ -1213,7 +1238,7 @@ const ProjectSprintsPage: React.FC = () => {
               </section>
 
               {/* Backlog */}
-              <section className="rounded-[10px] border border-gray-200 bg-white p-4" data-backlog-id={BACKLOG_ID}>
+              <BacklogDropZone isHighlighted={isDragOverBacklog}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="font-segoe-ui text-[14px] font-medium text-slate-900">
                     Backlog ({backlogTasks.length})
@@ -1227,7 +1252,13 @@ const ProjectSprintsPage: React.FC = () => {
                     +
                   </button>
                 </div>
-                <BacklogDropZone>
+                {backlogTasks.length === 0 ? (
+                  <div className="flex min-h-24 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 px-3 text-center">
+                    <p className="font-segoe-ui text-xs font-medium text-slate-500">
+                      Backlog jest pusty — przeciągnij tu zadanie ze sprintu
+                    </p>
+                  </div>
+                ) : (
                   <SortableContext items={backlogTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
                     <div className="flex flex-col gap-2">
                       {backlogTasks.map((task) => (
@@ -1235,8 +1266,8 @@ const ProjectSprintsPage: React.FC = () => {
                       ))}
                     </div>
                   </SortableContext>
-                </BacklogDropZone>
-              </section>
+                )}
+              </BacklogDropZone>
             </aside>
             </div>
             </div>
