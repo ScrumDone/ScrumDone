@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { formatCount, PLURALS } from '../../utils/plural';
-import { ArrowLeftIcon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, BuildingOffice2Icon, CalendarDaysIcon, PencilSquareIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useProject } from '../../hooks/projects/useProject';
 import { useUpdateProject } from '../../hooks/projects/useUpdateProject';
@@ -363,9 +363,20 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
 
               {isCompact ? (
                 <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-1">
-                  <a className="w-fit shrink-0 text-sm leading-5 tracking-[-0.15] text-scrumdone-blue-main">
-                    {displayedProject.clientName}
-                  </a>
+                  {projectData?.companyId ? (
+                    <a className="w-fit shrink-0 text-sm leading-5 tracking-[-0.15] text-scrumdone-blue-main">
+                      {displayedProject.clientName}
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleChangeClient}
+                      className="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border border-scrumdone-blue-main/30 bg-scrumdone-blue-main/10 px-2.5 py-1 text-sm font-medium leading-5 tracking-[-0.15] text-scrumdone-blue-main hover:bg-scrumdone-blue-main/15"
+                    >
+                      <BuildingOffice2Icon className="h-4 w-4" />
+                      Podepnij klienta
+                    </button>
+                  )}
                   <div className="flex flex-wrap items-center gap-4 text-slate-600 sm:gap-6">
                     <div className="inline-flex items-center gap-2 text-sm leading-5 tracking-[-0.15]">
                       <CalendarDaysIcon className="h-4 w-4" />
@@ -379,9 +390,20 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
                 </div>
               ) : (
                 <>
-                  <a className="w-fit text-sm leading-5 tracking-[-0.15] text-scrumdone-blue-main">
-                    {displayedProject.clientName}
-                  </a>
+                  {projectData?.companyId ? (
+                    <a className="w-fit text-sm leading-5 tracking-[-0.15] text-scrumdone-blue-main">
+                      {displayedProject.clientName}
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleChangeClient}
+                      className="inline-flex w-fit items-center gap-2 rounded-lg border border-scrumdone-blue-main/30 bg-scrumdone-blue-main/10 px-2.5 py-1 text-sm font-medium leading-5 tracking-[-0.15] text-scrumdone-blue-main hover:bg-scrumdone-blue-main/15"
+                    >
+                      <BuildingOffice2Icon className="h-4 w-4" />
+                      Podepnij projekt
+                    </button>
+                  )}
                   <p className="text-[16px] tracking-[-0.31px] text-slate-600">
                     {displayedProject.description}
                   </p>
