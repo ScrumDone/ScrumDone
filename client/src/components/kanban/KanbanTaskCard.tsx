@@ -39,10 +39,14 @@ export const KanbanTaskCard: React.FC<{
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
       onClick={onClick}
-      className={`rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab active:cursor-grabbing ${isDragOverlay ? 'w-full box-border cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      className={`group rounded-[10px] border bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab transition-colors active:cursor-grabbing ${
+        isDragOverlay || sortable.isDragging
+          ? 'border-scrumdone-blue-main'
+          : 'border-slate-200 active:border-scrumdone-blue-main'
+      } ${isDragOverlay ? 'w-full box-border cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 title={task.name} className="min-w-0 flex-1 break-words line-clamp-2 font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">{task.name}</h3>
+        <h3 title={task.name} className="min-w-0 flex-1 break-words line-clamp-2 font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased transition-colors group-hover:text-scrumdone-blue-main">{task.name}</h3>
         <div
           className={`relative shrink-0 ${isDragOverlay ? 'pointer-events-none' : ''}`}
           ref={!isDragOverlay && isMenuOpen ? menuRef : undefined}
