@@ -180,6 +180,7 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
         onSuccess: () => {
           setIsChangingMethodology(false);
           setPendingMethodology(null);
+          setIsEditModalOpen(false);
           if (nextIsScrum) {
             navigate(`/projects/${projectId}/sprinty`);
           }
@@ -428,23 +429,6 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
               </button>
             </div>
 
-            <div className="inline-flex w-full gap-2 rounded-[10px] bg-slate-50 p-1 sm:w-auto sm:min-w-48">
-              <button
-                type="button"
-                onClick={() => requestViewModeChange('kanban')}
-                className={segmentButtonClass(viewMode === 'kanban')}
-              >
-                Kanban
-              </button>
-              <button
-                type="button"
-                onClick={() => requestViewModeChange('scrum')}
-                className={segmentButtonClass(viewMode === 'scrum')}
-              >
-                Scrum
-              </button>
-            </div>
-
             {!isCompact ? (
               <button
                 type="button"
@@ -488,7 +472,10 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
         onDelete={handleDeleteProject}
         onDraftChange={setDraft}
         onToggleMember={toggleMember}
-        isSaving={isSaving}
+        methodology={viewMode}
+        onMethodologyChange={requestViewModeChange}
+        isMethodologySaving={isSavingProject && isChangingMethodology}
+        isSaving={isSaving && !isChangingMethodology}
         isArchiving={isArchiving}
         isDeleting={isDeleting}
         errorMessage={errorMessage}
