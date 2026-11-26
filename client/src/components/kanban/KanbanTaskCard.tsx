@@ -39,10 +39,14 @@ export const KanbanTaskCard: React.FC<{
       {...(isDragOverlay ? {} : sortable.attributes)}
       {...(isDragOverlay ? {} : sortable.listeners)}
       onClick={onClick}
-      className={`rounded-[10px] border border-slate-200 bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab active:cursor-grabbing ${isDragOverlay ? 'w-full box-border cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
+      className={`group rounded-[10px] border bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] cursor-grab transition-colors active:cursor-grabbing ${
+        isDragOverlay || sortable.isDragging
+          ? 'border-scrumdone-blue-main'
+          : 'border-slate-200 active:border-scrumdone-blue-main'
+      } ${isDragOverlay ? 'w-full box-border cursor-grabbing' : ''} ${sortable.isDragging ? 'opacity-50' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 title={task.name} className="min-w-0 flex-1 break-words line-clamp-2 font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased">{task.name}</h3>
+        <h3 title={task.name} className="min-w-0 flex-1 break-words line-clamp-2 font-segoe-ui text-[14px] leading-5 font-medium tracking-[-0.15px] text-slate-900 antialiased transition-colors group-hover:text-scrumdone-blue-main">{task.name}</h3>
         <div
           className={`relative shrink-0 ${isDragOverlay ? 'pointer-events-none' : ''}`}
           ref={!isDragOverlay && isMenuOpen ? menuRef : undefined}
@@ -71,9 +75,9 @@ export const KanbanTaskCard: React.FC<{
           {!isDragOverlay && isMenuOpen && (
             <div
               role="menu"
-              className="absolute right-0 top-full z-20 mt-1 min-w-[9.5rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+              className="absolute right-0 top-full z-20 mt-1  overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg"
             >
-              <button
+              {/* <button
                 type="button"
                 role="menuitem"
                 onPointerDown={(e) => e.stopPropagation()}
@@ -85,7 +89,7 @@ export const KanbanTaskCard: React.FC<{
               >
                 <PencilSquareIcon className="h-4 w-4" />
                 Edytuj
-              </button>
+              </button> */}
               <button
                 type="button"
                 role="menuitem"
@@ -94,10 +98,9 @@ export const KanbanTaskCard: React.FC<{
                   e.stopPropagation();
                   onDelete?.();
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                className=" px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
               >
                 <TrashIcon className="h-4 w-4" />
-                Usuń
               </button>
             </div>
           )}
