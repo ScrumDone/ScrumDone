@@ -150,7 +150,16 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
     if (!projectData || isSavingProject) return;
     const nextIsScrum = mode === 'scrum';
     if (projectData.isSetToScrum === nextIsScrum) return;
-    updateProject({ id: projectId, data: { isSetToScrum: nextIsScrum } });
+    updateProject(
+      { id: projectId, data: { isSetToScrum: nextIsScrum } },
+      {
+        onSuccess: () => {
+          if (nextIsScrum) {
+            navigate(`/projects/${projectId}/sprinty`);
+          }
+        },
+      },
+    );
   };
 
   const openEditModal = () => {
