@@ -55,7 +55,10 @@ namespace ScrumDone.Api.Services
         public async Task<CompanyDetailDto> GetCompanyByIdAsync(Guid id)
         {
             var company = await _context.Companies
-                .Include(c => c.ContactPeople)
+                .Include(c => c.ContactPeople
+                    .OrderByDescending(cp => cp.IsPrimary)
+                    .ThenBy(cp => cp.CreatedAt)
+                    .ThenBy(cp => cp.Id))
                 .Include(c => c.Projects)
                 .FirstOrDefaultAsync(c => c.Id == id)
             ?? throw new NotFoundException(nameof(Company), id);
@@ -222,10 +225,28 @@ namespace ScrumDone.Api.Services
                 Phone = dto.Phone  
             };
 
+            if (contact.IsPrimary)
+            {
+                await ClearOtherPrimaryContactsAsync(id, contact.Id);
+            }
+
             _context.ContactPeople.Add(contact);
             await _context.SaveChangesAsync();
 
             return contact.ToContactPersonDto();
+        }
+
+        // Firma może mieć tylko jeden główny kontakt — zdejmujemy flagę z pozostałych.
+        private async Task ClearOtherPrimaryContactsAsync(Guid companyId, Guid exceptContactId)
+        {
+            var otherPrimaries = await _context.ContactPeople
+                .Where(c => c.CompanyId == companyId && c.IsPrimary && c.Id != exceptContactId)
+                .ToListAsync();
+
+            foreach (var other in otherPrimaries)
+            {
+                other.IsPrimary = false;
+            }
         }
 
         public async Task<ContactPersonDto> UpdateCompanyContactAsync(Guid id, Guid contactId,  ContactPersonUpdateDto dto)
@@ -239,6 +260,11 @@ namespace ScrumDone.Api.Services
             if (dto.SetProperties.Contains(nameof(dto.Email))) contact.Email = dto.Email;
             if (dto.SetProperties.Contains(nameof(dto.Phone))) contact.Phone = dto.Phone;
             if (dto.SetProperties.Contains(nameof(dto.IsPrimary))) if (dto.IsPrimary != null) contact.IsPrimary = dto.IsPrimary.Value;
+
+            if (contact.IsPrimary)
+            {
+                await ClearOtherPrimaryContactsAsync(id, contact.Id);
+            }
 
             await _context.SaveChangesAsync();
 

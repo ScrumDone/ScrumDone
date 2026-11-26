@@ -17,9 +17,8 @@ export function useUpdateCompanyContact() {
       withCompaniesApiLog('Edytuj kontakt (PATCH)', { companyId, contactId, data }, () =>
         updateCompanyContact(companyId, contactId, data),
       ),
-    onSuccess: (_contact, { companyId }) => {
-      queryClient.invalidateQueries({ queryKey: ['companies', companyId] });
-      queryClient.invalidateQueries({ queryKey: ['companies', companyId, 'contacts'] });
+    onSuccess: () => {
+      // Prefiks ['companies'] obejmuje listę firm, szczegóły firmy i listy kontaktów.
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     },
   });

@@ -16,8 +16,10 @@ export function useAddCompanyContact() {
       withCompaniesApiLog('Dodaj kontakt (POST)', { companyId, data }, () =>
         addCompanyContact(companyId, data),
       ),
-    onSuccess: (_contact, { companyId }) => {
-      queryClient.invalidateQueries({ queryKey: ['companies', companyId] });
+    onSuccess: () => {
+      // Prefiks ['companies'] obejmuje listę firm (kafelki z głównym kontaktem),
+      // szczegóły firmy oraz listy kontaktów — nowy kontakt może zmienić główny kontakt.
+      queryClient.invalidateQueries({ queryKey: ['companies'] });
     },
   });
 }
