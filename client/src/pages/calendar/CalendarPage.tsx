@@ -28,6 +28,7 @@ import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../../lib/
 import type { CalendarView } from '../../lib/calendarRange'
 import type { CalendarMode, CalendarTask } from '../../types/calendar'
 import { DndContext } from '@dnd-kit/core'
+import { formatCount, PLURALS } from '../../utils/plural'
 
 const modeOptions: CalendarMode[] = ['Personal', 'Team']
 const monthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
@@ -186,10 +187,10 @@ const CalendarPage: React.FC = () => {
                 <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-350 flex-col px-4 pt-6 pb-24 sm:px-8 md:pb-6">
                     <div className="flex flex-1 flex-col items-stretch gap-6 md:flex-row md:gap-3">
                         <div className="min-w-0 flex flex-1 flex-col">
-                            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                            <div className="mb-6">
+                                <h1 className="font-segoe-ui text-[24px] leading-8 font-normal text-slate-900 antialiased">Kalendarz</h1>
+                            <div className="mt-4 grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                                    <h1 className="font-segoe-ui text-[24px] leading-8 font-normal text-slate-900 antialiased">Kalendarz</h1>
-
                                     <div className="flex items-center gap-2">
                                         <button
                                             type="button"
@@ -215,7 +216,11 @@ const CalendarPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap items-center gap-2">
+                                <p className="justify-self-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 font-segoe-ui text-sm font-medium text-scrumdone-red-600">
+                                    {formatCount(noDeadlineTasks.length, PLURALS.tasks)} bez terminu
+                                </p>
+
+                                <div className="flex flex-wrap items-center justify-self-end gap-4">
                                     <div className="flex items-center rounded-[10px] bg-[#F3F3F5] p-1">
                                         <button 
                                             onClick={() => setViewMode('week')}
@@ -262,6 +267,7 @@ const CalendarPage: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
+                            </div>
                             </div>
 
                             <div className="flex flex-1 flex-col gap-6">

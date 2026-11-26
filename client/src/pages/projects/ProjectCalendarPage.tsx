@@ -25,6 +25,7 @@ import { applyOptimisticDueDate, useCalendarDueDateDrag } from '../../hooks/cale
 import { assignmentToCalendarTask, assignmentToNoDeadlineTask } from '../../lib/assignmentMappers'
 import type { CalendarView } from '../../lib/calendarRange'
 import type { CalendarTask } from '../../types/calendar'
+import { formatCount, PLURALS } from '../../utils/plural'
 
 const ProjectCalendarPage: React.FC = () => {
   const { projectId = '' } = useParams()
@@ -227,13 +228,16 @@ const ProjectCalendarPage: React.FC = () => {
                   <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
                     <div className="min-w-0 space-y-4">
                       <div className="flex flex-col gap-4 p-0">
-                        <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto_1fr]">
                           <div className="flex items-center gap-2">
                             <button type="button" onClick={handlePrev} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 cursor-pointer"><ChevronLeftIcon className="h-4 w-4" /></button>
                             <span className="font-segoe-ui text-[14px] text-slate-900 mx-1 min-w-0 text-center capitalize sm:min-w-[180px]">{dateLabel}</span>
                             <button type="button" onClick={handleNext} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 cursor-pointer"><ChevronRightIcon className="h-4 w-4" /></button>
                           </div>
-                          <div className="inline-flex rounded-xl bg-slate-100/50 p-1">
+                          <p className="justify-self-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 font-segoe-ui text-sm font-medium text-scrumdone-red-600">
+                            {formatCount(noDeadlineTasks.length, PLURALS.tasks)} bez terminu
+                          </p>
+                          <div className="justify-self-end inline-flex rounded-xl bg-slate-100/50 p-1">
                             <button onClick={() => setDisplayMode('week')} className={monthButtonClass('week')}>Tydzień</button>
                             <button onClick={() => setDisplayMode('month')} className={monthButtonClass('month')}>Miesiąc</button>
                           </div>
