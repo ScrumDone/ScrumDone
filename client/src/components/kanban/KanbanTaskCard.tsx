@@ -71,9 +71,9 @@ export const KanbanTaskCard: React.FC<{
           {!isDragOverlay && isMenuOpen && (
             <div
               role="menu"
-              className="absolute right-0 top-full z-20 mt-1 min-w-[9.5rem] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+              className="absolute right-0 top-full z-20 mt-1  overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg"
             >
-              <button
+              {/* <button
                 type="button"
                 role="menuitem"
                 onPointerDown={(e) => e.stopPropagation()}
@@ -85,7 +85,7 @@ export const KanbanTaskCard: React.FC<{
               >
                 <PencilSquareIcon className="h-4 w-4" />
                 Edytuj
-              </button>
+              </button> */}
               <button
                 type="button"
                 role="menuitem"
@@ -94,10 +94,9 @@ export const KanbanTaskCard: React.FC<{
                   e.stopPropagation();
                   onDelete?.();
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                className=" px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50"
               >
                 <TrashIcon className="h-4 w-4" />
-                Usuń
               </button>
             </div>
           )}
