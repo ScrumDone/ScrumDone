@@ -7,8 +7,7 @@ export function useDeleteCompanyContact(companyId: string) {
   return useMutation({
     mutationFn: (contactId: string) => deleteCompanyContact(companyId, contactId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['companies', companyId] });
-      queryClient.invalidateQueries({ queryKey: ['companies', companyId, 'contacts'] });
+      // Prefiks ['companies'] obejmuje listę firm, szczegóły firmy i listy kontaktów.
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     },
   });

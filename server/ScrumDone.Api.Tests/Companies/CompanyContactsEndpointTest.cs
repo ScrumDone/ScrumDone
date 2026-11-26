@@ -152,6 +152,74 @@ public class CompanyContactsEndpointTests
         Assert.Equal("Name", contact.Name);
     }
 
+    // Główny kontakt — tylko jeden na firmę
+
+    [Fact]
+    public async Task CreateCompanyContact_AsPrimary_UnsetsPreviousPrimary()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var companyId = Guid.NewGuid();
+        var oldPrimaryId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Companies.Add(new Company { Id = companyId, Name = "Company" });
+            db.ContactPeople.Add(new ContactPerson { Id = oldPrimaryId, CompanyId = companyId, Name = "Old Primary", IsPrimary = true });
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var createResponse = await client.PostAsJsonAsync($"/api/companies/{companyId}/contacts",
+            new ContactPersonCreateDto { Name = "New Primary", IsPrimary = true });
+        Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
+        var created = await TestResponse.ReadJsonAsync<ContactPersonDto>(createResponse);
+
+        var getResponse = await client.GetAsync($"/api/companies/{companyId}/contacts");
+        var page = await TestResponse.ReadJsonAsync<PagedResultDto<ContactPersonDto>>(getResponse);
+
+        var primaries = page.Items.Where(c => c.IsPrimary == true).ToList();
+        Assert.Single(primaries);
+        Assert.Equal(created.Id, primaries[0].Id);
+
+        var companyResponse = await client.GetAsync($"/api/companies/{companyId}");
+        var company = await TestResponse.ReadJsonAsync<CompanyDetailDto>(companyResponse);
+        Assert.Single(company.Contacts, c => c.IsPrimary == true);
+        Assert.Equal(created.Id, company.Contacts.First().Id);
+    }
+
+    [Fact]
+    public async Task UpdateCompanyContact_SetPrimary_UnsetsPreviousPrimary()
+    {
+        using var app = new ScrumDoneApiFactory();
+        var companyId = Guid.NewGuid();
+        var oldPrimaryId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+
+        await app.SeedDatabaseAsync(db =>
+        {
+            db.Companies.Add(new Company { Id = companyId, Name = "Company" });
+            db.ContactPeople.AddRange(
+                new ContactPerson { Id = oldPrimaryId, CompanyId = companyId, Name = "Old Primary", IsPrimary = true },
+                new ContactPerson { Id = otherId, CompanyId = companyId, Name = "Other" }
+            );
+            return Task.CompletedTask;
+        });
+
+        using var client = app.CreateClient();
+
+        var response = await client.PatchAsJsonAsync($"/api/companies/{companyId}/contacts/{otherId}",
+            new { isPrimary = true });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var getResponse = await client.GetAsync($"/api/companies/{companyId}/contacts");
+        var page = await TestResponse.ReadJsonAsync<PagedResultDto<ContactPersonDto>>(getResponse);
+
+        var primaries = page.Items.Where(c => c.IsPrimary == true).ToList();
+        Assert.Single(primaries);
+        Assert.Equal(otherId, primaries[0].Id);
+    }
+
     // DELETE /api/companies/{id}/contacts/{contactId}
 
     [Fact]
