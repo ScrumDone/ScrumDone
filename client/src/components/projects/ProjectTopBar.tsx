@@ -17,6 +17,9 @@ import {
 } from '../../utils/projectDisplay';
 import ProjectEditModal, { type EditProjectDraft } from './ProjectEditModal';
 import ProjectChangeClientModal from './ProjectChangeClientModal';
+import ProjectMethodologyChangeDialog, {
+  type ProjectMethodology,
+} from './ProjectMethodologyChangeDialog';
 
 interface ProjectTopBarProps {
   projectId: string;
@@ -99,6 +102,8 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
   const [draft, setDraft] = useState<EditProjectDraft>(emptyDraft);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isChangingClient, setIsChangingClient] = useState(false);
+  const [isChangingMethodology, setIsChangingMethodology] = useState(false);
+  const [pendingMethodology, setPendingMethodology] = useState<ProjectMethodology | null>(null);
   const [density, setDensity] = useState<TopBarDensity>(readStoredDensity);
   const isCompact = density === 'compact';
 
@@ -112,13 +117,16 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
   };
 
   const isSaving = isSavingProject || isSavingMembers;
-  const saveErrorMessage = isUpdateProjectError && !isChangingClient && !isArchiving
+  const saveErrorMessage = isUpdateProjectError && !isChangingClient && !isArchiving && !isChangingMethodology
     ? updateProjectError?.message
     : isUpdateMembersError
       ? updateMembersError?.message
       : null;
   const deleteErrorMessage = isDeleteError ? deleteError?.message : null;
   const changeClientErrorMessage = isUpdateProjectError && isChangingClient
+    ? updateProjectError?.message
+    : null;
+  const methodologyErrorMessage = isUpdateProjectError && isChangingMethodology
     ? updateProjectError?.message
     : null;
   const errorMessage = saveErrorMessage ?? deleteErrorMessage ?? changeClientErrorMessage;
@@ -144,13 +152,41 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
     setIsChangingClient(false);
   };
 
-  const viewMode: 'kanban' | 'scrum' = projectData?.isSetToScrum ? 'scrum' : 'kanban';
+  const viewMode: ProjectMethodology = projectData?.isSetToScrum ? 'scrum' : 'kanban';
 
-  const handleViewModeChange = (mode: 'kanban' | 'scrum') => {
+  const requestViewModeChange = (mode: ProjectMethodology) => {
     if (!projectData || isSavingProject) return;
-    const nextIsScrum = mode === 'scrum';
-    if (projectData.isSetToScrum === nextIsScrum) return;
-    updateProject({ id: projectId, data: { isSetToScrum: nextIsScrum } });
+    if (projectData.isSetToScrum === (mode === 'scrum')) return;
+    resetUpdateProject();
+    setIsChangingMethodology(false);
+    setPendingMethodology(mode);
+  };
+
+  const closeMethodologyDialog = () => {
+    if (isSavingProject && isChangingMethodology) return;
+    resetUpdateProject();
+    setIsChangingMethodology(false);
+    setPendingMethodology(null);
+  };
+
+  const confirmViewModeChange = () => {
+    if (!projectData || !pendingMethodology || isSavingProject) return;
+    const nextIsScrum = pendingMethodology === 'scrum';
+    resetUpdateProject();
+    setIsChangingMethodology(true);
+    updateProject(
+      { id: projectId, data: { isSetToScrum: nextIsScrum } },
+      {
+        onSuccess: () => {
+          setIsChangingMethodology(false);
+          setPendingMethodology(null);
+          setIsEditModalOpen(false);
+          if (nextIsScrum) {
+            navigate(`/projects/${projectId}/sprinty`);
+          }
+        },
+      },
+    );
   };
 
   const openEditModal = () => {
@@ -393,23 +429,6 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
               </button>
             </div>
 
-            <div className="inline-flex w-full gap-2 rounded-[10px] bg-slate-50 p-1 sm:w-auto sm:min-w-48">
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('kanban')}
-                className={segmentButtonClass(viewMode === 'kanban')}
-              >
-                Kanban
-              </button>
-              <button
-                type="button"
-                onClick={() => handleViewModeChange('scrum')}
-                className={segmentButtonClass(viewMode === 'scrum')}
-              >
-                Scrum
-              </button>
-            </div>
-
             {!isCompact ? (
               <button
                 type="button"
@@ -453,10 +472,22 @@ const ProjectTopBar: React.FC<ProjectTopBarProps> = ({ projectId }) => {
         onDelete={handleDeleteProject}
         onDraftChange={setDraft}
         onToggleMember={toggleMember}
-        isSaving={isSaving}
+        methodology={viewMode}
+        onMethodologyChange={requestViewModeChange}
+        isMethodologySaving={isSavingProject && isChangingMethodology}
+        isSaving={isSaving && !isChangingMethodology}
         isArchiving={isArchiving}
         isDeleting={isDeleting}
         errorMessage={errorMessage}
+      />
+
+      <ProjectMethodologyChangeDialog
+        isOpen={pendingMethodology !== null}
+        nextMode={pendingMethodology}
+        isSaving={isSavingProject && isChangingMethodology}
+        errorMessage={methodologyErrorMessage}
+        onClose={closeMethodologyDialog}
+        onConfirm={confirmViewModeChange}
       />
 
       <ProjectChangeClientModal

@@ -8,6 +8,7 @@ import {
 import Avatar from '../common/Avatar';
 import ProjectColorPicker from './ProjectColorPicker';
 import ProjectLabelsEditor from './ProjectLabelsEditor';
+import type { ProjectMethodology } from './ProjectMethodologyChangeDialog';
 
 export type TeamMemberOption = {
   id: string;
@@ -38,6 +39,9 @@ type ProjectEditModalProps = {
   onDelete: () => void;
   onDraftChange: (updater: (prev: EditProjectDraft) => EditProjectDraft) => void;
   onToggleMember: (memberId: string) => void;
+  methodology: ProjectMethodology;
+  onMethodologyChange: (mode: ProjectMethodology) => void;
+  isMethodologySaving?: boolean;
   isSaving?: boolean;
   isArchiving?: boolean;
   isDeleting?: boolean;
@@ -57,12 +61,20 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
   onDelete,
   onDraftChange,
   onToggleMember,
+  methodology,
+  onMethodologyChange,
+  isMethodologySaving = false,
   isSaving = false,
   isArchiving = false,
   isDeleting = false,
   errorMessage = null,
 }) => {
-  const isBusy = isSaving || isArchiving || isDeleting;
+  const isBusy = isSaving || isArchiving || isDeleting || isMethodologySaving;
+
+  const methodologyButtonClass = (isSelected: boolean) =>
+    `flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+      isSelected ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-700 hover:text-slate-900'
+    }`;
   if (!isOpen) {
     return null;
   }
@@ -124,6 +136,32 @@ const ProjectEditModal: React.FC<ProjectEditModalProps> = ({
               disabled={isBusy}
               className="w-full resize-none rounded-lg border border-slate-100 bg-slate-100 px-3 py-2.5 font-segoe-ui text-sm text-slate-500 tracking-[-0.15px] outline-none transition-colors focus:border-scrumdone-blue-main disabled:opacity-60"
             />
+          </div>
+
+          <div>
+            <div className="mb-2 block font-segoe-ui text-sm leading-3.5 tracking-[-0.15px] font-medium text-slate-700">
+              Metodyka
+            </div>
+            <div className="inline-flex w-full gap-1 rounded-[10px] bg-slate-100 p-1 sm:max-w-xs" role="group" aria-label="Metodyka projektu">
+              <button
+                type="button"
+                onClick={() => onMethodologyChange('kanban')}
+                disabled={isBusy}
+                aria-pressed={methodology === 'kanban'}
+                className={methodologyButtonClass(methodology === 'kanban')}
+              >
+                Kanban
+              </button>
+              <button
+                type="button"
+                onClick={() => onMethodologyChange('scrum')}
+                disabled={isBusy}
+                aria-pressed={methodology === 'scrum'}
+                className={methodologyButtonClass(methodology === 'scrum')}
+              >
+                Scrum
+              </button>
+            </div>
           </div>
 
           <ProjectColorPicker
