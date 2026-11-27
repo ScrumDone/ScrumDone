@@ -62,7 +62,14 @@ const KanbanColumnContainer: React.FC<KanbanColumnContainerProps> = ({
   const countLabel = showPagedCount ? `${tasks.length}/${totalCount}` : String(tasks.length);
 
   return (
-    <section className="flex min-h-80 min-w-0 self-start flex-col gap-2">
+    <section
+      className={[
+        'flex min-h-80 min-w-0 flex-col gap-2',
+        // Separator between columns: horizontal on narrow screens, vertical on xl (5-column grid)
+        'border-t border-slate-300 pt-4 first:border-t-0 first:pt-0',
+        'xl:border-t-0 xl:border-l xl:px-4 xl:pt-0 xl:first:border-l-0 xl:first:pl-0 xl:last:pr-0',
+      ].join(' ')}
+    >
       <header className="flex items-center gap-2">
         <span
           className="h-6 w-1 rounded-full bg-slate-400"
