@@ -9,7 +9,7 @@ using ScrumDone.Api.Services;
 
 namespace ScrumDone.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api")]
     [ApiController]
     public class MessagesController : ControllerBase
     {
@@ -22,7 +22,7 @@ namespace ScrumDone.Api.Controllers
             _messagesService = messagesService;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("assignment/{id}/[controller]")]
         [ProducesResponseType(typeof(PagedResultDto<MessageDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetMessages(
@@ -34,7 +34,7 @@ namespace ScrumDone.Api.Controllers
             return Ok(await _messagesService.GetMessagesForAssignmentAsync(id, query));
         }
 
-        [HttpPost("{id}")]
+        [HttpPost("assignment/{id}/[controller]")]
         [ProducesResponseType(typeof(MessageDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -56,7 +56,7 @@ namespace ScrumDone.Api.Controllers
             return StatusCode(StatusCodes.Status201Created, result);
         }
 
-        [HttpPatch("{id}")]
+        [HttpPatch("[controller]/{id}")]
         [ProducesResponseType(typeof(MessageDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -69,7 +69,7 @@ namespace ScrumDone.Api.Controllers
             return Ok(await _messagesService.UpdateMessageAsync(id, dto));
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("[controller]/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteMessage([FromRoute] Guid id)
