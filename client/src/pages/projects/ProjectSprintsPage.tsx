@@ -1159,6 +1159,38 @@ const ProjectSprintsPage: React.FC = () => {
 
             {/* Filtry po prawej */}
             <aside className="flex min-h-0 flex-col gap-4 overscroll-contain pl-1 xl:min-h-0 xl:overflow-y-auto">
+              {/* Backlog */}
+              <BacklogDropZone isHighlighted={isDragOverBacklog}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="font-segoe-ui text-[14px] font-medium text-slate-900">
+                    Backlog ({backlogTasks.length})
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setIsTaskModalOpen(true)}
+                    className="flex px-2 py-2 items-center justify-center rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium text-white hover:bg-blue-600"
+                    title="Dodaj zadanie"
+                  >
+                    + Dodaj zadanie
+                  </button>
+                </div>
+                {backlogTasks.length === 0 ? (
+                  <div className="flex min-h-24 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 px-3 text-center">
+                    <p className="font-segoe-ui text-xs font-medium text-slate-500">
+                      Backlog jest pusty — przeciągnij tu zadanie ze sprintu
+                    </p>
+                  </div>
+                ) : (
+                  <SortableContext items={backlogTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+                    <div className="flex flex-col gap-2">
+                      {backlogTasks.map((task) => (
+                        <BacklogTaskCard key={task.id} task={task} onClick={() => navigate(`/task/${task.id}`)} />
+                      ))}
+                    </div>
+                  </SortableContext>
+                )}
+              </BacklogDropZone>
+              
               {/* Sprinty */}
               <section className="rounded-[10px] border border-gray-200 bg-white p-4">
                 <h3 className="mb-3 font-segoe-ui text-[14px] font-medium text-slate-900">Sprinty</h3>
@@ -1236,38 +1268,6 @@ const ProjectSprintsPage: React.FC = () => {
                   })}
                 </div>
               </section>
-
-              {/* Backlog */}
-              <BacklogDropZone isHighlighted={isDragOverBacklog}>
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-segoe-ui text-[14px] font-medium text-slate-900">
-                    Backlog ({backlogTasks.length})
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setIsTaskModalOpen(true)}
-                    className="flex h-6 w-6 items-center justify-center rounded-lg bg-scrumdone-blue-main px-4 text-sm font-medium text-white hover:bg-blue-600"
-                    title="Dodaj zadanie"
-                  >
-                    +
-                  </button>
-                </div>
-                {backlogTasks.length === 0 ? (
-                  <div className="flex min-h-24 items-center justify-center rounded-lg border-2 border-dashed border-slate-200 px-3 text-center">
-                    <p className="font-segoe-ui text-xs font-medium text-slate-500">
-                      Backlog jest pusty — przeciągnij tu zadanie ze sprintu
-                    </p>
-                  </div>
-                ) : (
-                  <SortableContext items={backlogTasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-                    <div className="flex flex-col gap-2">
-                      {backlogTasks.map((task) => (
-                        <BacklogTaskCard key={task.id} task={task} onClick={() => navigate(`/task/${task.id}`)} />
-                      ))}
-                    </div>
-                  </SortableContext>
-                )}
-              </BacklogDropZone>
             </aside>
             </div>
             </div>
