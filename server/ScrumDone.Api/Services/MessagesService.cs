@@ -32,7 +32,6 @@ namespace ScrumDone.Api.Services
 
             var  messagesPaginated = new PagedResultDto<MessageDto>(messages, query.Page, query.Limit, total);
             return messagesPaginated;
-            throw new NotImplementedException();
         }
 
         public async Task<MessageDto> CreateMessageForAssignmentAsync(Guid id, MessageCreateDto dto, Guid authorId)
@@ -90,9 +89,11 @@ namespace ScrumDone.Api.Services
         public async Task DeleteMessageAsync(Guid id)
         {
             var message = await _context.Messages.FirstOrDefaultAsync(m => m.Id == id)
-            ?? throw new NotFoundException(nameof(CooperationLog), id);
+            ?? throw new NotFoundException(nameof(Message), id);
 
-            _context.Messages.Remove(message);
+            message.Text = "(message removed)"; // that or              .OnDelete(DeleteBehavior.Cascade);
+
+            // _context.Messages.Remove(message);
             await _context.SaveChangesAsync();
             return;
         }
