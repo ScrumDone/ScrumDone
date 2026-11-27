@@ -561,7 +561,7 @@ const ProjectKanbanPage: React.FC = () => {
                       onDragEnd={handleDragEnd}
                       onDragCancel={() => setActiveTask(null)}
                     >
-                      <div className="grid items-start gap-2 xl:grid-cols-5">
+                      <div className="grid items-stretch gap-y-4 xl:grid-cols-5 xl:gap-0">
                         {(statuses ?? []).map((status) => (
                           <KanbanColumnContainer
                             key={status.id}
