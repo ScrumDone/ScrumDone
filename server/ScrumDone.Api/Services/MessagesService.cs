@@ -18,20 +18,34 @@ namespace ScrumDone.Api.Services
 
         public async Task<PagedResultDto<MessageDto>> GetMessagesForAssignmentAsync(Guid id, MessagesQueryDto query)
         {
-            var baseQuery = _context.Messages.Where(n => n.AssignmentId == id);
-            var total = await baseQuery.CountAsync();
-
-            var messagesFromDb = await baseQuery
-                .OrderByDescending(n => n.CreatedAt)
-                .Skip((query.Page - 1) * query.Limit) 
-                .Take(query.Limit)
+            var messagesFromDb = await _context.Messages
+                .Where(n => n.AssignmentId == id)
+                .OrderBy(n => n.CreatedAt)
                 .Include(n => n.Author)
                 .ToListAsync();
             
-            var messages = messagesFromDb.Select(message => message.ToDto());
+            var flatSorted = new List<MessageDto>();
+            var rootMessages = messagesFromDb.Where(m => m.ParentMessageId == null).Reverse();
+
+            Flatten(rootMessages, flatSorted);
+
+            var total = flatSorted.Count;
+            var messages = flatSorted.Skip((query.Page - 1) * query.Limit).Take(query.Limit).ToList();
 
             var  messagesPaginated = new PagedResultDto<MessageDto>(messages, query.Page, query.Limit, total);
             return messagesPaginated;
+        }
+
+        private void Flatten(IEnumerable<Message> messages, List<MessageDto> flatSorted)
+        {
+            foreach (var message in messages)
+            {
+                flatSorted.Add(message.ToDto());
+                if (message.Responses.Count > 0)
+                {
+                    Flatten(message.Responses, flatSorted);                    
+                }
+            }
         }
 
         public async Task<MessageDto> CreateMessageForAssignmentAsync(Guid id, MessageCreateDto dto, Guid authorId)
