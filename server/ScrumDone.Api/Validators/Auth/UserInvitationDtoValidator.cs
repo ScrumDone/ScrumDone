@@ -15,6 +15,8 @@ namespace ScrumDone.Api.Validators.Auth
                 .NotEmpty()
                 .EmailAddress()
                 .MaximumLength(128);
+
+            
         }
     }
 }
